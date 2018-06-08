@@ -1,16 +1,18 @@
 <?php
 // Secret database details
 abstract class DBDeets {
-  const DB_NAME_DATA = 'logger';
+  const DB_NAME_DATA = 'waves';
   const DB_USER = 'root';
   const DB_PW = 'root';
+  const DB_HOST = 'localhost';
+  const DB_PORT = 8889;
 }
 
 // Function to establish a connection to a named database using the above user and PW
 // Only makes localhost connections during PHP processing.
 // - returns an active database connection handle (be sure to close it later)
 function connectToDatabase($databaseName) {
-  $db = new mysqli('localhost', DBDeets::DB_USER, DBDeets::DB_PW, $databaseName);
+  $db = new mysqli('localhost:8889', DBDeets::DB_USER, DBDeets::DB_PW, $databaseName);
   return $db;
 }
 

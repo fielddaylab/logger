@@ -7,6 +7,9 @@
         padding:0px;
         font:16px Helvetica;
     }
+    .row {
+        padding-left:10px;
+    }
 </style>
 <head>
     <meta charset="UTF-8">
@@ -14,12 +17,29 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Data Visualization Tool</title>
     <link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css'>
+    <style>
+        .tab-content {
+            border-left: 1px solid #ddd;
+            border-right: 1px solid #ddd;
+            border-bottom: 1px solid #ddd;
+            border-top: 1px solid #ddd;
+            padding: 10px;
+            margin-left: 10px;
+            margin-right: 10px;
+            padding-bottom: 30px;
+        }
+
+        .nav-tabs {
+            margin-bottom: -1px;
+            margin-right:10px;
+        }
+    </style>
 </head>
 <body>
-    <div class="container-fluid">
-        <h2>Data Visualization Tool <small>Select a game to get started</small></h2>
+    <div class="container-fluid" style="padding-right:50px">
+        <h2>Data Visualization Tool <small>A Field Day Research Tool</small></h2>
         
-        <div class="row" style="padding-left:10px;">
+        <div class="row">
             <div class="col-xs-4">
                 <label for="gameSelect" style="padding-top:10px; padding-left:10px">Game</label>
                 <select id="gameSelect">
@@ -34,9 +54,50 @@
                     <option value="WIND">Wind</option>
                 </select>
             </div>
+            <div class="col-xs-4"></div>
             <div class="col-xs-4">
-                <div id="sessions" style="padding-top:10px;">Select a game to see sessions</div>
+                <div id="sessions" class="pull-right" style="margin-right:10px">Select a game to see sessions</div>
             </div>
+        </div>
+        <div class="row">
+            <div class="col-xs-4"></div>
+            <div class="col-xs-4"></div>
+            <div class="col-xs-4">
+                <ul class="nav nav-tabs pull-right">
+                    <li class="nav-item active"><a href="#all" class="nav-link" data-toggle="tab">All</a></li>
+                    <li class="nav-item"><a href="#single" class="nav-link" data-toggle="tab">Single</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="row tab-content">
+            <span class="tab-pane fade in active" id="all">
+                <div class="col-xs-4" style="margin-top:10px">
+                    Session
+                    <br>
+                    <select id="sessionSelect">
+                        <option value="empty"></option>
+                    </select>
+                </div>
+                <div class="col-xs-4" style="margin-top:10px">
+                    Level
+                    <br>
+
+                </div>
+                <div class="col-xs-4" style="margin-top:10px">
+                    all/column 3
+                </div>
+            </span>
+            <span class="tab-pane fade in" id="single">
+                <div class="col-xs-4" style="margin-top:10px">
+                    single/column 1
+                </div>
+                <div class="col-xs-4" style="margin-top:10px">
+                    single/column 2
+                </div>
+                <div class="col-xs-4" style="margin-top:10px">
+                    single/column 3
+                </div>
+            </span>
         </div>
     </div>
 
