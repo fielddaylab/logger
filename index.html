@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<style>
+    body,div
+    {
+        margin:0px;
+        padding:0px;
+        font:16px Helvetica;
+    }
+</style>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Data Visualization Tool</title>
+    <link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css'>
+</head>
+<body>
+    <div class="container-fluid">
+        <h2>Data Visualization Tool <small>Select a game to get started</small></h2>
+        
+        <div class="row" style="padding-left:10px;">
+            <div class="col-xs-4">
+                <label for="gameSelect" style="padding-top:10px; padding-left:10px">Game</label>
+                <select id="gameSelect">
+                    <option value="empty"></option>
+                    <option value="BACTERIA">Bacteria</option>
+                    <option value="BALLOON">Balloon</option>
+                    <option value="CRYSTAL">Crystal</option>
+                    <option value="CYCLE">Cycle</option>
+                    <option value="EARTHQUAKE">Earthquake</option>
+                    <option value="MAGNET">Magnet</option>
+                    <option value="WAVES">Waves</option>
+                    <option value="WIND">Wind</option>
+                </select>
+            </div>
+            <div class="col-xs-4">
+                <div id="sessions" style="padding-top:10px;">Select a game to see sessions</div>
+            </div>
+        </div>
+    </div>
+
+    <script src='https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js'></script>
+    <script src='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js'></script>
+    <script src='main.js'></script>
+</body>
+</html>
