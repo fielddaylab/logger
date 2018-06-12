@@ -4,17 +4,24 @@ $(document).ready((event) => {
         event.preventDefault()
         on()
         $.get('responsePage.php', { 'gameID': $('#gameSelect').val() }, (data, status, jqXHR) => {
-            $('#sessions').text(data.numSessions + ' sessions available')
-            for (let i = 0; i < data.numSessions; i++) {
-                $('#sessionSelect').append($('<option>', { value:data.sessions[i], text:data.sessions[i]}))
+            if (data.levels !== null) {
+                $('#sessions').text(data.numSessions + ' sessions available')
+                for (let i = 0; i < data.numSessions; i++) {
+                    $('#sessionSelect').append($('<option>', { value:data.sessions[i], text:data.sessions[i]}))
+                }
+                for (let i = 0; i < data.levels.length; i++) {
+                    $('#levelSelect').append($('<option>', { value:data.levels[i], text:data.levels[i]}))
+                }
+                let opt = $("#levelSelect option").sort(function (a,b) { return a.value.toUpperCase().localeCompare(b.value.toUpperCase(), {}, {numeric:true}) })
+                $("#levelSelect").append(opt)
+                selectSession(event)
+            } else {
+                off()
             }
-            for (let i = 0; i < data.levels.length; i++) {
-                $('#levelSelect').append($('<option>', { value:data.levels[i], text:data.levels[i]}))
-            }
-            let opt = $("#levelSelect option").sort(function (a,b) { return a.value.toUpperCase().localeCompare(b.value.toUpperCase(), {}, {numeric:true}) })
-            $("#levelSelect").append(opt)
-            selectSession(event)
-          }, 'json')
+          }, 'json').error((jqXHR, textStatus, errorThrown) => {
+              off()
+              showError()
+          })
     })
 
     $(document).on('change', '#sessionSelect', (event) => {
@@ -27,7 +34,10 @@ $(document).ready((event) => {
         $.get('responsePage.php', { 'gameID': $('#gameSelect').val(), 'sessionID': $('#sessionSelect').val() }, (data, status, jqXHR) => {
             $("#scoreDisplay").html(data.numCorrect + " / " + data.numQuestions)
             off()
-          }, 'json')
+        }, 'json').error((jqXHR, textStatus, errorThrown) => {
+            off()
+            showError()
+        })
     }
     
     function on() {
@@ -36,5 +46,9 @@ $(document).ready((event) => {
     
     function off() {
         $('#overlay').css('display', 'none')
+    }
+
+    function showError() {
+        $('#errorMessage').css('visibility', 'visible')
     }
 })
