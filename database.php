@@ -67,4 +67,30 @@ function simpleQueryParam($db, $query, $ptype, &$param) {
   if(strpos($query, 'SELECT') !== false) { $stmt->store_result(); }
   return $stmt;
 }
+
+function queryMultiParam($db, $query, $ptype, &$params) {
+    // Prepare the query
+    if(!($stmt = $db->prepare($query))) {
+      http_response_code(500);
+      echo '{ "errMessage": "Query prepare failed: '.$db->error.'" }';
+      return null;
+    }
+
+    $paramsArray[] = &$ptype;
+    for ($i = 0; $i < count($params); $i++) {
+      $paramsArray[] = $params[$i];
+    }
+    // Bind input params
+    call_user_func_array(array($stmt, 'bind_param'), $paramsArray);
+  
+    // Execute query
+    if(!$stmt->execute()) {
+      echo '{ "errMessage": "Query execute failed: '.$db->error.'" }';
+      return null;
+    }
+  
+    // Store the results and return the statement object
+    if(strpos($query, 'SELECT') !== false) { $stmt->store_result(); }
+    return $stmt;
+}
 ?>

@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <style>
-    body,div
-    {
+    body,div {
         margin:0px;
         padding:0px;
         font:16px Helvetica;
+    }
+    select {
+        min-width:200px;
     }
     .row {
         padding-left:10px;
@@ -38,6 +40,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Data Visualization Tool</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/css/select2.min.css">
     <link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css'>
     <style>
         .tab-content {
@@ -67,7 +70,7 @@
         <div class="row">
             <div class="col-xs-4">
                 <label for="gameSelect" style="padding-top:10px; padding-left:10px">Game</label>
-                <select id="gameSelect">
+                <select id="gameSelect" class="js-example-basic-single">
                     <option value="empty"></option>
                     <option value="BACTERIA">Bacteria</option>
                     <option value="BALLOON">Balloon</option>
@@ -96,20 +99,22 @@
         </div>
         <div class="row tab-content">
             <span class="tab-pane fade in active" id="all">
-                <div class="col-xs-4" style="margin-top:10px">
+                <div id="sessionSelectParent" class="col-xs-4" style="margin-top:10px">
                     Session
                     <br>
-                    <select id="sessionSelect">
+                    <select id="sessionSelect" class="js-example-basic-single">
                     </select>
                 </div>
                 <div class="col-xs-4" style="margin-top:10px">
                     Level
                     <br>
-                    <select id="levelSelect">
+                    <select id="levelSelect" class="js-example-basic-single">
                     </select>
                 </div>
                 <div class="col-xs-4" style="margin-top:10px">
-                    all/column 3
+                    Test score:
+                    <br>
+                    <div id="scoreDisplay">- / -</div>
                 </div>
             </span>
             <span class="tab-pane fade in" id="single">
@@ -128,6 +133,7 @@
 
     <script src='https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js'></script>
     <script src='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js'></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/js/select2.min.js"></script>
     <script src='main.js'></script>
 </body>
 </html>
