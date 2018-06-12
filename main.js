@@ -1,5 +1,7 @@
 $(document).ready((event) => {
-    $('.js-example-basic-single').select2()
+    $('.js-example-basic-single').select2() //initialize select boxes
+    let tester = $('#tester')[0]
+    
     $(document).on('change', '#gameSelect', (event) => {
         event.preventDefault()
         on()
@@ -14,7 +16,12 @@ $(document).ready((event) => {
                 }
                 let opt = $("#levelSelect option").sort(function (a,b) { return a.value.toUpperCase().localeCompare(b.value.toUpperCase(), {}, {numeric:true}) })
                 $("#levelSelect").append(opt)
-                selectSession(event)
+                if ($('#single').hasClass('active')) {
+                    // initialization of single tab
+                    selectSession(event)
+                } else {
+                    // do initialization of all tab
+                }
             } else {
                 off()
             }
@@ -33,11 +40,68 @@ $(document).ready((event) => {
         on()
         $.get('responsePage.php', { 'gameID': $('#gameSelect').val(), 'sessionID': $('#sessionSelect').val() }, (data, status, jqXHR) => {
             $("#scoreDisplay").html(data.numCorrect + " / " + data.numQuestions)
-            off()
+            $.get('responsePage.php', { 'gameID': $('#gameSelect').val(), 'sessionID': $('#sessionSelect').val(), 'level': $('#levelSelect').val() }, (data, status, jqXHR) => {
+                let dataObj = {data:JSON.parse(JSON.stringify(data.event_data)), times:data.times}
+                drawWavesChart(dataObj)
+                off()
+              }, 'json').error((jqXHR, textStatus, errorThrown) => {
+                  off()
+                  showError()
+              })
         }, 'json').error((jqXHR, textStatus, errorThrown) => {
             off()
             showError()
         })
+    }
+
+    function drawWavesChart(inData) {
+        let xAmp = []
+        let xFreq = []
+        let xOff = []
+        let yAmp = []
+        let yFreq = []
+        let yOff = []
+        for (let i = 0; i < inData.data.length; i++) {
+            let jsonData = JSON.parse(inData.data[i])
+
+            if (jsonData.slider === "AMPLITUDE") {
+                xAmp.push(inData.times[i])
+                yAmp.push(jsonData.end_val)
+            } else if (jsonData.slider === "WAVELENGTH") { 
+                xFreq.push(inData.times[i])
+                yFreq.push(jsonData.end_val)
+            } else if (jsonData.slider === "OFFSET") {
+                xOff.push(inData.times[i])
+                yOff.push(jsonData.end_val)
+            }
+        }
+        let ampTrace = {
+            x: xAmp,
+            y: yAmp,
+            line: {color: "red"},
+            name: 'Amplitude',
+            mode: 'lines+markers'
+        }
+        let freqTrace = {
+            x: xFreq,
+            y: yFreq,
+            line: {color: "blue"},
+            name: 'Frequency',
+            mode: 'lines+markers'
+        }
+        let offTrace = {
+            x: xOff,
+            y: yOff,
+            line: {color: "green"},
+            name: 'Offset',
+            mode: 'lines+markers'
+        }
+        let wavesData = [ampTrace, freqTrace, offTrace]
+        let layout = {
+            margin: { t: 0 },
+            showlegend: true
+        }
+        Plotly.plot(tester, wavesData, layout)
     }
     
     function on() {

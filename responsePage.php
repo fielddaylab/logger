@@ -11,7 +11,7 @@ if ($db->connect_error) {
 }
 if (!isset($_GET['sessionID']) && isset($_GET['gameID'])) {
     $gameID = $_GET['gameID'];
-    $query = "SELECT DISTINCT COUNT(session_id) FROM log WHERE app_id=?;";
+    $query = "SELECT COUNT(DISTINCT session_id) FROM log WHERE app_id=?;";
     $stmt = simpleQueryParam($db, $query, "s", $gameID);
     if($stmt == NULL) {
         http_response_code(500);
@@ -71,11 +71,13 @@ if (!isset($_GET['sessionID']) && isset($_GET['gameID'])) {
         "levels": <?=json_encode($levels)?>
     }
     <?php
+    $stmt4->close();
     $stmt->close();
     $stmt2->close();
     $stmt3->close();
 }
-if (isset($_GET['sessionID']) && isset($_GET['gameID'])) {
+
+if (!isset($_GET['level']) && isset($_GET['sessionID']) && isset($_GET['gameID'])) {
     $sessionID = $_GET['sessionID'];
     $gameID = $_GET['gameID'];
     $query1 = "SELECT event_data_complex FROM log WHERE app_id=? AND session_id=? AND event_custom=?;";
@@ -110,7 +112,39 @@ if (isset($_GET['sessionID']) && isset($_GET['gameID'])) {
     <?php
     $stmt1->close();
 }
-    // Close the database connection
 
+if (isset($_GET['gameID']) && isset($_GET['sessionID']) && isset($_GET['level'])) {
+    $level = $_GET['level'];
+    $gameID = $_GET['gameID'];
+    $sessionID = $_GET['sessionID'];
+
+    $query4 = "SELECT event_data_complex, client_time FROM log WHERE app_id=? AND session_id=? AND level=? AND (event_custom=? OR event_custom=?);";
+    $paramArray = array($gameID, $sessionID, $level, 1, 2);
+    $stmt4 = queryMultiParam($db, $query4, "ssiii", $paramArray);
+    if($stmt4 == NULL) {
+        http_response_code(500);
+        die('{ "errMessage": "Error running query." }');
+    }
+    // Bind variables to the results
+    if (!$stmt4->bind_result($singleData, $singleTime)) {
+        http_response_code(500);
+        die('{ "errMessage": "Failed to bind to results." }');
+    }
+    // Fetch and display the results
+    while($stmt4->fetch()) {
+        $times[] = $singleTime;
+        $eventData[] = $singleData;
+    }
+    ?>
+    {
+        "times": <?=json_encode($times)?>,
+        "event_data": <?=json_encode($eventData)?>
+    }
+    <?php
+    $stmt4->close();
+}
+
+
+    // Close the database connection
     $db->close();
 ?>
