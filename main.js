@@ -42,8 +42,11 @@ $(document).ready((event) => {
         $.get('responsePage.php', { 'gameID': $('#gameSelect').val(), 'sessionID': $('#sessionSelect').val() }, (data, status, jqXHR) => {
             $("#scoreDisplay").html(data.numCorrect + " / " + data.numQuestions)
             $.get('responsePage.php', { 'gameID': $('#gameSelect').val(), 'sessionID': $('#sessionSelect').val(), 'level': $('#levelSelect').val() }, (data, status, jqXHR) => {
-                let dataObj = {data:JSON.parse(JSON.stringify(data.event_data)), times:data.times}
-                drawWavesChart(dataObj)
+                if ($('#gameSelect').val() === "WAVES") {
+                    let dataObj = {data:JSON.parse(JSON.stringify(data.event_data)), times:data.times}
+                    drawWavesChart(dataObj)
+                    getWavesData()
+                }
                 off()
               }, 'json').error((jqXHR, textStatus, errorThrown) => {
                   off()
@@ -59,14 +62,54 @@ $(document).ready((event) => {
         event.preventDefault()
         on()
         $.get('responsePage.php', { 'gameID': $('#gameSelect').val(), 'sessionID': $('#sessionSelect').val(), 'level': $('#levelSelect').val()}, (data, status, jqXHR) => {
-            let dataObj = {data:JSON.parse(JSON.stringify(data.event_data)), times:data.times}
-            drawWavesChart(dataObj)
+            if ($('#gameSelect').val() === "WAVES") {
+                let dataObj = {data:JSON.parse(JSON.stringify(data.event_data)), times:data.times}
+                drawWavesChart(dataObj)
+            }
             off()
         }, 'json').error((jqXHR, textStatus, errorThrown) => {
             off()
             showError()
         })
     })
+
+    function getWavesData() {
+        $('#basicFeatures').empty()
+        // Variables holding "basic facts" for waves game, filled by database data
+        let timePerChallenge
+        let avgTime
+        let totalTime
+        let numMovesPerChallenge
+        let totalMoves
+        let avgMoves
+        let moveTypeChangesPerLevel
+        let moveTypeChangesTotal
+        let moveTypeChangesAvg
+        let knobStdDev
+        let knobAvg
+        let knobSumPerLevel
+        let knobTotal
+
+        let timesList = $('<ul></ul>').attr('id', 'times')
+        timesList.css('font-size', '18px')
+
+        $('#basicFeatures').append($(`<li>Times:</li>`).append(timesList))
+        for (let i = 0; i < 4; i++) {
+            $('#times').append($(`<li>Level ${i}: ${2}</li>`).css('font-size', '16px'))
+        }
+        $('#basicFeatures').append($(`<li>Var2: 5</li>`)).css('font-size', '18px')
+        // $('#basicFeatures').append($(`<li>Time: ${variable}</li>`)).css('font-size', '18px')
+        // $('#basicFeatures').append($(`<li>Time: ${variable}</li>`)).css('font-size', '18px')
+        // $('#basicFeatures').append($(`<li>Time: ${variable}</li>`)).css('font-size', '18px')
+        // $('#basicFeatures').append($(`<li>Time: ${variable}</li>`)).css('font-size', '18px')
+        // $('#basicFeatures').append($(`<li>Time: ${variable}</li>`)).css('font-size', '18px')
+        // $('#basicFeatures').append($(`<li>Time: ${variable}</li>`)).css('font-size', '18px')
+        // $('#basicFeatures').append($(`<li>Time: ${variable}</li>`)).css('font-size', '18px')
+        // $('#basicFeatures').append($(`<li>Time: ${variable}</li>`)).css('font-size', '18px')
+        // $('#basicFeatures').append($(`<li>Time: ${variable}</li>`)).css('font-size', '18px')
+        // $('#basicFeatures').append($(`<li>Time: ${variable}</li>`)).css('font-size', '18px')
+        // $('#basicFeatures').append($(`<li>Time: ${variable}</li>`)).css('font-size', '18px')
+    }
 
     function drawWavesChart(inData) {
         let xAmp = []
