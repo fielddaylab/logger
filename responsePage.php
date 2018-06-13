@@ -9,7 +9,8 @@ if ($db->connect_error) {
     http_response_code(500);
     die('{ "errMessage": "Failed to Connect to DB." }');
 }
-if (!isset($_GET['sessionID']) && isset($_GET['gameID'])) {
+// Return number of sessions for a given game and return those session ids
+if (!isset($_GET['isBasicFeatures']) && !isset($_GET['sessionID']) && isset($_GET['gameID'])) {
     $gameID = $_GET['gameID'];
     $query = "SELECT COUNT(DISTINCT session_id) FROM log WHERE app_id=?;";
     $stmt = simpleQueryParam($db, $query, "s", $gameID);
@@ -75,9 +76,10 @@ if (!isset($_GET['sessionID']) && isset($_GET['gameID'])) {
     $stmt->close();
     $stmt2->close();
     $stmt3->close();
-}
+} else
 
-if (!isset($_GET['level']) && isset($_GET['sessionID']) && isset($_GET['gameID'])) {
+// Return number of questions and number correct for a given session id and game
+if (!isset($_GET['isBasicFeatures']) && !isset($_GET['level']) && isset($_GET['sessionID']) && isset($_GET['gameID'])) {
     $sessionID = $_GET['sessionID'];
     $gameID = $_GET['gameID'];
     $query1 = "SELECT event_data_complex FROM log WHERE app_id=? AND session_id=? AND event_custom=?;";
@@ -111,9 +113,10 @@ if (!isset($_GET['level']) && isset($_GET['sessionID']) && isset($_GET['gameID']
     }
     <?php
     $stmt1->close();
-}
+} else
 
-if (isset($_GET['gameID']) && isset($_GET['sessionID']) && isset($_GET['level'])) {
+// Return graphing data
+if (!isset($_GET['isBasicFeatures']) && isset($_GET['gameID']) && isset($_GET['sessionID']) && isset($_GET['level'])) {
     $level = $_GET['level'];
     $gameID = $_GET['gameID'];
     $sessionID = $_GET['sessionID'];
@@ -142,9 +145,44 @@ if (isset($_GET['gameID']) && isset($_GET['sessionID']) && isset($_GET['level'])
     }
     <?php
     $stmt4->close();
+} else
+
+// Return basic information
+if (isset($_GET['isBasicFeatures']) && isset($_GET['gameID']) && isset($_GET['sessionID'])) {
+    $level = $_GET['level'];
+    $gameID = $_GET['gameID'];
+    $sessionID = $_GET['sessionID'];
+
+    $query = "SELECT event_data_complex, client_time, level, event FROM log WHERE app_id=? AND session_id=? AND (event=? OR event=? OR event=?);";
+    $paramArray = array($gameID, $sessionID, "BEGIN", "COMPLETE", "FAIL");
+    $stmt = queryMultiParam($db, $query, "sssss", $paramArray);
+    if($stmt == NULL) {
+        http_response_code(500);
+        die('{ "errMessage": "Error running query." }');
+    }
+    // Bind variables to the results
+    if (!$stmt->bind_result($singleData, $singleTime, $singleLevel, $singleEvent)) {
+        http_response_code(500);
+        die('{ "errMessage": "Failed to bind to results." }');
+    }
+    // Fetch and display the results
+    while($stmt->fetch()) {
+        $times[] = $singleTime;
+        $eventData[] = $singleData;
+        $levels[] = $singleLevel;
+        $events[] = $singleEvent;
+    }
+    ?>
+    {
+        "times": <?=json_encode($times)?>,
+        "event_data": <?=json_encode($eventData)?>,
+        "levels": <?=json_encode($levels)?>,
+        "events": <?=json_encode($events)?>
+    }
+    <?php
+    $stmt->close();
 }
 
-
-    // Close the database connection
-    $db->close();
+// Close the database connection
+$db->close();
 ?>

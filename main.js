@@ -74,41 +74,73 @@ $(document).ready((event) => {
     })
 
     function getWavesData() {
-        $('#basicFeatures').empty()
-        // Variables holding "basic facts" for waves game, filled by database data
-        let timePerChallenge
-        let avgTime
-        let totalTime
-        let numMovesPerChallenge
-        let totalMoves
-        let avgMoves
-        let moveTypeChangesPerLevel
-        let moveTypeChangesTotal
-        let moveTypeChangesAvg
-        let knobStdDev
-        let knobAvg
-        let knobSumPerLevel
-        let knobTotal
+        $.get('responsePage.php', { 'isBasicFeatures': true, 'gameID': $('#gameSelect').val(), 'sessionID': $('#sessionSelect').val()}, (data, status, jqXHR) => {
+            if ($('#gameSelect').val() === "WAVES") {
+                let dataObj = {data:JSON.parse(JSON.stringify(data.event_data)), times:data.times, events:JSON.parse(JSON.stringify(data.events)), levels:data.levels}
+                $('#basicFeatures').empty()
+                // Variables holding "basic facts" for waves game, filled by database data
+                let timePerChallenge = dataObj.times
+                let avgTime
+                let totalTime = 0
 
-        let timesList = $('<ul></ul>').attr('id', 'times')
-        timesList.css('font-size', '18px')
+                let numMovesPerChallenge
+                let totalMoves
+                let avgMoves
+                let moveTypeChangesPerLevel
+                let moveTypeChangesTotal
+                let moveTypeChangesAvg
+                let knobStdDev
+                let knobAvg
+                let knobSumPerLevel
+                let knobTotal
 
-        $('#basicFeatures').append($(`<li>Times:</li>`).append(timesList))
-        for (let i = 0; i < 4; i++) {
-            $('#times').append($(`<li>Level ${i}: ${2}</li>`).css('font-size', '16px'))
-        }
-        $('#basicFeatures').append($(`<li>Var2: 5</li>`)).css('font-size', '18px')
-        // $('#basicFeatures').append($(`<li>Time: ${variable}</li>`)).css('font-size', '18px')
-        // $('#basicFeatures').append($(`<li>Time: ${variable}</li>`)).css('font-size', '18px')
-        // $('#basicFeatures').append($(`<li>Time: ${variable}</li>`)).css('font-size', '18px')
-        // $('#basicFeatures').append($(`<li>Time: ${variable}</li>`)).css('font-size', '18px')
-        // $('#basicFeatures').append($(`<li>Time: ${variable}</li>`)).css('font-size', '18px')
-        // $('#basicFeatures').append($(`<li>Time: ${variable}</li>`)).css('font-size', '18px')
-        // $('#basicFeatures').append($(`<li>Time: ${variable}</li>`)).css('font-size', '18px')
-        // $('#basicFeatures').append($(`<li>Time: ${variable}</li>`)).css('font-size', '18px')
-        // $('#basicFeatures').append($(`<li>Time: ${variable}</li>`)).css('font-size', '18px')
-        // $('#basicFeatures').append($(`<li>Time: ${variable}</li>`)).css('font-size', '18px')
-        // $('#basicFeatures').append($(`<li>Time: ${variable}</li>`)).css('font-size', '18px')
+                let timesList = $('<ul></ul>').attr('id', 'times')
+                timesList.css('font-size', '18px')
+
+                $('#basicFeatures').append($(`<li>Times:</li>`).append(timesList))
+                if (dataObj.times !== null) {
+                    let levelStartTime, levelEndTime, startIndices = [], endIndices = []
+                    for (let i = 0; i < dataObj.times.length; i++) {
+                        if (dataObj.events[i] === 'BEGIN') {
+                            startIndices[dataObj.levels[i]] = i
+                        } else if (dataObj.events[i] === 'COMPLETE') {
+                            endIndices[dataObj.levels[i]] = i
+                        }
+                    }
+                    for (let i = 0; i < startIndices.length; i++) {
+                        levelStartTime = new Date(dataObj.times[startIndices[i]].replace(/-/g, "/"))
+                        levelEndTime = new Date(dataObj.times[endIndices[i]].replace(/-/g, "/"))
+                        let levelTime = (levelEndTime.getTime() - levelStartTime.getTime()) / 1000
+                        totalTime += levelTime
+                        $('#times').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${levelTime} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                    }
+                    avgTime = totalTime / startIndices.length
+                    $('#times').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
+                    $('#times').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${totalTime} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                    $('#times').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${avgTime.toFixed(2)} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                }
+
+                let movesList = $('<ul></ul>').attr('id', 'moves')
+                movesList.css('font-size', '18px')
+
+                $('#basicFeatures').append($(`<li>Number of moves: </li>`).css({'font-size':'16px', 'margin-top':'5px'}))
+                // $('#basicFeatures').append($(`<li>Time: ${variable}</li>`)).css('font-size', '18px')
+                // $('#basicFeatures').append($(`<li>Time: ${variable}</li>`)).css('font-size', '18px')
+                // $('#basicFeatures').append($(`<li>Time: ${variable}</li>`)).css('font-size', '18px')
+                // $('#basicFeatures').append($(`<li>Time: ${variable}</li>`)).css('font-size', '18px')
+                // $('#basicFeatures').append($(`<li>Time: ${variable}</li>`)).css('font-size', '18px')
+                // $('#basicFeatures').append($(`<li>Time: ${variable}</li>`)).css('font-size', '18px')
+                // $('#basicFeatures').append($(`<li>Time: ${variable}</li>`)).css('font-size', '18px')
+                // $('#basicFeatures').append($(`<li>Time: ${variable}</li>`)).css('font-size', '18px')
+                // $('#basicFeatures').append($(`<li>Time: ${variable}</li>`)).css('font-size', '18px')
+                // $('#basicFeatures').append($(`<li>Time: ${variable}</li>`)).css('font-size', '18px')
+                // $('#basicFeatures').append($(`<li>Time: ${variable}</li>`)).css('font-size', '18px')
+            }
+            off()
+        }, 'json').error((jqXHR, textStatus, errorThrown) => {
+            off()
+            showError()
+        })
     }
 
     function drawWavesChart(inData) {
