@@ -83,12 +83,12 @@ $(document).ready((event) => {
                 let avgTime
                 let totalTime = 0
                 let numFails
-
                 let numMovesPerChallenge
-                let totalMoves
+                let totalMoves = 0
                 let avgMoves
+
                 let moveTypeChangesPerLevel
-                let moveTypeChangesTotal
+                let moveTypeChangesTotal = 0
                 let moveTypeChangesAvg
                 let knobStdDev
                 let knobAvg
@@ -107,10 +107,16 @@ $(document).ready((event) => {
                 $('#basicFeatures').append($(`<span><li style='margin-top:5px'>Number of moves: <a href='#moves' data-toggle='collapse' id='movesCollapseBtn' class='collapseBtn'>[−]</a></li></span>`).append(movesList)
                     .on('hide.bs.collapse', () => {$('#movesCollapseBtn').html('[+]')})
                     .on('show.bs.collapse', () => {$('#movesCollapseBtn').html('[−]')}))
+                let typesList = $('<ul></ul>').attr('id', 'types').addClass('collapse in').css({'font-size':'18px'})
+                $('#basicFeatures').append($(`<span><li style='margin-top:5px'>Move type changes: <a href='#types' data-toggle='collapse' id='typesCollapseBtn' class='collapseBtn'>[−]</a></li></span>`).append(typesList)
+                    .on('hide.bs.collapse', () => {$('#typesCollapseBtn').html('[+]')})
+                    .on('show.bs.collapse', () => {$('#typesCollapseBtn').html('[−]')}))
+                
                 if (dataObj.times !== null) {
-                    let levelStartTime, levelEndTime, startIndices = [], endIndices = []
+                    let levelStartTime, levelEndTime, lastSlider = null, startIndices = [], endIndices = [], moveTypeChangesPerLevel = []
                     numFails = new Array(dataObj.times.length).fill(0)
                     numMovesPerChallenge = new Array(dataObj.times.length).fill(0)
+                    moveTypeChangesPerLevel = new Array(dataObj.times.length).fill(0)
                     for (let i = 0; i < dataObj.times.length; i++) {
                         let dataJson = JSON.parse(dataObj.data[i])
                         if (dataObj.events[i] === 'BEGIN') {
@@ -122,6 +128,10 @@ $(document).ready((event) => {
                         } else if (dataObj.events[i] === "CUSTOM" &&
                             (dataJson.event_custom === 'SLIDER_MOVE_RELEASE' ||
                             dataJson.event_custom === 'ARROW_MOVE_RELEASE')) {
+                                if (lastSlider !== dataJson.slider) {
+                                    moveTypeChangesPerLevel[dataObj.levels[i]]++
+                                }
+                                lastSlider = dataJson.slider
                                 numMovesPerChallenge[dataObj.levels[i]]++
                         }
                     }
@@ -130,20 +140,35 @@ $(document).ready((event) => {
                         levelEndTime = new Date(dataObj.times[endIndices[i]].replace(/-/g, "/"))
                         let levelTime = (levelEndTime.getTime() - levelStartTime.getTime()) / 1000
                         totalTime += levelTime
+                        totalMoves += numMovesPerChallenge[i]
+                        moveTypeChangesTotal += moveTypeChangesPerLevel[i]
+
+                        // append times
                         $('#times').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${levelTime} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+
+                        // append fails
+                        $('#fails').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${numFails[i]}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+
+                        // append moves
+                        $('#moves').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${numMovesPerChallenge[i]}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                        
+                        // append types
+                        $('#types').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${moveTypeChangesPerLevel[i]}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
                     }
                     avgTime = totalTime / startIndices.length
                     $('#times').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
                     $('#times').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${totalTime} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
                     $('#times').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${avgTime.toFixed(2)} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
 
-                    for (let i = 0; i < startIndices.length; i++) {
-                        // append fails
-                        $('#fails').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${numFails[i]}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                    avgMoves = totalMoves / startIndices.length
+                    $('#moves').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
+                    $('#moves').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${totalMoves}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                    $('#moves').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${avgMoves.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
 
-                        // append moves
-                        $('#moves').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${numMovesPerChallenge[i]}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-                    }
+                    moveTypeChangesAvg = moveTypeChangesTotal / startIndices.length
+                    $('#types').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
+                    $('#types').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${moveTypeChangesTotal}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                    $('#types').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${moveTypeChangesAvg.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
                 }
             }
             off()
