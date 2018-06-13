@@ -55,6 +55,19 @@ $(document).ready((event) => {
         })
     }
 
+    $(document).on('change', '#levelSelect', (event) => {
+        event.preventDefault()
+        on()
+        $.get('responsePage.php', { 'gameID': $('#gameSelect').val(), 'sessionID': $('#sessionSelect').val(), 'level': $('#levelSelect').val()}, (data, status, jqXHR) => {
+            let dataObj = {data:JSON.parse(JSON.stringify(data.event_data)), times:data.times}
+            drawWavesChart(dataObj)
+            off()
+        }, 'json').error((jqXHR, textStatus, errorThrown) => {
+            off()
+            showError()
+        })
+    })
+
     function drawWavesChart(inData) {
         let xAmp = []
         let xFreq = []
