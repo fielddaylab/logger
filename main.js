@@ -1,6 +1,7 @@
 $(document).ready((event) => {
     $('.js-example-basic-single').select2() //initialize select boxes
     let tester = $('#tester')[0]
+    Plotly.newPlot(tester, [], {margin: { t: 0 }})
     
     $(document).on('change', '#gameSelect', (event) => {
         event.preventDefault()
@@ -61,20 +62,25 @@ $(document).ready((event) => {
         let yAmp = []
         let yFreq = []
         let yOff = []
-        for (let i = 0; i < inData.data.length; i++) {
-            let jsonData = JSON.parse(inData.data[i])
-
-            if (jsonData.slider === "AMPLITUDE") {
-                xAmp.push(inData.times[i])
-                yAmp.push(jsonData.end_val)
-            } else if (jsonData.slider === "WAVELENGTH") { 
-                xFreq.push(inData.times[i])
-                yFreq.push(jsonData.end_val)
-            } else if (jsonData.slider === "OFFSET") {
-                xOff.push(inData.times[i])
-                yOff.push(jsonData.end_val)
+        if (inData.data !== null) {
+            hideNoData()
+            for (let i = 0; i < inData.data.length; i++) {
+                let jsonData = JSON.parse(inData.data[i])
+                if (jsonData.slider === "AMPLITUDE") {
+                    xAmp.push(inData.times[i])
+                    yAmp.push(jsonData.end_val)
+                } else if (jsonData.slider === "WAVELENGTH") { 
+                    xFreq.push(inData.times[i])
+                    yFreq.push(jsonData.end_val)
+                } else if (jsonData.slider === "OFFSET") {
+                    xOff.push(inData.times[i])
+                    yOff.push(jsonData.end_val)
+                }
             }
+        } else {
+            showNoData()
         }
+
         let ampTrace = {
             x: xAmp,
             y: yAmp,
@@ -101,18 +107,26 @@ $(document).ready((event) => {
             margin: { t: 0 },
             showlegend: true
         }
-        Plotly.plot(tester, wavesData, layout)
+        Plotly.newPlot(tester, wavesData, layout)
     }
     
     function on() {
-        $('#overlay').css('display', 'block')
+        $('#loadingOverlay').css('display', 'block')
     }
     
     function off() {
-        $('#overlay').css('display', 'none')
+        $('#loadingOverlay').css('display', 'none')
     }
 
     function showError() {
         $('#errorMessage').css('visibility', 'visible')
+    }
+
+    function showNoData() {
+        $('#noDataOverlay').css('display', 'block')
+    }
+
+    function hideNoData() {
+        $('#noDataOverlay').css('display', 'none')
     }
 })

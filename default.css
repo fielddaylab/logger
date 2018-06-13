@@ -9,7 +9,7 @@ select {
 .row {
     padding-left:10px;
 }
-#overlay { /* from w3schools */
+.overlay { /* from w3schools */
     position: fixed; /* Sit on top of the page content */
     display: none; /* Hidden by default */
     width: 100%; /* Full width (cover the whole page) */
@@ -22,7 +22,7 @@ select {
     z-index: 2; /* Specify a stack order in case you're using a different order for other elements */
     cursor: pointer; /* Add a pointer on hover */
 }
-#text {
+.text {
     position: absolute;
     top: 50%;
     left: 50%;
@@ -45,4 +45,19 @@ select {
 .nav-tabs {
     margin-bottom: -1px;
     margin-right:10px;
+}
+
+#noDataOverlay {
+    position: relative;
+    margin: auto;
+    padding: auto;
+    height: 200px;
+    top: -100%;
+}
+
+.box {
+    border-left: 1px solid #ddd;
+    border-right: 1px solid #ddd;
+    border-bottom: 1px solid #ddd;
+    border-top: 1px solid #ddd;
 }

@@ -10,8 +10,8 @@
     <link rel="stylesheet" href="default.css">
 </head>
 <body>
-     <div id="overlay" style="display:none">
-        <div id="text">Loading . . .</div>
+     <div id="loadingOverlay" class="overlay" style="display:none">
+        <div class="text">Loading . . .</div>
     </div>
     <div class="container-fluid" style="padding-right:50px">
         <h2>Data Visualization Tool <small>A Field Day Research Tool</small></h2>
@@ -73,7 +73,15 @@
                 </div>
                 <br/><br/>
                 <div class="row" style="margin-left:0px;margin-right:0px;">
-                    <div id="tester" style="width:80%;height:200px;"></div>
+                    <div id="tester" style="width:80%;height:200px;">
+                        <div id="noDataOverlay" class="overlay" style="display:none">
+                            <div class="text" style="color:red; font-weight:bold;">NO DATA</div>
+                        </div>
+                    </div>
+                </div>
+                <br/><br/>
+                <div class="row" style="margin-left:0px;margin-right:0px">
+                    <div class="box" style="width:20%;height:300px;"></div>
                 </div>
             </span>
             <span class="tab-pane fade in" id="all">
