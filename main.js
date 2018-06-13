@@ -82,6 +82,7 @@ $(document).ready((event) => {
                 let timePerChallenge = dataObj.times
                 let avgTime
                 let totalTime = 0
+                let numFails
 
                 let numMovesPerChallenge
                 let totalMoves
@@ -94,17 +95,34 @@ $(document).ready((event) => {
                 let knobSumPerLevel
                 let knobTotal
 
-                let timesList = $('<ul></ul>').attr('id', 'times')
-                timesList.css('font-size', '18px')
-
-                $('#basicFeatures').append($(`<li>Times:</li>`).append(timesList))
+                let timesList = $('<ul></ul>').attr('id', 'times').addClass('collapse in').css('font-size', '18px')
+                $('#basicFeatures').append($(`<span><li>Times: <a href='#times' data-toggle='collapse' id='timesCollapseBtn' class='collapseBtn'>[−]</a></li></span>`).append(timesList)
+                    .on('hide.bs.collapse', () => {$('#timesCollapseBtn').html('[+]')})
+                    .on('show.bs.collapse', () => {$('#timesCollapseBtn').html('[−]')}))
+                let failsList = $('<ul></ul>').attr('id', 'fails').addClass('collapse in').css({'font-size':'18px'})
+                $('#basicFeatures').append($(`<span><li style='margin-top:5px'>Failures: <a href='#fails' data-toggle='collapse' id='failsCollapseBtn' class='collapseBtn'>[−]</a></li></span>`).append(failsList)
+                    .on('hide.bs.collapse', () => {$('#failsCollapseBtn').html('[+]')})
+                    .on('show.bs.collapse', () => {$('#failsCollapseBtn').html('[−]')}))
+                let movesList = $('<ul></ul>').attr('id', 'moves').addClass('collapse in').css({'font-size':'18px'})
+                $('#basicFeatures').append($(`<span><li style='margin-top:5px'>Number of moves: <a href='#moves' data-toggle='collapse' id='movesCollapseBtn' class='collapseBtn'>[−]</a></li></span>`).append(movesList)
+                    .on('hide.bs.collapse', () => {$('#movesCollapseBtn').html('[+]')})
+                    .on('show.bs.collapse', () => {$('#movesCollapseBtn').html('[−]')}))
                 if (dataObj.times !== null) {
                     let levelStartTime, levelEndTime, startIndices = [], endIndices = []
+                    numFails = new Array(dataObj.times.length).fill(0)
+                    numMovesPerChallenge = new Array(dataObj.times.length).fill(0)
                     for (let i = 0; i < dataObj.times.length; i++) {
+                        let dataJson = JSON.parse(dataObj.data[i])
                         if (dataObj.events[i] === 'BEGIN') {
                             startIndices[dataObj.levels[i]] = i
                         } else if (dataObj.events[i] === 'COMPLETE') {
                             endIndices[dataObj.levels[i]] = i
+                        } else if (dataObj.events[i] === 'FAIL') {
+                            numFails[dataObj.levels[i]]++
+                        } else if (dataObj.events[i] === "CUSTOM" &&
+                            (dataJson.event_custom === 'SLIDER_MOVE_RELEASE' ||
+                            dataJson.event_custom === 'ARROW_MOVE_RELEASE')) {
+                                numMovesPerChallenge[dataObj.levels[i]]++
                         }
                     }
                     for (let i = 0; i < startIndices.length; i++) {
@@ -118,23 +136,15 @@ $(document).ready((event) => {
                     $('#times').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
                     $('#times').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${totalTime} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
                     $('#times').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${avgTime.toFixed(2)} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+
+                    for (let i = 0; i < startIndices.length; i++) {
+                        // append fails
+                        $('#fails').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${numFails[i]}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+
+                        // append moves
+                        $('#moves').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${numMovesPerChallenge[i]}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                    }
                 }
-
-                let movesList = $('<ul></ul>').attr('id', 'moves')
-                movesList.css('font-size', '18px')
-
-                $('#basicFeatures').append($(`<li>Number of moves: </li>`).css({'font-size':'16px', 'margin-top':'5px'}))
-                // $('#basicFeatures').append($(`<li>Time: ${variable}</li>`)).css('font-size', '18px')
-                // $('#basicFeatures').append($(`<li>Time: ${variable}</li>`)).css('font-size', '18px')
-                // $('#basicFeatures').append($(`<li>Time: ${variable}</li>`)).css('font-size', '18px')
-                // $('#basicFeatures').append($(`<li>Time: ${variable}</li>`)).css('font-size', '18px')
-                // $('#basicFeatures').append($(`<li>Time: ${variable}</li>`)).css('font-size', '18px')
-                // $('#basicFeatures').append($(`<li>Time: ${variable}</li>`)).css('font-size', '18px')
-                // $('#basicFeatures').append($(`<li>Time: ${variable}</li>`)).css('font-size', '18px')
-                // $('#basicFeatures').append($(`<li>Time: ${variable}</li>`)).css('font-size', '18px')
-                // $('#basicFeatures').append($(`<li>Time: ${variable}</li>`)).css('font-size', '18px')
-                // $('#basicFeatures').append($(`<li>Time: ${variable}</li>`)).css('font-size', '18px')
-                // $('#basicFeatures').append($(`<li>Time: ${variable}</li>`)).css('font-size', '18px')
             }
             off()
         }, 'json').error((jqXHR, textStatus, errorThrown) => {

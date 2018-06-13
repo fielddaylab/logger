@@ -153,9 +153,9 @@ if (isset($_GET['isBasicFeatures']) && isset($_GET['gameID']) && isset($_GET['se
     $gameID = $_GET['gameID'];
     $sessionID = $_GET['sessionID'];
 
-    $query = "SELECT event_data_complex, client_time, level, event FROM log WHERE app_id=? AND session_id=? AND (event=? OR event=? OR event=?);";
-    $paramArray = array($gameID, $sessionID, "BEGIN", "COMPLETE", "FAIL");
-    $stmt = queryMultiParam($db, $query, "sssss", $paramArray);
+    $query = "SELECT event_data_complex, client_time, level, event FROM log WHERE app_id=? AND session_id=?;";
+    $paramArray = array($gameID, $sessionID);
+    $stmt = queryMultiParam($db, $query, "ss", $paramArray);
     if($stmt == NULL) {
         http_response_code(500);
         die('{ "errMessage": "Error running query." }');
