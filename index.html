@@ -54,38 +54,54 @@
             <span class="tab-pane fade in active" id="single">
                 <div class="row">
                     <div id="sessionSelectParent" class="col-xs-4" style="margin-top:10px">
-                            Session
-                            <br>
-                            <select id="sessionSelect" class="js-example-basic-single">
-                            </select>
-                        </div>
-                        <div class="col-xs-4" style="margin-top:10px">
-                            Level
-                            <br>
-                            <select id="levelSelect" class="js-example-basic-single">
-                            </select>
-                        </div>
-                        <div class="col-xs-4" style="margin-top:10px">
-                            Test score:
-                            <br>
-                            <div id="scoreDisplay">- / -</div>
-                        </div>
-                </div>
-                <br><br>
-                <div class="row" style="margin-left:0px;margin-right:0px;">
-                    <div id="tester" style="width:80%;height:200px;">
-                        <div id="noDataOverlay" class="overlay" style="display:none">
-                            <div class="text" style="color:red; font-weight:bold;">NO DATA</div>
-                        </div>
+                        Session
+                        <br>
+                        <select id="sessionSelect" class="js-example-basic-single">
+                        </select>
+                    </div>
+                    <div class="col-xs-4" style="margin-top:10px">
+                        Level
+                        <br>
+                        <select id="levelSelect" class="js-example-basic-single">
+                        </select>
+                    </div>
+                    <div class="col-xs-4" style="margin-top:10px">
+                        Test score:
+                        <br>
+                        <div id="scoreDisplay">- / -</div>
                     </div>
                 </div>
                 <br><br>
+                <div class="row" style="margin-left:0px;margin-right:0px;">
+                    <div class="col-xs-12">
+                        <div id="tester" style="height:200px;">
+                            <div id="noDataOverlay" class="overlay" style="display:none">
+                                <div class="text" style="color:red; font-weight:bold;">NO DATA</div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <br><br>
                 <div class="row" style="margin-left:0px;margin-right:0px">
-                    <div class="box" style="width:20%;max-height:425px;overflow-y:auto;overflow-x:hidden;white-space:nowrap;">
-                        <div style="margin-left:20px;margin-top:20px;margin-bottom:5px;font-size:20px;">Basic features:</div>
-                        <ul id="basicFeatures" style="margin-bottom:20px;">
-                            <li style="font-size:16px;">Select a game to see features</li>
-                        </ul>
+                    <div class="col-xs-4">
+                        <div class="box" style="max-height:425px;overflow-y:auto;overflow-x:hidden;white-space:nowrap;">
+                            <div style="margin-left:20px;margin-top:20px;margin-bottom:5px;font-size:20px;">Basic features:</div>
+                            <ul id="basicFeatures" style="margin-bottom:20px;">
+                                <li style="font-size:16px;">Select a game to see features</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="col-xs-8">
+                        <div class="box" style="max-height:425px;overflow-y:auto;overflow-x:hidden;white-space:nowrap;">
+                            <div id="goalsDiv" style="margin-left:20px;margin-top:20px;margin-bottom:20px;font-size:20px;">Select a game to see goals</div>
+                            <div id="goalsGraph1" style="height:200px">
+                                <div id="noDataOverlayGoals" class="overlay" style="display:none">
+                                    <div class="text" style="color:red; font-weight:bold;">NO DATA</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </span>

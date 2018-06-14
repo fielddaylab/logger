@@ -46,7 +46,7 @@ select {
     margin-right:10px;
 }
 
-#noDataOverlay {
+#noDataOverlay, #noDataOverlayGoals {
     position: relative;
     margin: auto;
     padding: auto;
