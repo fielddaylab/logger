@@ -163,55 +163,57 @@ $(document).ready((event) => {
                             }
                         }
                     }
-                    for (let i = 0; i < Object.keys(startIndices).length && startIndices[i] !== undefined; i++) {
-                        let levelTime = "-";
-                        if (dataObj.times[endIndices[i]] && dataObj.times[startIndices[i]]) {
-                            levelStartTime = new Date(dataObj.times[startIndices[i]].replace(/-/g, "/"))
-                            levelEndTime = new Date(dataObj.times[endIndices[i]].replace(/-/g, "/"))
-                            levelTime = (levelEndTime.getTime() - levelStartTime.getTime()) / 1000
-                            totalTime += levelTime
+                    for (let i = 0; i < Object.keys(startIndices).length; i++) {
+                        if (startIndices[i] !== undefined) {
+                            let levelTime = "-";
+                            if (dataObj.times[endIndices[i]] && dataObj.times[startIndices[i]]) {
+                                levelStartTime = new Date(dataObj.times[startIndices[i]].replace(/-/g, "/"))
+                                levelEndTime = new Date(dataObj.times[endIndices[i]].replace(/-/g, "/"))
+                                levelTime = (levelEndTime.getTime() - levelStartTime.getTime()) / 1000
+                                totalTime += levelTime
+                            }
+    
+                            totalMoves += numMovesPerChallenge[i]
+                            moveTypeChangesTotal += moveTypeChangesPerLevel[i]
+                            if (knobNumStdDevs[i] !== 0) {
+                                knobAmtsTotal += (knobAmts[i]/knobNumStdDevs[i])
+                            }
+                            
+                            knobSumTotal += knobAmts[i]
+    
+                            // append times
+                            $('#times').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${levelTime} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+    
+                            // append fails
+                            $('#fails').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${numFails[i]}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+    
+                            // append moves
+                            $('#moves').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${numMovesPerChallenge[i]}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                            
+                            // append types
+                            $('#types').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${moveTypeChangesPerLevel[i]}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+    
+                            // append std devs
+                            let knobAvgStdDev
+                            if (knobNumStdDevs[i] === 0) {
+                                knobAvgStdDev = 0
+                            } else {
+                                knobAvgStdDev = (knobStdDevs[i]/knobNumStdDevs[i])
+                            }
+                            $('#stdDevs').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${knobAvgStdDev.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+    
+                            // append knob amounts
+                            let knobAvgAmt
+                            if (knobNumStdDevs[i] === 0) {
+                                knobAvgAmt = 0
+                            } else {
+                                knobAvgAmt = (knobAmts[i]/knobNumStdDevs[i])
+                            }
+                            $('#amts').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${knobAvgAmt.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+    
+                            // append knob total amounts
+                            $('#amtsTotal').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${(knobAmts[i]).toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
                         }
-
-                        totalMoves += numMovesPerChallenge[i]
-                        moveTypeChangesTotal += moveTypeChangesPerLevel[i]
-                        if (knobNumStdDevs[i] !== 0) {
-                            knobAmtsTotal += (knobAmts[i]/knobNumStdDevs[i])
-                        }
-                        
-                        knobSumTotal += knobAmts[i]
-
-                        // append times
-                        $('#times').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${levelTime} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-
-                        // append fails
-                        $('#fails').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${numFails[i]}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-
-                        // append moves
-                        $('#moves').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${numMovesPerChallenge[i]}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-                        
-                        // append types
-                        $('#types').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${moveTypeChangesPerLevel[i]}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-
-                        // append std devs
-                        let knobAvgStdDev
-                        if (knobNumStdDevs[i] === 0) {
-                            knobAvgStdDev = 0
-                        } else {
-                            knobAvgStdDev = (knobStdDevs[i]/knobNumStdDevs[i])
-                        }
-                        $('#stdDevs').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${knobAvgStdDev.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-
-                        // append knob amounts
-                        let knobAvgAmt
-                        if (knobNumStdDevs[i] === 0) {
-                            knobAvgAmt = 0
-                        } else {
-                            knobAvgAmt = (knobAmts[i]/knobNumStdDevs[i])
-                        }
-                        $('#amts').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${knobAvgAmt.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-
-                        // append knob total amounts
-                        $('#amtsTotal').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${(knobAmts[i]).toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
                     }
                     avgTime = totalTime / startIndices.filter(function(value) { return value !== undefined }).length
                     $('#times').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
@@ -237,7 +239,6 @@ $(document).ready((event) => {
                     $('#amtsTotal').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
                     $('#amtsTotal').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${knobSumTotal.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
                     $('#amtsTotal').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${knobSumAvg.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-
                     drawWavesGoals(dataObj, numMovesPerChallenge)
                 }
             }
