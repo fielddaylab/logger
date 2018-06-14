@@ -1,9 +1,9 @@
 $(document).ready((event) => {
     $('.js-example-basic-single').select2() //initialize select boxes
     let tester = $('#tester')[0]
-    Plotly.newPlot(tester, [], {margin: { t: 0 }})
+    Plotly.newPlot(tester, [], { height:200, margin: { t: 20 }})
     let goalsGraph1 = $('#goalsGraph1')[0]
-    Plotly.newPlot(goalsGraph1, [], {margin: { t: 0 }})
+    Plotly.newPlot(goalsGraph1, [], { height:200, margin: { t: 20 }})
     
     $(document).on('change', '#gameSelect', (event) => {
         event.preventDefault()
@@ -282,13 +282,15 @@ $(document).ready((event) => {
         let closenessTrace = {
             x: moveNumbers,
             y: distanceToGoal,
-            line: {color: "orange"},
+            line: {color: 'orange'},
             name: 'Net good moves',
             mode: 'lines+markers'
         }
         let graphData = [closenessTrace]
         let layout = {
-            margin: { t: 0 },
+            margin: { t: 30 },
+            title: `Level ${$('#levelSelect').val()}`,
+            height: 200,
             xaxis: {
                 title: 'Move number',
                 titlefont: {
