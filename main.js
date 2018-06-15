@@ -162,7 +162,7 @@ $(document).ready((event) => {
                                 }
                             } else if (dataObj.events[i] === 'COMPLETE') {
                                 if (endIndices[dataObj.levels[i]] === undefined) {
-                                    endIndices[dataObj.levels[i]]
+                                    endIndices[dataObj.levels[i]] = i
                                 }
                             } else if (dataObj.events[i] === 'FAIL') {
                                 numFails[dataObj.levels[i]]++
@@ -193,7 +193,7 @@ $(document).ready((event) => {
                         }
                     }
 
-                    for (let i = 0; i < Object.keys(startIndices).length; i++) {
+                    for (let i in Object.keys(startIndices)) {
                         if (startIndices[i] !== undefined) {
                             let levelTime = "-";
                             if (dataObj.times[endIndices[i]] && dataObj.times[startIndices[i]]) {
