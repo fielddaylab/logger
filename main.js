@@ -3,6 +3,7 @@ $(document).ready((event) => {
     let graphLeft = $('#graphLeft')[0]
     let graphRight = $('#graphRight')[0]
     let goalsGraph1 = $('#goalsGraph1')[0]
+    let goalsGraph2 = $('#goalsGraph2')[0]
     
     $(document).on('change', '#gameSelect', (event) => {
         event.preventDefault()
@@ -252,7 +253,7 @@ $(document).ready((event) => {
 
     function drawWavesGoals(dataObj, numMovesPerChallenge) {
         // Goals stuff
-        $('#goalsDiv').html('Goal 1: Success')
+        $('#goalsDiv1').html('Goal 1: Success')
 
         let distanceToGoal = []
         distanceToGoal = new Array(numMovesPerChallenge[$('#levelSelect').val()]).fill(0)
@@ -280,15 +281,15 @@ $(document).ready((event) => {
                 distanceToGoal[i] = cumulativeDistance
             }
         }
-        let closenessTrace = {
+        let closenessTrace1 = {
             x: moveNumbers,
             y: distanceToGoal,
             line: {color: 'orange'},
             name: 'Net good moves',
             mode: 'lines+markers'
         }
-        let graphData = [closenessTrace]
-        let layout = {
+        let graphData1 = [closenessTrace1]
+        let layout1 = {
             margin: { t: 35 },
             title: `Level ${$('#levelSelect').val()}`,
             height: 200,
@@ -309,7 +310,92 @@ $(document).ready((event) => {
                 }
               }
         }
-        Plotly.newPlot(goalsGraph1, graphData, layout)
+        Plotly.newPlot(goalsGraph1, graphData1, layout1)
+
+
+        $('#goalsDiv2').html('Goal 2: Maxing slider values')
+        $('#goalsDiv2').css('display', 'block')
+        $('#goalsGraph2').css('display', 'block')
+        distanceToGoal = new Array(numMovesPerChallenge[$('#levelSelect').val()]).fill(0)
+        moveGoodness = distanceToGoal // an array of 0s
+        moveNumbers = []
+        cumulativeDistance = 0;
+        for (let i = 0; i < numMovesPerChallenge[$('#levelSelect').val()]; i++) {
+            let dataJson = JSON.parse(dataObj.data[i])
+            let lastCloseness = [], thisCloseness = []
+            moveNumbers.push(i)
+            if (dataObj.events[i] === 'CUSTOM' && (dataJson.event_custom === 'SLIDER_MOVE_RELEASE' || dataJson.event_custom === 'ARROW_MOVE_RELEASE')) {
+                let graph_min_x = -50
+                let graph_max_x =  50
+                let graph_min_y = -50
+                let graph_max_y =  50
+                let graph_min_offset = graph_min_x
+                let graph_max_offset = graph_max_x
+                let graph_min_wavelength = 2
+                let graph_max_wavelength = graph_max_x*2
+                let graph_min_amplitude = 0
+                let graph_max_amplitude = graph_max_y*(3/5)
+                let graph_default_offset = (graph_min_x+graph_max_x)/2
+                let graph_default_wavelength = (2+(graph_max_x*2))/2
+                let graph_default_amplitude = graph_max_y/4
+
+                lastCloseness['OFFSET', 'left'] = lastCloseness['OFFSET', 'right'] = graph_max_offset-graph_default_offset
+                lastCloseness['AMPLITUDE', 'left'] = lastCloseness['AMPLITUDE', 'right'] = graph_max_amplitude-graph_default_amplitude
+                lastCloseness['WAVELENGTH', 'left'] = lastCloseness['WAVELENGTH', 'right'] = graph_max_wavelength-graph_default_wavelength
+
+                if (dataJson.slider ===  'AMPLITUDE') {
+                    thisCloseness[dataJson.slider, dataJson.wave] = graph_max_amplitude-dataJson.end_val
+                } else if (dataJson.slider === 'OFFSET') {
+                    thisCloseness[dataJson.slider, dataJson.wave] = graph_max_offset-dataJson.end_val
+                } else if (dataJson.slider === 'WAVELENGTH') {
+                    thisCloseness[dataJson.slider, dataJson.wave] = graph_max_wavelength-dataJson.end_val
+                }
+
+                if (dataJson.event_custom === 'SLIDER_MOVE_RELEASE') { // sliders have before and after closeness
+                    if (thisCloseness[dataJson.slider, dataJson.wave] < lastCloseness[dataJson.slider, dataJson.wave]) moveGoodness[i] = 1
+                    else if (thisCloseness[dataJson.slider, dataJson.wave] > lastCloseness[dataJson.slider, dataJson.wave]) moveGoodness[i] = -1
+
+                    lastCloseness[dataJson.slider] = thisCloseness[dataJson.slider]
+                } else { // arrow
+                    if (thisCloseness[dataJson.slider, dataJson.wave] < lastCloseness[dataJson.slider, dataJson.wave]) moveGoodness[i] = -1
+                    else if (thisCloseness[dataJson.slider, dataJson.wave] > lastCloseness[dataJson.slider, dataJson.wave]) moveGoodness[i] = 1
+
+                    lastCloseness[dataJson.slider, dataJson.wave] = thisCloseness[dataJson.slider, dataJson.wave]
+                }
+                cumulativeDistance += moveGoodness[i]
+                distanceToGoal[i] = cumulativeDistance
+            }
+        }
+        let closenessTrace2 = {
+            x: moveNumbers,
+            y: distanceToGoal,
+            line: {color: 'orange'},
+            name: 'Net good moves',
+            mode: 'lines+markers'
+        }
+        let graphData2 = [closenessTrace2]
+        let layout2 = {
+            margin: { t: 35 },
+            title: `Level ${$('#levelSelect').val()}`,
+            height: 200,
+            xaxis: {
+                title: 'Move number',
+                titlefont: {
+                  family: 'Courier New, monospace',
+                  size: 12,
+                  color: '#7f7f7f'
+                }
+              },
+              yaxis: {
+                title: 'Net good moves',
+                titlefont: {
+                  family: 'Courier New, monospace',
+                  size: 12,
+                  color: '#7f7f7f'
+                }
+              }
+        }
+        Plotly.newPlot(goalsGraph2, graphData2, layout2)
     }
 
     function drawWavesChart(inData) {
