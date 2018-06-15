@@ -46,12 +46,13 @@ select {
     margin-right:10px;
 }
 
-#noDataOverlayLeft, #noDataOverlayRight, #noDataOverlayGoals {
+#noDataOverlayLeft, #noDataOverlayRight, #noDataOverlayGoals1, #noDataOverlayGoals2 {
     position: relative;
     margin: auto;
     padding: auto;
     height: 200px;
     top: -100%;
+    z-index: 1;
 }
 
 .box {

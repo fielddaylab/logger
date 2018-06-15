@@ -8,9 +8,12 @@ $(document).ready((event) => {
     $(document).on('change', '#gameSelect', (event) => {
         event.preventDefault()
         on()
+        $('#levelSelect').empty()
+        $('#sessionSelect').empty()
         $.get('responsePage.php', { 'gameID': $('#gameSelect').val() }, (data, status, jqXHR) => {
             if (data.levels !== null) {
                 $('#sessions').text(data.numSessions + ' sessions available')
+                
                 for (let i = 0; i < data.numSessions; i++) {
                     $('#sessionSelect').append($('<option>', { value:data.sessions[i], text:data.sessions[i]}))
                 }
@@ -133,38 +136,63 @@ $(document).ready((event) => {
                     // Basic features stuff
                     let levelStartTime, levelEndTime, lastSlider = null, startIndices = [], endIndices = [], moveTypeChangesPerLevel = [], knobStdDevs = [], knobNumStdDevs = [], knobAmts = []
                     numFails = new Array($('#levelSelect option').size()).fill(0)
-                    numMovesPerChallenge = new Array($('#levelSelect option').size()).fill(0)
+                    numMovesPerChallenge = new Array($('#levelSelect option').size())
                     moveTypeChangesPerLevel = new Array($('#levelSelect option').size()).fill(0)
                     knobStdDevs = new Array($('#levelSelect option').size()).fill(0)
                     knobNumStdDevs = new Array($('#levelSelect option').size()).fill(0)
                     knobAmts = new Array($('#levelSelect option').size()).fill(0)
                     startIndices = new Array($('#levelSelect option').size()).fill(undefined)
                     endIndices = new Array($('#levelSelect option').size()).fill(undefined)
-                    for (let i in dataObj.times) { //for (let i = 0; i < dataObj.times.length; i++) {
-                        let dataJson = JSON.parse(dataObj.data[i])
-                        if (dataObj.events[i] === 'BEGIN') {
-                            if (startIndices[dataObj.levels[i]] === undefined) { // check this space isn't filled by a previous attempt on the same level
-                                startIndices[dataObj.levels[i]] = i
+                    let indicesToSplice = new Array($('#levelSelect option').size())
+                    for (let i = 0; i < numMovesPerChallenge.length; i++) {
+                        numMovesPerChallenge[i] = []
+                        indicesToSplice[i] = []
+                    }
+                    for (let i = 0; i < dataObj.times.length; i++) {
+                        if (!(endIndices[dataObj.levels[i]])) {
+                            let dataJson = JSON.parse(dataObj.data[i])
+                            if (dataJson !== null) {
+                                if (dataJson.event_custom !== 'SLIDER_MOVE_RELEASE' && dataJson.event_custom !== 'ARROW_MOVE_RELEASE') {
+                                    indicesToSplice[dataObj.levels[i]].push(i)
+                                }
                             }
-                        } else if (dataObj.events[i] === 'COMPLETE') {
-                            if (endIndices[dataObj.levels[i]] === undefined) {
-                                endIndices[dataObj.levels[i]] = i
-                            }
-                        } else if (dataObj.events[i] === 'FAIL') {
-                            numFails[dataObj.levels[i]]++
-                        } else if (dataObj.events[i] === "CUSTOM" && (dataJson.event_custom === 'SLIDER_MOVE_RELEASE' || dataJson.event_custom === 'ARROW_MOVE_RELEASE')) {
-                            if (lastSlider !== dataJson.slider) {
-                                moveTypeChangesPerLevel[dataObj.levels[i]]++
-                            }
-                            lastSlider = dataJson.slider
-                            numMovesPerChallenge[dataObj.levels[i]]++
-                            if (dataJson.event_custom === 'SLIDER_MOVE_RELEASE') { // arrows don't have std devs
-                                knobNumStdDevs[dataObj.levels[i]]++
-                                knobStdDevs[dataObj.levels[i]] += dataJson.stdev_val
-                                knobAmts[dataObj.levels[i]] += (dataJson.max_val-dataJson.min_val)
+                            if (dataObj.events[i] === 'BEGIN') {
+                                if (startIndices[dataObj.levels[i]] === undefined) { // check this space isn't filled by a previous attempt on the same level
+                                    startIndices[dataObj.levels[i]] = i
+                                }
+                            } else if (dataObj.events[i] === 'COMPLETE') {
+                                if (endIndices[dataObj.levels[i]] === undefined) {
+                                    endIndices[dataObj.levels[i]]
+                                }
+                            } else if (dataObj.events[i] === 'FAIL') {
+                                numFails[dataObj.levels[i]]++
+                            } else if (dataObj.events[i] === 'CUSTOM' && (dataJson.event_custom === 'SLIDER_MOVE_RELEASE' || dataJson.event_custom === 'ARROW_MOVE_RELEASE')) {
+                                if (lastSlider !== dataJson.slider) {
+                                    moveTypeChangesPerLevel[dataObj.levels[i]]++
+                                }
+                                lastSlider = dataJson.slider
+                                numMovesPerChallenge[dataObj.levels[i]].push(i)
+                                if (dataJson.event_custom === 'SLIDER_MOVE_RELEASE') { // arrows don't have std devs
+                                    knobNumStdDevs[dataObj.levels[i]]++
+                                    knobStdDevs[dataObj.levels[i]] += dataJson.stdev_val
+                                    knobAmts[dataObj.levels[i]] += (dataJson.max_val-dataJson.min_val)
+                                }
                             }
                         }
                     }
+                    for (let i in indicesToSplice) {
+                        for (let j in indicesToSplice[i]) {
+                            numMovesPerChallenge[i].splice(j, 1, undefined)
+                        }
+                    }
+                    for (let i in numMovesPerChallenge) {
+                        for (let j in numMovesPerChallenge[i].length) {
+                            if (numMovesPerChallenge[i, j] === undefined) {
+                                numMovesPerChallenge[i].splice(j, 1)
+                            }
+                        }
+                    }
+
                     for (let i = 0; i < Object.keys(startIndices).length; i++) {
                         if (startIndices[i] !== undefined) {
                             let levelTime = "-";
@@ -174,8 +202,8 @@ $(document).ready((event) => {
                                 levelTime = (levelEndTime.getTime() - levelStartTime.getTime()) / 1000
                                 totalTime += levelTime
                             }
-    
-                            totalMoves += numMovesPerChallenge[i]
+
+                            totalMoves += numMovesPerChallenge[i].length
                             moveTypeChangesTotal += moveTypeChangesPerLevel[i]
                             if (knobNumStdDevs[i] !== 0) {
                                 knobAmtsTotal += (knobAmts[i]/knobNumStdDevs[i])
@@ -190,7 +218,7 @@ $(document).ready((event) => {
                             $('#fails').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${numFails[i]}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
     
                             // append moves
-                            $('#moves').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${numMovesPerChallenge[i]}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                            $('#moves').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${numMovesPerChallenge[i].length}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
                             
                             // append types
                             $('#types').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${moveTypeChangesPerLevel[i]}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
@@ -241,7 +269,7 @@ $(document).ready((event) => {
                     $('#amtsTotal').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
                     $('#amtsTotal').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${knobSumTotal.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
                     $('#amtsTotal').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${knobSumAvg.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-                    drawWavesGoals(dataObj, numMovesPerChallenge)
+                    drawWavesGoals(dataObj, numMovesPerChallenge[$('#levelSelect').val()])
                 }
             }
             off()
@@ -253,34 +281,34 @@ $(document).ready((event) => {
 
     function drawWavesGoals(dataObj, numMovesPerChallenge) {
         // Goals stuff
-        $('#goalsDiv1').html('Goal 1: Success')
-
+        $('#goalsDiv1').html('Goal 1: Completing the challenge')
         let distanceToGoal = []
-        distanceToGoal = new Array(numMovesPerChallenge[$('#levelSelect').val()]).fill(0)
+        distanceToGoal = new Array(numMovesPerChallenge.length).fill(0)
         let moveGoodness = distanceToGoal // an array of 0s
         let moveNumbers = []
-        let cumulativeDistance = 0;
-        for (let i = 0; i < numMovesPerChallenge[$('#levelSelect').val()]; i++) {
+        let cumulativeDistance = 0
+        let lastCloseness1
+        for (let i in numMovesPerChallenge) {
             let dataJson = JSON.parse(dataObj.data[i])
-            let lastCloseness;
-            moveNumbers.push(i)
             if (dataObj.events[i] === "CUSTOM" && (dataJson.event_custom === 'SLIDER_MOVE_RELEASE' || dataJson.event_custom === 'ARROW_MOVE_RELEASE')) {
                 if (dataJson.event_custom === "SLIDER_MOVE_RELEASE") { // sliders have before and after closeness
                     if (dataJson.end_closeness < dataJson.begin_closeness) moveGoodness[i] = 1
                     else if (dataJson.end_closeness > dataJson.begin_closeness) moveGoodness[i] = -1
 
-                    lastCloseness = dataJson.end_closeness
+                    lastCloseness1 = dataJson.end_closeness
                 } else { // arrow
-                    if (!lastCloseness) lastCloseness = dataJson.closeness
-                    if (dataJson.closeness < lastCloseness) moveGoodness[i] = -1
-                    else if (dataJson.closeness > lastCloseness) moveGoodness[i] = 1
+                    if (!lastCloseness1) lastCloseness1 = dataJson.closeness
+                    if (dataJson.closeness < lastCloseness1) moveGoodness[i] = -1
+                    else if (dataJson.closeness > lastCloseness1) moveGoodness[i] = 1
 
-                    lastCloseness = dataJson.closeness
+                    lastCloseness1 = dataJson.closeness
                 }
-                cumulativeDistance += moveGoodness[i]
-                distanceToGoal[i] = cumulativeDistance
             }
+            moveNumbers[i] = i
+            cumulativeDistance += moveGoodness[i]
+            distanceToGoal[i] = cumulativeDistance
         }
+
         let closenessTrace1 = {
             x: moveNumbers,
             y: distanceToGoal,
@@ -316,33 +344,31 @@ $(document).ready((event) => {
         $('#goalsDiv2').html('Goal 2: Maxing slider values')
         $('#goalsDiv2').css('display', 'block')
         $('#goalsGraph2').css('display', 'block')
-        distanceToGoal = new Array(numMovesPerChallenge[$('#levelSelect').val()]).fill(0)
-        moveGoodness = distanceToGoal // an array of 0s
+        distanceToGoal = new Array(numMovesPerChallenge.length).fill(0)
+        moveGoodness = new Array(numMovesPerChallenge.length).fill(0) // an array of 0s
         moveNumbers = []
         cumulativeDistance = 0;
-        for (let i = 0; i < numMovesPerChallenge[$('#levelSelect').val()]; i++) {
+        indicesToSplice = []
+        let graph_min_x = -50
+        let graph_max_x =  50
+        let graph_min_y = -50
+        let graph_max_y =  50
+        let graph_min_offset = graph_min_x
+        let graph_max_offset = graph_max_x
+        let graph_min_wavelength = 2
+        let graph_max_wavelength = graph_max_x*2
+        let graph_min_amplitude = 0
+        let graph_max_amplitude = graph_max_y*(3/5)
+        let graph_default_offset = (graph_min_x+graph_max_x)/2
+        let graph_default_wavelength = (2+(graph_max_x*2))/2
+        let graph_default_amplitude = graph_max_y/4
+        let lastCloseness = [], thisCloseness = []
+        lastCloseness['OFFSET', 'left'] = lastCloseness['OFFSET', 'right'] = graph_max_offset-graph_default_offset
+        lastCloseness['AMPLITUDE', 'left'] = lastCloseness['AMPLITUDE', 'right'] = graph_max_amplitude-graph_default_amplitude
+        lastCloseness['WAVELENGTH', 'left'] = lastCloseness['WAVELENGTH', 'right'] = graph_max_wavelength-graph_default_wavelength
+        for (let i in numMovesPerChallenge) {
             let dataJson = JSON.parse(dataObj.data[i])
-            let lastCloseness = [], thisCloseness = []
-            moveNumbers.push(i)
             if (dataObj.events[i] === 'CUSTOM' && (dataJson.event_custom === 'SLIDER_MOVE_RELEASE' || dataJson.event_custom === 'ARROW_MOVE_RELEASE')) {
-                let graph_min_x = -50
-                let graph_max_x =  50
-                let graph_min_y = -50
-                let graph_max_y =  50
-                let graph_min_offset = graph_min_x
-                let graph_max_offset = graph_max_x
-                let graph_min_wavelength = 2
-                let graph_max_wavelength = graph_max_x*2
-                let graph_min_amplitude = 0
-                let graph_max_amplitude = graph_max_y*(3/5)
-                let graph_default_offset = (graph_min_x+graph_max_x)/2
-                let graph_default_wavelength = (2+(graph_max_x*2))/2
-                let graph_default_amplitude = graph_max_y/4
-
-                lastCloseness['OFFSET', 'left'] = lastCloseness['OFFSET', 'right'] = graph_max_offset-graph_default_offset
-                lastCloseness['AMPLITUDE', 'left'] = lastCloseness['AMPLITUDE', 'right'] = graph_max_amplitude-graph_default_amplitude
-                lastCloseness['WAVELENGTH', 'left'] = lastCloseness['WAVELENGTH', 'right'] = graph_max_wavelength-graph_default_wavelength
-
                 if (dataJson.slider ===  'AMPLITUDE') {
                     thisCloseness[dataJson.slider, dataJson.wave] = graph_max_amplitude-dataJson.end_val
                 } else if (dataJson.slider === 'OFFSET') {
@@ -362,10 +388,12 @@ $(document).ready((event) => {
 
                     lastCloseness[dataJson.slider, dataJson.wave] = thisCloseness[dataJson.slider, dataJson.wave]
                 }
-                cumulativeDistance += moveGoodness[i]
-                distanceToGoal[i] = cumulativeDistance
             }
+            moveNumbers[i] = i
+            cumulativeDistance += moveGoodness[i]
+            distanceToGoal[i] = cumulativeDistance
         }
+
         let closenessTrace2 = {
             x: moveNumbers,
             y: distanceToGoal,
@@ -386,14 +414,14 @@ $(document).ready((event) => {
                   color: '#7f7f7f'
                 }
               },
-              yaxis: {
+            yaxis: {
                 title: 'Net good moves',
                 titlefont: {
-                  family: 'Courier New, monospace',
-                  size: 12,
-                  color: '#7f7f7f'
+                    family: 'Courier New, monospace',
+                    size: 12,
+                    color: '#7f7f7f'
                 }
-              }
+            }
         }
         Plotly.newPlot(goalsGraph2, graphData2, layout2)
     }
@@ -543,10 +571,35 @@ $(document).ready((event) => {
     }
 
     function showNoDataGoals() {
-        $('#noDataOverlayGoals').css('display', 'block')
+        $('#noDataOverlayGoals1').css('display', 'block')
+        $('#noDataOverlayGoals2').css('display', 'block')
+        let layout = {
+            margin: { t: 35 },
+            title: `Level ${$('#levelSelect').val()}`,
+            height: 200,
+            xaxis: {
+                title: 'Move number',
+                titlefont: {
+                  family: 'Courier New, monospace',
+                  size: 12,
+                  color: '#7f7f7f'
+                }
+              },
+            yaxis: {
+                title: 'Net good moves',
+                titlefont: {
+                    family: 'Courier New, monospace',
+                    size: 12,
+                    color: '#7f7f7f'
+                }
+            }
+        }
+        Plotly.newPlot(goalsGraph1, [], layout)
+        Plotly.newPlot(goalsGraph2, [], layout)
     }
 
     function hideNoDataGoals() {
-        $('#noDataOverlayGoals').css('display', 'none')
+        $('#noDataOverlayGoals1').css('display', 'none')
+        $('#noDataOverlayGoals2').css('display', 'none')
     }
 })
