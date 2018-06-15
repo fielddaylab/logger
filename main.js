@@ -1,9 +1,8 @@
 $(document).ready((event) => {
     $('.js-example-basic-single').select2() //initialize select boxes
-    let tester = $('#tester')[0]
-    Plotly.newPlot(tester, [], { height:200, margin: { t: 20 }})
+    let graphLeft = $('#graphLeft')[0]
+    let graphRight = $('#graphRight')[0]
     let goalsGraph1 = $('#goalsGraph1')[0]
-    Plotly.newPlot(goalsGraph1, [], { height:200, margin: { t: 20 }})
     
     $(document).on('change', '#gameSelect', (event) => {
         event.preventDefault()
@@ -14,11 +13,13 @@ $(document).ready((event) => {
                 for (let i = 0; i < data.numSessions; i++) {
                     $('#sessionSelect').append($('<option>', { value:data.sessions[i], text:data.sessions[i]}))
                 }
+                $('#sessionSelect').val('18020410454796070') // the most interesting session
                 for (let i = 0; i < data.levels.length; i++) {
                     $('#levelSelect').append($('<option>', { value:data.levels[i], text:data.levels[i]}))
                 }
                 let opt = $('#levelSelect option').sort(function (a,b) { return a.value.toUpperCase().localeCompare(b.value.toUpperCase(), {}, {numeric:true}) })
                 $('#levelSelect').append(opt)
+                $('#levelSelect').val($('#levelSelect option:first').val())
                 if ($('#single').hasClass('active')) {
                     // initialization of single tab
                     selectSession(event)
@@ -130,15 +131,15 @@ $(document).ready((event) => {
                 if (dataObj.times !== null) {
                     // Basic features stuff
                     let levelStartTime, levelEndTime, lastSlider = null, startIndices = [], endIndices = [], moveTypeChangesPerLevel = [], knobStdDevs = [], knobNumStdDevs = [], knobAmts = []
-                    numFails = new Array(dataObj.times.length).fill(0)
-                    numMovesPerChallenge = new Array(dataObj.times.length).fill(0)
-                    moveTypeChangesPerLevel = new Array(dataObj.times.length).fill(0)
-                    knobStdDevs = new Array(dataObj.times.length).fill(0)
-                    knobNumStdDevs = new Array(dataObj.times.length).fill(0)
-                    knobAmts = new Array(dataObj.times.length).fill(0)
-                    startIndices = new Array(dataObj.times.length).fill(undefined)
-                    endIndices = new Array(dataObj.times.length).fill(undefined)
-                    for (let i = 0; i < dataObj.times.length; i++) {
+                    numFails = new Array($('#levelSelect option').size()).fill(0)
+                    numMovesPerChallenge = new Array($('#levelSelect option').size()).fill(0)
+                    moveTypeChangesPerLevel = new Array($('#levelSelect option').size()).fill(0)
+                    knobStdDevs = new Array($('#levelSelect option').size()).fill(0)
+                    knobNumStdDevs = new Array($('#levelSelect option').size()).fill(0)
+                    knobAmts = new Array($('#levelSelect option').size()).fill(0)
+                    startIndices = new Array($('#levelSelect option').size()).fill(undefined)
+                    endIndices = new Array($('#levelSelect option').size()).fill(undefined)
+                    for (let i in dataObj.times) { //for (let i = 0; i < dataObj.times.length; i++) {
                         let dataJson = JSON.parse(dataObj.data[i])
                         if (dataObj.events[i] === 'BEGIN') {
                             if (startIndices[dataObj.levels[i]] === undefined) { // check this space isn't filled by a previous attempt on the same level
@@ -288,7 +289,7 @@ $(document).ready((event) => {
         }
         let graphData = [closenessTrace]
         let layout = {
-            margin: { t: 30 },
+            margin: { t: 35 },
             title: `Level ${$('#levelSelect').val()}`,
             height: 200,
             xaxis: {
@@ -312,58 +313,117 @@ $(document).ready((event) => {
     }
 
     function drawWavesChart(inData) {
-        let xAmp = []
-        let xFreq = []
-        let xOff = []
-        let yAmp = []
-        let yFreq = []
-        let yOff = []
+        let xAmpLeft = [], xAmpRight = []
+        let xFreqLeft = [], xFreqRight = []
+        let xOffLeft = [], xOffRight = []
+        let yAmpLeft = [], yAmpRight = []
+        let yFreqLeft = [], yFreqRight = []
+        let yOffLeft = [], yOffRight = []
+        let hasLeftData = false, hasRightData = false
         if (inData.data !== null) {
-            hideNoData()
             for (let i = 0; i < inData.data.length; i++) {
                 let jsonData = JSON.parse(inData.data[i])
-                if (jsonData.slider === "AMPLITUDE") {
-                    xAmp.push(inData.times[i])
-                    yAmp.push(jsonData.end_val)
-                } else if (jsonData.slider === "WAVELENGTH") { 
-                    xFreq.push(inData.times[i])
-                    yFreq.push(jsonData.end_val)
-                } else if (jsonData.slider === "OFFSET") {
-                    xOff.push(inData.times[i])
-                    yOff.push(jsonData.end_val)
+                if (jsonData.wave === 'left') {
+                    hasLeftData = true
+                    if (jsonData.slider === 'AMPLITUDE') {
+                        xAmpLeft.push(inData.times[i])
+                        yAmpLeft.push(jsonData.end_val)
+                    } else if (jsonData.slider === 'WAVELENGTH') { 
+                        xFreqLeft.push(inData.times[i])
+                        yFreqLeft.push(jsonData.end_val)
+                    } else if (jsonData.slider === 'OFFSET') {
+                        xOffLeft.push(inData.times[i])
+                        yOffLeft.push(jsonData.end_val)
+                    }
+                } else if (jsonData.wave === 'right') {
+                    hasRightData = true
+                    if (jsonData.slider === 'AMPLITUDE') {
+                        xAmpRight.push(inData.times[i])
+                        yAmpRight.push(jsonData.end_val)
+                    } else if (jsonData.slider === 'WAVELENGTH') { 
+                        xFreqRight.push(inData.times[i])
+                        yFreqRight.push(jsonData.end_val)
+                    } else if (jsonData.slider === 'OFFSET') {
+                        xOffRight.push(inData.times[i])
+                        yOffRight.push(jsonData.end_val)
+                    }
                 }
             }
+            if (hasLeftData) {
+                hideNoDataLeft()
+                hideNoDataGoals()
+            } else {
+                showNoDataLeft()
+            }
+            if (hasRightData) {
+                hideNoDataGoals()
+                hideNoDataRight()
+            } else {
+                showNoDataRight()
+            }
         } else {
-            showNoData()
+            showNoDataLeft()
+            showNoDataRight()
+            showNoDataGoals()
         }
 
-        let ampTrace = {
-            x: xAmp,
-            y: yAmp,
-            line: {color: "red"},
+        let ampTraceLeft = {
+            x: xAmpLeft,
+            y: yAmpLeft,
+            line: {color: 'red'},
             name: 'Amplitude',
             mode: 'lines+markers'
         }
-        let freqTrace = {
-            x: xFreq,
-            y: yFreq,
-            line: {color: "blue"},
+        let freqTraceLeft = {
+            x: xFreqLeft,
+            y: yFreqLeft,
+            line: {color: 'blue'},
             name: 'Frequency',
             mode: 'lines+markers'
         }
-        let offTrace = {
-            x: xOff,
-            y: yOff,
-            line: {color: "green"},
+        let offTraceLeft = {
+            x: xOffLeft,
+            y: yOffLeft,
+            line: {color: 'green'},
             name: 'Offset',
             mode: 'lines+markers'
         }
-        let wavesData = [ampTrace, freqTrace, offTrace]
-        let layout = {
-            margin: { t: 0 },
+
+        let ampTraceRight = {
+            x: xAmpRight,
+            y: yAmpRight,
+            line: {color: 'red'},
+            name: 'Amplitude',
+            mode: 'lines+markers'
+        }
+        let freqTraceRight = {
+            x: xFreqRight,
+            y: yFreqRight,
+            line: {color: 'blue'},
+            name: 'Frequency',
+            mode: 'lines+markers'
+        }
+        let offTraceRight = {
+            x: xOffRight,
+            y: yOffRight,
+            line: {color: 'green'},
+            name: 'Offset',
+            mode: 'lines+markers'
+        }
+        let wavesDataLeft = [ampTraceLeft, freqTraceLeft, offTraceLeft]
+        let wavesDataRight = [ampTraceRight, freqTraceRight, offTraceRight]
+        let layoutLeft = {
+            margin: { t: 35 },
+            title: 'Left Sliders',
             showlegend: true
         }
-        Plotly.newPlot(tester, wavesData, layout)
+        let layoutRight = {
+            margin: { t: 35 },
+            title: 'Right Sliders',
+            showlegend: true
+        }
+        Plotly.newPlot(graphLeft, wavesDataLeft, layoutLeft)
+        Plotly.newPlot(graphRight, wavesDataRight, layoutRight)
     }
     
     function on() {
@@ -378,13 +438,29 @@ $(document).ready((event) => {
         $('#errorMessage').css('visibility', 'visible')
     }
 
-    function showNoData() {
-        $('#noDataOverlay').css('display', 'block')
+    function showNoDataLeft() {
+        $('#noDataOverlayLeft').css('display', 'block')
         $('#noDataOverlayGoals').css('display', 'block')
     }
 
-    function hideNoData() {
-        $('#noDataOverlay').css('display', 'none')
+    function hideNoDataLeft() {
+        $('#noDataOverlayLeft').css('display', 'none')
+        $('#noDataOverlayGoals').css('display', 'none')
+    }
+
+    function showNoDataRight() {
+        $('#noDataOverlayRight').css('display', 'block')
+    }
+
+    function hideNoDataRight() {
+        $('#noDataOverlayRight').css('display', 'none')
+    }
+
+    function showNoDataGoals() {
+        $('#noDataOverlayGoals').css('display', 'block')
+    }
+
+    function hideNoDataGoals() {
         $('#noDataOverlayGoals').css('display', 'none')
     }
 })
