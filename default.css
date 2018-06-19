@@ -1,4 +1,4 @@
-body,div {
+body, div {
     margin:0px;
     padding:0px;
     font:16px Helvetica;
@@ -46,7 +46,8 @@ select {
     margin-right:10px;
 }
 
-#noDataOverlayLeft, #noDataOverlayRight, #noDataOverlayGoals1, #noDataOverlayGoals2 {
+#noDataOverlayLeft, #noDataOverlayRight, #noDataOverlayGoals1, #noDataOverlayGoals2,
+#noDataOverlayLeftAll, #noDataOverlayRightAll, #noDataOverlayGoals1All, #noDataOverlayGoals2All {
     position: relative;
     margin: auto;
     padding: auto;

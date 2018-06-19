@@ -10,7 +10,7 @@ if ($db->connect_error) {
     die('{ "errMessage": "Failed to Connect to DB." }');
 }
 // Return number of sessions for a given game and return those session ids
-if (!isset($_GET['isBasicFeatures']) && !isset($_GET['sessionID']) && isset($_GET['gameID'])) {
+if (!isset($_GET['isAll']) && !isset($_GET['isBasicFeatures']) && !isset($_GET['sessionID']) && isset($_GET['gameID'])) {
     $gameID = $_GET['gameID'];
     $query = "SELECT COUNT(DISTINCT session_id) FROM log WHERE app_id=?;";
     $stmt = simpleQueryParam($db, $query, "s", $gameID);
@@ -79,7 +79,7 @@ if (!isset($_GET['isBasicFeatures']) && !isset($_GET['sessionID']) && isset($_GE
 } else
 
 // Return number of questions and number correct for a given session id and game
-if (!isset($_GET['isBasicFeatures']) && !isset($_GET['level']) && isset($_GET['sessionID']) && isset($_GET['gameID'])) {
+if (!isset($_GET['isAll']) && !isset($_GET['isBasicFeatures']) && !isset($_GET['level']) && isset($_GET['sessionID']) && isset($_GET['gameID'])) {
     $sessionID = $_GET['sessionID'];
     $gameID = $_GET['gameID'];
     $query1 = "SELECT event_data_complex FROM log WHERE app_id=? AND session_id=? AND event_custom=?;";
@@ -116,7 +116,7 @@ if (!isset($_GET['isBasicFeatures']) && !isset($_GET['level']) && isset($_GET['s
 } else
 
 // Return graphing data
-if (!isset($_GET['isBasicFeatures']) && isset($_GET['gameID']) && isset($_GET['sessionID']) && isset($_GET['level'])) {
+if (!isset($_GET['isAll']) && !isset($_GET['isBasicFeatures']) && isset($_GET['gameID']) && isset($_GET['sessionID']) && isset($_GET['level'])) {
     $level = $_GET['level'];
     $gameID = $_GET['gameID'];
     $sessionID = $_GET['sessionID'];
@@ -148,7 +148,7 @@ if (!isset($_GET['isBasicFeatures']) && isset($_GET['gameID']) && isset($_GET['s
 } else
 
 // Return basic information
-if (isset($_GET['isBasicFeatures']) && isset($_GET['gameID']) && isset($_GET['sessionID'])) {
+if (!isset($_GET['isAll']) && isset($_GET['isBasicFeatures']) && isset($_GET['gameID']) && isset($_GET['sessionID'])) {
     $level = $_GET['level'];
     $gameID = $_GET['gameID'];
     $sessionID = $_GET['sessionID'];
@@ -181,6 +181,54 @@ if (isset($_GET['isBasicFeatures']) && isset($_GET['gameID']) && isset($_GET['se
     }
     <?php
     $stmt->close();
+}
+
+// The same functions as above but for all sessions
+
+// Return number of questions and number correct for a given  game
+if (isset($_GET['isAll']) && !isset($_GET['isBasicFeatures']) && !isset($_GET['level']) && isset($_GET['gameID'])) {
+    $gameID = $_GET['gameID'];
+    $query1 = "SELECT event_data_complex, session_id FROM log WHERE app_id=? AND event_custom=? ORDER BY session_id;";
+    $paramArray = array($gameID, 3);
+    $stmt1 = queryMultiParam($db, $query1, "si", $paramArray);
+    if($stmt1 == NULL) {
+        http_response_code(500);
+        die('{ "errMessage": "Error running query." }');
+    }
+    // Bind variables to the results
+    if (!$stmt1->bind_result($dataComplex, $sessionID)) {
+        http_response_code(500);
+        die('{ "errMessage": "Failed to bind to results." }');
+    }
+    // Fetch and display the results
+    while($stmt1->fetch()) {
+        $data[] = $dataComplex;
+        $sessionIDs[] = $sessionID;
+    }
+    $totalNumCorrect = 0;
+    $totalNumQuestions = count($data);
+    $numSessions = count(array_unique($sessionIDs));
+    $index = 0;
+    for ($i = 0; $i < $numSessions; $i++) {
+        $numCorrect = 0;
+        $numQuestions = count(array_count_values($sessionIDs)[$sessionID]);
+        for ($j = 0; $j < $numQuestions; $j++) {
+            $jsonData = json_decode($data[$index], true);
+            $index++;
+            if ($jsonData["answer"] == $jsonData["answered"]) {
+                $numCorrect++;
+                $totalNumCorrect++;
+            }
+        }
+    }
+    ?>
+    {
+        "totalNumCorrect": <?=json_encode($totalNumCorrect)?>,
+        "totalNumQuestions": <?=json_encode($totalNumQuestions)?>,
+        "index": <?=json_encode($index)?>
+    }
+    <?php
+    $stmt1->close();
 }
 
 // Close the database connection

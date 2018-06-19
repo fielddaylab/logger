@@ -1,5 +1,6 @@
 $(document).ready((event) => {
     $('.js-example-basic-single').select2() //initialize select boxes
+    $('#sessionSelectAll').select2({ disabled: true })
     let graphLeft = $('#graphLeft')[0]
     let graphRight = $('#graphRight')[0]
     let goalsGraph1 = $('#goalsGraph1')[0]
@@ -13,29 +14,41 @@ $(document).ready((event) => {
         $.get('responsePage.php', { 'gameID': $('#gameSelect').val() }, (data, status, jqXHR) => {
             if (data.levels !== null) {
                 $('#sessions').text(data.numSessions + ' sessions available')
-                
-                for (let i = 0; i < data.numSessions; i++) {
-                    $('#sessionSelect').append($('<option>', { value:data.sessions[i], text:data.sessions[i]}))
-                }
-                $('#sessionSelect').val('18020410454796070') // the most interesting session
-                for (let i = 0; i < data.levels.length; i++) {
-                    $('#levelSelect').append($('<option>', { value:data.levels[i], text:data.levels[i]}))
-                }
-                let opt = $('#levelSelect option').sort(function (a,b) { return a.value.toUpperCase().localeCompare(b.value.toUpperCase(), {}, {numeric:true}) })
-                $('#levelSelect').append(opt)
-                $('#levelSelect').val($('#levelSelect option:first').val())
-                if ($('#single').hasClass('active')) {
+
+                if ($('#singleNavTab').hasClass('active')) {
                     // initialization of single tab
+                    for (let i = 0; i < data.numSessions; i++) {
+                        $('#sessionSelect').append($('<option>', { value:data.sessions[i], text:data.sessions[i]}))
+                    }
+                    $('#sessionSelect').val('18020410454796070') // the most interesting session
+                    for (let i = 0; i < data.levels.length; i++) {
+                        $('#levelSelect').append($('<option>', { value:data.levels[i], text:data.levels[i]}))
+                    }
+                    let opt = $('#levelSelect option').sort(function (a,b) { return a.value.toUpperCase().localeCompare(b.value.toUpperCase(), {}, {numeric:true}) })
+    
+                    $('#levelSelect').append(opt)
+                    $('#levelSelect').val($('#levelSelect option:first').val())
+    
                     selectSession(event)
-                } else {
+                } else if ($('#allNavTab').hasClass('active')) {
                     // do initialization of all tab
+                    for (let i = 0; i < data.levels.length; i++) {
+                        $('#levelSelectAll').append($('<option>', { value:data.levels[i], text:data.levels[i]}))
+                    }
+                    let opt = $('#levelSelectAll option').sort(function (a,b) { return a.value.toUpperCase().localeCompare(b.value.toUpperCase(), {}, {numeric:true}) })
+    
+                    $('#levelSelectAll').append(opt)
+                    $('#levelSelectAll').val($('#levelSelectAll option:first').val())
+
+                    selectGameAll(event)
                 }
             } else {
                 off()
+                hideError()
             }
           }, 'json').error((jqXHR, textStatus, errorThrown) => {
               off()
-              showError()
+              showError(jqXHR.responseText)
           })
     })
 
@@ -48,6 +61,7 @@ $(document).ready((event) => {
         on()
         $.get('responsePage.php', { 'gameID': $('#gameSelect').val(), 'sessionID': $('#sessionSelect').val() }, (data, status, jqXHR) => {
             $("#scoreDisplay").html(data.numCorrect + " / " + data.numQuestions)
+            hideError()
             $.get('responsePage.php', { 'gameID': $('#gameSelect').val(), 'sessionID': $('#sessionSelect').val(), 'level': $('#levelSelect').val() }, (data, status, jqXHR) => {
                 if ($('#gameSelect').val() === "WAVES") {
                     let dataObj = {data:JSON.parse(JSON.stringify(data.event_data)), times:data.times}
@@ -55,13 +69,27 @@ $(document).ready((event) => {
                     getWavesData()
                 }
                 off()
+                hideError()
               }, 'json').error((jqXHR, textStatus, errorThrown) => {
                   off()
-                  showError()
+                  showError(jqXHR.responseText)
               })
         }, 'json').error((jqXHR, textStatus, errorThrown) => {
             off()
-            showError()
+            showError(jqXHR.responseText)
+        })
+    }
+
+    function selectGameAll(event) {
+        if (event) event.preventDefault()
+        on()
+        $.get('responsePage.php', { 'gameID': $('#gameSelect').val(), 'isAll': true }, (data, status, jqXHR) => {
+            $('#scoreDisplayAll').html(data.totalNumCorrect + ' / ' + data.totalNumQuestions + ' (' + (100*data.totalNumCorrect/data.totalNumQuestions).toFixed(2) + '%)')
+            hideError()
+            off()
+        }, 'json').error((jqXHR, textStatus, errorThrown) => {
+            off()
+            showError(jqXHR.responseText)
         })
     }
 
@@ -75,9 +103,10 @@ $(document).ready((event) => {
                 getWavesData()
             }
             off()
+            hideError()
         }, 'json').error((jqXHR, textStatus, errorThrown) => {
             off()
-            showError()
+            showError(jqXHR.responseText)
         })
     })
 
@@ -273,9 +302,10 @@ $(document).ready((event) => {
                 }
             }
             off()
+            hideError()
         }, 'json').error((jqXHR, textStatus, errorThrown) => {
             off()
-            showError()
+            showError(jqXHR.responseText)
         })
     }
 
@@ -548,58 +578,114 @@ $(document).ready((event) => {
         $('#loadingOverlay').css('display', 'none')
     }
 
-    function showError() {
+    function showError(error) {
         $('#errorMessage').css('visibility', 'visible')
+        console.log(error)
+    }
+
+    function hideError() {
+        $('#errorMessage').css('visibility', 'hidden')
     }
 
     function showNoDataLeft() {
-        $('#noDataOverlayLeft').css('display', 'block')
-        $('#noDataOverlayGoals').css('display', 'block')
+        if ($('#singleNavTab').hasClass('active')) {
+            $('#noDataOverlayLeft').css('display', 'block')
+            $('#noDataOverlayGoals').css('display', 'block')
+        } else if ($('#allNavTab').hasClass('active')) {
+            $('#noDataOverlayLeftAll').css('display', 'block')
+            $('#noDataOverlayGoalsAll').css('display', 'block')
+        }
     }
 
     function hideNoDataLeft() {
-        $('#noDataOverlayLeft').css('display', 'none')
-        $('#noDataOverlayGoals').css('display', 'none')
+        if ($('#singleNavTab').hasClass('active')) {
+            $('#noDataOverlayLeft').css('display', 'none')
+            $('#noDataOverlayGoals').css('display', 'none')
+        } else if ($('#allNavTab').hasClass('active')) {
+            $('#noDataOverlayLeftAll').css('display', 'none')
+            $('#noDataOverlayGoalsAll').css('display', 'none')
+        }
     }
 
     function showNoDataRight() {
-        $('#noDataOverlayRight').css('display', 'block')
+        if ($('#singleNavTab').hasClass('active')) {
+            $('#noDataOverlayRight').css('display', 'block')
+        } else if ($('#allNavTab').hasClass('active')) {
+            $('#noDataOverlayRightAll').css('display', 'block')
+        }
     }
 
     function hideNoDataRight() {
-        $('#noDataOverlayRight').css('display', 'none')
+        if ($('#singleNavTab').hasClass('active')) {
+            $('#noDataOverlayRight').css('display', 'none')
+        } else if ($('#allNavTab').hasClass('active')) {
+            $('#noDataOverlayRightAll').css('display', 'none')
+        }
     }
 
     function showNoDataGoals() {
-        $('#noDataOverlayGoals1').css('display', 'block')
-        $('#noDataOverlayGoals2').css('display', 'block')
-        let layout = {
-            margin: { t: 35 },
-            title: `Level ${$('#levelSelect').val()}`,
-            height: 200,
-            xaxis: {
-                title: 'Move number',
-                titlefont: {
-                  family: 'Courier New, monospace',
-                  size: 12,
-                  color: '#7f7f7f'
-                }
-              },
-            yaxis: {
-                title: 'Net good moves',
-                titlefont: {
-                    family: 'Courier New, monospace',
-                    size: 12,
-                    color: '#7f7f7f'
+        if ($('#singleNavTab').hasClass('active')) {
+            $('#noDataOverlayGoals1').css('display', 'block')
+            $('#noDataOverlayGoals2').css('display', 'block')
+            let layout = {
+                margin: { t: 35 },
+                title: `Level ${$('#levelSelect').val()}`,
+                height: 200,
+                xaxis: {
+                    title: 'Move number',
+                    titlefont: {
+                      family: 'Courier New, monospace',
+                      size: 12,
+                      color: '#7f7f7f'
+                    }
+                  },
+                yaxis: {
+                    title: 'Net good moves',
+                    titlefont: {
+                        family: 'Courier New, monospace',
+                        size: 12,
+                        color: '#7f7f7f'
+                    }
                 }
             }
+            Plotly.newPlot(goalsGraph1, [], layout)
+            Plotly.newPlot(goalsGraph2, [], layout)
+        } else if ($('#allNavTab').hasClass('active')) {
+            $('#noDataOverlayGoals1All').css('display', 'block')
+            $('#noDataOverlayGoals2All').css('display', 'block')
+            let layout = {
+                margin: { t: 35 },
+                title: `Level ${$('#levelSelectAll').val()}`,
+                height: 200,
+                xaxis: {
+                    title: 'Move number',
+                    titlefont: {
+                      family: 'Courier New, monospace',
+                      size: 12,
+                      color: '#7f7f7f'
+                    }
+                  },
+                yaxis: {
+                    title: 'Net good moves',
+                    titlefont: {
+                        family: 'Courier New, monospace',
+                        size: 12,
+                        color: '#7f7f7f'
+                    }
+                }
+            }
+            Plotly.newPlot(goalsGraph1All, [], layout)
+            Plotly.newPlot(goalsGraph2All, [], layout)
         }
-        Plotly.newPlot(goalsGraph1, [], layout)
-        Plotly.newPlot(goalsGraph2, [], layout)
     }
 
     function hideNoDataGoals() {
-        $('#noDataOverlayGoals1').css('display', 'none')
-        $('#noDataOverlayGoals2').css('display', 'none')
+        if ($('#singleNavTab').hasClass('active')) {
+            $('#noDataOverlayGoals1').css('display', 'none')
+            $('#noDataOverlayGoals2').css('display', 'none')
+        } else if ($('#allNavTab').hasClass('active')) {
+            $('#noDataOverlayGoals1All').css('display', 'none')
+            $('#noDataOverlayGoals2All').css('display', 'none')
+        }
     }
 })
