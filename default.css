@@ -3,7 +3,7 @@ body, div {
     padding:0px;
     font:16px Helvetica;
 }
-select {
+select, .select2 {
     min-width:200px;
 }
 .row {
@@ -46,7 +46,7 @@ select {
     margin-right:10px;
 }
 
-#noDataOverlayLeft, #noDataOverlayRight, #noDataOverlayGoals1, #noDataOverlayGoals2,
+#noDataOverlayLeft,    #noDataOverlayRight,    #noDataOverlayGoals1,    #noDataOverlayGoals2,
 #noDataOverlayLeftAll, #noDataOverlayRightAll, #noDataOverlayGoals1All, #noDataOverlayGoals2All {
     position: relative;
     margin: auto;
