@@ -13,8 +13,46 @@
      <div id="loadingOverlay" class="overlay" style="z-index:5">
         <div class="text">Loading . . .</div>
     </div>
+    <div class="modal fade" id="filterModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title">Filter sessions</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="container-fluid">
+                        <form id="filterForm" role="form">
+                            <div class="row">
+                                <div class="col-xs-6">
+                                    <div class="form-group">
+                                        <label for="minMoves">Minimum moves</label>
+                                        <input name="minMoves" required type="number" min="0" class="form-control" id="minMoves" value="0">
+                                        <br>
+                                        <label for="minQuestions">Minimum questions answered</label>
+                                        <input name="minQuestions" required type="number" min="0" class="form-control" id="minQuestions" value="0">
+                                        <br>
+                                        <label for="minLevels">Minimum levels completed</label>
+                                        <input name="minLevels" required type="number" min="0" class="form-control" id="minLevels" value="0">
+                                        <br>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <div class="col-xs-8">
+                                    <div style="color:red; text-align:left;" id="formError" hidden></div>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Submit</button>
+                                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="container-fluid" style="padding-right:50px">
-        <h2>Data Visualization Tool <small>A Field Day Research Tool</small></h2>
+        <h2>Data Visualization Tool <small>A Field Day Research Tool</small></h2>       
         
         <div class="row">
             <div class="col-xs-4">
@@ -45,16 +83,16 @@
             <div class="col-xs-4"></div>
             <div class="col-xs-4">
                 <ul class="nav nav-tabs pull-right">
-                    <li id="allNavTab" class="nav-item active"><a href="#all" class="nav-link" data-toggle="tab">All</a></li>
-                    <li id="singleNavTab" class="nav-item"><a href="#single" class="nav-link" data-toggle="tab">Single</a></li>
+                    <li id="allNavTab" class="nav-item"><a href="#all" class="nav-link" data-toggle="tab">All</a></li>
+                    <li id="singleNavTab" class="nav-item active"><a href="#single" class="nav-link" data-toggle="tab">Single</a></li>
                 </ul>
             </div>
         </div>
         <div class="row tab-content" style="margin-right:12px">
-            <span class="tab-pane fade in" id="single">
+            <span class="tab-pane fade in active" id="single">
                 <div class="row">
                     <div id="sessionSelectParent" class="col-xs-4" style="margin-top:10px">
-                        Session
+                        Session <a href="#filterModal" data-toggle="modal" style="margin-left:90px">Filter...</a>
                         <br>
                         <select id="sessionSelect" class="js-example-basic-single">
                         </select>
@@ -123,12 +161,12 @@
                     </div>
                 </div>
             </span>
-            <span class="tab-pane fade in active" id="all">
+            <span class="tab-pane fade in" id="all">
                 <div class="row">
                     <div id="sessionSelectParent" class="col-xs-4" style="margin-top:10px">
                         Session
                         <br>
-                        <select id="sessionSelectAll" class="js-example-basic-single">
+                        <select id="sessionSelectAll" class="js-example-basic-single" disabled>
                         </select>
                     </div>
                     <div class="col-xs-4" style="margin-top:10px">
@@ -200,7 +238,6 @@
 
     <script src='https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js'></script>
     <script src='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js'></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/js/select2.min.js"></script>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src='main.js'></script>
 </body>

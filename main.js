@@ -1,6 +1,6 @@
 $(document).ready((event) => {
-    $('.js-example-basic-single').select2() //initialize select boxes
-    $('#sessionSelectAll').select2({ disabled: true })
+    //$('.js-example-basic-single').select2() //initialize select boxes
+    //$('#sessionSelectAll').select2({ disabled: true })
     let graphLeft = $('#graphLeft')[0]
     let graphRight = $('#graphRight')[0]
     let goalsGraph1 = $('#goalsGraph1')[0]
@@ -14,6 +14,7 @@ $(document).ready((event) => {
     $(document).on('change', '#gameSelect', (event) => {
         event.preventDefault()
         on()
+        $('#gameIDForm').val($('#gameSelect').val())
         $('#levelSelect').empty()
         $('#levelSelectAll').empty()
         $('#sessionSelect').empty()
@@ -22,9 +23,19 @@ $(document).ready((event) => {
                 $('#sessions').text(data.numSessions + ' sessions available')
 
                 // initialization of single tab
-                for (let i = 0; i < data.numSessions; i++) {
-                    $('#sessionSelect').append($('<option>', { value:data.sessions[i], text:data.sessions[i]}))
+                // for (let i = 0; i < data.numSessions; i++) {
+                //     $('#sessionSelect').append($('<option>', { value:data.sessions[i], text:data.sessions[i] + '    ' + data.times[i]}))
+                // }
+
+                let options = []
+                for (let i = 0; i < data.sessions.length; i++) {
+                    let newOpt = document.createElement('option')
+                    newOpt.value = data.sessions[i]
+                    newOpt.text = data.sessions[i]
+                    options.push(newOpt)
                 }
+                $('#sessionSelect').empty().append(options)
+
                 $('#sessionSelect').val('18020410454796070') // the most interesting session
                 for (let i = 0; i < data.levels.length; i++) {
                     $('#levelSelect').append($('<option>', { value:data.levels[i], text:data.levels[i]}))
@@ -37,16 +48,25 @@ $(document).ready((event) => {
                 selectSession(event)
 
                 // do initialization of all tab
-                for (let i = 0; i < data.levels.length; i++) {
-                    $('#levelSelectAll').append($('<option>', { value:data.levels[i], text:data.levels[i]}))
-                }
-                let optAll = $('#levelSelectAll option').sort(function (a,b) { return a.value.toUpperCase().localeCompare(b.value.toUpperCase(), {}, {numeric:true}) })
+                // for (let i = 0; i < data.levels.length; i++) {
+                //     $('#levelSelectAll').append($('<option>', { value:data.levels[i], text:data.levels[i]}))
+                // }
+                // let dummy2 = document.createDocumentFragment()
+                // for (let i = 0; i < data.levels.length; i++) {
+                //     let newOpt = document.createElement('option')
+                //     newOpt.value = data.levels[i]
+                //     newOpt.text = data.levels[i]
+                //     dummy2.appendChild(newOpt)
+                //     //$('#sessionSelect').append($('<option>', { value:data.sessions[i], text:data.sessions[i]}))
+                // }
+                // document.getElementById('sessionSelectAll').appendChild(dummy2)
+                // let optAll = $('#levelSelectAll option').sort(function (a,b) { return a.value.toUpperCase().localeCompare(b.value.toUpperCase(), {}, {numeric:true}) })
 
-                $('#levelSelectAll').append(optAll)
-                $('#levelSelectAll').val($('#levelSelectAll option:first').val())
+                // $('#levelSelectAll').append(optAll)
+                // $('#levelSelectAll').val($('#levelSelectAll option:first').val())
 
-                selectGameAll(event)
-                getWavesDataAll()
+                // selectGameAll(event)
+                // getWavesDataAll()
             } else {
                 off()
                 hideError()
@@ -59,6 +79,41 @@ $(document).ready((event) => {
 
     $(document).on('change', '#sessionSelect', (event) => {
         selectSession(event)
+    })
+
+    $(document).on('submit', '#filterForm', (event) => {
+        event.preventDefault()
+        if ($('#gameSelect').val() !== 'empty') {
+            $('#filterModal').modal('hide')
+            on()
+            $.get('responsePage.php', { 'gameID': $('#gameSelect').val(), 'minMoves': $('#minMoves').val(), 'minQuestions': $('#minQuestions').val(), 'minLevels': $('#minLevels').val() }, (data, status, jqXHR) => {
+                $('#sessions').text(data.sessions.length + ' sessions available')
+                let options = []
+                for (let i = 0; i < data.sessions.length; i++) {
+                    let newOpt = document.createElement('option')
+                    newOpt.value = data.sessions[i]
+                    newOpt.text = data.sessions[i]
+                    options.push(newOpt)
+                }
+                $('#sessionSelect').empty().append(options)
+
+                off()
+                hideError()
+                selectSession(event)
+            }, 'json').error((jqXHR, textStatus, errorThrown) => {
+                $('#filterModal').modal('hide')
+                off()
+                showError(jqXHR.responseText)
+            })
+        } else {
+            $('#formError').show()
+            $('#filterModal').modal('hide')
+            $('#formError').html('Please select a game before filtering sessions.')
+        }
+    })
+
+    $(document).on('hide.bs.modal', '#filterModal', (event) => {
+        $('#formError').hide()
     })
 
     function selectSession(event) {
@@ -105,7 +160,7 @@ $(document).ready((event) => {
         event.preventDefault()
         if ($('#levelSelect').val() !== $('#levelSelectAll').val()) {
             on()
-            $('#levelSelectAll').val($('#levelSelect').val()).trigger('change')
+            //$('#levelSelectAll').val($('#levelSelect').val()).trigger('change')
             $.get('responsePage.php', { 'gameID': $('#gameSelect').val(), 'sessionID': $('#sessionSelect').val(), 'level': $('#levelSelect').val()}, (data, status, jqXHR) => {
                 if ($('#gameSelect').val() === "WAVES") {
                     let dataObj = {data:JSON.parse(JSON.stringify(data.event_data)), times:data.times}
@@ -121,25 +176,25 @@ $(document).ready((event) => {
         }
     })
 
-    $(document).on('change', '#levelSelectAll', (event) => {
-        event.preventDefault()
-        if ($('#levelSelect').val() !== $('#levelSelectAll').val()) {
-            on()
-            $('#levelSelect').val($('#levelSelectAll').val()).trigger('change')
-            $.get('responsePage.php', { 'isAll': true, 'gameID': $('#gameSelect').val(), 'level': $('#levelSelectAll').val()}, (data, status, jqXHR) => {
-                if ($('#gameSelect').val() === "WAVES") {
-                    let dataObj = {data:JSON.parse(JSON.stringify(data.event_data)), times:data.times}
-                    //drawWavesChartAll(dataObj)
-                    getWavesDataAll()
-                }
-                off()
-                hideError()
-            }, 'json').error((jqXHR, textStatus, errorThrown) => {
-                off()
-                showError(jqXHR.responseText)
-            })
-        }
-    })
+    // $(document).on('change', '#levelSelectAll', (event) => {
+    //     event.preventDefault()
+    //     if ($('#levelSelect').val() !== $('#levelSelectAll').val()) {
+    //         on()
+    //         $('#levelSelect').val($('#levelSelectAll').val()).trigger('change')
+    //         $.get('responsePage.php', { 'isAll': true, 'gameID': $('#gameSelect').val(), 'level': $('#levelSelectAll').val()}, (data, status, jqXHR) => {
+    //             if ($('#gameSelect').val() === "WAVES") {
+    //                 let dataObj = {data:JSON.parse(JSON.stringify(data.event_data)), times:data.times}
+    //                 drawWavesChartAll(dataObj)
+    //                 getWavesDataAll()
+    //             }
+    //             off()
+    //             hideError()
+    //         }, 'json').error((jqXHR, textStatus, errorThrown) => {
+    //             off()
+    //             showError(jqXHR.responseText)
+    //         })
+    //     }
+    // })
 
     function getWavesData() {
         $.get('responsePage.php', { 'isBasicFeatures': true, 'gameID': $('#gameSelect').val(), 'sessionID': $('#sessionSelect').val()}, (data, status, jqXHR) => {
@@ -322,7 +377,6 @@ $(document).ready((event) => {
                     $('#amtsTotal').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
                     $('#amtsTotal').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${knobSumTotal.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
                     $('#amtsTotal').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${knobSumAvg.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-
                     drawWavesGoals(dataObj, numMovesPerChallenge[$('#levelSelect').val()])
                 }
             }
@@ -690,152 +744,152 @@ $(document).ready((event) => {
         }
         Plotly.newPlot(goalsGraph2, graphData2, layout2)
     }
-    function drawWavesGoalsAll(dataObj, numMovesPerChallenge) {
-        // Goals stuff
-        $('#goalsDiv1').html('Goal 1: Completing the challenge')
-        let distanceToGoal = []
-        distanceToGoal = new Array(numMovesPerChallenge.length).fill(0)
-        let moveGoodness = distanceToGoal // an array of 0s
-        let moveNumbers = []
-        let cumulativeDistance = 0
-        let lastCloseness1
-        for (let i in numMovesPerChallenge) {
-            let dataJson = JSON.parse(dataObj.data[i])
-            if (dataObj.events[i] === "CUSTOM" && (dataJson.event_custom === 'SLIDER_MOVE_RELEASE' || dataJson.event_custom === 'ARROW_MOVE_RELEASE')) {
-                if (dataJson.event_custom === "SLIDER_MOVE_RELEASE") { // sliders have before and after closeness
-                    if (dataJson.end_closeness < dataJson.begin_closeness) moveGoodness[i] = 1
-                    else if (dataJson.end_closeness > dataJson.begin_closeness) moveGoodness[i] = -1
+    // function drawWavesGoalsAll(dataObj, numMovesPerChallenge) {
+    //     // Goals stuff
+    //     $('#goalsDiv1').html('Goal 1: Completing the challenge')
+    //     let distanceToGoal = []
+    //     distanceToGoal = new Array(numMovesPerChallenge.length).fill(0)
+    //     let moveGoodness = distanceToGoal // an array of 0s
+    //     let moveNumbers = []
+    //     let cumulativeDistance = 0
+    //     let lastCloseness1
+    //     for (let i in numMovesPerChallenge) {
+    //         let dataJson = JSON.parse(dataObj.data[i])
+    //         if (dataObj.events[i] === "CUSTOM" && (dataJson.event_custom === 'SLIDER_MOVE_RELEASE' || dataJson.event_custom === 'ARROW_MOVE_RELEASE')) {
+    //             if (dataJson.event_custom === "SLIDER_MOVE_RELEASE") { // sliders have before and after closeness
+    //                 if (dataJson.end_closeness < dataJson.begin_closeness) moveGoodness[i] = 1
+    //                 else if (dataJson.end_closeness > dataJson.begin_closeness) moveGoodness[i] = -1
 
-                    lastCloseness1 = dataJson.end_closeness
-                } else { // arrow
-                    if (!lastCloseness1) lastCloseness1 = dataJson.closeness
-                    if (dataJson.closeness < lastCloseness1) moveGoodness[i] = -1
-                    else if (dataJson.closeness > lastCloseness1) moveGoodness[i] = 1
+    //                 lastCloseness1 = dataJson.end_closeness
+    //             } else { // arrow
+    //                 if (!lastCloseness1) lastCloseness1 = dataJson.closeness
+    //                 if (dataJson.closeness < lastCloseness1) moveGoodness[i] = -1
+    //                 else if (dataJson.closeness > lastCloseness1) moveGoodness[i] = 1
 
-                    lastCloseness1 = dataJson.closeness
-                }
-            }
-            moveNumbers[i] = i
-            cumulativeDistance += moveGoodness[i]
-            distanceToGoal[i] = cumulativeDistance
-        }
+    //                 lastCloseness1 = dataJson.closeness
+    //             }
+    //         }
+    //         moveNumbers[i] = i
+    //         cumulativeDistance += moveGoodness[i]
+    //         distanceToGoal[i] = cumulativeDistance
+    //     }
 
-        let closenessTrace1 = {
-            x: moveNumbers,
-            y: distanceToGoal,
-            line: {color: 'orange'},
-            name: 'Net good moves',
-            mode: 'lines+markers'
-        }
-        let graphData1 = [closenessTrace1]
-        let layout1 = {
-            margin: { t: 35 },
-            title: `Level ${$('#levelSelect').val()}`,
-            height: 200,
-            xaxis: {
-                title: 'Move number',
-                titlefont: {
-                  family: 'Courier New, monospace',
-                  size: 12,
-                  color: '#7f7f7f'
-                }
-              },
-              yaxis: {
-                title: 'Net good moves',
-                titlefont: {
-                  family: 'Courier New, monospace',
-                  size: 12,
-                  color: '#7f7f7f'
-                }
-              }
-        }
-        Plotly.newPlot(goalsGraph1, graphData1, layout1)
+    //     let closenessTrace1 = {
+    //         x: moveNumbers,
+    //         y: distanceToGoal,
+    //         line: {color: 'orange'},
+    //         name: 'Net good moves',
+    //         mode: 'lines+markers'
+    //     }
+    //     let graphData1 = [closenessTrace1]
+    //     let layout1 = {
+    //         margin: { t: 35 },
+    //         title: `Level ${$('#levelSelect').val()}`,
+    //         height: 200,
+    //         xaxis: {
+    //             title: 'Move number',
+    //             titlefont: {
+    //               family: 'Courier New, monospace',
+    //               size: 12,
+    //               color: '#7f7f7f'
+    //             }
+    //           },
+    //           yaxis: {
+    //             title: 'Net good moves',
+    //             titlefont: {
+    //               family: 'Courier New, monospace',
+    //               size: 12,
+    //               color: '#7f7f7f'
+    //             }
+    //           }
+    //     }
+    //     Plotly.newPlot(goalsGraph1, graphData1, layout1)
 
 
-        $('#goalsDiv2').html('Goal 2: Maxing slider values')
-        $('#goalsDiv2').css('display', 'block')
-        $('#goalsGraph2').css('display', 'block')
-        distanceToGoal = new Array(numMovesPerChallenge.length).fill(0)
-        moveGoodness = new Array(numMovesPerChallenge.length).fill(0) // an array of 0s
-        moveNumbers = []
-        cumulativeDistance = 0;
-        indicesToSplice = []
-        let graph_min_x = -50
-        let graph_max_x =  50
-        let graph_min_y = -50
-        let graph_max_y =  50
-        let graph_min_offset = graph_min_x
-        let graph_max_offset = graph_max_x
-        let graph_min_wavelength = 2
-        let graph_max_wavelength = graph_max_x*2
-        let graph_min_amplitude = 0
-        let graph_max_amplitude = graph_max_y*(3/5)
-        let graph_default_offset = (graph_min_x+graph_max_x)/2
-        let graph_default_wavelength = (2+(graph_max_x*2))/2
-        let graph_default_amplitude = graph_max_y/4
-        let lastCloseness = [], thisCloseness = []
-        lastCloseness['OFFSET', 'left'] = lastCloseness['OFFSET', 'right'] = graph_max_offset-graph_default_offset
-        lastCloseness['AMPLITUDE', 'left'] = lastCloseness['AMPLITUDE', 'right'] = graph_max_amplitude-graph_default_amplitude
-        lastCloseness['WAVELENGTH', 'left'] = lastCloseness['WAVELENGTH', 'right'] = graph_max_wavelength-graph_default_wavelength
-        for (let i in numMovesPerChallenge) {
-            let dataJson = JSON.parse(dataObj.data[i])
-            if (dataObj.events[i] === 'CUSTOM' && (dataJson.event_custom === 'SLIDER_MOVE_RELEASE' || dataJson.event_custom === 'ARROW_MOVE_RELEASE')) {
-                if (dataJson.slider ===  'AMPLITUDE') {
-                    thisCloseness[dataJson.slider, dataJson.wave] = graph_max_amplitude-dataJson.end_val
-                } else if (dataJson.slider === 'OFFSET') {
-                    thisCloseness[dataJson.slider, dataJson.wave] = graph_max_offset-dataJson.end_val
-                } else if (dataJson.slider === 'WAVELENGTH') {
-                    thisCloseness[dataJson.slider, dataJson.wave] = graph_max_wavelength-dataJson.end_val
-                }
+    //     $('#goalsDiv2').html('Goal 2: Maxing slider values')
+    //     $('#goalsDiv2').css('display', 'block')
+    //     $('#goalsGraph2').css('display', 'block')
+    //     distanceToGoal = new Array(numMovesPerChallenge.length).fill(0)
+    //     moveGoodness = new Array(numMovesPerChallenge.length).fill(0) // an array of 0s
+    //     moveNumbers = []
+    //     cumulativeDistance = 0;
+    //     indicesToSplice = []
+    //     let graph_min_x = -50
+    //     let graph_max_x =  50
+    //     let graph_min_y = -50
+    //     let graph_max_y =  50
+    //     let graph_min_offset = graph_min_x
+    //     let graph_max_offset = graph_max_x
+    //     let graph_min_wavelength = 2
+    //     let graph_max_wavelength = graph_max_x*2
+    //     let graph_min_amplitude = 0
+    //     let graph_max_amplitude = graph_max_y*(3/5)
+    //     let graph_default_offset = (graph_min_x+graph_max_x)/2
+    //     let graph_default_wavelength = (2+(graph_max_x*2))/2
+    //     let graph_default_amplitude = graph_max_y/4
+    //     let lastCloseness = [], thisCloseness = []
+    //     lastCloseness['OFFSET', 'left'] = lastCloseness['OFFSET', 'right'] = graph_max_offset-graph_default_offset
+    //     lastCloseness['AMPLITUDE', 'left'] = lastCloseness['AMPLITUDE', 'right'] = graph_max_amplitude-graph_default_amplitude
+    //     lastCloseness['WAVELENGTH', 'left'] = lastCloseness['WAVELENGTH', 'right'] = graph_max_wavelength-graph_default_wavelength
+    //     for (let i in numMovesPerChallenge) {
+    //         let dataJson = JSON.parse(dataObj.data[i])
+    //         if (dataObj.events[i] === 'CUSTOM' && (dataJson.event_custom === 'SLIDER_MOVE_RELEASE' || dataJson.event_custom === 'ARROW_MOVE_RELEASE')) {
+    //             if (dataJson.slider ===  'AMPLITUDE') {
+    //                 thisCloseness[dataJson.slider, dataJson.wave] = graph_max_amplitude-dataJson.end_val
+    //             } else if (dataJson.slider === 'OFFSET') {
+    //                 thisCloseness[dataJson.slider, dataJson.wave] = graph_max_offset-dataJson.end_val
+    //             } else if (dataJson.slider === 'WAVELENGTH') {
+    //                 thisCloseness[dataJson.slider, dataJson.wave] = graph_max_wavelength-dataJson.end_val
+    //             }
 
-                if (dataJson.event_custom === 'SLIDER_MOVE_RELEASE') { // sliders have before and after closeness
-                    if (thisCloseness[dataJson.slider, dataJson.wave] < lastCloseness[dataJson.slider, dataJson.wave]) moveGoodness[i] = 1
-                    else if (thisCloseness[dataJson.slider, dataJson.wave] > lastCloseness[dataJson.slider, dataJson.wave]) moveGoodness[i] = -1
+    //             if (dataJson.event_custom === 'SLIDER_MOVE_RELEASE') { // sliders have before and after closeness
+    //                 if (thisCloseness[dataJson.slider, dataJson.wave] < lastCloseness[dataJson.slider, dataJson.wave]) moveGoodness[i] = 1
+    //                 else if (thisCloseness[dataJson.slider, dataJson.wave] > lastCloseness[dataJson.slider, dataJson.wave]) moveGoodness[i] = -1
 
-                    lastCloseness[dataJson.slider] = thisCloseness[dataJson.slider]
-                } else { // arrow
-                    if (thisCloseness[dataJson.slider, dataJson.wave] < lastCloseness[dataJson.slider, dataJson.wave]) moveGoodness[i] = -1
-                    else if (thisCloseness[dataJson.slider, dataJson.wave] > lastCloseness[dataJson.slider, dataJson.wave]) moveGoodness[i] = 1
+    //                 lastCloseness[dataJson.slider] = thisCloseness[dataJson.slider]
+    //             } else { // arrow
+    //                 if (thisCloseness[dataJson.slider, dataJson.wave] < lastCloseness[dataJson.slider, dataJson.wave]) moveGoodness[i] = -1
+    //                 else if (thisCloseness[dataJson.slider, dataJson.wave] > lastCloseness[dataJson.slider, dataJson.wave]) moveGoodness[i] = 1
 
-                    lastCloseness[dataJson.slider, dataJson.wave] = thisCloseness[dataJson.slider, dataJson.wave]
-                }
-            }
-            moveNumbers[i] = i
-            cumulativeDistance += moveGoodness[i]
-            distanceToGoal[i] = cumulativeDistance
-        }
+    //                 lastCloseness[dataJson.slider, dataJson.wave] = thisCloseness[dataJson.slider, dataJson.wave]
+    //             }
+    //         }
+    //         moveNumbers[i] = i
+    //         cumulativeDistance += moveGoodness[i]
+    //         distanceToGoal[i] = cumulativeDistance
+    //     }
 
-        let closenessTrace2 = {
-            x: moveNumbers,
-            y: distanceToGoal,
-            line: {color: 'orange'},
-            name: 'Net good moves',
-            mode: 'lines+markers'
-        }
-        let graphData2 = [closenessTrace2]
-        let layout2 = {
-            margin: { t: 35 },
-            title: `Level ${$('#levelSelect').val()}`,
-            height: 200,
-            xaxis: {
-                title: 'Move number',
-                titlefont: {
-                  family: 'Courier New, monospace',
-                  size: 12,
-                  color: '#7f7f7f'
-                }
-              },
-            yaxis: {
-                title: 'Net good moves',
-                titlefont: {
-                    family: 'Courier New, monospace',
-                    size: 12,
-                    color: '#7f7f7f'
-                }
-            }
-        }
-        Plotly.newPlot(goalsGraph2, graphData2, layout2)
-    }
+    //     let closenessTrace2 = {
+    //         x: moveNumbers,
+    //         y: distanceToGoal,
+    //         line: {color: 'orange'},
+    //         name: 'Net good moves',
+    //         mode: 'lines+markers'
+    //     }
+    //     let graphData2 = [closenessTrace2]
+    //     let layout2 = {
+    //         margin: { t: 35 },
+    //         title: `Level ${$('#levelSelect').val()}`,
+    //         height: 200,
+    //         xaxis: {
+    //             title: 'Move number',
+    //             titlefont: {
+    //               family: 'Courier New, monospace',
+    //               size: 12,
+    //               color: '#7f7f7f'
+    //             }
+    //           },
+    //         yaxis: {
+    //             title: 'Net good moves',
+    //             titlefont: {
+    //                 family: 'Courier New, monospace',
+    //                 size: 12,
+    //                 color: '#7f7f7f'
+    //             }
+    //         }
+    //     }
+    //     Plotly.newPlot(goalsGraph2, graphData2, layout2)
+    // }
 
     function drawWavesChart(inData) {
         let xAmpLeft = [], xAmpRight = []
@@ -950,10 +1004,6 @@ $(document).ready((event) => {
         Plotly.newPlot(graphLeft, wavesDataLeft, layoutLeft)
         Plotly.newPlot(graphRight, wavesDataRight, layoutRight)
     }
-
-    function drawWavesChartAll(inData) {
-
-    }
     
     function on() {
         $('#loadingOverlay').css('display', 'block')
@@ -965,7 +1015,7 @@ $(document).ready((event) => {
 
     function showError(error) {
         $('#errorMessage').css('visibility', 'visible')
-        //console.log(error)
+        console.log(error)
     }
 
     function hideError() {
