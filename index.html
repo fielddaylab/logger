@@ -37,6 +37,16 @@
                                         <br>
                                     </div>
                                 </div>
+                                <div class="col-xs-6">
+                                    <div class="form-group">
+                                        <label for="startDate">Filter start date</label>
+                                        <input name="startDate" required type="date" class="form-control" id="startDate">
+                                        <br>
+                                        <label for="endDate">Filter end date</label>
+                                        <input name="endDate" required type="date" class="form-control" id="endDate">
+                                        <br>
+                                    </div>
+                                </div>
                             </div>
                             <div class="modal-footer">
                                 <div class="col-xs-8">
@@ -59,14 +69,14 @@
                 <label for="gameSelect" style="padding-top:10px; padding-left:10px">Game</label>
                 <select id="gameSelect" class="js-example-basic-single">
                     <option value="empty"></option>
-                    <option value="BACTERIA">Bacteria</option>
-                    <option value="BALLOON">Balloon</option>
-                    <option value="CRYSTAL">Crystal</option>
-                    <option value="CYCLE">Cycle</option>
-                    <option value="EARTHQUAKE">Earthquake</option>
-                    <option value="MAGNET">Magnet</option>
+                    <option value="BACTERIA" disabled>Bacteria</option>
+                    <option value="BALLOON" disabled>Balloon</option>
+                    <option value="CRYSTAL" disabled>Crystal</option>
+                    <option value="CYCLE" disabled>Cycle</option>
+                    <option value="EARTHQUAKE" disabled>Earthquake</option>
+                    <option value="MAGNET" disabled>Magnet</option>
                     <option value="WAVES">Waves</option>
-                    <option value="WIND">Wind</option>
+                    <option value="WIND" disabled>Wind</option>
                 </select>
             </div>
             <div class="col-xs-4">
@@ -165,18 +175,8 @@
             </span>
             <span class="tab-pane fade in" id="all">
                 <div class="row">
-                    <div id="sessionSelectParent" class="col-xs-4" style="margin-top:10px">
-                        Session
-                        <br>
-                        <select id="sessionSelectAll" class="js-example-basic-single" disabled>
-                        </select>
-                    </div>
-                    <div class="col-xs-4" style="margin-top:10px">
-                        Level
-                        <br>
-                        <select id="levelSelectAll" class="js-example-basic-single">
-                        </select>
-                    </div>
+                    <div class="col-xs-4"></div>
+                    <div class="col-xs-4"></div>
                     <div class="col-xs-4" style="margin-top:10px">
                         Test score:
                         <br>

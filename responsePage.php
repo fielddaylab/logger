@@ -36,7 +36,7 @@ if (!isset($_GET['minMoves']) && !isset($_GET['minQuestions']) && !isset($_GET['
                 die('{ "errMessage": "Resource not found." }');                
             }
     
-            $query2 = "SELECT session_id, client_time FROM log WHERE app_id=? GROUP BY session_id;";
+            $query2 = "SELECT session_id, client_time FROM log WHERE app_id=? GROUP BY client_time;";
             $stmt2 = simpleQueryParam($db, $query2, "s", $gameID);
             if($stmt2 == NULL) {
                 http_response_code(500);
@@ -274,8 +274,10 @@ if (!isset($_GET['minMoves']) && !isset($_GET['minQuestions']) && !isset($_GET['
     $minMoves = $_GET['minMoves'];
     $minLevels = $_GET['minLevels'];
     $minQuestions = $_GET['minQuestions'];
+    $startDate = new DateTime($_GET['startDate']);
+    $endDate = new DateTime($_GET['endDate']);
     $gameID = $_GET['gameID'];
-    $query1 = "SELECT event, event_custom, session_id, client_time FROM log WHERE app_id=? ORDER BY session_id;";
+    $query1 = "SELECT event, event_custom, session_id, client_time FROM log WHERE app_id=? ORDER BY client_time;";
     $paramArray = array($gameID);
     $stmt1 = queryMultiParam($db, $query1, "s", $paramArray);
     if($stmt1 == NULL) {
@@ -306,6 +308,7 @@ if (!isset($_GET['minMoves']) && !isset($_GET['minQuestions']) && !isset($_GET['
         $numMoves = 0;
         $numLevels = 0;
         $numQuestions = 0;
+        $date = new DateTime($times[$index]);
         for ($i = 0; $i < $eventsPerSession[$session]; $i++) {
             if ($events[$index + $i] == "COMPLETE") {
                 $numLevels++;
@@ -317,7 +320,8 @@ if (!isset($_GET['minMoves']) && !isset($_GET['minQuestions']) && !isset($_GET['
                 }
             }
         }
-        if ($numMoves >= $minMoves && $numLevels >= $minLevels && $numQuestions >= $minQuestions) {
+        if ($numMoves >= $minMoves && $numLevels >= $minLevels && $numQuestions >= $minQuestions &&
+                $startDate <= $date && $date <= $endDate) {
             $filteredSessions[] = $session;
             $filteredSessionsMoves[] = $numMoves;
             $filteredSessionsQuestions[] = $numQuestions;
@@ -328,7 +332,7 @@ if (!isset($_GET['minMoves']) && !isset($_GET['minQuestions']) && !isset($_GET['
     ?>
     {
         "sessions": <?=json_encode($filteredSessions)?>,
-        "times": <?=json_Encode($filteredSessionsTimes)?>
+        "times": <?=json_encode($filteredSessionsTimes)?>
     }
     <?php
 
