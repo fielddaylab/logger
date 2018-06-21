@@ -275,7 +275,7 @@ if (!isset($_GET['minMoves']) && !isset($_GET['minQuestions']) && !isset($_GET['
     $minLevels = $_GET['minLevels'];
     $minQuestions = $_GET['minQuestions'];
     $gameID = $_GET['gameID'];
-    $query1 = "SELECT event, event_custom, session_id FROM log WHERE app_id=? ORDER BY session_id;";
+    $query1 = "SELECT event, event_custom, session_id, client_time FROM log WHERE app_id=? ORDER BY session_id;";
     $paramArray = array($gameID);
     $stmt1 = queryMultiParam($db, $query1, "s", $paramArray);
     if($stmt1 == NULL) {
@@ -283,7 +283,7 @@ if (!isset($_GET['minMoves']) && !isset($_GET['minQuestions']) && !isset($_GET['
         die('{ "errMessage": "Error running query." }');
     }
     // Bind variables to the results
-    if (!$stmt1->bind_result($event, $event_custom, $sessionID)) {
+    if (!$stmt1->bind_result($event, $event_custom, $sessionID, $time)) {
         http_response_code(500);
         die('{ "errMessage": "Failed to bind to results." }');
     }
@@ -292,6 +292,7 @@ if (!isset($_GET['minMoves']) && !isset($_GET['minQuestions']) && !isset($_GET['
         $events[] = $event;
         $event_customs[] = $event_custom;
         $sessionIDs[] = $sessionID;
+        $times[] = $time;
     }
 
     $eventsPerSession = array_count_values($sessionIDs);
@@ -299,6 +300,7 @@ if (!isset($_GET['minMoves']) && !isset($_GET['minQuestions']) && !isset($_GET['
     $filteredSessionsMoves = [];
     $filteredSessionsQuestions = [];
     $filteredSessionsLevels = [];
+    $filteredSessionsTimes = [];
     $uniqueSessionIDs = array_unique($sessionIDs);
     foreach ($uniqueSessionIDs as $index=>$session) {
         $numMoves = 0;
@@ -320,11 +322,13 @@ if (!isset($_GET['minMoves']) && !isset($_GET['minQuestions']) && !isset($_GET['
             $filteredSessionsMoves[] = $numMoves;
             $filteredSessionsQuestions[] = $numQuestions;
             $filteredSessionsLevels[] = $numLevels;
+            $filteredSessionsTimes[] = $times[$index];
         }
     }
     ?>
     {
-        "sessions": <?=json_encode($filteredSessions)?>      
+        "sessions": <?=json_encode($filteredSessions)?>,
+        "times": <?=json_Encode($filteredSessionsTimes)?>
     }
     <?php
 

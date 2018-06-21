@@ -10,6 +10,8 @@ $(document).ready((event) => {
     let graphRightAll = $('#graphRightAll')[0]
     let goalsGraph1All = $('#goalsGraph1All')[0]
     let goalsGraph2All = $('#goalsGraph2All')[0]
+
+    let totalSessions
     
     $(document).on('change', '#gameSelect', (event) => {
         event.preventDefault()
@@ -20,7 +22,8 @@ $(document).ready((event) => {
         $('#sessionSelect').empty()
         $.get('responsePage.php', { 'gameID': $('#gameSelect').val() }, (data, status, jqXHR) => {
             if (data.levels !== null) {
-                $('#sessions').text(data.numSessions + ' sessions available')
+                totalSessions = data.numSessions
+                $('#sessions').text('Showing ' + data.numSessions + ' of ' + totalSessions + ' available sessions')
 
                 // initialization of single tab
                 // for (let i = 0; i < data.numSessions; i++) {
@@ -31,7 +34,7 @@ $(document).ready((event) => {
                 for (let i = 0; i < data.sessions.length; i++) {
                     let newOpt = document.createElement('option')
                     newOpt.value = data.sessions[i]
-                    newOpt.text = data.sessions[i]
+                    newOpt.text = data.sessions[i] + ' | ' + data.times[i] + ' | ' + i
                     options.push(newOpt)
                 }
                 $('#sessionSelect').empty().append(options)
@@ -87,12 +90,12 @@ $(document).ready((event) => {
             $('#filterModal').modal('hide')
             on()
             $.get('responsePage.php', { 'gameID': $('#gameSelect').val(), 'minMoves': $('#minMoves').val(), 'minQuestions': $('#minQuestions').val(), 'minLevels': $('#minLevels').val() }, (data, status, jqXHR) => {
-                $('#sessions').text(data.sessions.length + ' sessions available')
+                $('#sessions').text('Showing ' + data.sessions.length + ' of ' + totalSessions + ' available sessions')
                 let options = []
                 for (let i = 0; i < data.sessions.length; i++) {
                     let newOpt = document.createElement('option')
                     newOpt.value = data.sessions[i]
-                    newOpt.text = data.sessions[i]
+                    newOpt.text = i + ' | ' + data.sessions[i] + ' | ' + data.times[i]
                     options.push(newOpt)
                 }
                 $('#sessionSelect').empty().append(options)

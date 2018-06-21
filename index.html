@@ -92,10 +92,12 @@
             <span class="tab-pane fade in active" id="single">
                 <div class="row">
                     <div id="sessionSelectParent" class="col-xs-4" style="margin-top:10px">
-                        Session <a href="#filterModal" data-toggle="modal" style="margin-left:90px">Filter...</a>
-                        <br>
-                        <select id="sessionSelect" class="js-example-basic-single">
-                        </select>
+                        <div style="display:inline-block">
+                                <label for="sessionSelect" style="font-weight:initial">Session</label>
+                                <a href="#filterModal" data-toggle="modal" class="control-label" style="float:right;">Filter...</a>
+                                <br>
+                                <select id="sessionSelect" class="js-example-basic-single session-select"></select>
+                        </div>
                     </div>
                     <div class="col-xs-4" style="margin-top:10px">
                         Level
