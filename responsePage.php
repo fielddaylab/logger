@@ -188,7 +188,7 @@ if (!isset($_GET['minMoves']) && !isset($_GET['minQuestions']) && !isset($_GET['
         }
     } else { // The same functions as above but for all sessions
         // Return number of questions and number correct for a given game
-        if (isset($_GET['isAll']) && !isset($_GET['isBasicFeatures']) && !isset($_GET['level']) && isset($_GET['gameID'])) {
+        if (!isset($_GET['isAggregate']) && isset($_GET['isAll']) && !isset($_GET['isBasicFeatures']) && !isset($_GET['level']) && isset($_GET['gameID'])) {
             $gameID = $_GET['gameID'];
             $query1 = "SELECT event_data_complex, session_id FROM log WHERE app_id=? AND event_custom=? ORDER BY session_id;";
             $paramArray = array($gameID, 3);
@@ -231,8 +231,7 @@ if (!isset($_GET['minMoves']) && !isset($_GET['minQuestions']) && !isset($_GET['
         } else
     
         // Return basic information
-        if (isset($_GET['isAll']) && isset($_GET['isBasicFeatures']) && isset($_GET['gameID']) && isset($_GET['level'])) {
-            $level = $_GET['level'];
+        if (isset($_GET['isAggregate']) && isset($_GET['isAll']) && isset($_GET['isBasicFeatures']) && isset($_GET['gameID'])) {
             $gameID = $_GET['gameID'];
     
             $query = "SELECT event_data_complex, client_time, level, event, session_id FROM log WHERE app_id=? ORDER BY session_id, client_time;";
@@ -264,7 +263,7 @@ if (!isset($_GET['minMoves']) && !isset($_GET['minQuestions']) && !isset($_GET['
                 "levels": <?=json_encode($levels)?>,
                 "events": <?=json_encode($events)?>,
                 "sessions": <?=json_encode($sessionIDs)?>,
-                "sessionNumEvents": <?json_encode($sessionNumEvents)?>
+                "sessionNumEvents": <?=json_encode($sessionNumEvents)?>
             }
             <?php
             $stmt->close();
