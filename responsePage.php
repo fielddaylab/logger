@@ -241,19 +241,18 @@ function parseBasicInfo($data, $gameID, $db) {
 
                     $totalMoves += count($numMovesPerChallenge[$i]);
                     $moveTypeChangesTotal += $moveTypeChangesPerLevel[$i];
-                    if ($knobNumStdDevs[$i] != 0) {
+                    if (isset($knobNumStdDevs[$i]) && $knobNumStdDevs[$i] != 0) {
                         $knobAmtsTotal += ($knobAmts[$i]/$knobNumStdDevs[$i]);
                     }
-                    
-                    $knobSumTotal += $knobAmts[$i];
+                    if (isset($knobAmts[$i])) $knobSumTotal += $knobAmts[$i];
                     $knobAvgStdDev = 0;
-                    if ($knobNumStdDevs[$i] != 0) {
+                    if (isset($knobNumStdDevs[$i]) && $knobNumStdDevs[$i] != 0) {
                         $knobAvgStdDev = ($knobStdDevs[$i]/$knobNumStdDevs[$i]);
                     }
                     $avgKnobStdDevs []= $knobAvgStdDev;
 
                     $knobAvgAmt = 0;
-                    if ($knobNumStdDevs[$i] != 0) {
+                    if (isset($knobNumStdDevs[$i]) && $knobNumStdDevs[$i] != 0) {
                         $knobAvgAmt = ($knobAmts[$i]/$knobNumStdDevs[$i]);
                     }
                     $knobAvgs []= $knobAvgAmt;
