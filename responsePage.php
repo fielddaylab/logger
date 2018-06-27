@@ -59,17 +59,17 @@ function getSessionsAndTimes($gameID, $db) {
         die('{ "errMessage": "Error running query." }');
     }
     // Bind variables to the results
-    if (!$stmt->bind_result($sessions, $time)) {
+    if (!$stmt->bind_result($session, $time)) {
         http_response_code(500);
         die('{ "errMessage": "Failed to bind to results." }');
     }
     // Fetch and display the results
     while($stmt->fetch()) {
-        $resultsArray[] = $sessions;
+        $sessions[] = $session;
         $times[] = $time;
     }
     $stmt->close();
-    return array("sessions"=>$resultsArray, "times"=>$times);
+    return array("sessions"=>$sessions, "times"=>$times);
 }
 
 function getQuestions($gameID, $sessionID, $db) {
@@ -179,44 +179,42 @@ if (!isset($_GET['minMoves']) && !isset($_GET['minQuestions']) && !isset($_GET['
         // Return number of questions and number correct for a given game
         if (!isset($_GET['isAggregate']) && !isset($_GET['isBasicFeatures']) && !isset($_GET['level']) && isset($_GET['gameID'])) {
             $gameID = $_GET['gameID'];
-            $query1 = "SELECT event_data_complex, session_id FROM log WHERE app_id=? AND event_custom=? ORDER BY session_id;";
+            $query = "SELECT event_data_complex, session_id FROM log WHERE app_id=? AND event_custom=? ORDER BY session_id;";
             $paramArray = array($gameID, 3);
-            $stmt1 = queryMultiParam($db, $query1, "si", $paramArray);
-            if($stmt1 === NULL) {
+            $stmt = queryMultiParam($db, $query, "si", $paramArray);
+            if($stmt === NULL) {
                 http_response_code(500);
                 die('{ "errMessage": "Error running query." }');
             }
             // Bind variables to the results
-            if (!$stmt1->bind_result($dataComplex, $sessionID)) {
+            if (!$stmt->bind_result($dataComplex, $sessionID)) {
                 http_response_code(500);
                 die('{ "errMessage": "Failed to bind to results." }');
             }
             // Fetch and display the results
-            while($stmt1->fetch()) {
+            while($stmt->fetch()) {
                 $data[] = $dataComplex;
                 $sessionIDs[] = $sessionID;
             }
             $totalNumCorrect = 0;
-            $totalNumQuestions = count($data);
+            $totalNumQuestions = 0;
             $numSessions = count(array_unique($sessionIDs));
+            $arrayValues = array_count_values($sessionIDs);
             for ($i = 0; $i < $numSessions; $i++) {
                 $numCorrect = 0;
-                $numQuestions = array_count_values($sessionIDs)[$sessionID];
+                $numQuestions = $arrayValues[$sessionIDs[$i]];
                 for ($j = 0; $j < $numQuestions; $j++) {
-                    $jsonData = json_decode($data[$index], true);
+                    $jsonData = json_decode($data[$i*$numQuestions+$j], true);
                     if ($jsonData["answer"] === $jsonData["answered"]) {
                         $numCorrect++;
-                        $totalNumCorrect++;
                     }
                 }
+                $totalNumCorrect += $numCorrect;
+                $totalNumQuestions += $numQuestions;
             }
-            ?>
-            {
-                "totalNumCorrect": <?=json_encode($totalNumCorrect)?>,
-                "totalNumQuestions": <?=json_encode($totalNumQuestions)?>
-            }
-            <?php
-            $stmt1->close();
+            $stmt->close();
+            $output = array("totalNumCorrect"=>$totalNumCorrect, "totalNumQuestions"=>$totalNumQuestions);
+            echo json_encode($output);
         } else
     
         // Return basic information
