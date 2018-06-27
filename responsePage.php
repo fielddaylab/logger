@@ -101,6 +101,52 @@ function getQuestions($gameID, $sessionID, $db) {
     return array("numCorrect"=>$numCorrect, "numQuestions"=>$numQuestions);
 }
 
+function getGraphData($gameID, $sessionID, $level, $db) {
+    $query = "SELECT event_data_complex, client_time FROM log WHERE app_id=? AND session_id=? AND level=? AND (event_custom=? OR event_custom=?);";
+    $paramArray = array($gameID, $sessionID, $level, 1, 2);
+    $stmt = queryMultiParam($db, $query, "ssiii", $paramArray);
+    if($stmt === NULL) {
+        http_response_code(500);
+        die('{ "errMessage": "Error running query." }');
+    }
+    // Bind variables to the results
+    if (!$stmt->bind_result($singleData, $singleTime)) {
+        http_response_code(500);
+        die('{ "errMessage": "Failed to bind to results." }');
+    }
+    // Fetch and display the results
+    while($stmt->fetch()) {
+        $times[] = $singleTime;
+        $eventData[] = $singleData;
+    }
+    $stmt->close();
+    return array("times"=>$times, "event_data"=>$eventData);
+}
+
+function getBasicInfo($gameID, $sessionID, $db) {
+    $query = "SELECT event_data_complex, client_time, level, event FROM log WHERE app_id=? AND session_id=?;";
+    $paramArray = array($gameID, $sessionID);
+    $stmt = queryMultiParam($db, $query, "ss", $paramArray);
+    if($stmt === NULL) {
+        http_response_code(500);
+        die('{ "errMessage": "Error running query." }');
+    }
+    // Bind variables to the results
+    if (!$stmt->bind_result($singleData, $singleTime, $singleLevel, $singleEvent)) {
+        http_response_code(500);
+        die('{ "errMessage": "Failed to bind to results." }');
+    }
+    // Fetch and display the results
+    while($stmt->fetch()) {
+        $times[] = $singleTime;
+        $eventData[] = $singleData;
+        $levels[] = $singleLevel;
+        $events[] = $singleEvent;
+    }
+    $stmt->close();
+    return array("times"=>$times, "event_data"=>$eventData, "levels"=>$levels, "events"=>$events);
+}
+
 if (!isset($_GET['minMoves']) && !isset($_GET['minQuestions']) && !isset($_GET['minLevels'])) {
     if (!isset($_GET['isAll'])) {
         // Return number of sessions for a given game and return those session ids
@@ -120,74 +166,18 @@ if (!isset($_GET['minMoves']) && !isset($_GET['minQuestions']) && !isset($_GET['
     
         // Return graphing data
         if (!isset($_GET['isBasicFeatures']) && isset($_GET['gameID']) && isset($_GET['sessionID']) && isset($_GET['level'])) {
-            $level = $_GET['level'];
-            $gameID = $_GET['gameID'];
-            $sessionID = $_GET['sessionID'];
-    
-            $query4 = "SELECT event_data_complex, client_time FROM log WHERE app_id=? AND session_id=? AND level=? AND (event_custom=? OR event_custom=?);";
-            $paramArray = array($gameID, $sessionID, $level, 1, 2);
-            $stmt4 = queryMultiParam($db, $query4, "ssiii", $paramArray);
-            if($stmt4 === NULL) {
-                http_response_code(500);
-                die('{ "errMessage": "Error running query." }');
-            }
-            // Bind variables to the results
-            if (!$stmt4->bind_result($singleData, $singleTime)) {
-                http_response_code(500);
-                die('{ "errMessage": "Failed to bind to results." }');
-            }
-            // Fetch and display the results
-            while($stmt4->fetch()) {
-                $times[] = $singleTime;
-                $eventData[] = $singleData;
-            }
-            ?>
-            {
-                "times": <?=json_encode($times)?>,
-                "event_data": <?=json_encode($eventData)?>
-            }
-            <?php
-            $stmt4->close();
+            $data = getGraphData($_GET['gameID'], $_GET['sessionID'], $_GET['level'], $db);
+            echo json_encode($data);
         } else
     
         // Return basic information
         if (isset($_GET['isBasicFeatures']) && isset($_GET['gameID']) && isset($_GET['sessionID'])) {
-            $level = $_GET['level'];
-            $gameID = $_GET['gameID'];
-            $sessionID = $_GET['sessionID'];
-    
-            $query = "SELECT event_data_complex, client_time, level, event FROM log WHERE app_id=? AND session_id=?;";
-            $paramArray = array($gameID, $sessionID);
-            $stmt = queryMultiParam($db, $query, "ss", $paramArray);
-            if($stmt === NULL) {
-                http_response_code(500);
-                die('{ "errMessage": "Error running query." }');
-            }
-            // Bind variables to the results
-            if (!$stmt->bind_result($singleData, $singleTime, $singleLevel, $singleEvent)) {
-                http_response_code(500);
-                die('{ "errMessage": "Failed to bind to results." }');
-            }
-            // Fetch and display the results
-            while($stmt->fetch()) {
-                $times[] = $singleTime;
-                $eventData[] = $singleData;
-                $levels[] = $singleLevel;
-                $events[] = $singleEvent;
-            }
-            ?>
-            {
-                "times": <?=json_encode($times)?>,
-                "event_data": <?=json_encode($eventData)?>,
-                "levels": <?=json_encode($levels)?>,
-                "events": <?=json_encode($events)?>
-            }
-            <?php
-            $stmt->close();
+            $data = getBasicInfo($_GET['gameID'], $_GET['sessionID'], $db);
+            echo json_encode($data);
         }
     } else { // The same functions as above but for all sessions
         // Return number of questions and number correct for a given game
-        if (!isset($_GET['isAggregate']) && isset($_GET['isAll']) && !isset($_GET['isBasicFeatures']) && !isset($_GET['level']) && isset($_GET['gameID'])) {
+        if (!isset($_GET['isAggregate']) && !isset($_GET['isBasicFeatures']) && !isset($_GET['level']) && isset($_GET['gameID'])) {
             $gameID = $_GET['gameID'];
             $query1 = "SELECT event_data_complex, session_id FROM log WHERE app_id=? AND event_custom=? ORDER BY session_id;";
             $paramArray = array($gameID, 3);
