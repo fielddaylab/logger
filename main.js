@@ -276,7 +276,7 @@ $(document).ready((event) => {
                         }
                     }
                     for (let i = 0; i < indicesToSplice; i++) {
-                        for (let j = indicesToSplice[i].length-1; j > 0; j--) {
+                        for (let j = indicesToSplice[i].length-1; j >= 0; j--) {
                             numMovesPerChallenge[i].splice(indicesToSplice[i, j], 1)
                         }
                     }

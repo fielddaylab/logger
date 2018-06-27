@@ -68,7 +68,7 @@ function simpleQueryParam($db, $query, $ptype, &$param) {
   return $stmt;
 }
 
-function queryMultiParam($db, $query, $ptype, &$params) {
+function queryMultiParam($db, $query, $ptypes, &$params) {
     // Prepare the query
     if(!($stmt = $db->prepare($query))) {
       http_response_code(500);
@@ -76,12 +76,12 @@ function queryMultiParam($db, $query, $ptype, &$params) {
       return null;
     }
 
-    $paramsArray[] = &$ptype;
-    for ($i = 0; $i < count($params); $i++) {
-      $paramsArray[] = $params[$i];
-    }
     // Bind input params
-    call_user_func_array(array($stmt, 'bind_param'), $paramsArray);
+    if (!$stmt->bind_param($ptypes, ...$params)) {
+      http_response_code(500);
+      echo '{ "errMessage": "Query param binding failed: '.$db->error.'" }';
+      return null;
+    }
   
     // Execute query
     if(!$stmt->execute()) {

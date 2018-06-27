@@ -9,114 +9,113 @@ if ($db->connect_error) {
     http_response_code(500);
     die('{ "errMessage": "Failed to Connect to DB." }');
 }
+
+function getNumSessions($gameID, $db) {
+    $query = "SELECT COUNT(DISTINCT session_id) FROM log WHERE app_id=?;";
+    $stmt = simpleQueryParam($db, $query, "s", $gameID);
+    if($stmt === NULL) {
+        http_response_code(500);
+        die('{ "errMessage": "Error running query." }');
+    }
+    // Bind variables to the results
+    if (!$stmt->bind_result($numSessions)) {
+        http_response_code(500);
+        die('{ "errMessage": "Failed to bind to results." }');
+    }
+    // Fetch and display the results
+    if(!$stmt->fetch()) {
+        http_response_code(404);
+        die('{ "errMessage": "Resource not found." }');                
+    }
+    $stmt->close();
+    return $numSessions;
+}
+
+function getLevels($gameID, $db) {
+    $query = "SELECT DISTINCT level FROM log WHERE app_id=? ORDER BY level ASC;";
+    $stmt = simpleQueryParam($db, $query, "s", $gameID);
+    if($stmt === NULL) {
+        http_response_code(500);
+        die('{ "errMessage": "Error running query." }');
+    }
+    // Bind variables to the results
+    if (!$stmt->bind_result($level)) {
+        http_response_code(500);
+        die('{ "errMessage": "Failed to bind to results." }');
+    }
+    // Fetch and display the results
+    while($stmt->fetch()) {
+        $levels[] = $level;
+    }
+    $stmt->close();
+    return $levels;
+}
+
+function getSessionsAndTimes($gameID, $db) {
+    $query = "SELECT DISTINCT q.session_id, q.cl_time FROM (SELECT session_id, MIN(client_time) as cl_time FROM log WHERE app_id=? GROUP BY session_id) q ORDER BY q.cl_time;";
+    $stmt = simpleQueryParam($db, $query, "s", $gameID);
+    if($stmt === NULL) {
+        http_response_code(500);
+        die('{ "errMessage": "Error running query." }');
+    }
+    // Bind variables to the results
+    if (!$stmt->bind_result($sessions, $time)) {
+        http_response_code(500);
+        die('{ "errMessage": "Failed to bind to results." }');
+    }
+    // Fetch and display the results
+    while($stmt->fetch()) {
+        $resultsArray[] = $sessions;
+        $times[] = $time;
+    }
+    $stmt->close();
+    return array("sessions"=>$resultsArray, "times"=>$times);
+}
+
+function getQuestions($gameID, $sessionID, $db) {
+    $query = "SELECT event_data_complex FROM log WHERE app_id=? AND session_id=? AND event_custom=?;";
+    $paramArray = array($gameID, $sessionID, 3);
+    $stmt = queryMultiParam($db, $query, "ssi", $paramArray);
+    if($stmt === NULL) {
+        http_response_code(500);
+        die('{ "errMessage": "Error running query." }');
+    }
+    // Bind variables to the results
+    if (!$stmt->bind_result($dataComplex)) {
+        http_response_code(500);
+        die('{ "errMessage": "Failed to bind to results." }');
+    }
+    // Fetch and display the results
+    while($stmt->fetch()) {
+        $data[] = $dataComplex;
+    }
+    $numCorrect = 0;
+    $numQuestions = count($data);
+    for ($i = 0; $i < $numQuestions; $i++) {
+        $jsonData = json_decode($data[$i], true);
+        if ($jsonData["answer"] === $jsonData["answered"]) {
+            $numCorrect++;
+        }
+    }
+    $stmt->close();
+    return array("numCorrect"=>$numCorrect, "numQuestions"=>$numQuestions);
+}
+
 if (!isset($_GET['minMoves']) && !isset($_GET['minQuestions']) && !isset($_GET['minLevels'])) {
     if (!isset($_GET['isAll'])) {
         // Return number of sessions for a given game and return those session ids
         if (!isset($_GET['isBasicFeatures']) && !isset($_GET['sessionID']) && isset($_GET['gameID'])) {
-            $gameID = $_GET['gameID'];
-            $query = "SELECT COUNT(DISTINCT session_id) FROM log WHERE app_id=?;";
-            $stmt = simpleQueryParam($db, $query, "s", $gameID);
-            if($stmt === NULL) {
-                http_response_code(500);
-                die('{ "errMessage": "Error running query." }');
-            }
-            // Bind variables to the results
-            if (!$stmt->bind_result($numSessions)) {
-                http_response_code(500);
-                die('{ "errMessage": "Failed to bind to results." }');
-            }
-            // Fetch and display the results
-            if($stmt->fetch()) {
-            ?>
-                {
-                    "numSessions": <?=json_encode($numSessions)?>,
-            <?php
-            } else {
-                http_response_code(404);
-                die('{ "errMessage": "Resource not found." }');                
-            }
-    
-            $query2 = "SELECT session_id, client_time FROM log WHERE app_id=? GROUP BY client_time;";
-            $stmt2 = simpleQueryParam($db, $query2, "s", $gameID);
-            if($stmt2 === NULL) {
-                http_response_code(500);
-                die('{ "errMessage": "Error running query." }');
-            }
-            // Bind variables to the results
-            if (!$stmt2->bind_result($sessions, $time)) {
-                http_response_code(500);
-                die('{ "errMessage": "Failed to bind to results." }');
-            }
-            // Fetch and display the results
-            while($stmt2->fetch()) {
-                $resultsArray[] = $sessions;
-                $times[] = $time;
-            }
-            ?>
-                "sessions": <?=json_encode($resultsArray)?>,
-                "times": <?=json_encode($times)?>,
-            <?php
-    
-            $query3 = "SELECT DISTINCT level FROM log WHERE app_id=?;";
-            $stmt3 = simpleQueryParam($db, $query3, "s", $gameID);
-            if($stmt3 === NULL) {
-                http_response_code(500);
-                die('{ "errMessage": "Error running query." }');
-            }
-            // Bind variables to the results
-            if (!$stmt3->bind_result($level)) {
-                http_response_code(500);
-                die('{ "errMessage": "Failed to bind to results." }');
-            }
-            // Fetch and display the results
-            while($stmt3->fetch()) {
-                $levels[] = $level;
-            }
-            ?>
-                "levels": <?=json_encode($levels)?>
-            }
-            <?php
-            $stmt4->close();
-            $stmt->close();
-            $stmt2->close();
-            $stmt3->close();
+            $numSessions = getNumSessions($_GET['gameID'], $db);
+            $levels = getLevels($_GET['gameID'], $db);
+            $sessionsAndTimes = getSessionsAndTimes($_GET['gameID'], $db);
+            $data = array("numSessions"=>$numSessions, "levels"=>$levels, "sessions"=>$sessionsAndTimes["sessions"], "times"=>$sessionsAndTimes["times"]);
+            echo json_encode($data);
         } else
     
         // Return number of questions and number correct for a given session id and game
         if (!isset($_GET['isBasicFeatures']) && !isset($_GET['level']) && isset($_GET['sessionID']) && isset($_GET['gameID'])) {
-            $sessionID = $_GET['sessionID'];
-            $gameID = $_GET['gameID'];
-            $query1 = "SELECT event_data_complex FROM log WHERE app_id=? AND session_id=? AND event_custom=?;";
-            $paramArray = array($gameID, $sessionID, 3);
-            $stmt1 = queryMultiParam($db, $query1, "ssi", $paramArray);
-            if($stmt1 === NULL) {
-                http_response_code(500);
-                die('{ "errMessage": "Error running query." }');
-            }
-            // Bind variables to the results
-            if (!$stmt1->bind_result($dataComplex)) {
-                http_response_code(500);
-                die('{ "errMessage": "Failed to bind to results." }');
-            }
-            // Fetch and display the results
-            while($stmt1->fetch()) {
-                $data[] = $dataComplex;
-            }
-            $numCorrect = 0;
-            $numQuestions = count($data);
-            for ($i = 0; $i < count($data); $i++) {
-                $jsonData = json_decode($data[$i], true);
-                if ($jsonData["answer"] === $jsonData["answered"]) {
-                    $numCorrect++;
-                }
-            }
-            ?>
-            {
-                "numCorrect": <?=json_encode($numCorrect)?>,
-                "numQuestions": <?=json_encode($numQuestions)?>
-            }
-            <?php
-            $stmt1->close();
+            $data = getQuestions($_GET['gameID'], $_GET['sessionID'], $db);
+            echo json_encode($data);
         } else
     
         // Return graphing data
@@ -212,7 +211,7 @@ if (!isset($_GET['minMoves']) && !isset($_GET['minQuestions']) && !isset($_GET['
             $numSessions = count(array_unique($sessionIDs));
             for ($i = 0; $i < $numSessions; $i++) {
                 $numCorrect = 0;
-                $numQuestions = count(array_count_values($sessionIDs)[$sessionID]);
+                $numQuestions = array_count_values($sessionIDs)[$sessionID];
                 for ($j = 0; $j < $numQuestions; $j++) {
                     $jsonData = json_decode($data[$index], true);
                     if ($jsonData["answer"] === $jsonData["answered"]) {
@@ -286,6 +285,8 @@ if (!isset($_GET['minMoves']) && !isset($_GET['minQuestions']) && !isset($_GET['
                 $numMovesPerChallengeAll[$i] = array();
             }
             $numEventsAllSessions = array_count_values($sessionIDs);
+            $totalTimes = array();
+            $totalMovess = array();
             for ($i = 0; $i < $numSessions; $i++) {
                 $numEventsThisSession = $numEventsAllSessions[$uniqueIDs[$i]];
                 $dataObj = array("data"=>$eventData[$uniqueIDs[$i]], "times"=>$times[$uniqueIDs[$i]], "events"=>$events[$uniqueIDs[$i]], "levels"=>$levels[$uniqueIDs[$i]]);
@@ -324,9 +325,9 @@ if (!isset($_GET['minMoves']) && !isset($_GET['minQuestions']) && !isset($_GET['
                 for ($j = 0; $j < $numEventsThisSession; $j++) {
                     if (!isset($endIndices[$dataObj["levels"][$j]])) {
                         $dataJson = json_decode($dataObj["data"][$j], true);
-                        if (!isset($dataJson)) {
+                        if (isset($dataJson)) {
                             if ($dataJson["event_custom"] !== "SLIDER_MOVE_RELEASE" && $dataJson["event_custom"] !== "ARROW_MOVE_RELEASE") {
-                                $indicesToSplit[$dataObj["levels"][$j]][] = $j;
+                                $indicesToSplice[$dataObj["levels"][$j]][] = $j;
                             }
                         }
                         if ($dataObj["events"][$j] === "BEGIN") {
@@ -352,8 +353,8 @@ if (!isset($_GET['minMoves']) && !isset($_GET['minQuestions']) && !isset($_GET['
                     }
                 }
                 for ($j = 0; $j < count($indicesToSplice); $j++) {
-                    for ($k = count($indicesToSplice[$j])-1; $k > 0; $k--) {
-                        array_splice($numMovesPerChallenge[$j], $indicestoSplice[$j][$k], 1);
+                    for ($k = count($indicesToSplice[$j])-1; $k >= 0; $k--) {
+                        array_splice($numMovesPerChallenge[$j], $indicesToSplice[$j][$k], 1);
                     }
                 }
                 foreach ($startIndices as $j => $value) {
@@ -403,19 +404,23 @@ if (!isset($_GET['minMoves']) && !isset($_GET['minQuestions']) && !isset($_GET['
                 $knobSumTotalAll += $knobSumTotal;
 
                 foreach ($numMovesPerChallenge as $k => $numMoves) {
-                    $numMovesPerChallengeAll[$k][] = $numMoves;
+                    $numMovesPerChallengeAll[$k][] = count($numMoves);
                 }
 
                 foreach ($moveTypeChangesPerLevel as $k => $typeChanges) {
                     $moveTypeChangesPerLevelAll[$k][] = $typeChanges;
                 }
+                $totalTimes[$i] = $totalTime;
+                $totalMovess[$i] = $totalMoves;
             }
             ?>
             {
                 "times": <?=json_encode($levelTimesAll)?>,
                 "numMoves": <?=json_encode($numMovesPerChallengeAll)?>,
                 "moveTypeChanges": <?=json_encode($moveTypeChangesPerLevelAll)?>,
-                "sessionIDs": <?=json_encode($uniqueIDs)?>
+                "sessionIDs": <?=json_encode($uniqueIDs)?>,
+                "totalTimes": <?=json_encode($totalTimes)?>,
+                "totalMoves": <?=json_encode($totalMovess)?>
             }
             <?php
             $stmt->close();
