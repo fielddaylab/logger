@@ -152,7 +152,7 @@ $(document).ready((event) => {
         if (event) event.preventDefault()
         on()
         $.get('responsePage.php', { 'gameID': $('#gameSelect').val(), 'isAll': true }, (data, status, jqXHR) => {
-            $('#scoreDisplayAll').html(data.totalNumCorrect + ' / ' + data.totalNumQuestions + ' (' + (100*data.totalNumCorrect/data.totalNumQuestions).toFixed(2) + '%)')
+            $('#scoreDisplayAll').html(data.totalNumCorrect + ' / ' + data.totalNumQuestions + ' (' + (100*data.totalNumCorrect/data.totalNumQuestions).toFixed(1) + '%)')
             if ($('#gameSelect').val() === "WAVES") {
                 getWavesDataAll()
             }
@@ -187,7 +187,6 @@ $(document).ready((event) => {
         on()
         $.get('responsePage.php', { 'isBasicFeatures': true, 'gameID': $('#gameSelect').val(), 'sessionID': $('#sessionSelect').val()}, (data, status, jqXHR) => {
             if ($('#gameSelect').val() === "WAVES") {
-                let dataObj = data
                 fastClear($('#basicFeatures'))
 
                 let timesList = $('<ul></ul>').attr('id', 'times').addClass('collapse').css('font-size', '18px')
@@ -215,46 +214,46 @@ $(document).ready((event) => {
                     .on('hide.bs.collapse', () => {$('#amtsTotalCollapseBtn').html('[+]')})
                     .on('show.bs.collapse', () => {$('#amtsTotalCollapseBtn').html('[−]')}))
 
-                for (let i = 0; i < dataObj.levelTimes.length; i++) {
+                for (let i = 0; i < data.levelTimes.length; i++) {
                     // append times
-                    $('#times').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${dataObj.levelTimes[i]} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                    $('#times').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.levelTimes[i]} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
 
                     // append moves
-                    $('#moves').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${dataObj.numMovesPerChallenge[i]}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                    $('#moves').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.numMovesPerChallenge[i]}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
                     
                     // append types
-                    $('#types').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${dataObj.moveTypeChangesPerLevel[i]}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                    $('#types').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.moveTypeChangesPerLevel[i]}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
 
                     // append std devs
-                    $('#stdDevs').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${dataObj.knobStdDevs[i].toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                    $('#stdDevs').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.knobStdDevs[i].toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
 
                     // append knob amounts
-                    $('#amts').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${dataObj.knobAvgs[i].toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                    $('#amts').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.knobAvgs[i].toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
 
                     // append knob total amounts
-                    $('#amtsTotal').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${(dataObj.knobTotalAmts[i]).toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                    $('#amtsTotal').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${(data.knobTotalAmts[i]).toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
                 }
 
                 $('#times').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
-                $('#times').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${dataObj.totalTime} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-                $('#times').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${dataObj.avgTime.toFixed(2)} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                $('#times').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.totalTime} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                $('#times').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.avgTime.toFixed(1)} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
 
                 $('#moves').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
-                $('#moves').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${dataObj.totalMoves}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-                $('#moves').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${dataObj.avgMoves.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                $('#moves').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.totalMoves}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                $('#moves').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.avgMoves.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
 
                 $('#types').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
-                $('#types').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${dataObj.moveTypeChangesTotal}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-                $('#types').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${dataObj.moveTypeChangesAvg.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                $('#types').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.moveTypeChangesTotal}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                $('#types').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.moveTypeChangesAvg.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
 
                 $('#amts').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
-                $('#amts').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${dataObj.knobAmtsTotalAvg.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-                $('#amts').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${dataObj.knobAmtsAvgAvg.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                $('#amts').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.knobAmtsTotalAvg.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                $('#amts').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.knobAmtsAvgAvg.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
 
                 $('#amtsTotal').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
-                $('#amtsTotal').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${dataObj.knobSumTotal.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-                $('#amtsTotal').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${dataObj.knobTotalAvg.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-                //drawWavesGoals(dataObj, numMovesPerChallenge[$('#levelSelect').val()])
+                $('#amtsTotal').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.knobSumTotal.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                $('#amtsTotal').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.knobTotalAvg.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                drawWavesGoals(data)
             }
             off()
             hideError()
@@ -266,98 +265,93 @@ $(document).ready((event) => {
 
     function getWavesDataAll() {
         on()
-        fastClear($('#basicFeaturesAll'))
-        let timesList = $('<ul></ul>').attr('id', 'timesAll').addClass('collapse').css('font-size', '18px')
-        $('#basicFeaturesAll').append($(`<span><li>Times: <a href='#timesAll' data-toggle='collapse' id='timesCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(timesList)
-            .on('hide.bs.collapse', () => {$('#timesCollapseBtnAll').html('[+]')})
-            .on('show.bs.collapse', () => {$('#timesCollapseBtnAll').html('[−]')}))
-        let movesList = $('<ul></ul>').attr('id', 'movesAll').addClass('collapse').css({'font-size':'18px'})
-        $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Number of moves: <a href='#movesAll' data-toggle='collapse' id='movesCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(movesList)
-            .on('hide.bs.collapse', () => {$('#movesCollapseBtnAll').html('[+]')})
-            .on('show.bs.collapse', () => {$('#movesCollapseBtnAll').html('[−]')}))
-        let typesList = $('<ul></ul>').attr('id', 'typesAll').addClass('collapse').css({'font-size':'18px'})
-        $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Move type changes: <a href='#typesAll' data-toggle='collapse' id='typesCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(typesList)
-            .on('hide.bs.collapse', () => {$('#typesCollapseBtnAll').html('[+]')})
-            .on('show.bs.collapse', () => {$('#typesCollapseBtnAll').html('[−]')}))
-        let stdDevList = $('<ul></ul>').attr('id', 'stdDevsAll').addClass('collapse').css({'font-size':'18px'})
-        $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Knob std devs (avg): <a href='#stdDevsAll' data-toggle='collapse' id='stdDevsCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(stdDevList)
-            .on('hide.bs.collapse', () => {$('#stdDevsCollapseBtnAll').html('[+]')})
-            .on('show.bs.collapse', () => {$('#stdDevsCollapseBtnAll').html('[−]')}))
-        let amtsList = $('<ul></ul>').attr('id', 'amtsAll').addClass('collapse').css({'font-size':'18px'})
-        $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Knob max-min (avg): <a href='#amtsAll' data-toggle='collapse' id='amtsCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(amtsList)
-            .on('hide.bs.collapse', () => {$('#amtsCollapseBtnAll').html('[+]')})
-            .on('show.bs.collapse', () => {$('#amtsCollapseBtnAll').html('[−]')}))
-        let amtsTotalList = $('<ul></ul>').attr('id', 'amtsTotalAll').addClass('collapse').css({'font-size':'18px'})
-        $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Knob max-min (total): <a href='#amtsTotalAll' data-toggle='collapse' id='amtsTotalCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(amtsTotalList)
-            .on('hide.bs.collapse', () => {$('#amtsTotalCollapseBtnAll').html('[+]')})
-            .on('show.bs.collapse', () => {$('#amtsTotalCollapseBtnAll').html('[−]')}))
+        $.get('responsePage.php', { 'isBasicFeatures': true, 'gameID': $('#gameSelect').val(), 'isAll': true, 'isAggregate': true }, (data, status, jqXHR) => {
+            fastClear($('#basicFeaturesAll'))
+            let timesList = $('<ul></ul>').attr('id', 'timesAll').addClass('collapse').css('font-size', '18px')
+            $('#basicFeaturesAll').append($(`<span><li>Times: <a href='#timesAll' data-toggle='collapse' id='timesCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(timesList)
+                .on('hide.bs.collapse', () => {$('#timesCollapseBtnAll').html('[+]')})
+                .on('show.bs.collapse', () => {$('#timesCollapseBtnAll').html('[−]')}))
+            let movesList = $('<ul></ul>').attr('id', 'movesAll').addClass('collapse').css({'font-size':'18px'})
+            $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Number of moves: <a href='#movesAll' data-toggle='collapse' id='movesCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(movesList)
+                .on('hide.bs.collapse', () => {$('#movesCollapseBtnAll').html('[+]')})
+                .on('show.bs.collapse', () => {$('#movesCollapseBtnAll').html('[−]')}))
+            let typesList = $('<ul></ul>').attr('id', 'typesAll').addClass('collapse').css({'font-size':'18px'})
+            $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Move type changes: <a href='#typesAll' data-toggle='collapse' id='typesCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(typesList)
+                .on('hide.bs.collapse', () => {$('#typesCollapseBtnAll').html('[+]')})
+                .on('show.bs.collapse', () => {$('#typesCollapseBtnAll').html('[−]')}))
+            let stdDevList = $('<ul></ul>').attr('id', 'stdDevsAll').addClass('collapse').css({'font-size':'18px'})
+            $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Knob std devs (avg): <a href='#stdDevsAll' data-toggle='collapse' id='stdDevsCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(stdDevList)
+                .on('hide.bs.collapse', () => {$('#stdDevsCollapseBtnAll').html('[+]')})
+                .on('show.bs.collapse', () => {$('#stdDevsCollapseBtnAll').html('[−]')}))
+            let amtsList = $('<ul></ul>').attr('id', 'amtsAll').addClass('collapse').css({'font-size':'18px'})
+            $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Knob max-min (avg): <a href='#amtsAll' data-toggle='collapse' id='amtsCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(amtsList)
+                .on('hide.bs.collapse', () => {$('#amtsCollapseBtnAll').html('[+]')})
+                .on('show.bs.collapse', () => {$('#amtsCollapseBtnAll').html('[−]')}))
+            let amtsTotalList = $('<ul></ul>').attr('id', 'amtsTotalAll').addClass('collapse').css({'font-size':'18px'})
+            $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Knob max-min (total): <a href='#amtsTotalAll' data-toggle='collapse' id='amtsTotalCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(amtsTotalList)
+                .on('hide.bs.collapse', () => {$('#amtsTotalCollapseBtnAll').html('[+]')})
+                .on('show.bs.collapse', () => {$('#amtsTotalCollapseBtnAll').html('[−]')}))
 
-        // aggregate average variables
-        let levelTimesAll = new Array($('#levelSelect option').size())
-        let levelTimesAvgAll = new Array($('#levelSelect option').size())
-        let avgTimeAll
-        let totalTimeAll = 0
-        let numMovesPerChallengeAll = new Array($('#levelSelect option').size())
-        let totalMovesAll = 0
-        let avgMovesAll
-        let moveTypeChangesPerLevelAll = new Array($('#levelSelect option').size())
-        let moveTypeChangesTotalAll = 0
-        let moveTypeChangesAvgAll = new Array($('#levelSelect option').size())
-        let knobStdDevsAll = new Array($('#levelSelect option').size())
-        let knobNumStdDevsAll = new Array($('#levelSelect option').size())
-        let knobAmtsTotalAll = 0
-        let knobAmtsAvgAll
-        let knobSumTotalAll = 0
-        let knobSumAvgAll
-        for (let i = 0; i < $('#levelSelect option').size(); i++) {
-            levelTimesAll[i] = []
-            moveTypeChangesPerLevelAll[i] = []
-            numMovesPerChallengeAll[i] = []
-        }
-        let promises = []
-        let results = []
-        off()
-        for (let i = 0; i < $('#levelSelect option').size(); i++) {
-            // append times
-            $('#timesAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${levelTimesAvgAll[i]} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+            let averageTimes = [], averageMoves = [], averageTypeChanges = []
 
-            // append moves
-            $('#movesAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${numMovesPerChallengeAll[i]}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-            
-            // append types
-            $('#typesAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${moveTypeChangesAvgAll[i]}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-        }
+            for (let i = 0; i < data.times.length; i++) {
+                // append times
+                averageTimes[i] = average(data.times[i])
+                $('#timesAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${averageTimes[i].toFixed(1)} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
 
-        $('#timesAll').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
-        $('#timesAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${totalTimeAll} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-        //$('#timesAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${avgTimeAll.toFixed(2)} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                // append moves
+                averageMoves[i] = average(data.numMoves[i])
+                $('#movesAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${averageMoves[i].toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                
+                // append types
+                averageTypeChanges[i] = average(data.moveTypeChanges[i])
+                $('#typesAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${averageTypeChanges[i].toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
 
-        $('#movesAll').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
-        $('#movesAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${totalMovesAll}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-        //$('#movesAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${avgMovesAll.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                // append std devs
+                //$('#stdDevsAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${average(data.knobStdDevs[i]).toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
 
-        $('#typesAll').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
-        $('#typesAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${moveTypeChangesTotalAll}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-        //$('#typesAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${moveTypeChangesAvgAll.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                // append knob amounts
+                //$('#amtsAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${average(data.knobAvgs[i]).toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
 
-        $('#amtsAll').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
-        $('#amtsAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${knobAmtsTotalAll.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-        //$('#amtsAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${knobAmtsAvgAll.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                // append knob total amounts
+                //$('#amtsTotalAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${average(data.knobTotalAmts[i]).toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+            }
 
-        $('#amtsTotalAll').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
-        $('#amtsTotalAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${knobSumTotalAll.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-        //$('#amtsTotalAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${knobSumAvgAll.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+            $('#timesAll').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
+            $('#timesAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${sum(averageTimes).toFixed(1)} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+            //$('#timesAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.avgTime.toFixed(1)} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
 
+            $('#movesAll').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
+            $('#movesAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${sum(averageMoves).toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+            //$('#movesAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.avgMoves.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
 
-        //$('#stdDevsAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${knobAvgStdDevAll.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-        //$('#amtsAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${knobAvgAmtAll.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-        //$('#amtsTotalAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${(knobAmtsAll[i]).toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+            $('#typesAll').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
+            $('#typesAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${sum(averageTypeChanges).toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+            // $('#typesAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.moveTypeChangesAvg.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
 
-        //drawWavesGoalsAll(dataObj, numMovesPerChallenge[$('#levelSelect').val()])
+            // $('#amtsAll').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
+            // $('#amtsAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.knobAmtsTotalAvg.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+            // $('#amtsAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.knobAmtsAvgAvg.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+
+            // $('#amtsTotalAll').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
+            // $('#amtsTotalAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.knobSumTotal.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+            // $('#amtsTotalAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.knobTotalAvg.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+    
+            // $('#stdDevsAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${knobAvgStdDevAll.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+            // $('#amtsAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${knobAvgAmtAll.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+            // $('#amtsTotalAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${(knobAmtsAll[i]).toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+    
+            //drawWavesGoalsAll(dataObj, numMovesPerChallenge[$('#levelSelect').val()])
+        }, 'json').error((jqXHR, textStatus, errorThrown) => {
+            off()
+            showError(jqXHR.responseText)
+        })
     }
 
-    function drawWavesGoals(dataObj, numMovesPerChallenge) {
+    function drawWavesGoals(data) {
         // Goals stuff
+        let dataObj = data.dataObj
+        let numMovesPerChallenge = data.numMovesPerChallengeArray[$('#levelSelect').val()]
         $('#goalsDiv1').html('Goal 1: Completing the challenge')
         let distanceToGoal = []
         distanceToGoal = new Array(numMovesPerChallenge.length).fill(0)
@@ -428,13 +422,9 @@ $(document).ready((event) => {
         indicesToSplice = []
         let graph_min_x = -50
         let graph_max_x =  50
-        let graph_min_y = -50
         let graph_max_y =  50
-        let graph_min_offset = graph_min_x
         let graph_max_offset = graph_max_x
-        let graph_min_wavelength = 2
         let graph_max_wavelength = graph_max_x*2
-        let graph_min_amplitude = 0
         let graph_max_amplitude = graph_max_y*(3/5)
         let graph_default_offset = (graph_min_x+graph_max_x)/2
         let graph_default_wavelength = (2+(graph_max_x*2))/2
@@ -706,5 +696,21 @@ $(document).ready((event) => {
         let newSelectObj = selectObj.cloneNode(false)
         selectParentNode.replaceChild(newSelectObj, selectObj)
         return newSelectObj
+    }
+
+    function average(arr) {
+        let total = 0
+        for (let i = 0; i < arr.length; i++) {
+            total += arr[i]
+        }
+        return total / arr.length
+    }
+
+    function sum(arr) {
+        let total = 0
+        for (let i = 0; i < arr.length; i++) {
+            total += arr[i]
+        }
+        return total
     }
 })
