@@ -10,6 +10,24 @@ if ($db->connect_error) {
     die('{ "errMessage": "Failed to Connect to DB." }');
 }
 
+function average($arr) {
+    $total = 0;
+    $filtered = array_filter($arr, function ($value) { return $value != 0 && $value != "-"; });
+    foreach ($filtered as $value) {
+        $total += $value;
+    }
+    $length = count($filtered);
+    return ($length != 0) ? $total / $length : 0;
+}
+
+function sum($arr) {
+    $total = 0;
+    foreach ($arr as $value) {
+        $total += $value;
+    }
+    return $total;
+}
+
 function getNumSessions($gameID, $db) {
     $query = "SELECT COUNT(DISTINCT session_id) FROM log WHERE app_id=?;";
     $stmt = simpleQueryParam($db, $query, "s", $gameID);
@@ -200,6 +218,8 @@ function parseBasicInfo($data, $gameID, $db) {
                 $knobStdDevs[$i] = 0;
                 $knobNumStdDevs[$i] = 0;
                 $knobAmts[$i] = 0;
+                $knobAvgs[$i] = 0;
+                $avgKnobStdDevs[$i] = 0;
             }
 
             for ($i = 0; $i < count($dataObj["times"]); $i++) {
@@ -234,7 +254,7 @@ function parseBasicInfo($data, $gameID, $db) {
             
             foreach ($startIndices as $i=>$value) {
                 if (isset($startIndices[$i])) {
-                    $levelTime = -1;
+                    $levelTime = "-";
                     if (isset($dataObj["times"][$endIndices[$i]]) && isset($dataObj["times"][$startIndices[$i]])) {
                         $levelStartTime = new DateTime($dataObj["times"][$startIndices[$i]]);
                         $levelEndTime = new DateTime($dataObj["times"][$endIndices[$i]]);
@@ -248,7 +268,11 @@ function parseBasicInfo($data, $gameID, $db) {
                     if (isset($knobNumStdDevs[$i]) && $knobNumStdDevs[$i] != 0) {
                         $knobAmtsTotal += ($knobAmts[$i]/$knobNumStdDevs[$i]);
                     }
-                    if (isset($knobAmts[$i])) $knobSumTotal += $knobAmts[$i];
+
+                    if (isset($knobAmts[$i]) && $knobAmts[$i] != 0) {
+                        $knobSumTotal += $knobAmts[$i];
+                    } 
+
                     $knobAvgStdDev = 0;
                     if (isset($knobNumStdDevs[$i]) && $knobNumStdDevs[$i] != 0) {
                         $knobAvgStdDev = ($knobStdDevs[$i]/$knobNumStdDevs[$i]);
@@ -278,6 +302,34 @@ function parseBasicInfo($data, $gameID, $db) {
         "moveTypeChangesPerLevel"=>$moveTypeChangesPerLevel, "moveTypeChangesTotal"=>$moveTypeChangesTotal, "moveTypeChangesAvg"=>$moveTypeChangesAvg, "knobStdDevs"=>$avgKnobStdDevs,
         "knobNumStdDevs"=>$knobNumStdDevs, "knobAvgs"=>$knobAvgs, "knobAmtsTotalAvg"=>$knobAmtsTotal, "knobAmtsAvgAvg"=>$knobAmtsAvg, "knobTotalAmts"=>$knobAmts, "knobSumTotal"=>$knobSumTotal,
         "knobTotalAvg"=>$knobSumAvg, "numMovesPerChallengeArray"=>$numMovesPerChallenge, "dataObj"=>$dataObj);
+        /*
+         * The above values are
+         * levelTimes                -    array       - elements hold time per level for this session
+         * avgTime                   -    value       - average value of levelTimes
+         * totalTime                 -    value       - sum value of levelTimes
+         * 
+         * numMovesPerChallenge      -    array       - elements hold number of moves per level (NOT a list of indices at this point)
+         * totalMoves                -    value       - sum value of numMovesPerChallenge
+         * avgMoves                  -    value       - average value of numMovesPerChallenge
+         * 
+         * moveTypeChangesPerLevel   -    array       - elements hold number of times move type changed
+         * moveTypeChangesTotal      -    value       - sum value of moveTypeChangesPerLevel
+         * moveTypeChangesAvg        -    value       - average value of moveTypeChangesPerLevel 
+         * 
+         * knobStdDevs               -    array       - elements hold average std dev for moves in level
+         * knobNumStdDevs            -    array       - elements hold number of std devs in level
+         * 
+         * knobAvgs                  -    array       - elements hold average max-min for each level
+         * knobAmtsTotalAvg          -    value       - average value of knobAvgs
+         * knobAmtsAvgAvg            -    value       - average value of knobAvgs
+         * 
+         * knobTotalAmts             -    array       - elements hold total max-min for each level
+         * knobTotalAvg              -    value       - average value of knobTotalAmts
+         * knobSumTotal              -    value       - sum value of knobTotalAmts
+         * 
+         * numMovesPerChallengeArray -    array[][]   - original numMovesPerChallenge (list of indices of moves per level)
+         * dataObj                   -    object      - dataObj from old structure
+         */
     } else {
         return null;
     }
@@ -363,29 +415,53 @@ if (!isset($_GET['minMoves']) && !isset($_GET['minQuestions']) && !isset($_GET['
             $numLevels = count(getLevels($gameID, $db));
             $numSessions = count($sessionIDs);
 
-            $levelTimesAll = array();
-            $levelTimesAvgAll = array();
-            $avgTimeAll = 0;
-            $totalTimeAll = 0;
-            $numMovesPerChallengeAll = array();
-            $totalMovesAll = 0;
-            $totalMovess = array();
-            $avgMovesAll = 0;
+            // arrays of arrays (temp)
+            $levelTimesPerLevelAll = array();
+            $numMovesPerLevelAll = array();
             $moveTypeChangesPerLevelAll = array();
-            $moveTypeChangesTotalAll = 0;
-            $moveTypeChangesAvgAll = array();
-            $knobStdDevsAll = array();
-            $knobNumStdDevsAll = array();
-            $knobAvgsAll = array();
-            $knobAmtsTotalAll = 0;
-            $knobAmtsAvgAll = 0;
-            $knobSumTotalAll = 0;
-            $knobSumAvgAll = 0;
+            $knobStdDevsPerLevelAll = array();
+            $knobTotalAmtsPerLevelAll = array();
+            $knobAvgsPerLevelAll = array();
+
+            // arrays of totals of above arrays (temp)
+            $totalTimesPerLevelAll = array();
+            $totalMovesPerLevelArray = array();
+            $totalMoveTypeChangesPerLevelAll = array();
+            $totalStdDevsPerLevelAll = array();
+            $totalKnobTotalsPerLevelAll = array();
+            $totalKnobAvgsPerLevelAll = array();
+
+            // scalar totals of totals arrays (temp)
+            $totalTimeAll = 0;
+            $totalMovesAll = 0;
+            $totalMoveTypeChangesAll = 0;
+            $totalStdDevsAll = 0;
+            $totalKnobTotalsAll = 0;
+            $totalKnobAvgsAll = 0;
+
+            // arrays of averages per level (display)
+            $avgLevelTimesAll = array();
+            $avgMovesArray = array();
+            $avgMoveTypeChangesPerLevelAll = array();
+            $avgStdDevsPerLevelAll = array();
+            $avgKnobTotalsPerLevelAll = array();
+            $avgKnobAvgsPerLevelAll = array();
+
+            // scalar averages of averages arrays (display)
+            $avgTimeAll = 0;
+            $avgMovesAll = 0;
+            $avgMoveTypeChangesAll = 0;
+            $avgStdDevAll = 0;
+            $avgKnobTotalsAll = 0;
+            $avgKnobAvgsAll = 0;
+
             for ($i = 0; $i < $numLevels; $i++) {
-                $levelTimesAll[$i] = array();
+                $levelTimesPerLevelAll[$i] = array();
                 $moveTypeChangesPerLevelAll[$i] = array();
-                $numMovesPerChallengeAll[$i] = array();
-                $knobAvgsAll[$i] = 0;
+                $numMovesPerLevelAll[$i] = array();
+                $knobStdDevsPerLevelAll[$i] = array();
+                $knobTotalAmtsPerLevelAll[$i] = array();
+                $knobAvgsPerLevelAll[$i] = array();
             }
             $allData["18020410454796070"] = parseBasicInfo(getBasicInfo($gameID, 18020410454796070, $db), $gameID, $db);
             $allData["18020414085766550"] = parseBasicInfo(getBasicInfo($gameID, 18020414085766550, $db), $gameID, $db);
@@ -404,36 +480,50 @@ if (!isset($_GET['minMoves']) && !isset($_GET['minQuestions']) && !isset($_GET['
             $allData["18020414175586176"] = parseBasicInfo(getBasicInfo($gameID, 18020414175586176, $db), $gameID, $db);
             $allData["18020411125135564"] = parseBasicInfo(getBasicInfo($gameID, 18020411125135564, $db), $gameID, $db);
             $allData["18020409524381744"] = parseBasicInfo(getBasicInfo($gameID, 18020409524381744, $db), $gameID, $db);
-
             foreach ($sessionIDs as $i=>$session) {
                 //$allData[$session] = parseBasicInfo(getBasicInfo($gameID, $session, $db), $gameID, $db);
             }
 
             // loop through all the sessions we got above and add their variables to totals
             foreach ($allData as $index=>$dataObj) {
-                foreach ($dataObj["levelTimes"] as $i=>$levelTime) {
-                    $levelTimesAll[$i] []= $dataObj["levelTimes"][$i];
-                }
+                foreach ($dataObj["levelTimes"] as $i=>$levelTime) { $levelTimesPerLevelAll[$i] []= $levelTime; }
+                foreach ($levelTimesPerLevelAll as $i=>$array) { $totalTimesPerLevelAll[$i] = average($array); }
 
-                foreach ($dataObj["numMovesPerChallenge"] as $i=>$numMoves) {
-                    $numMovesPerChallengeAll[$i] []= $dataObj["numMovesPerChallenge"][$i];
-                }
+                foreach ($dataObj["numMovesPerChallenge"] as $i=>$numMoves) { $numMovesPerLevelAll[$i] []= $numMoves; }
+                foreach ($numMovesPerLevelAll as $i=>$array) { $totalMovesPerLevelArray[$i] = average($array); }
 
-                foreach ($dataObj["moveTypeChangesPerLevel"] as $i=>$moveTypeChanges) {
-                    $moveTypeChangesPerLevelAll[$i] []= $dataObj["moveTypeChangesPerLevel"][$i];
-                }
+                foreach ($dataObj["moveTypeChangesPerLevel"] as $i=>$moveTypeChanges) { $moveTypeChangesPerLevelAll[$i] []= $moveTypeChanges; }
+                foreach ($moveTypeChangesPerLevelAll as $i=>$array) { $totalMoveTypeChangesPerLevelAll[$i] = average($array); }
 
-                foreach ($dataObj["knobAvgs"] as $i=>$knobAvg) {
-                    $knobAvgsAll[$i] += $knobAvg;
-                }
+                foreach ($dataObj["knobStdDevs"] as $i=>$knobStdDevs) { $knobStdDevsPerLevelAll[$i] []= $knobStdDevs; }
+                foreach ($knobStdDevsPerLevelAll as $i=>$array) { $totalStdDevsPerLevelAll[$i] = average($array); }
 
-                $totalTimeAll += $dataObj["totalTime"];
-                $totalMovesAll += $dataObj["totalMoves"];
-                $moveTypeChangesTotalAll += $dataObj["moveTypeChangesTotal"];
+                foreach ($dataObj["knobTotalAmts"] as $i=>$knobTotalAmts) { $knobTotalAmtsPerLevelAll[$i] []= $knobTotalAmts; }
+                foreach ($knobTotalAmtsPerLevelAll as $i=>$array) { $totalKnobTotalsPerLevelAll[$i] = average($array); }
+
+                foreach ($dataObj["knobAvgs"] as $i=>$knobAvg) { $knobAvgsPerLevelAll[$i] []= $knobAvg; }
+                foreach ($knobAvgsPerLevelAll as $i=>$array) { $totalKnobAvgsPerLevelAll[$i] = average($array); }
             }
+            $totalTimeAll = sum($totalTimesPerLevelAll);
+            $totalMovesAll = sum($totalMovesPerLevelArray);
+            $totalMoveTypeChangesAll = sum($totalMoveTypeChangesPerLevelAll);
+            //$totalStdDevsAll = sum($totalStdDevsPerLevelAll);
+            $totalKnobTotalsAll = sum($totalKnobTotalsPerLevelAll);
+            $totalKnobAvgsAll = sum($totalKnobAvgsPerLevelAll);
+
+            $avgTimeAll = average($totalTimesPerLevelAll);
+            $avgMovesAll = average($totalMovesPerLevelArray);
+            $avgMoveTypeChangesAll = average($totalMoveTypeChangesPerLevelAll);
+            //$avgStdDevAll = average($totalStdDevsPerLevelAll);
+            $avgKnobTotalsAll = average($totalKnobTotalsPerLevelAll);
+            $avgKnobAvgsAll = average($totalKnobAvgsPerLevelAll);
             
-            $output = array("times"=>$levelTimesAll, "numMoves"=>$numMovesPerChallengeAll, "moveTypeChanges"=>$moveTypeChangesPerLevelAll,
-                 "totalTimes"=>$totalTimeAll, "totalMoves"=>$totalMovesAll);
+            $output = array("times"=>$totalTimesPerLevelAll, "numMoves"=>$totalMovesPerLevelArray, "moveTypeChanges"=>$totalMoveTypeChangesPerLevelAll,
+                "knobStdDevs"=>$totalStdDevsPerLevelAll, "totalMaxMin"=>$totalKnobTotalsPerLevelAll, "avgMaxMin"=>$totalKnobAvgsPerLevelAll,
+                "totalTime"=>$totalTimeAll, "totalMoves"=>$totalMovesAll, "totalMoveChanges"=>$totalMoveTypeChangesAll,
+                "totalKnobTotals"=>$totalKnobTotalsAll, "totalKnobAvgs"=>$totalKnobAvgsAll,
+                "avgTime"=>$avgTimeAll, "avgMoves"=>$avgMovesAll, "avgMoveChanges"=>$avgMoveTypeChangesAll,
+                "avgKnobTotals"=>$avgKnobTotalsAll, "avgKnobAvgs"=>$avgKnobAvgsAll);
             echo json_encode($output);
         }
     }
