@@ -45,6 +45,9 @@
                                         <label for="endDate">Filter end date</label>
                                         <input name="endDate" required type="date" class="form-control" id="endDate">
                                         <br>
+                                        <label for="maxSessions">Max number of sessions</label>
+                                        <input name="maxSessions" required min="0" value="100" type="number" class="form-control" id="maxSessions">
+                                        <br>
                                     </div>
                                 </div>
                             </div>
@@ -78,6 +81,7 @@
                     <option value="WAVES">Waves</option>
                     <option value="WIND" disabled>Wind</option>
                 </select>
+                <a href="#filterModal" data-toggle="modal" class="control-label" style="padding-left:10px;">Filter sessions...</a>
             </div>
             <div class="col-xs-4">
                 <div id="errorMessage" style="color:red; font-weight:bold; visibility:hidden;">
@@ -104,7 +108,6 @@
                     <div id="sessionSelectParent" class="col-xs-4" style="margin-top:10px">
                         <div style="display:inline-block">
                                 <label for="sessionSelect" style="font-weight:initial">Session</label>
-                                <a href="#filterModal" data-toggle="modal" class="control-label" style="float:right;">Filter...</a>
                                 <br>
                                 <select id="sessionSelect" class="js-example-basic-single session-select"></select>
                         </div>
