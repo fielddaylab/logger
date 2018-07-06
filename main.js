@@ -780,4 +780,15 @@ $(document).ready((event) => {
         selectParentNode.replaceChild(newSelectObj, selectObj)
         return newSelectObj
     }
+
+    setInterval(() => {
+        let currentText = $('#loadingText').html()
+        let newText
+        if (currentText !== 'Loading . . . .') {
+            newText = currentText + ' .'
+        } else {
+            newText = 'Loading .'
+        }
+        $('#loadingText').html(newText)
+    }, 500)
 })
