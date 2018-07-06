@@ -43,7 +43,7 @@ $(document).ready((event) => {
                 $('#startDate').val(startyyyy+'-'+startmm+'-'+startdd)
                 $('#endDate').val(endyyyy+'-'+endmm+'-'+enddd)
 
-                let options = new Array()
+                let options = []
                 fastClear($('#sessionSelect'))
 
                 for (let i = 0; i < $('#maxSessions').val(); i++) { //for (let i = 0; i < data.sessions.length; i++) {
@@ -53,8 +53,9 @@ $(document).ready((event) => {
                     options.push(newOpt)
                 }
                 $('#sessionSelect').append(options)
+                $('#sessionSelect').append($('<option></option>').attr({'value':18020410454796070, 'text':'18020410454796070'}))
+                $('#sessionSelect').val('18020410454796070') // the most interesting session
 
-                //$('#sessionSelect').val('18020410454796070') // the most interesting session
                 options = []
                 for (let i = 0; i < data.levels.length; i++) {
                     let newOpt = document.createElement('option')
@@ -464,6 +465,8 @@ $(document).ready((event) => {
             distanceToGoal[i] = cumulativeDistance
         }
 
+        goalSlope1 = (distanceToGoal[distanceToGoal.length-1] - distanceToGoal[0]) / (moveNumbers[moveNumbers.length-1] - moveNumbers[0])
+
         let closenessTrace1 = {
             x: moveNumbers,
             y: distanceToGoal,
@@ -471,7 +474,6 @@ $(document).ready((event) => {
             name: 'Net good moves',
             mode: 'lines+markers'
         }
-        let graphData1 = [closenessTrace1]
         let layout1 = {
             margin: { t: 35 },
             title: `Level ${$('#levelSelect').val()}`,
@@ -479,20 +481,43 @@ $(document).ready((event) => {
             xaxis: {
                 title: 'Move number',
                 titlefont: {
-                  family: 'Courier New, monospace',
-                  size: 12,
-                  color: '#7f7f7f'
+                    family: 'Courier New, monospace',
+                    size: 12,
+                    color: '#7f7f7f'
                 }
-              },
+            },
               yaxis: {
                 title: 'Net good moves',
                 titlefont: {
-                  family: 'Courier New, monospace',
-                  size: 12,
-                  color: '#7f7f7f'
+                    family: 'Courier New, monospace',
+                    size: 12,
+                    color: '#7f7f7f'
                 }
-              }
+            },
+            showlegend: false,
+            annotations: [{
+                    x: (moveNumbers[0]+ moveNumbers[moveNumbers.length-1]) / 2,
+                    y: (distanceToGoal[0] + distanceToGoal[distanceToGoal.length-1]) / 2,
+                    xref: 'x',
+                    yref: 'y',
+                    text: 'Slope: ' + goalSlope1.toFixed(2),
+                    showArrow: true,
+                    arrowhead: 0,
+                    ax: 0,
+                    ay: -40,
+                    bgcolor: 'darkgray',
+                    borderpad: 4
+            }]
         }
+        let slopeTrace1 = {
+            x: [moveNumbers[0], moveNumbers[moveNumbers.length-1]],
+            y: [distanceToGoal[0], distanceToGoal[distanceToGoal.length-1]],
+            line: {color: 'blue'},
+            name: 'Slope',
+            mode: 'line'
+        }
+        let graphData1 = [closenessTrace1, slopeTrace1]
+
         Plotly.newPlot(goalsGraph1, graphData1, layout1)
 
 
