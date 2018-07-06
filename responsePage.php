@@ -12,12 +12,12 @@ if ($db->connect_error) {
 
 function average($arr) {
     $total = 0;
-    $filtered = array_filter($arr, function ($value) { return $value != 0 && $value != "-"; });
+    $filtered = array_filter($arr, function ($value) { return $value != 0 && $value !== "-"; });
     foreach ($filtered as $value) {
         $total += $value;
     }
     $length = count($filtered);
-    return ($length != 0) ? $total / $length : 0;
+    return ($length !== 0) ? $total / $length : 0;
 }
 
 function sum($arr) {
@@ -225,27 +225,27 @@ function parseBasicInfo($data, $gameID, $db) {
             for ($i = 0; $i < count($dataObj["times"]); $i++) {
                 if (!isset($endIndices[$dataObj["levels"][$i]])) {
                     $dataJson = json_decode($dataObj["data"][$i], true);
-                    if ($dataObj["events"][$i] === 'BEGIN') {
+                    if ($dataObj["events"][$i] === "BEGIN") {
                         if (!isset($startIndices[$dataObj["levels"][$i]])) { // check this space isn't filled by a previous attempt on the same level
                             $startIndices[$dataObj["levels"][$i]] = $i;
                         }
-                    } else if ($dataObj["events"][$i] === 'COMPLETE') {
+                    } else if ($dataObj["events"][$i] === "COMPLETE") {
                         if (!isset($endIndices[$dataObj["levels"][$i]])) {
                             $endIndices[$dataObj["levels"][$i]] = $i;
                         }
-                    } else if ($dataObj["events"][$i] === 'CUSTOM' && ($dataJson["event_custom"] === 'SLIDER_MOVE_RELEASE' || $dataJson["event_custom"] === 'ARROW_MOVE_RELEASE')) {
+                    } else if ($dataObj["events"][$i] === "CUSTOM" && ($dataJson["event_custom"] === "SLIDER_MOVE_RELEASE" || $dataJson["event_custom"] === "ARROW_MOVE_RELEASE")) {
                         if ($lastSlider !== $dataJson["slider"]) {
                             if (!isset($moveTypeChangesPerLevel[$dataObj["levels"][$i]])) $moveTypeChangesPerLevel[$dataObj["levels"][$i]] = 0;
                             $moveTypeChangesPerLevel[$dataObj["levels"][$i]]++;
                         }
                         $lastSlider = $dataJson["slider"];
                         $numMovesPerChallenge[$dataObj["levels"][$i]] []= $i;
-                        if ($dataJson["event_custom"] === 'SLIDER_MOVE_RELEASE') { // arrows don't have std devs
-                            if (!isset($knobNumStdDevs[$dataObj["levels"][$i]])) $knobNumStdDevs[$dataObj["levels"][$i]] = 0;
+                        if ($dataJson["event_custom"] === "SLIDER_MOVE_RELEASE") { // arrows don't have std devs
+                            //if (!isset($knobNumStdDevs[$dataObj["levels"][$i]])) $knobNumStdDevs[$dataObj["levels"][$i]] = 0;
                             $knobNumStdDevs[$dataObj["levels"][$i]]++;
-                            if (!isset($knobStdDevs[$dataObj["levels"][$i]])) $knobStdDevs[$dataObj["levels"][$i]] = 0;
+                            //if (!isset($knobStdDevs[$dataObj["levels"][$i]])) $knobStdDevs[$dataObj["levels"][$i]] = 0;
                             $knobStdDevs[$dataObj["levels"][$i]] += $dataJson["stdev_val"];
-                            if (!isset($knobAmts[$dataObj["levels"][$i]])) $knobAmts[$dataObj["levels"][$i]] = 0;
+                            //if (!isset($knobAmts[$dataObj["levels"][$i]])) $knobAmts[$dataObj["levels"][$i]] = 0;
                             $knobAmts[$dataObj["levels"][$i]] += ($dataJson["max_val"]-$dataJson["min_val"]);
                         }
                     }
@@ -265,26 +265,21 @@ function parseBasicInfo($data, $gameID, $db) {
 
                     $totalMoves += count($numMovesPerChallenge[$i]);
                     $moveTypeChangesTotal += $moveTypeChangesPerLevel[$i];
-                    if (isset($knobNumStdDevs[$i]) && $knobNumStdDevs[$i] != 0) {
-                        $knobAmtsTotal += ($knobAmts[$i]/$knobNumStdDevs[$i]);
-                    }
-
-                    if (isset($knobAmts[$i]) && $knobAmts[$i] != 0) {
-                        $knobSumTotal += $knobAmts[$i];
-                    } 
-
-                    $knobAvgStdDev = 0;
-                    if (isset($knobNumStdDevs[$i]) && $knobNumStdDevs[$i] != 0) {
-                        $knobAvgStdDev = ($knobStdDevs[$i]/$knobNumStdDevs[$i]);
-                    }
-                    $avgKnobStdDevs []= $knobAvgStdDev;
 
                     $knobAvgAmt = 0;
-                    if (isset($knobNumStdDevs[$i]) && $knobNumStdDevs[$i] != 0) {
-                        $knobAvgAmt = ($knobAmts[$i]/$knobNumStdDevs[$i]);
+                    $knobAvgStdDev = 0;
+                    if ($knobNumStdDevs[$i] != 0) {
+                        $temp = $knobAmts[$i]/$knobNumStdDevs[$i];
+                        $knobAmtsTotal += $temp;
+                        $knobAvgAmt = $temp;
+                        $knobAvgStdDev = ($knobStdDevs[$i]/$knobNumStdDevs[$i]);
                     }
-                    $knobAvgs []= $knobAvgAmt;
+                    $knobAvgs[$i] = $knobAvgAmt;
+                    $avgKnobStdDevs[$i] = $knobAvgStdDev;
 
+                    if ($knobAmts[$i] != 0) {
+                        $knobSumTotal += $knobAmts[$i];
+                    } 
                 }
             }
             $avgTime = $totalTime / $numLevels;
@@ -320,7 +315,7 @@ function parseBasicInfo($data, $gameID, $db) {
          * knobNumStdDevs            -    array       - elements hold number of std devs in level
          * 
          * knobAvgs                  -    array       - elements hold average max-min for each level
-         * knobAmtsTotalAvg          -    value       - average value of knobAvgs
+         * knobAmtsTotalAvg          -    value       - sum value of knobAvgs
          * knobAmtsAvgAvg            -    value       - average value of knobAvgs
          * 
          * knobTotalAmts             -    array       - elements hold total max-min for each level
@@ -480,7 +475,10 @@ if (!isset($_GET['minMoves']) && !isset($_GET['minQuestions']) && !isset($_GET['
             $allData["18020414175586176"] = parseBasicInfo(getBasicInfo($gameID, 18020414175586176, $db), $gameID, $db);
             $allData["18020411125135564"] = parseBasicInfo(getBasicInfo($gameID, 18020411125135564, $db), $gameID, $db);
             $allData["18020409524381744"] = parseBasicInfo(getBasicInfo($gameID, 18020409524381744, $db), $gameID, $db);
+            $k = 0;
             foreach ($sessionIDs as $i=>$session) {
+                $k++;
+                if ($k > 15) break;
                 //$allData[$session] = parseBasicInfo(getBasicInfo($gameID, $session, $db), $gameID, $db);
             }
 
@@ -534,20 +532,20 @@ if (!isset($_GET['minMoves']) && !isset($_GET['minQuestions']) && !isset($_GET['
     $startDate = new DateTime($_GET['startDate']);
     $endDate = new DateTime($_GET['endDate']);
     $gameID = $_GET['gameID'];
-    $query1 = "SELECT event, event_custom, session_id, client_time FROM log WHERE app_id=? ORDER BY client_time;";
+    $query = "SELECT event, event_custom, session_id, client_time FROM log WHERE app_id=? ORDER BY client_time;";
     $paramArray = array($gameID);
-    $stmt1 = queryMultiParam($db, $query1, "s", $paramArray);
-    if($stmt1 === NULL) {
+    $stmt = queryMultiParam($db, $query, "s", $paramArray);
+    if($stmt === NULL) {
         http_response_code(500);
         die('{ "errMessage": "Error running query." }');
     }
     // Bind variables to the results
-    if (!$stmt1->bind_result($event, $event_custom, $sessionID, $time)) {
+    if (!$stmt->bind_result($event, $event_custom, $sessionID, $time)) {
         http_response_code(500);
         die('{ "errMessage": "Failed to bind to results." }');
     }
     // Fetch and display the results
-    while($stmt1->fetch()) {
+    while($stmt->fetch()) {
         $events[] = $event;
         $event_customs[] = $event_custom;
         $sessionIDs[] = $sessionID;
@@ -586,14 +584,11 @@ if (!isset($_GET['minMoves']) && !isset($_GET['minQuestions']) && !isset($_GET['
             $filteredSessionsTimes[] = $times[$index];
         }
     }
-    ?>
-    {
-        "sessions": <?=json_encode($filteredSessions)?>,
-        "times": <?=json_encode($filteredSessionsTimes)?>
-    }
-    <?php
 
-    $stmt1->close();
+    $output = array("sessions"=>$filteredSessions, "times"=>$filteredSessionsTimes);
+    echo json_encode($output);
+
+    $stmt->close();
 }
 
 // Close the database connection
