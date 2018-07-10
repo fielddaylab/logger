@@ -392,6 +392,7 @@ function getFilteredSessionsAndTimes($gameID, $minMoves, $minLevels, $minQuestio
         }
     }
 
+    array_multisort($filteredSessionsTimes, SORT_ASC, $filteredSessions, SORT_ASC);
     $output = array("sessions"=>$filteredSessions, "times"=>$filteredSessionsTimes);
     return $output;
 }

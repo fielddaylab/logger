@@ -23,7 +23,8 @@ $(document).ready((event) => {
             if (data.levels !== null) {
                 totalSessions = data.numSessions
                 currentSessions = data.sessions
-                $('#sessions').text('Showing ' + Math.min(data.numSessions, $('#maxSessions').val()) + ' of ' + totalSessions + ' available sessions')
+                let numSessionsToDisplay = Math.min($('#maxSessions').val(), data.numSessions)
+                $('#sessions').text('Showing ' + numSessionsToDisplay + ' of ' + totalSessions + ' available sessions')
                 // Get default dates from first and last times
                 let startDate = new Date(data.times[data.times.lastIndexOf('0000-00-00 00:00:00')+1].replace(/-/g, "/"))
                 let startdd = startDate.getDate()
@@ -45,7 +46,7 @@ $(document).ready((event) => {
                 let options = []
                 fastClear($('#sessionSelect'))
 
-                for (let i = 0; i < $('#maxSessions').val(); i++) { //for (let i = 0; i < data.sessions.length; i++) {
+                for (let i = 0; i < numSessionsToDisplay; i++) { //for (let i = 0; i < data.sessions.length; i++) {
                     let newOpt = document.createElement('option')
                     newOpt.value = data.sessions[i]
                     newOpt.text = i + ' | ' + data.sessions[i] + ' | ' + data.times[i]
