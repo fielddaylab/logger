@@ -53,7 +53,7 @@ $(document).ready((event) => {
                     options.push(newOpt)
                 }
                 $('#sessionSelect').append(options)
-                $('#sessionSelect').append($('<option></option>').attr({'value':18020410454796070, 'text':'18020410454796070'}))
+                $('#sessionSelect').append($('<option>18020410454796070</option>').attr({'value':18020410454796070}))
                 $('#sessionSelect').val('18020410454796070') // the most interesting session
 
                 options = []
@@ -200,7 +200,6 @@ $(document).ready((event) => {
 
             $.when.apply($, promises).then(() => {
                 off()
-                console.log('all requests finished')
             })
         } else {
             $('#formError').show()
@@ -438,8 +437,11 @@ $(document).ready((event) => {
         let numMovesPerChallenge = data.numMovesPerChallengeArray[$('#levelSelect').val()]
         $('#goalsDiv1').html('Goal 1: Completing the challenge')
         let distanceToGoal = []
-        distanceToGoal = new Array(numMovesPerChallenge.length).fill(0)
-        let moveGoodness = distanceToGoal // an array of 0s
+        let moveGoodness = []
+        if (numMovesPerChallenge) {
+            distanceToGoal = new Array(numMovesPerChallenge.length).fill(0)
+            moveGoodness = new Array(numMovesPerChallenge.length).fill(0) // an array of 0s
+        }
         let moveNumbers = []
         let cumulativeDistance = 0
         let lastCloseness1
@@ -486,7 +488,7 @@ $(document).ready((event) => {
                     color: '#7f7f7f'
                 }
             },
-              yaxis: {
+            yaxis: {
                 title: 'Net good moves',
                 titlefont: {
                     family: 'Courier New, monospace',
@@ -514,19 +516,24 @@ $(document).ready((event) => {
             y: [distanceToGoal[0], distanceToGoal[distanceToGoal.length-1]],
             line: {color: 'blue'},
             name: 'Slope',
-            mode: 'line'
+            mode: 'lines'
         }
         let graphData1 = [closenessTrace1, slopeTrace1]
 
-        Plotly.newPlot(goalsGraph1, graphData1, layout1)
-
+        if (graphData1[0].x.length > 0 && graphData1[0].y.length > 0 && 
+            graphData1[1].x.length > 0 && graphData1[1].y.length > 0) {
+            
+            Plotly.newPlot(goalsGraph1, graphData1, layout1)
+        }
 
         $('#goalsDiv2').html('Goal 2: Maxing slider values')
         $('#goalsDiv2').css('display', 'block')
         $('#goalsGraph2').css('display', 'block')
-        distanceToGoal = new Array(numMovesPerChallenge.length).fill(0)
-        moveGoodness = new Array(numMovesPerChallenge.length).fill(0) // an array of 0s
-        cumulativeDistance = 0;
+        if (numMovesPerChallenge) {
+            distanceToGoal = new Array(numMovesPerChallenge.length).fill(0)
+            moveGoodness = new Array(numMovesPerChallenge.length).fill(0) // an array of 0s
+        }
+        cumulativeDistance = 0
         indicesToSplice = []
         let graph_min_x = -50
         let graph_max_x =  50
@@ -569,6 +576,8 @@ $(document).ready((event) => {
             distanceToGoal[i] = cumulativeDistance
         }
 
+        goalSlope2 = (distanceToGoal[distanceToGoal.length-1] - distanceToGoal[0]) / (moveNumbers[moveNumbers.length-1] - moveNumbers[0])
+
         let closenessTrace2 = {
             x: moveNumbers,
             y: distanceToGoal,
@@ -576,7 +585,6 @@ $(document).ready((event) => {
             name: 'Net good moves',
             mode: 'lines+markers'
         }
-        let graphData2 = [closenessTrace2]
         let layout2 = {
             margin: { t: 35 },
             title: `Level ${$('#levelSelect').val()}`,
@@ -596,9 +604,36 @@ $(document).ready((event) => {
                     size: 12,
                     color: '#7f7f7f'
                 }
-            }
+            },
+            showlegend: false,
+            annotations: [{
+                    x: (moveNumbers[0]+ moveNumbers[moveNumbers.length-1]) / 2,
+                    y: (distanceToGoal[0] + distanceToGoal[distanceToGoal.length-1]) / 2,
+                    xref: 'x',
+                    yref: 'y',
+                    text: 'Slope: ' + goalSlope2.toFixed(2),
+                    showArrow: true,
+                    arrowhead: 0,
+                    ax: 0,
+                    ay: -40,
+                    bgcolor: 'darkgray',
+                    borderpad: 4
+            }]
         }
-        Plotly.newPlot(goalsGraph2, graphData2, layout2)
+        let slopeTrace2 = {
+            x: [moveNumbers[0], moveNumbers[moveNumbers.length-1]],
+            y: [distanceToGoal[0], distanceToGoal[distanceToGoal.length-1]],
+            line: {color: 'blue'},
+            name: 'Slope',
+            mode: 'lines'
+        }
+        let graphData2 = [closenessTrace2, slopeTrace2]
+
+        if (graphData2[0].x.length > 0 && graphData2[0].y.length > 0 && 
+            graphData2[1].x.length > 0 && graphData2[1].y.length > 0) {
+            
+            Plotly.newPlot(goalsGraph2, graphData2, layout2)
+        }
     }
 
     function drawWavesChart(inData) {
