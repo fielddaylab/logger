@@ -8,8 +8,8 @@ $(document).ready((event) => {
 
     let graphLeftAll = $('#graphLeftAll')[0]
     let graphRightAll = $('#graphRightAll')[0]
-    let goalsGraph1All = $('#goalsGraph1All')[0]
-    let goalsGraph2All = $('#goalsGraph2All')[0]
+    let histogramAll1 = $('#goalsGraph1All')[0]
+    let histogramAll2 = $('#goalsGraph2All')[0]
 
     let totalSessions
     let currentSessions = []
@@ -197,7 +197,16 @@ $(document).ready((event) => {
                 $('#filterModal').modal('hide')
                 off()
                 showError(jqXHR.responseText)
-            }))
+            }),
+            $.get('responsePage.php', { 'isAll': true, 'isHistogram': true, 'gameID': $('#gameSelect').val(), 'isAggregate': true, 'minMoves': $('#minMoves').val(), 'minQuestions': $('#minQuestions').val(),
+                    'minLevels': $('#minLevels').val(), 'startDate': $('#startDate').val(), 'endDate': $('#endDate').val(), 'maxSessions': $('#maxSessions').val()}, (data) => {
+                drawWavesHistograms(data)
+            }, 'json').error((jqXHR, textStatus, errorThrown) => {
+                $('#filterModal').modal('hide')
+                off()
+                showError(jqXHR.responseText)
+            })
+            ) // end of promises.push(
 
             $.when.apply($, promises).then(() => {
                 off()
@@ -221,7 +230,7 @@ $(document).ready((event) => {
             hideError()
             $.get('responsePage.php', { 'gameID': $('#gameSelect').val(), 'sessionID': $('#sessionSelect').val(), 'level': $('#levelSelect').val() }, (data, status, jqXHR) => {
                 if ($('#gameSelect').val() === "WAVES") {
-                    let dataObj = {data:JSON.parse(JSON.stringify(data.event_data)), times:data.times}
+                    let dataObj = {data:data.event_data, times:data.times}
                     drawWavesChart(dataObj)
                     getWavesData(shouldHideOverlay)
                 }
@@ -245,6 +254,13 @@ $(document).ready((event) => {
         $.get('responsePage.php', { 'gameID': $('#gameSelect').val(), 'isAll': true }, (data, status, jqXHR) => {
             $('#scoreDisplayAll').html(data.totalNumCorrect + ' / ' + data.totalNumQuestions + ' (' + (100*data.totalNumCorrect/data.totalNumQuestions).toFixed(1) + '%)')
             if ($('#gameSelect').val() === "WAVES") {
+                $.get('responsePage.php', { 'isAll': true, 'isHistogram': true, 'gameID': $('#gameSelect').val(), 'isAggregate': true }, (data) => {
+                drawWavesHistograms(data)
+            }, 'json').error((jqXHR, textStatus, errorThrown) => {
+                $('#filterModal').modal('hide')
+                off()
+                showError(jqXHR.responseText)
+            })
                 getWavesDataAll()
             }
             hideError()
@@ -429,11 +445,50 @@ $(document).ready((event) => {
             $('#amtsTotalAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.avgKnobTotals.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
 
             off()
-            //drawWavesGoalsAll(dataObj, numMovesPerChallenge[$('#levelSelect').val()])
+            //drawWavesHistogramsAll()
         }, 'json').error((jqXHR, textStatus, errorThrown) => {
             off()
             showError(jqXHR.responseText)
         })
+    }
+
+    function drawWavesHistograms(data) {
+        $('#goalsDiv1All').html('Histogram 1: Questions answered')
+        let trace = {
+            x: data.numsQuestions,
+            type: 'histogram',
+            autobinx: false,
+            xbins: {
+                start: 0,
+                size: 1,
+                end: 6
+            }
+        }
+        let layout1 = {
+            margin: { t: 35 },
+            height: 200,
+            xaxis: {
+                autotick: false,
+                tick0: 0,
+                dtick: 1,
+                title: 'Number of questions answered',
+                titlefont: {
+                    family: 'Courier New, monospace',
+                    size: 12,
+                    color: '#7f7f7f'
+                }
+            },
+            yaxis: {
+                title: 'Number of sessions',
+                titlefont: {
+                    family: 'Courier New, monospace',
+                    size: 12,
+                    color: '#7f7f7f'
+                }
+            },
+            showlegend: false
+        }
+        Plotly.newPlot(histogramAll1, [trace], layout1)
     }
 
     function drawWavesGoals(data, shouldHideOverlay = true) {

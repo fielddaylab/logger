@@ -530,7 +530,7 @@ function getBasicInfoAll($gameID, $isFiltered, $db) {
 }
 
 if (!isset($_GET['isAll'])) {
-    if (!isset($_GET['minMoves']) && !isset($_GET['minQuestions']) && !isset($_GET['minLevels'])) {
+    if (!isset($_GET['isHistogram']) && !isset($_GET['minMoves']) && !isset($_GET['minQuestions']) && !isset($_GET['minLevels'])) {
         // Return number of sessions for a given game and return those session ids
         if (!isset($_GET['isBasicFeatures']) && !isset($_GET['sessionID']) && isset($_GET['gameID'])) {
             $numSessions = getNumSessions($_GET['gameID'], $db);
@@ -569,7 +569,7 @@ if (!isset($_GET['isAll'])) {
     }
 } else { // The same functions as above but for all sessions
     // Return number of questions and number correct for a given game
-    if (!isset($_GET['isAggregate']) && !isset($_GET['isBasicFeatures']) && !isset($_GET['level']) && isset($_GET['gameID'])) {
+    if (!isset($_GET['isHistogram']) && !isset($_GET['isAggregate']) && !isset($_GET['isBasicFeatures']) && !isset($_GET['level']) && isset($_GET['gameID'])) {
         // This query is a lot faster than looping through getQuestions for all sessions
         $gameID = $_GET['gameID'];
         $maxSessions;
@@ -618,10 +618,40 @@ if (!isset($_GET['isAll'])) {
     } else
 
     // Return basic information
-    if (isset($_GET['isAggregate']) && isset($_GET['isBasicFeatures']) && isset($_GET['gameID'])) {
+    if (!isset($_GET['isHistogram']) && isset($_GET['isAggregate']) && isset($_GET['isBasicFeatures']) && isset($_GET['gameID'])) {
         $gameID = $_GET["gameID"];
         $output = getBasicInfoAll($gameID, isset($_GET['isFiltered']), $db);
         
+        echo json_encode($output);
+    } else
+
+    // Return histogram information
+    if (isset($_GET['isHistogram']) && isset($_GET['isAggregate']) && !isset($_GET['isBasicFeatures']) && isset($_GET['gameID'])) {
+        $gameID = $_GET['gameID'];
+
+        $maxSessions = 100;
+        if (isset($_GET['maxSessions'])) {
+            $maxSessions = $_GET['maxSessions'];
+        }
+
+        $sessionIDs;
+        if (isset($_GET['minMoves'])) { // filtered
+            $sessionIDs = getFilteredSessionsAndTimes($gameID, $_GET['minMoves'], $_GET['minLevels'], $_GET['minQuestions'], $db)["sessions"];
+        } else { // not filtered
+            $sessionIDs = getSessionsAndTimes($gameID, $db)["sessions"];
+        }
+        
+        $numSessions = min($maxSessions, count($sessionIDs));
+        $questionsCorrect = array();
+        $questionsAnswered = array();
+
+        for ($i = 0; $i < $numSessions; $i++) {
+            $questions = getQuestions($gameID, $sessionIDs[$i], $db);
+            $questionsCorrect[$i] = $questions["numCorrect"];
+            $questionsAnswered[$i] = $questions["numQuestions"];
+        }
+
+        $output = array("numsCorrect"=>$questionsCorrect, "numsQuestions"=>$questionsAnswered);
         echo json_encode($output);
     }
 }
