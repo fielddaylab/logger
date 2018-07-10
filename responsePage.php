@@ -105,6 +105,7 @@ function getQuestions($gameID, $sessionID, $db) {
         die('{ "errMessage": "Failed to bind to results." }');
     }
     // Fetch and display the results
+    $data = array();
     while($stmt->fetch()) {
         $data[] = $dataComplex;
     }
@@ -134,6 +135,8 @@ function getGraphData($gameID, $sessionID, $level, $db) {
         die('{ "errMessage": "Failed to bind to results." }');
     }
     // Fetch and display the results
+    $times = array();
+    $eventData = array();
     while($stmt->fetch()) {
         $times[] = $singleTime;
         $eventData[] = $singleData;
@@ -334,7 +337,7 @@ function parseBasicInfo($data, $gameID, $db) {
 function getFilteredSessionsAndTimes($gameID, $minMoves, $minLevels, $minQuestions, $db) {
     $startDate = new DateTime($_GET['startDate']);
     $endDate = new DateTime($_GET['endDate']);
-    $query = "SELECT event, event_custom, session_id, client_time FROM log WHERE app_id=? ORDER BY client_time;";
+    $query = "SELECT event, event_custom, session_id, client_time FROM log WHERE app_id=? ORDER BY session_id;";
     $paramArray = array($gameID);
     $stmt = queryMultiParam($db, $query, "s", $paramArray);
     if($stmt === NULL) {
@@ -361,6 +364,7 @@ function getFilteredSessionsAndTimes($gameID, $minMoves, $minLevels, $minQuestio
     $filteredSessionsLevels = [];
     $filteredSessionsTimes = [];
     $uniqueSessionIDs = array_unique($sessionIDs);
+
     foreach ($uniqueSessionIDs as $index=>$session) {
         $numMoves = 0;
         $numLevels = 0;
@@ -377,6 +381,7 @@ function getFilteredSessionsAndTimes($gameID, $minMoves, $minLevels, $minQuestio
                 }
             }
         }
+        
         if ($numMoves >= $minMoves && $numLevels >= $minLevels && $numQuestions >= $minQuestions &&
                 $startDate <= $date && $date <= $endDate) {
             $filteredSessions[] = $session;
@@ -599,19 +604,12 @@ if (!isset($_GET['isAll'])) {
             $filteredSessions = array_values(array_intersect(getFilteredSessionsAndTimes($gameID, $_GET['minMoves'], $_GET['minLevels'], $_GET['minQuestions'], $db)["sessions"], $sessionIDs));
         }
         $numSessions = count($filteredSessions);
-        $arrayValues = array_count_values($filteredSessions);
         
+        $index = 0;
         for ($i = 0; $i < $numSessions; $i++) {
-            $numCorrect = 0;
-            $numQuestions = $arrayValues[$filteredSessions[$i]];
-            for ($j = 0; $j < $numQuestions; $j++) {
-                $jsonData = json_decode($data[$i*$numQuestions+$j], true);
-                if ($jsonData["answer"] === $jsonData["answered"]) {
-                    $numCorrect++;
-                }
-            }
-            $totalNumCorrect += $numCorrect;
-            $totalNumQuestions += $numQuestions;
+            $questions = getQuestions($gameID, $filteredSessions[$i], $db);
+            $totalNumCorrect += $questions["numCorrect"];
+            $totalNumQuestions += $questions["numQuestions"];
         }
         $stmt->close();
         $output = array("totalNumCorrect"=>$totalNumCorrect, "totalNumQuestions"=>$totalNumQuestions);

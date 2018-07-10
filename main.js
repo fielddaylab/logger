@@ -24,7 +24,6 @@ $(document).ready((event) => {
                 totalSessions = data.numSessions
                 currentSessions = data.sessions
                 $('#sessions').text('Showing ' + Math.min(data.numSessions, $('#maxSessions').val()) + ' of ' + totalSessions + ' available sessions')
-                $('#maxSessions').attr('max', data.numSessions)
                 // Get default dates from first and last times
                 let startDate = new Date(data.times[data.times.lastIndexOf('0000-00-00 00:00:00')+1].replace(/-/g, "/"))
                 let startdd = startDate.getDate()
@@ -95,14 +94,15 @@ $(document).ready((event) => {
             // Single tab stuff
             promises.push($.get('responsePage.php', { 'gameID': $('#gameSelect').val(), 'minMoves': $('#minMoves').val(), 'minQuestions': $('#minQuestions').val(),
                     'minLevels': $('#minLevels').val(), 'startDate': $('#startDate').val(), 'endDate': $('#endDate').val(), 'maxSessions': $('#maxSessions').val() }, (data, status, jqXHR) => {
-                $('#sessions').text('Showing ' + Math.min(data.sessions.length, $('#maxSessions').val()) + ' of ' + totalSessions + ' available sessions')
-                $('#maxSessions').attr('max', data.sessions.length)
+                let numSessionsToDisplay = Math.min(data.sessions.length, $('#maxSessions').val())
+                $('#sessions').text('Showing ' + numSessionsToDisplay + ' of ' + totalSessions + ' available sessions')
                 currentSessions = data.sessions
 
                 let options = []
 
                 fastClear($('#sessionSelect'))
-                for (let i = 0; i < $('#maxSessions').val(); i++) { //for (let i = 0; i < data.sessions.length; i++) {
+
+                for (let i = 0; i < numSessionsToDisplay; i++) { //for (let i = 0; i < data.sessions.length; i++) {
                     let newOpt = document.createElement('option')
                     newOpt.value = data.sessions[i]
                     newOpt.text = i + ' | ' + data.sessions[i] + ' | ' + data.times[i]
@@ -302,8 +302,12 @@ $(document).ready((event) => {
                 $('#basicFeatures').append($(`<span><li style='margin-top:5px'>Knob max-min (total): <a href='#amtsTotal' data-toggle='collapse' id='amtsTotalCollapseBtn' class='collapseBtn'>[+]</a></li></span>`).append(amtsTotalList)
                     .on('hide.bs.collapse', () => {$('#amtsTotalCollapseBtn').html('[+]')})
                     .on('show.bs.collapse', () => {$('#amtsTotalCollapseBtn').html('[−]')}))
+ 
+                let levels = data.dataObj.levels.filter((element, i, array) => {
+                    return i == array.indexOf(element)
+                })
 
-                for (let i = 0; i < data.levelTimes.length; i++) {
+                levels.forEach((i) => {
                     // append times
                     $('#times').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.levelTimes[i]} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
 
@@ -321,7 +325,7 @@ $(document).ready((event) => {
 
                     // append knob total amounts
                     $('#amtsTotal').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${(data.knobTotalAmts[i]).toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-                }
+                })
 
                 $('#times').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
                 $('#times').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.totalTime} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
