@@ -4,6 +4,8 @@ header('Content-Type: application/json');
 
 // Establish the database connection
 include "database.php";
+ini_set('memory_limit','256M');
+
 $db = connectToDatabase(DBDeets::DB_NAME_DATA);
 if ($db->connect_error) {
     http_response_code(500);
