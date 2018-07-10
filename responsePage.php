@@ -529,6 +529,32 @@ function getBasicInfoAll($gameID, $isFiltered, $db) {
     return $output;
 }
 
+function getQuestionsHistogram($gameID, $minMoves, $minLevels, $minQuestions, $db) {
+    $maxSessions = 100;
+    if (isset($_GET['maxSessions'])) {
+        $maxSessions = $_GET['maxSessions'];
+    }
+
+    $sessionIDs;
+    if (isset($_GET['minMoves'])) { // filtered
+        $sessionIDs = getFilteredSessionsAndTimes($gameID, $minMoves, $minLevels, $minQuestions, $db)["sessions"];
+    } else { // not filtered
+        $sessionIDs = getSessionsAndTimes($gameID, $db)["sessions"];
+    }
+    
+    $numSessions = min($maxSessions, count($sessionIDs));
+    $questionsCorrect = array();
+    $questionsAnswered = array();
+
+    for ($i = 0; $i < $numSessions; $i++) {
+        $questions = getQuestions($gameID, $sessionIDs[$i], $db);
+        $questionsCorrect[$i] = $questions["numCorrect"];
+        $questionsAnswered[$i] = $questions["numQuestions"];
+    }
+
+    return array("numsCorrect"=>$questionsCorrect, "numsQuestions"=>$questionsAnswered);
+}
+
 if (!isset($_GET['isAll'])) {
     if (!isset($_GET['isHistogram']) && !isset($_GET['minMoves']) && !isset($_GET['minQuestions']) && !isset($_GET['minLevels'])) {
         // Return number of sessions for a given game and return those session ids
@@ -628,30 +654,12 @@ if (!isset($_GET['isAll'])) {
     // Return histogram information
     if (isset($_GET['isHistogram']) && isset($_GET['isAggregate']) && !isset($_GET['isBasicFeatures']) && isset($_GET['gameID'])) {
         $gameID = $_GET['gameID'];
-
-        $maxSessions = 100;
-        if (isset($_GET['maxSessions'])) {
-            $maxSessions = $_GET['maxSessions'];
-        }
-
-        $sessionIDs;
-        if (isset($_GET['minMoves'])) { // filtered
-            $sessionIDs = getFilteredSessionsAndTimes($gameID, $_GET['minMoves'], $_GET['minLevels'], $_GET['minQuestions'], $db)["sessions"];
-        } else { // not filtered
-            $sessionIDs = getSessionsAndTimes($gameID, $db)["sessions"];
+        if (isset($_GET['minMoves'])) {
+            $output = getQuestionsHistogram($gameID, $_GET['minMoves'], $_GET['minLevels'], $_GET['minQuestions'], $db);
+        } else {
+            $output = getQuestionsHistogram($gameID, null, null, null, $db);
         }
         
-        $numSessions = min($maxSessions, count($sessionIDs));
-        $questionsCorrect = array();
-        $questionsAnswered = array();
-
-        for ($i = 0; $i < $numSessions; $i++) {
-            $questions = getQuestions($gameID, $sessionIDs[$i], $db);
-            $questionsCorrect[$i] = $questions["numCorrect"];
-            $questionsAnswered[$i] = $questions["numQuestions"];
-        }
-
-        $output = array("numsCorrect"=>$questionsCorrect, "numsQuestions"=>$questionsAnswered);
         echo json_encode($output);
     }
 }
