@@ -461,6 +461,8 @@ $(document).ready((event) => {
         }
         let layout1 = {
             margin: { t: 35 },
+            plot_bgcolor: '#F6F6F3',
+            paper_bgcolor: '#F6F6F3',
             height: 200,
             xaxis: {
                 autotick: false,
@@ -495,6 +497,8 @@ $(document).ready((event) => {
         let layout2 = {
             margin: { t: 35 },
             height: 200,
+            plot_bgcolor: '#F6F6F3',
+            paper_bgcolor: '#F6F6F3',
             xaxis: {
                 title: 'Total number of moves',
                 titlefont: {
@@ -526,6 +530,8 @@ $(document).ready((event) => {
         let layout3 = {
             margin: { t: 35 },
             height: 200,
+            plot_bgcolor: '#F6F6F3',
+            paper_bgcolor: '#F6F6F3',
             xaxis: {
                 title: 'Number of levels completed',
                 titlefont: {
@@ -596,6 +602,8 @@ $(document).ready((event) => {
         let layout1 = {
             margin: { t: 35 },
             title: `Level ${$('#levelSelect').val()}`,
+            plot_bgcolor: '#F6F6F3',
+            paper_bgcolor: '#F6F6F3',
             height: 200,
             xaxis: {
                 title: 'Move number',
@@ -706,6 +714,8 @@ $(document).ready((event) => {
             margin: { t: 35 },
             title: `Level ${$('#levelSelect').val()}`,
             height: 200,
+            plot_bgcolor: '#F6F6F3',
+            paper_bgcolor: '#F6F6F3',
             xaxis: {
                 title: 'Move number',
                 titlefont: {
@@ -921,6 +931,8 @@ $(document).ready((event) => {
         $('#noDataOverlayGoals1').css('display', 'block')
         $('#noDataOverlayGoals2').css('display', 'block')
         let layout = {
+            plot_bgcolor: '#F6F6F3',
+            paper_bgcolor: '#F6F6F3',
             margin: { t: 35 },
             title: `Level ${$('#levelSelect').val()}`,
             height: 200,

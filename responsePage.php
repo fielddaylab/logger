@@ -3,7 +3,7 @@
 header('Content-Type: application/json');
 
 // Establish the database connection
-include "database.php";
+include "database.php.template";
 ini_set('memory_limit','256M');
 
 $db = connectToDatabase(DBDeets::DB_NAME_DATA);
@@ -339,7 +339,7 @@ function parseBasicInfo($data, $gameID, $db) {
 function getFilteredSessionsAndTimes($gameID, $minMoves, $minLevels, $minQuestions, $db) {
     $startDate = new DateTime($_GET['startDate']);
     $endDate = new DateTime($_GET['endDate']);
-    $query = "SELECT event, event_custom, session_id, client_time FROM log WHERE app_id=? ORDER BY session_id;";
+    $query = "SELECT level, event, event_custom, session_id, client_time FROM log WHERE app_id=? ORDER BY session_id;";
     $paramArray = array($gameID);
     $stmt = queryMultiParam($db, $query, "s", $paramArray);
     if($stmt === NULL) {
@@ -347,12 +347,13 @@ function getFilteredSessionsAndTimes($gameID, $minMoves, $minLevels, $minQuestio
         die('{ "errMessage": "Error running query." }');
     }
     // Bind variables to the results
-    if (!$stmt->bind_result($event, $event_custom, $sessionID, $time)) {
+    if (!$stmt->bind_result($level, $event, $event_custom, $sessionID, $time)) {
         http_response_code(500);
         die('{ "errMessage": "Failed to bind to results." }');
     }
     // Fetch and display the results
     while($stmt->fetch()) {
+        $levels[] = $level;
         $events[] = $event;
         $event_customs[] = $event_custom;
         $sessionIDs[] = $sessionID;
@@ -372,9 +373,11 @@ function getFilteredSessionsAndTimes($gameID, $minMoves, $minLevels, $minQuestio
         $numLevels = 0;
         $numQuestions = 0;
         $date = new DateTime($times[$index]);
+        $levelsCompleted = array();
         for ($i = 0; $i < $eventsPerSession[$session]; $i++) {
-            if ($events[$index + $i] === "COMPLETE") {
+            if ($events[$index + $i] === "COMPLETE" && !in_array($levels[$index+$i], $levelsCompleted)) {
                 $numLevels++;
+                $levelsCompleted []= $levels[$index+$i];
             } else if ($events[$index + $i] === "CUSTOM") {
                 if ($event_customs[$index + $i] === 1 || $event_customs[$index + $i] === 2) {
                     $numMoves++;
@@ -614,7 +617,7 @@ function getLevelsHistogram($gameID, $minMoves, $minLevels, $minQuestions, $db) 
     array_walk($sessionIDs, 'intval');
     $ids = implode(',', $sessionIDs);
 
-    $query = "SELECT DISTINCT level, session_id, count(session_id) FROM log WHERE app_id=? AND event=? AND session_id IN ($ids) GROUP BY session_id;";
+    $query = "SELECT q.level, count(q.session_id) FROM (SELECT DISTINCT level, session_id FROM log WHERE app_id=? AND event=? AND session_id IN ($ids)) q GROUP BY q.session_id;";
     $paramArray = array($gameID, "COMPLETE");
     $stmt = queryMultiParam($db, $query, "ss", $paramArray);
     if($stmt === NULL) {
@@ -622,17 +625,17 @@ function getLevelsHistogram($gameID, $minMoves, $minLevels, $minQuestions, $db) 
         die('{ "errMessage": "Error running query." }');
     }
     // Bind variables to the results
-    if (!$stmt->bind_result($level, $session, $count)) {
+    if (!$stmt->bind_result($level, $count)) {
         http_response_code(500);
         die('{ "errMessage": "Failed to bind to results." }');
     }
 
     $counts = array();
-    $sessions = array();
+    $levels = array();
     // Fetch and display the results
     while($stmt->fetch()) {
         $counts []= $count;
-        $sessions []= $session;
+        $levels []= $level;
     }
 
     $zeroLevelSessions = array_diff($sessionIDs, $sessions);

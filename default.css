@@ -1,7 +1,7 @@
 body, div {
     margin:0px;
     padding:0px;
-    font:16px Helvetica;
+    font:16px "Open Sans";
 }
 select, .select2 {
     min-width:200px;
@@ -42,7 +42,7 @@ select, .select2 {
 
 .nav-tabs {
     margin-bottom: -1px;
-    margin-right:10px;
+    margin-right: 10px;
 }
 
 #noDataOverlayLeft,    #noDataOverlayRight,    #noDataOverlayGoals1,    #noDataOverlayGoals2,
