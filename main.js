@@ -10,6 +10,7 @@ $(document).ready((event) => {
     let graphRightAll = $('#graphRightAll')[0]
     let histogramAll1 = $('#goalsGraph1All')[0]
     let histogramAll2 = $('#goalsGraph2All')[0]
+    let histogramAll3 = $('#goalsGraph3All')[0]
 
     let totalSessions
     let currentSessions = []
@@ -520,6 +521,37 @@ $(document).ready((event) => {
         }
 
         Plotly.newPlot(histogramAll2, [trace2], layout2)
+
+        $('#goalsDiv3All').html('Histogram 3: Number of levels completed')
+        $('#goalsDiv3All').css('display', 'block')
+        $('#goalsGraph3All').css('display', 'block')
+        let trace3 = {
+            x: data.numLevels,
+            type: 'histogram'
+        }
+        let layout3 = {
+            margin: { t: 35 },
+            height: 200,
+            xaxis: {
+                title: 'Number of levels completed',
+                titlefont: {
+                    family: 'Courier New, monospace',
+                    size: 12,
+                    color: '#7f7f7f'
+                }
+            },
+            yaxis: {
+                title: 'Number of sessions',
+                titlefont: {
+                    family: 'Courier New, monospace',
+                    size: 12,
+                    color: '#7f7f7f'
+                }
+            },
+            showlegend: false
+        }
+
+        Plotly.newPlot(histogramAll3, [trace3], layout3)
     }
 
     function drawWavesGoals(data, shouldHideOverlay = true) {

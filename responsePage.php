@@ -3,7 +3,7 @@
 header('Content-Type: application/json');
 
 // Establish the database connection
-include "database.php";
+include "database.php.template";
 ini_set('memory_limit','256M');
 
 $db = connectToDatabase(DBDeets::DB_NAME_DATA);
@@ -538,7 +538,7 @@ function getQuestionsHistogram($gameID, $minMoves, $minLevels, $minQuestions, $d
     }
 
     $sessionIDs;
-    if (isset($_GET['minMoves'])) { // filtered
+    if (isset($minMoves)) { // filtered
         $sessionIDs = getFilteredSessionsAndTimes($gameID, $minMoves, $minLevels, $minQuestions, $db)["sessions"];
     } else { // not filtered
         $sessionIDs = getSessionsAndTimes($gameID, $db)["sessions"];
@@ -564,7 +564,7 @@ function getMovesHistogram($gameID, $minMoves, $minLevels, $minQuestions, $db) {
     }
 
     $sessionIDs;
-    if (isset($_GET['minMoves'])) { // filtered
+    if (isset($minMoves)) { // filtered
         $sessionIDs = getFilteredSessionsAndTimes($gameID, $minMoves, $minLevels, $minQuestions, $db)["sessions"];
     } else { // not filtered
         $sessionIDs = getSessionsAndTimes($gameID, $db)["sessions"];
@@ -594,6 +594,46 @@ function getMovesHistogram($gameID, $minMoves, $minLevels, $minQuestions, $db) {
     }
 
     $output = array("numMoves"=>$counts);
+    return $output;
+}
+
+function getLevelsHistogram($gameID, $minMoves, $minLevels, $minQuestions, $db) {
+    $maxSessions = 100;
+    if (isset($_GET['maxSessions'])) {
+        $maxSessions = $_GET['maxSessions'];
+    }
+
+    $sessionIDs;
+    if (isset($minMoves)) { // filtered
+        $sessionIDs = getFilteredSessionsAndTimes($gameID, $minMoves, $minLevels, $minQuestions, $db)["sessions"];
+    } else { // not filtered
+        $sessionIDs = getSessionsAndTimes($gameID, $db)["sessions"];
+    }
+
+    $numSessions = min($maxSessions, count($sessionIDs));
+    array_walk($sessionIDs, 'intval');
+    $ids = implode(',', $sessionIDs);
+
+    $query = "SELECT session_id, count(*) FROM log WHERE app_id=? AND (event=?) AND session_id IN ($ids) GROUP BY session_id LIMIT ?;";
+    $paramArray = array($gameID, "COMPLETE", $numSessions);
+    $stmt = queryMultiParam($db, $query, "ssi", $paramArray);
+    if($stmt === NULL) {
+        http_response_code(500);
+        die('{ "errMessage": "Error running query." }');
+    }
+    // Bind variables to the results
+    if (!$stmt->bind_result($sessionID, $count)) {
+        http_response_code(500);
+        die('{ "errMessage": "Failed to bind to results." }');
+    }
+
+    $counts = array();
+    // Fetch and display the results
+    while($stmt->fetch()) {
+        $counts []= $count;
+    }
+
+    $output = array("numLevels"=>$counts);
     return $output;
 }
 
@@ -699,12 +739,14 @@ if (!isset($_GET['isAll'])) {
         if (isset($_GET['minMoves'])) {
             $questions = getQuestionsHistogram($gameID, $_GET['minMoves'], $_GET['minLevels'], $_GET['minQuestions'], $db);
             $moves = getMovesHistogram($gameID, $_GET['minMoves'], $_GET['minLevels'], $_GET['minQuestions'], $db);
+            $levels = getLevelsHistogram($gameID, $_GET['minMoves'], $_GET['minLevels'], $_GET['minQuestions'], $db);
         } else {
             $questions = getQuestionsHistogram($gameID, null, null, null, $db);
             $moves = getMovesHistogram($gameID, null, null, null, $db);
+            $levels = getLevelsHistogram($gameID, null, null, null, $db);
         }
 
-        $output = array_merge($questions, $moves);
+        $output = array_merge($questions, $moves, $levels);
         echo json_encode($output);
     }
 }
