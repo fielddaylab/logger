@@ -555,6 +555,46 @@ function getQuestionsHistogram($gameID, $minMoves, $minLevels, $minQuestions, $d
     return array("numsCorrect"=>$questionsCorrect, "numsQuestions"=>$questionsAnswered);
 }
 
+function getMovesHistogram($gameID, $minMoves, $minLevels, $minQuestions, $db) {
+    $maxSessions = 100;
+    if (isset($_GET['maxSessions'])) {
+        $maxSessions = $_GET['maxSessions'];
+    }
+
+    $sessionIDs;
+    if (isset($_GET['minMoves'])) { // filtered
+        $sessionIDs = getFilteredSessionsAndTimes($gameID, $minMoves, $minLevels, $minQuestions, $db)["sessions"];
+    } else { // not filtered
+        $sessionIDs = getSessionsAndTimes($gameID, $db)["sessions"];
+    }
+
+    $numSessions = min($maxSessions, count($sessionIDs));
+    array_walk($sessionIDs, 'intval');
+    $ids = implode(',', $sessionIDs);
+
+    $query = "SELECT session_id, count(*) FROM log WHERE app_id=? AND (event_custom=1 OR event_custom=2) AND session_id IN ($ids) GROUP BY session_id LIMIT ?;";
+    $paramArray = array($gameID, $numSessions);
+    $stmt = queryMultiParam($db, $query, "si", $paramArray);
+    if($stmt === NULL) {
+        http_response_code(500);
+        die('{ "errMessage": "Error running query." }');
+    }
+    // Bind variables to the results
+    if (!$stmt->bind_result($sessionID, $count)) {
+        http_response_code(500);
+        die('{ "errMessage": "Failed to bind to results." }');
+    }
+
+    $counts = array();
+    // Fetch and display the results
+    while($stmt->fetch()) {
+        $counts []= $count;
+    }
+
+    $output = array("numMoves"=>$counts);
+    return $output;
+}
+
 if (!isset($_GET['isAll'])) {
     if (!isset($_GET['isHistogram']) && !isset($_GET['minMoves']) && !isset($_GET['minQuestions']) && !isset($_GET['minLevels'])) {
         // Return number of sessions for a given game and return those session ids
@@ -655,11 +695,14 @@ if (!isset($_GET['isAll'])) {
     if (isset($_GET['isHistogram']) && isset($_GET['isAggregate']) && !isset($_GET['isBasicFeatures']) && isset($_GET['gameID'])) {
         $gameID = $_GET['gameID'];
         if (isset($_GET['minMoves'])) {
-            $output = getQuestionsHistogram($gameID, $_GET['minMoves'], $_GET['minLevels'], $_GET['minQuestions'], $db);
+            $questions = getQuestionsHistogram($gameID, $_GET['minMoves'], $_GET['minLevels'], $_GET['minQuestions'], $db);
+            $moves = getMovesHistogram($gameID, $_GET['minMoves'], $_GET['minLevels'], $_GET['minQuestions'], $db);
         } else {
-            $output = getQuestionsHistogram($gameID, null, null, null, $db);
+            $questions = getQuestionsHistogram($gameID, null, null, null, $db);
+            $moves = getMovesHistogram($gameID, null, null, null, $db);
         }
-        
+
+        $output = array_merge($questions, $moves);
         echo json_encode($output);
     }
 }

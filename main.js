@@ -489,6 +489,37 @@ $(document).ready((event) => {
             showlegend: false
         }
         Plotly.newPlot(histogramAll1, [trace], layout1)
+
+        $('#goalsDiv2All').html('Histogram 2: Total number of moves')
+        $('#goalsDiv2All').css('display', 'block')
+        $('#goalsGraph2All').css('display', 'block')
+        let trace2 = {
+            x: data.numMoves,
+            type: 'histogram'
+        }
+        let layout2 = {
+            margin: { t: 35 },
+            height: 200,
+            xaxis: {
+                title: 'Total number of moves',
+                titlefont: {
+                    family: 'Courier New, monospace',
+                    size: 12,
+                    color: '#7f7f7f'
+                }
+            },
+            yaxis: {
+                title: 'Number of sessions',
+                titlefont: {
+                    family: 'Courier New, monospace',
+                    size: 12,
+                    color: '#7f7f7f'
+                }
+            },
+            showlegend: false
+        }
+
+        Plotly.newPlot(histogramAll2, [trace2], layout2)
     }
 
     function drawWavesGoals(data, shouldHideOverlay = true) {
