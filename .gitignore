@@ -2,5 +2,7 @@
 log\.log
 
 log2\.log
+/database.php
+.DS_Store
 
 \.DS_Store
