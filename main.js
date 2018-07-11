@@ -457,13 +457,7 @@ $(document).ready((event) => {
         $('#goalsDiv1All').html('Histogram 1: Questions answered')
         let trace = {
             x: data.numsQuestions,
-            type: 'histogram',
-            autobinx: false,
-            xbins: {
-                start: 0,
-                size: 1,
-                end: 6
-            }
+            type: 'histogram'
         }
         let layout1 = {
             margin: { t: 35 },

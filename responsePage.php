@@ -605,32 +605,39 @@ function getLevelsHistogram($gameID, $minMoves, $minLevels, $minQuestions, $db) 
 
     $sessionIDs;
     if (isset($minMoves)) { // filtered
-        $sessionIDs = getFilteredSessionsAndTimes($gameID, $minMoves, $minLevels, $minQuestions, $db)["sessions"];
+        $sessionIDs = array_slice(getFilteredSessionsAndTimes($gameID, $minMoves, $minLevels, $minQuestions, $db)["sessions"], 0, $maxSessions, true);
     } else { // not filtered
-        $sessionIDs = getSessionsAndTimes($gameID, $db)["sessions"];
+        $sessionIDs = array_slice(getSessionsAndTimes($gameID, $db)["sessions"], 0, $maxSessions, true);
     }
 
     $numSessions = min($maxSessions, count($sessionIDs));
     array_walk($sessionIDs, 'intval');
     $ids = implode(',', $sessionIDs);
 
-    $query = "SELECT session_id, count(*) FROM log WHERE app_id=? AND (event=?) AND session_id IN ($ids) GROUP BY session_id LIMIT ?;";
-    $paramArray = array($gameID, "COMPLETE", $numSessions);
-    $stmt = queryMultiParam($db, $query, "ssi", $paramArray);
+    $query = "SELECT DISTINCT level, session_id, count(session_id) FROM log WHERE app_id=? AND event=? AND session_id IN ($ids) GROUP BY session_id;";
+    $paramArray = array($gameID, "COMPLETE");
+    $stmt = queryMultiParam($db, $query, "ss", $paramArray);
     if($stmt === NULL) {
         http_response_code(500);
         die('{ "errMessage": "Error running query." }');
     }
     // Bind variables to the results
-    if (!$stmt->bind_result($sessionID, $count)) {
+    if (!$stmt->bind_result($level, $session, $count)) {
         http_response_code(500);
         die('{ "errMessage": "Failed to bind to results." }');
     }
 
     $counts = array();
+    $sessions = array();
     // Fetch and display the results
     while($stmt->fetch()) {
         $counts []= $count;
+        $sessions []= $session;
+    }
+
+    $zeroLevelSessions = array_diff($sessionIDs, $sessions);
+    for ($i = 0; $i < count($zeroLevelSessions); $i++) {
+        $counts []= 0;
     }
 
     $output = array("numLevels"=>$counts);
@@ -687,7 +694,7 @@ if (!isset($_GET['isAll'])) {
             $maxSessions = 100;
         }
         $query = "SELECT q.event_data_complex, q.session_id FROM
-        (SELECT event_data_complex, session_id FROM log where app_id=? AND event_custom=? GROUP BY session_id LIMIT ?) q
+        (SELECT event_data_complex, session_id FROM log WHERE app_id=? AND event_custom=? GROUP BY session_id LIMIT ?) q
         ORDER BY q.session_id;";
         $paramArray = array($gameID, 3, $maxSessions);
         $stmt = queryMultiParam($db, $query, "sii", $paramArray);
