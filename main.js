@@ -231,7 +231,7 @@ $(document).ready((event) => {
             hideError()
             $.get('responsePage.php', { 'gameID': $('#gameSelect').val(), 'sessionID': $('#sessionSelect').val(), 'level': $('#levelSelect').val() }, (data, status, jqXHR) => {
                 if ($('#gameSelect').val() === "WAVES") {
-                    let dataObj = {data:data.event_data, times:data.times}
+                    let dataObj = {events:data.events, data:data.event_data, times:data.times}
                     drawWavesChart(dataObj)
                     getWavesData(shouldHideOverlay)
                 }
@@ -278,7 +278,7 @@ $(document).ready((event) => {
             //$('#levelSelectAll').val($('#levelSelect').val()).trigger('change')
             $.get('responsePage.php', { 'gameID': $('#gameSelect').val(), 'sessionID': $('#sessionSelect').val(), 'level': $('#levelSelect').val()}, (data, status, jqXHR) => {
                 if ($('#gameSelect').val() === "WAVES") {
-                    let dataObj = {data:JSON.parse(JSON.stringify(data.event_data)), times:data.times}
+                    let dataObj = {events:data.events, data:data.event_data, times:data.times}
                     drawWavesChart(dataObj)
                     getWavesData()
                 }
@@ -764,6 +764,7 @@ $(document).ready((event) => {
     }
 
     function drawWavesChart(inData) {
+        let xSucceed = []
         let xAmpLeft = [], xAmpRight = []
         let xFreqLeft = [], xFreqRight = []
         let xOffLeft = [], xOffRight = []
@@ -777,36 +778,41 @@ $(document).ready((event) => {
         if (inData.data !== null) {
             for (let i = 0; i < inData.data.length; i++) {
                 let jsonData = JSON.parse(inData.data[i])
-                if (jsonData.wave === 'left') {
-                    hasLeftData = true
-                    if (jsonData.slider === 'AMPLITUDE') {
-                        xAmpLeft.push(inData.times[i])
-                        yAmpLeft.push(jsonData.end_val)
-                        ampLeftNum.push('Move ' + i)
-                    } else if (jsonData.slider === 'WAVELENGTH') { 
-                        xFreqLeft.push(inData.times[i])
-                        yFreqLeft.push(jsonData.end_val)
-                        freqLeftNum.push('Move ' + i)
-                    } else if (jsonData.slider === 'OFFSET') {
-                        xOffLeft.push(inData.times[i])
-                        yOffLeft.push(jsonData.end_val)
-                        offLeftNum.push('Move ' + i)
+                if (jsonData.wave !== undefined) {
+                    if (jsonData.wave === 'left') {
+                        hasLeftData = true
+                        if (jsonData.slider === 'AMPLITUDE') {
+                            xAmpLeft.push(inData.times[i])
+                            yAmpLeft.push(jsonData.end_val)
+                            ampLeftNum.push('Move ' + i)
+                        } else if (jsonData.slider === 'WAVELENGTH') { 
+                            xFreqLeft.push(inData.times[i])
+                            yFreqLeft.push(jsonData.end_val)
+                            freqLeftNum.push('Move ' + i)
+                        } else if (jsonData.slider === 'OFFSET') {
+                            xOffLeft.push(inData.times[i])
+                            yOffLeft.push(jsonData.end_val)
+                            offLeftNum.push('Move ' + i)
+                        }
+                    } else if (jsonData.wave === 'right') {
+                        hasRightData = true
+                        if (jsonData.slider === 'AMPLITUDE') {
+                            xAmpRight.push(inData.times[i])
+                            yAmpRight.push(jsonData.end_val)
+                            ampRightNum.push('Move ' + i)
+                        } else if (jsonData.slider === 'WAVELENGTH') { 
+                            xFreqRight.push(inData.times[i])
+                            yFreqRight.push(jsonData.end_val)
+                            freqRightNum.push('Move ' + i)
+                        } else if (jsonData.slider === 'OFFSET') {
+                            xOffRight.push(inData.times[i])
+                            yOffRight.push(jsonData.end_val)
+                            offRightNum.push('Move ' + i)
+                        }
                     }
-                } else if (jsonData.wave === 'right') {
-                    hasRightData = true
-                    if (jsonData.slider === 'AMPLITUDE') {
-                        xAmpRight.push(inData.times[i])
-                        yAmpRight.push(jsonData.end_val)
-                        ampRightNum.push('Move ' + i)
-                    } else if (jsonData.slider === 'WAVELENGTH') { 
-                        xFreqRight.push(inData.times[i])
-                        yFreqRight.push(jsonData.end_val)
-                        freqRightNum.push('Move ' + i)
-                    } else if (jsonData.slider === 'OFFSET') {
-                        xOffRight.push(inData.times[i])
-                        yOffRight.push(jsonData.end_val)
-                        offRightNum.push('Move ' + i)
-                    }
+                }
+                if (inData.events[i] === 'SUCCEED') {
+                    xSucceed.push(inData.times[i])
                 }
             }
             if (hasLeftData) {
@@ -878,16 +884,52 @@ $(document).ready((event) => {
         }
         let wavesDataLeft = [ampTraceLeft, freqTraceLeft, offTraceLeft]
         let wavesDataRight = [ampTraceRight, freqTraceRight, offTraceRight]
+
         let layoutLeft = {
             margin: { t: 35 },
             title: 'Left Sliders',
-            showlegend: true
+            showlegend: true,
+            shapes: []
         }
         let layoutRight = {
             margin: { t: 35 },
             title: 'Right Sliders',
-            showlegend: true
+            showlegend: true,
+            shapes: []
         }
+        if (hasLeftData) {
+            xSucceed.forEach((val, index) => {
+                layoutLeft.shapes.push({
+                    type: 'line',
+                    xref: 'x',
+                    yref: 'paper',
+                    x0: val,
+                    x1: val,
+                    y0: 0,
+                    y1: 1,
+                    line: {
+                        color: 'purple'
+                    }
+                })
+            })
+        }
+        if (hasRightData) {
+            xSucceed.forEach((val, index) => {
+                layoutRight.shapes.push({
+                    type: 'line',
+                    xref: 'x',
+                    yref: 'paper',
+                    x0: val,
+                    x1: val,
+                    y0: 0,
+                    y1: 1,
+                    line: {
+                        color: 'purple'
+                    }
+                })
+            })
+        }
+
         Plotly.newPlot(graphLeft, wavesDataLeft, layoutLeft)
         Plotly.newPlot(graphRight, wavesDataRight, layoutRight)
     }
