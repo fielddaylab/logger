@@ -771,7 +771,7 @@ $(document).ready((event) => {
         let yAmpLeft = [], yAmpRight = []
         let yFreqLeft = [], yFreqRight = []
         let yOffLeft = [], yOffRight = []
-        let hasLeftData = false, hasRightData = false
+        let hasLeftData = false, hasRightData = false, hasSuccessState = false
         let ampLeftNum = [], ampRightNum = []
         let freqLeftNum = [], freqRightNum = []
         let offLeftNum = [], offRightNum = []
@@ -812,6 +812,7 @@ $(document).ready((event) => {
                     }
                 }
                 if (inData.events[i] === 'SUCCEED') {
+                    hasSuccessState = true
                     xSucceed.push(inData.times[i])
                 }
             }
@@ -882,6 +883,12 @@ $(document).ready((event) => {
             name: 'Offset',
             mode: 'lines+markers'
         }
+        let legendTrace = {
+            x: [null],
+            y: [null],
+            line: {color: '#9467bd'},
+            name: 'Success state'
+        }
         let wavesDataLeft = [ampTraceLeft, freqTraceLeft, offTraceLeft]
         let wavesDataRight = [ampTraceRight, freqTraceRight, offTraceRight]
 
@@ -898,6 +905,9 @@ $(document).ready((event) => {
             shapes: []
         }
         if (hasLeftData) {
+            if (hasSuccessState) {
+                wavesDataLeft.push(legendTrace)
+            }
             xSucceed.forEach((val, index) => {
                 layoutLeft.shapes.push({
                     type: 'line',
@@ -908,12 +918,15 @@ $(document).ready((event) => {
                     y0: 0,
                     y1: 1,
                     line: {
-                        color: 'purple'
+                        color: '#9467bd'
                     }
                 })
             })
         }
         if (hasRightData) {
+            if (hasSuccessState) {
+                wavesDataRight.push(legendTrace)
+            }
             xSucceed.forEach((val, index) => {
                 layoutRight.shapes.push({
                     type: 'line',
@@ -924,7 +937,7 @@ $(document).ready((event) => {
                     y0: 0,
                     y1: 1,
                     line: {
-                        color: 'purple'
+                        color: '#9467bd'
                     }
                 })
             })
