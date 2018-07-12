@@ -280,7 +280,7 @@ $(document).ready((event) => {
                 if ($('#gameSelect').val() === "WAVES") {
                     let dataObj = {events:data.events, data:data.event_data, times:data.times}
                     drawWavesChart(dataObj)
-                    getWavesData()
+                    getWavesData(true, false)
                 }
                 off()
                 hideError()
@@ -291,11 +291,12 @@ $(document).ready((event) => {
         }
     })
 
-    function getWavesData(shouldHideOverlay = true) {
+    function getWavesData(shouldHideOverlay = true, shouldClearLists = true) {
         on()
-        fastClear($('#basicFeatures'))
+        if (shouldClearLists)
+            fastClear($('#basicFeatures'))
         $.get('responsePage.php', { 'isBasicFeatures': true, 'gameID': $('#gameSelect').val(), 'sessionID': $('#sessionSelect').val()}, (data, status, jqXHR) => {
-            if ($('#gameSelect').val() === "WAVES") {
+            if ($('#gameSelect').val() === "WAVES" && shouldClearLists) {
                 let timesList = $('<ul></ul>').attr('id', 'times').addClass('collapse').css('font-size', '18px')
                 $('#basicFeatures').append($(`<span><li>Times: <a href='#times' data-toggle='collapse' id='timesCollapseBtn' class='collapseBtn'>[+]</a></li></span>`).append(timesList)
                     .on('hide.bs.collapse', () => {$('#timesCollapseBtn').html('[+]')})
@@ -364,8 +365,8 @@ $(document).ready((event) => {
                 $('#amtsTotal').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
                 $('#amtsTotal').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.knobSumTotal.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
                 $('#amtsTotal').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.knobTotalAvg.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-                drawWavesGoals(data, shouldHideOverlay)
             }
+            drawWavesGoals(data, shouldHideOverlay)
             if (shouldHideOverlay) {
                 off()
             }
@@ -559,10 +560,12 @@ $(document).ready((event) => {
         let dataObj = data.dataObj
         let numMovesPerChallenge = data.numMovesPerChallengeArray[$('#levelSelect').val()]
         $('#goalsDiv1').html('Goal 1: Completing the challenge')
-        let distanceToGoal = []
-        let moveGoodness = []
+        let distanceToGoal
+        let moveGoodness
+        let absDistanceToGoal
         if (numMovesPerChallenge) {
-            distanceToGoal = new Array(numMovesPerChallenge.length).fill(0)
+            absDistanceToGoal = new Array(numMovesPerChallenge.length).fill(0)
+            distanceToGoal = new Array(numMovesPerChallenge.length).fill(0) // this one is just -1/0/1
             moveGoodness = new Array(numMovesPerChallenge.length).fill(0) // an array of 0s
         }
         let moveNumbers = []
@@ -584,6 +587,8 @@ $(document).ready((event) => {
 
                     lastCloseness1 = dataJson.closeness
                 }
+                if (lastCloseness1 < 99999)
+                    absDistanceToGoal[i] = Math.round(lastCloseness1*100)/100
             }
             moveNumbers[i] = i
             cumulativeDistance += moveGoodness[i]
@@ -591,15 +596,21 @@ $(document).ready((event) => {
         }
 
         goalSlope1 = (distanceToGoal[distanceToGoal.length-1] - distanceToGoal[0]) / (moveNumbers[moveNumbers.length-1] - moveNumbers[0])
-
+        let distanceTrace1 = {
+            x: moveNumbers,
+            y: absDistanceToGoal,
+            xaxis: 'x1',
+            yaxis: 'y2',
+            line: {color: 'green'},
+            name: 'Distance to goal'
+        }
         let closenessTrace1 = {
             x: moveNumbers,
             y: distanceToGoal,
             line: {color: 'orange'},
             name: 'Net good moves',
-            mode: 'lines+markers'
         }
-        let layout1 = {
+        let layout = {
             margin: { t: 35 },
             title: `Level ${$('#levelSelect').val()}`,
             plot_bgcolor: '#F6F6F3',
@@ -618,43 +629,40 @@ $(document).ready((event) => {
                 titlefont: {
                     family: 'Courier New, monospace',
                     size: 12,
-                    color: '#7f7f7f'
-                }
+                    color: '#7f7f7f',
+                },
+                rangemode: 'tozero'
             },
-            showlegend: false,
-            annotations: [{
-                    x: (moveNumbers[0]+ moveNumbers[moveNumbers.length-1]) / 2,
-                    y: (distanceToGoal[0] + distanceToGoal[distanceToGoal.length-1]) / 2,
-                    xref: 'x',
-                    yref: 'y',
-                    text: 'Slope: ' + goalSlope1.toFixed(2),
-                    showArrow: true,
-                    arrowhead: 0,
-                    ax: 0,
-                    ay: -40,
-                    bgcolor: 'darkgray',
-                    borderpad: 4
-            }]
+            yaxis2: {
+                title: 'Dist. to goal',
+                titlefont: {
+                    family: 'Courier New, monospace',
+                    size: 12,
+                    color: 'green'
+                },
+                side: 'right',
+                overlaying: 'y',
+                rangemode: 'tozero'
+            },
+            showlegend: true,
+            legend: {
+                x: 1.1,
+                y: 1
+            }
         }
-        let slopeTrace1 = {
-            x: [moveNumbers[0], moveNumbers[moveNumbers.length-1]],
-            y: [distanceToGoal[0], distanceToGoal[distanceToGoal.length-1]],
-            line: {color: 'blue'},
-            name: 'Slope',
-            mode: 'lines'
-        }
-        let graphData1 = [closenessTrace1, slopeTrace1]
+        let graphData1 = [closenessTrace1, distanceTrace1]
 
         if (graphData1[0].x.length > 0 && graphData1[0].y.length > 0 && 
             graphData1[1].x.length > 0 && graphData1[1].y.length > 0) {
-            
-            Plotly.newPlot(goalsGraph1, graphData1, layout1)
+            $('#slopeDiv1').html('Net good moves slope: ' + goalSlope1.toFixed(2))
+            Plotly.newPlot(goalsGraph1, graphData1, layout)
         }
 
         $('#goalsDiv2').html('Goal 2: Maxing slider values')
         $('#goalsDiv2').css('display', 'block')
         $('#goalsGraph2').css('display', 'block')
         if (numMovesPerChallenge) {
+            absDistanceToGoal = new Array(numMovesPerChallenge.length).fill(0)
             distanceToGoal = new Array(numMovesPerChallenge.length).fill(0)
             moveGoodness = new Array(numMovesPerChallenge.length).fill(0) // an array of 0s
         }
@@ -688,13 +696,15 @@ $(document).ready((event) => {
                     if (thisCloseness[dataJson.slider, dataJson.wave] < lastCloseness[dataJson.slider, dataJson.wave]) moveGoodness[i] = 1
                     else if (thisCloseness[dataJson.slider, dataJson.wave] > lastCloseness[dataJson.slider, dataJson.wave]) moveGoodness[i] = -1
 
-                    lastCloseness[dataJson.slider] = thisCloseness[dataJson.slider]
+                    lastCloseness[dataJson.slider, dataJson.wave] = thisCloseness[dataJson.slider, dataJson.wave]
                 } else { // arrow
-                    if (thisCloseness[dataJson.slider, dataJson.wave] < lastCloseness[dataJson.slider, dataJson.wave]) moveGoodness[i] = -1
-                    else if (thisCloseness[dataJson.slider, dataJson.wave] > lastCloseness[dataJson.slider, dataJson.wave]) moveGoodness[i] = 1
+                    if (thisCloseness[dataJson.slider, dataJson.wave] < lastCloseness[dataJson.slider, dataJson.wave]) moveGoodness[i] = 1
+                    else if (thisCloseness[dataJson.slider, dataJson.wave] > lastCloseness[dataJson.slider, dataJson.wave]) moveGoodness[i] = -1
 
                     lastCloseness[dataJson.slider, dataJson.wave] = thisCloseness[dataJson.slider, dataJson.wave]
                 }
+                if (thisCloseness[dataJson.slider, dataJson.wave] < 99999)
+                    absDistanceToGoal[i] = Math.round(thisCloseness[dataJson.slider, dataJson.wave]*10)/10
             }
             moveNumbers[i] = i
             cumulativeDistance += moveGoodness[i]
@@ -703,63 +713,27 @@ $(document).ready((event) => {
 
         goalSlope2 = (distanceToGoal[distanceToGoal.length-1] - distanceToGoal[0]) / (moveNumbers[moveNumbers.length-1] - moveNumbers[0])
 
+        let distanceTrace2 = {
+            x: moveNumbers,
+            y: absDistanceToGoal,
+            xaxis: 'x1',
+            yaxis: 'y2',
+            overlaying: 'y',
+            line: {color: 'green'},
+            name: 'Distance to goal'
+        }
         let closenessTrace2 = {
             x: moveNumbers,
             y: distanceToGoal,
             line: {color: 'orange'},
-            name: 'Net good moves',
-            mode: 'lines+markers'
+            name: 'Net good moves'
         }
-        let layout2 = {
-            margin: { t: 35 },
-            title: `Level ${$('#levelSelect').val()}`,
-            height: 200,
-            plot_bgcolor: '#F6F6F3',
-            paper_bgcolor: '#F6F6F3',
-            xaxis: {
-                title: 'Move number',
-                titlefont: {
-                  family: 'Courier New, monospace',
-                  size: 12,
-                  color: '#7f7f7f'
-                }
-              },
-            yaxis: {
-                title: 'Net good moves',
-                titlefont: {
-                    family: 'Courier New, monospace',
-                    size: 12,
-                    color: '#7f7f7f'
-                }
-            },
-            showlegend: false,
-            annotations: [{
-                    x: (moveNumbers[0]+ moveNumbers[moveNumbers.length-1]) / 2,
-                    y: (distanceToGoal[0] + distanceToGoal[distanceToGoal.length-1]) / 2,
-                    xref: 'x',
-                    yref: 'y',
-                    text: 'Slope: ' + goalSlope2.toFixed(2),
-                    showArrow: true,
-                    arrowhead: 0,
-                    ax: 0,
-                    ay: -40,
-                    bgcolor: 'darkgray',
-                    borderpad: 4
-            }]
-        }
-        let slopeTrace2 = {
-            x: [moveNumbers[0], moveNumbers[moveNumbers.length-1]],
-            y: [distanceToGoal[0], distanceToGoal[distanceToGoal.length-1]],
-            line: {color: 'blue'},
-            name: 'Slope',
-            mode: 'lines'
-        }
-        let graphData2 = [closenessTrace2, slopeTrace2]
+        let graphData2 = [closenessTrace2, distanceTrace2]
 
         if (graphData2[0].x.length > 0 && graphData2[0].y.length > 0 && 
             graphData2[1].x.length > 0 && graphData2[1].y.length > 0) {
-            
-            Plotly.newPlot(goalsGraph2, graphData2, layout2)
+            $('#slopeDiv2').html('Net good moves slope: ' + goalSlope2.toFixed(2))
+            Plotly.newPlot(goalsGraph2, graphData2, layout)
         }
     }
 
@@ -775,6 +749,7 @@ $(document).ready((event) => {
         let ampLeftNum = [], ampRightNum = []
         let freqLeftNum = [], freqRightNum = []
         let offLeftNum = [], offRightNum = []
+        let moveCounter = 0
         if (inData.data !== null) {
             for (let i = 0; i < inData.data.length; i++) {
                 let jsonData = JSON.parse(inData.data[i])
@@ -784,31 +759,33 @@ $(document).ready((event) => {
                         if (jsonData.slider === 'AMPLITUDE') {
                             xAmpLeft.push(inData.times[i])
                             yAmpLeft.push(jsonData.end_val)
-                            ampLeftNum.push('Move ' + i)
+                            ampLeftNum.push('Move ' + moveCounter)
                         } else if (jsonData.slider === 'WAVELENGTH') { 
                             xFreqLeft.push(inData.times[i])
                             yFreqLeft.push(jsonData.end_val)
-                            freqLeftNum.push('Move ' + i)
+                            freqLeftNum.push('Move ' + moveCounter)
                         } else if (jsonData.slider === 'OFFSET') {
                             xOffLeft.push(inData.times[i])
                             yOffLeft.push(jsonData.end_val)
-                            offLeftNum.push('Move ' + i)
+                            offLeftNum.push('Move ' + moveCounter)
                         }
+                        moveCounter++
                     } else if (jsonData.wave === 'right') {
                         hasRightData = true
                         if (jsonData.slider === 'AMPLITUDE') {
                             xAmpRight.push(inData.times[i])
                             yAmpRight.push(jsonData.end_val)
-                            ampRightNum.push('Move ' + i)
+                            ampRightNum.push('Move ' + moveCounter)
                         } else if (jsonData.slider === 'WAVELENGTH') { 
                             xFreqRight.push(inData.times[i])
                             yFreqRight.push(jsonData.end_val)
-                            freqRightNum.push('Move ' + i)
+                            freqRightNum.push('Move ' + moveCounter)
                         } else if (jsonData.slider === 'OFFSET') {
                             xOffRight.push(inData.times[i])
                             yOffRight.push(jsonData.end_val)
-                            offRightNum.push('Move ' + i)
+                            offRightNum.push('Move ' + moveCounter)
                         }
+                        moveCounter++
                     }
                 }
                 if (inData.events[i] === 'SUCCEED') {
@@ -887,7 +864,8 @@ $(document).ready((event) => {
             x: [null],
             y: [null],
             line: {color: '#9467bd'},
-            name: 'Success state'
+            name: 'Success state',
+            mode: 'lines'
         }
         let wavesDataLeft = [ampTraceLeft, freqTraceLeft, offTraceLeft]
         let wavesDataRight = [ampTraceRight, freqTraceRight, offTraceRight]
