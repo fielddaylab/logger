@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/css/select2.min.css">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
     <link rel="stylesheet" href="default.css">
-    <link rel='stylesheet' href='https://fonts.googleapis.com/css?family=Open+Sans' type='text/css'>
+    <link rel='stylesheet' href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' type='text/css'>
 </head>
 <body>
      <div id="loadingOverlay" class="overlay" style="z-index:5">
@@ -190,24 +190,167 @@
                 </div>
                 <br><br>
                 <div class="row" style="margin-left:0px;margin-right:0px;">
-                    <div id="wavesGraphsAll">
-                        <div class="col-xs-6">
-                            <div id="graphLeftAll" style="height:200px;">
-                                <div id="noDataOverlayLeftAll" class="overlay" style="display:none">
-                                    <div class="text" style="color:red; font-weight:bold;">NO DATA</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-xs-6">
-                            <div id="graphRightAll" style="height:200px;">
-                                <div id="noDataOverlayRightAll" class="overlay" style="display:none">
-                                    <div class="text" style="color:red; font-weight:bold;">NO DATA</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div id="defaultGraphContainerAll" style="display:none">
-
+                    <div class="col-xs-12">
+                        <table id="tableAll" class="table table-striped table-bordered table-hover">
+                            <thead>
+                                <tr>
+                                    <th scope="col"></th>
+                                    <th scope="col">Game complete</th>
+                                    <th scope="col">Level 10 complete</th>
+                                    <th scope="col">Level 20 complete</th>
+                                    <th scope="col">Q1/A</th>
+                                    <th scope="col">Q1/B</th>
+                                    <th scope="col">Q1/C</th>
+                                    <th scope="col">Q1/D</th>
+                                    <th scope="col">Q2/A</th>
+                                    <th scope="col">Q2/B</th>
+                                    <th scope="col">Q2/C</th>
+                                    <th scope="col">Q2/D</th>
+                                    <th scope="col">Q3/A</th>
+                                    <th scope="col">Q3/B</th>
+                                    <th scope="col">Q3/C</th>
+                                    <th scope="col">Q3/D</th>
+                                    <th scope="col">Q4/A</th>
+                                    <th scope="col">Q4/B</th>
+                                    <th scope="col">Q4/C</th>
+                                    <th scope="col">Q4/D</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <th scope="row"># moves</th>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"># type changes</th>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Total time</th>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Knob max-min (avg)</th>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Slope of goal 1</th>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Slope of goal 2</th>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
                 <br><br>
