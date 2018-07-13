@@ -445,12 +445,21 @@ $(document).ready((event) => {
             $('#amtsTotalAll').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
             $('#amtsTotalAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.totalKnobTotals.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
             $('#amtsTotalAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.avgKnobTotals.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-
+            getWavesTableData()
             off()
             //drawWavesHistogramsAll()
         }, 'json').error((jqXHR, textStatus, errorThrown) => {
             off()
             showError(jqXHR.responseText)
+        })
+    }
+
+    function getWavesTableData() {
+        // $.get...
+        $('#tableAllBody tr').each((i, ival) => {
+            $(ival).find('td').each((j, jval) => {
+                $(jval).html(i+', '+j)
+            })
         })
     }
 
