@@ -3,7 +3,7 @@
 header('Content-Type: application/json');
 
 // Establish the database connection
-include "database.php";
+include "database.php.template";
 ini_set('memory_limit','256M');
 
 $db = connectToDatabase(DBDeets::DB_NAME_DATA);
@@ -263,7 +263,7 @@ function parseBasicInfo($data, $gameID, $db) {
             foreach ($startIndices as $i=>$value) {
                 if (isset($startIndices[$i])) {
                     $levelTime = "-";
-                    if (isset($dataObj["times"][$endIndices[$i]]) && isset($dataObj["times"][$startIndices[$i]])) {
+                    if (isset($dataObj["times"][$endIndices[$i]], $dataObj["times"][$startIndices[$i]])) {
                         $levelStartTime = new DateTime($dataObj["times"][$startIndices[$i]]);
                         $levelEndTime = new DateTime($dataObj["times"][$endIndices[$i]]);
                         $levelTime = $levelEndTime->getTimestamp() - $levelStartTime->getTimestamp();
@@ -415,11 +415,10 @@ function getBasicInfoAll($gameID, $isFiltered, $db) {
         $maxSessions = 100;
         $sessionIDs = getSessionsAndTimes($gameID, $db)["sessions"];
     }
-    
-    $allData = array();
 
     $numLevels = count(getLevels($gameID, $db));
     $numSessions = count($sessionIDs);
+    $allData = array();
 
     // arrays of arrays (temp)
     $levelTimesPerLevelAll = array();
@@ -469,23 +468,6 @@ function getBasicInfoAll($gameID, $isFiltered, $db) {
         $knobTotalAmtsPerLevelAll[$i] = array();
         $knobAvgsPerLevelAll[$i] = array();
     }
-    // $allData["18020410454796070"] = parseBasicInfo(getBasicInfo($gameID, 18020410454796070, $db), $gameID, $db);
-    // $allData["18020414085766550"] = parseBasicInfo(getBasicInfo($gameID, 18020414085766550, $db), $gameID, $db);
-    // $allData["18020410051068496"] = parseBasicInfo(getBasicInfo($gameID, 18020410051068496, $db), $gameID, $db);
-    // $allData["18020409553488828"] = parseBasicInfo(getBasicInfo($gameID, 18020409553488828, $db), $gameID, $db);
-    // $allData["18020414243056364"] = parseBasicInfo(getBasicInfo($gameID, 18020414243056364, $db), $gameID, $db);
-    // $allData["18020409460082890"] = parseBasicInfo(getBasicInfo($gameID, 18020409460082890, $db), $gameID, $db);
-    // $allData["18020414111365300"] = parseBasicInfo(getBasicInfo($gameID, 18020414111365300, $db), $gameID, $db);
-    // $allData["18020414240304052"] = parseBasicInfo(getBasicInfo($gameID, 18020414240304052, $db), $gameID, $db);
-    // $allData["18020414191844732"] = parseBasicInfo(getBasicInfo($gameID, 18020414191844732, $db), $gameID, $db);
-    // $allData["18020409575887704"] = parseBasicInfo(getBasicInfo($gameID, 18020409575887704, $db), $gameID, $db);
-    // $allData["18020414124838264"] = parseBasicInfo(getBasicInfo($gameID, 18020414124838264, $db), $gameID, $db);
-    // $allData["18020409434141040"] = parseBasicInfo(getBasicInfo($gameID, 18020409434141040, $db), $gameID, $db);
-    // $allData["18020414033230916"] = parseBasicInfo(getBasicInfo($gameID, 18020414033230916, $db), $gameID, $db);
-    // $allData["18020409473269000"] = parseBasicInfo(getBasicInfo($gameID, 18020409473269000, $db), $gameID, $db);
-    // $allData["18020414175586176"] = parseBasicInfo(getBasicInfo($gameID, 18020414175586176, $db), $gameID, $db);
-    // $allData["18020411125135564"] = parseBasicInfo(getBasicInfo($gameID, 18020411125135564, $db), $gameID, $db);
-    // $allData["18020409524381744"] = parseBasicInfo(getBasicInfo($gameID, 18020409524381744, $db), $gameID, $db);
     $k = 0;
     foreach ($sessionIDs as $i=>$session) {
         $k++;
@@ -651,10 +633,121 @@ function getLevelsHistogram($gameID, $minMoves, $minLevels, $minQuestions, $db) 
     return $output;
 }
 
+function getGoalsData($gameID, $sessionID, $level, $db) {
+    $data = parseBasicInfo(getBasicInfo($gameID, $sessionID, $db), $gameID, $db);
+    $dataObj = $data["dataObj"];
+    $numMovesPerChallenge = $data["numMovesPerChallengeArray"][$level];
+    
+    $distanceToGoal1;
+    $moveGoodness1;
+    $absDistanceToGoal1;
+    if (isset($numMovesPerChallenge)) {
+        $absDistanceToGoal1 = array_fill(0, count($numMovesPerChallenge), 0);
+        $distanceToGoal1 = array_fill(0, count($numMovesPerChallenge), 0); // this one is just -1/0/1
+        $moveGoodness1 = array_fill(0, count($numMovesPerChallenge), 0); // an array of 0s
+    }
+    $moveNumbers = array();
+    $cumulativeDistance1 = 0;
+    $lastCloseness1;
+
+    foreach ($numMovesPerChallenge as $i=>$val) {
+        $dataJson = json_decode($dataObj["data"][$i], true);
+        if ($dataObj["events"][$i] == "CUSTOM" && ($dataJson["event_custom"] == 'SLIDER_MOVE_RELEASE' || $dataJson["event_custom"] == 'ARROW_MOVE_RELEASE')) {
+            if ($dataJson["event_custom"] == "SLIDER_MOVE_RELEASE") { // sliders have before and after closeness
+                if ($dataJson["end_closeness"] < $dataJson["begin_closeness"]) $moveGoodness1[$i] = 1;
+                else if ($dataJson["end_closeness"] > $dataJson["begin_closeness"]) $moveGoodness1[$i] = -1;
+
+                $lastCloseness1 = $dataJson["end_closeness"];
+            } else { // arrow
+                if (!isset($lastCloseness1)) $lastCloseness1 = $dataJson["closeness"];
+                if ($dataJson["closeness"] < $lastCloseness1) $moveGoodness1[$i] = -1;
+                else if ($dataJson["closeness"] > $lastCloseness1) $moveGoodness1[$i] = 1;
+
+                $lastCloseness1 = $dataJson["closeness"];
+            }
+            if ($lastCloseness1 < 99999)
+                $absDistanceToGoal1[$i] = round($lastCloseness1, 2);
+        }
+        $moveNumbers[$i] = $i;
+        $cumulativeDistance1 += $moveGoodness1[$i];
+        $distanceToGoal1[$i] = $cumulativeDistance1;
+    }
+    $goalSlope1 = 0;
+    $deltaX = $moveNumbers[count($moveNumbers)-1] - $moveNumbers[0];
+    $deltaY = $distanceToGoal1[count($distanceToGoal1)-1] - $distanceToGoal1[0];
+    if ($deltaX != 0) {
+        $goalSlope1 = $deltaY / $deltaX;
+    }
+
+    $distanceToGoal2;
+    $moveGoodness2;
+    $absDistanceToGoal2;
+    if (isset($numMovesPerChallenge)) {
+        $absDistanceToGoal2 = array_fill(0, count($numMovesPerChallenge), 0);
+        $distanceToGoal2 = array_fill(0, count($numMovesPerChallenge), 0); // this one is just -1/0/1
+        $moveGoodness2 = array_fill(0, count($numMovesPerChallenge), 0); // an array of 0s
+    }
+    $cumulativeDistance2 = 0;
+    $lastCloseness2;
+
+    $graph_min_x = -50;
+    $graph_max_x =  50;
+    $graph_max_y =  50;
+    $graph_max_offset = $graph_max_x;
+    $graph_max_wavelength = $graph_max_x*2;
+    $graph_max_amplitude = $graph_max_y*(3/5);
+    $graph_default_offset = ($graph_min_x+$graph_max_x)/2;
+    $graph_default_wavelength = (2+($graph_max_x*2))/2;
+    $graph_default_amplitude = $graph_max_y/4;
+    $lastCloseness = array();
+    $thisCloseness = array();
+    $lastCloseness['OFFSET']['left'] = $lastCloseness['OFFSET']['right'] = $graph_max_offset-$graph_default_offset;
+    $lastCloseness['AMPLITUDE']['left'] = $lastCloseness['AMPLITUDE']['right'] = $graph_max_amplitude-$graph_default_amplitude;
+    $lastCloseness['WAVELENGTH']['left'] = $lastCloseness['WAVELENGTH']['right'] = $graph_max_wavelength-$graph_default_wavelength;
+    foreach ($numMovesPerChallenge as $i=>$val) {
+        $dataJson = json_decode($dataObj["data"][$i], true);
+        if ($dataObj["events"][$i] == 'CUSTOM' && ($dataJson["event_custom"] == 'SLIDER_MOVE_RELEASE' || $dataJson["event_custom"] == 'ARROW_MOVE_RELEASE')) {
+            if ($dataJson["slider"] ==  'AMPLITUDE') {
+                $thisCloseness[$dataJson["slider"]][$dataJson["wave"]] = $graph_max_amplitude-$dataJson["end_val"];
+            } else if ($dataJson["slider"] == 'OFFSET') {
+                $thisCloseness[$dataJson["slider"]][$dataJson["wave"]] = $graph_max_offset-$dataJson["end_val"];
+            } else if ($dataJson["slider"] == 'WAVELENGTH') {
+                $thisCloseness[$dataJson["slider"]][$dataJson["wave"]] = $graph_max_wavelength-$dataJson["end_val"];
+            }
+
+            if ($dataJson["event_custom"] == 'SLIDER_MOVE_RELEASE') { // sliders have before and after closeness
+                if ($thisCloseness[$dataJson["slider"]][$dataJson["wave"]] < $lastCloseness[$dataJson["slider"]][$dataJson["wave"]]) $moveGoodness2[$i] = 1;
+                else if ($thisCloseness[$dataJson["slider"]][$dataJson["wave"]] > $lastCloseness[$dataJson["slider"]][$dataJson["wave"]]) $moveGoodness2[$i] = -1;
+
+                $lastCloseness[$dataJson["slider"]][$dataJson["wave"]] = $thisCloseness[$dataJson["slider"]][$dataJson["wave"]];
+            } else { // arrow
+                if ($thisCloseness[$dataJson["slider"]][$dataJson["wave"]] < $lastCloseness[$dataJson["slider"]][$dataJson["wave"]]) $moveGoodness2[$i] = 1;
+                else if ($thisCloseness[$dataJson["slider"]][$dataJson["wave"]] > $lastCloseness[$dataJson["slider"]][$dataJson["wave"]]) $moveGoodness2[$i] = -1;
+
+                $lastCloseness[$dataJson["slider"]][$dataJson["wave"]] = $thisCloseness[$dataJson["slider"]][$dataJson["wave"]];
+            }
+            if ($thisCloseness[$dataJson["slider"]][$dataJson["wave"]] < 99999)
+                $absDistanceToGoal2[$i] = round($thisCloseness[$dataJson["slider"]][$dataJson["wave"]], 2);
+        }
+        $cumulativeDistance2 += $moveGoodness2[$i];
+        $distanceToGoal2[$i] = $cumulativeDistance2;
+    }
+
+    $goalSlope2 = 0;
+    $deltaY = $distanceToGoal2[count($distanceToGoal2)-1] - $distanceToGoal2[0];
+    if ($deltaX != 0) {
+        $goalSlope2 = $deltaY / $deltaX;
+    }
+
+    $output = array("moveNumbers"=>$moveNumbers, "distanceToGoal1"=>$distanceToGoal1, "distanceToGoal2"=>$distanceToGoal2,
+        "absDistanceToGoal1"=>$absDistanceToGoal1, "absDistanceToGoal2"=>$absDistanceToGoal2, "goalSlope1"=>$goalSlope1, "goalSlope2"=>$goalSlope2, "dataObj"=>$dataObj);
+    return $output;
+}
+
 if (!isset($_GET['isAll'])) {
     if (!isset($_GET['isHistogram']) && !isset($_GET['minMoves']) && !isset($_GET['minQuestions']) && !isset($_GET['minLevels'])) {
         // Return number of sessions for a given game and return those session ids
-        if (!isset($_GET['isBasicFeatures']) && !isset($_GET['sessionID']) && isset($_GET['gameID'])) {
+        if (!isset($_GET['isBasicFeatures']) && !isset($_GET['sessionID']) && !isset($_GET['isGoals']) && isset($_GET['gameID'])) {
             $numSessions = getNumSessions($_GET['gameID'], $db);
             $levels = getLevels($_GET['gameID'], $db);
             $sessionsAndTimes = getSessionsAndTimes($_GET['gameID'], $db);
@@ -663,20 +756,26 @@ if (!isset($_GET['isAll'])) {
         } else 
     
         // Return number of questions and number correct for a given session id and game
-        if (!isset($_GET['isBasicFeatures']) && !isset($_GET['level']) && isset($_GET['sessionID']) && isset($_GET['gameID'])) {
+        if (!isset($_GET['isBasicFeatures']) && !isset($_GET['level']) && !isset($_GET['isGoals']) && isset($_GET['sessionID'], $_GET['gameID'])) {
             $data = getQuestions($_GET['gameID'], $_GET['sessionID'], $db);
             echo json_encode($data);
         } else
     
         // Return graphing data
-        if (!isset($_GET['isBasicFeatures']) && isset($_GET['gameID']) && isset($_GET['sessionID']) && isset($_GET['level'])) {
+        if (!isset($_GET['isBasicFeatures']) && !isset($_GET['isGoals']) && isset($_GET['gameID'], $_GET['sessionID'], $_GET['level'])) {
             $data = getGraphData($_GET['gameID'], $_GET['sessionID'], $_GET['level'], $db);
             echo json_encode($data);
         } else
     
         // Return basic information
-        if (isset($_GET['isBasicFeatures']) && isset($_GET['gameID']) && isset($_GET['sessionID'])) {
+        if (isset($_GET['isBasicFeatures'], $_GET['gameID'], $_GET['sessionID'])) {
             $data = parseBasicInfo(getBasicInfo($_GET['gameID'], $_GET['sessionID'], $db), $_GET['gameID'], $db);
+            echo json_encode($data);
+        } else
+
+        // Return goals information
+        if (isset($_GET['gameID'], $_GET['isGoals'], $_GET['sessionID'], $_GET['level'])) {
+            $data = getGoalsData($_GET['gameID'], $_GET['sessionID'], $_GET['level'], $db);
             echo json_encode($data);
         }
     } else {
@@ -740,7 +839,7 @@ if (!isset($_GET['isAll'])) {
     } else
 
     // Return basic information
-    if (!isset($_GET['isHistogram']) && isset($_GET['isAggregate']) && isset($_GET['isBasicFeatures']) && isset($_GET['gameID'])) {
+    if (!isset($_GET['isHistogram']) && isset($_GET['isAggregate'], $_GET['isBasicFeatures'], $_GET['gameID'])) {
         $gameID = $_GET["gameID"];
         $output = getBasicInfoAll($gameID, isset($_GET['isFiltered']), $db);
         
@@ -748,7 +847,7 @@ if (!isset($_GET['isAll'])) {
     } else
 
     // Return histogram information
-    if (isset($_GET['isHistogram']) && isset($_GET['isAggregate']) && !isset($_GET['isBasicFeatures']) && isset($_GET['gameID'])) {
+    if (isset($_GET['isHistogram'], $_GET['isAggregate'], $_GET['gameID']) && !isset($_GET['isBasicFeatures'])) {
         $gameID = $_GET['gameID'];
         if (isset($_GET['minMoves'])) {
             $questions = getQuestionsHistogram($gameID, $_GET['minMoves'], $_GET['minLevels'], $_GET['minQuestions'], $db);

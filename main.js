@@ -70,9 +70,8 @@ $(document).ready((event) => {
                 $('#levelSelect').append(opt)
                 $('#levelSelect').val($('#levelSelect option:first').val())
 
-                selectSession(event, false)
-                // do initialization of all tab
                 selectGameAll(event)
+                selectSession(event, false)
             } else {
                 off()
                 hideError()
@@ -366,7 +365,7 @@ $(document).ready((event) => {
                 $('#amtsTotal').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.knobSumTotal.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
                 $('#amtsTotal').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.knobTotalAvg.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
             }
-            drawWavesGoals(data, shouldHideOverlay)
+            drawWavesGoals(shouldHideOverlay)
             if (shouldHideOverlay) {
                 off()
             }
@@ -564,186 +563,111 @@ $(document).ready((event) => {
         Plotly.newPlot(histogramAll3, [trace3], layout3)
     }
 
-    function drawWavesGoals(data, shouldHideOverlay = true) {
+    function drawWavesGoals(shouldHideOverlay = true) {
         // Goals stuff
-        let dataObj = data.dataObj
-        let numMovesPerChallenge = data.numMovesPerChallengeArray[$('#levelSelect').val()]
-        $('#goalsDiv1').html('Goal 1: Completing the challenge')
-        let distanceToGoal
-        let moveGoodness
-        let absDistanceToGoal
-        if (numMovesPerChallenge) {
-            absDistanceToGoal = new Array(numMovesPerChallenge.length).fill(0)
-            distanceToGoal = new Array(numMovesPerChallenge.length).fill(0) // this one is just -1/0/1
-            moveGoodness = new Array(numMovesPerChallenge.length).fill(0) // an array of 0s
-        }
-        let moveNumbers = []
-        let cumulativeDistance = 0
-        let lastCloseness1
+        on();
+        $.get('responsePage.php', { 'gameID': $('gameSelect').val(), 'isGoals': true, 'sessionID': $('#sessionSelect').val(), 'level': $('#levelSelect').val() }, (data, status, jqXHR) => {
+            $('#goalsDiv1').html('Goal 1: Completing the challenge')
 
-        for (let i in numMovesPerChallenge) {
-            let dataJson = JSON.parse(dataObj.data[i])
-            if (dataObj.events[i] === "CUSTOM" && (dataJson.event_custom === 'SLIDER_MOVE_RELEASE' || dataJson.event_custom === 'ARROW_MOVE_RELEASE')) {
-                if (dataJson.event_custom === "SLIDER_MOVE_RELEASE") { // sliders have before and after closeness
-                    if (dataJson.end_closeness < dataJson.begin_closeness) moveGoodness[i] = 1
-                    else if (dataJson.end_closeness > dataJson.begin_closeness) moveGoodness[i] = -1
+            console.log(data)
 
-                    lastCloseness1 = dataJson.end_closeness
-                } else { // arrow
-                    if (!lastCloseness1) lastCloseness1 = dataJson.closeness
-                    if (dataJson.closeness < lastCloseness1) moveGoodness[i] = -1
-                    else if (dataJson.closeness > lastCloseness1) moveGoodness[i] = 1
+            let goalSlope1 = data.goalSlope1
+            let goalSlope2 = data.goalSlope2
 
-                    lastCloseness1 = dataJson.closeness
-                }
-                if (lastCloseness1 < 99999)
-                    absDistanceToGoal[i] = Math.round(lastCloseness1*100)/100
+            let distanceTrace1 = {
+                x: data.moveNumbers,
+                y: data.absDistanceToGoal1,
+                xaxis: 'x1',
+                yaxis: 'y2',
+                line: {color: 'green'},
+                name: 'Distance to goal'
             }
-            moveNumbers[i] = i
-            cumulativeDistance += moveGoodness[i]
-            distanceToGoal[i] = cumulativeDistance
-        }
-
-        goalSlope1 = (distanceToGoal[distanceToGoal.length-1] - distanceToGoal[0]) / (moveNumbers[moveNumbers.length-1] - moveNumbers[0])
-        let distanceTrace1 = {
-            x: moveNumbers,
-            y: absDistanceToGoal,
-            xaxis: 'x1',
-            yaxis: 'y2',
-            line: {color: 'green'},
-            name: 'Distance to goal'
-        }
-        let closenessTrace1 = {
-            x: moveNumbers,
-            y: distanceToGoal,
-            line: {color: 'orange'},
-            name: 'Net good moves',
-        }
-        let layout = {
-            margin: { t: 35 },
-            title: `Level ${$('#levelSelect').val()}`,
-            plot_bgcolor: '#F6F6F3',
-            paper_bgcolor: '#F6F6F3',
-            height: 200,
-            xaxis: {
-                title: 'Move number',
-                titlefont: {
-                    family: 'Courier New, monospace',
-                    size: 12,
-                    color: '#7f7f7f'
+            let closenessTrace1 = {
+                x: data.moveNumbers,
+                y: data.distanceToGoal1,
+                line: {color: 'orange'},
+                name: 'Net good moves',
+            }
+            let layout = {
+                margin: { t: 35 },
+                title: `Level ${$('#levelSelect').val()}`,
+                plot_bgcolor: '#F6F6F3',
+                paper_bgcolor: '#F6F6F3',
+                height: 200,
+                xaxis: {
+                    title: 'Move number',
+                    titlefont: {
+                        family: 'Courier New, monospace',
+                        size: 12,
+                        color: '#7f7f7f'
+                    }
+                },
+                yaxis: {
+                    title: 'Net good moves',
+                    titlefont: {
+                        family: 'Courier New, monospace',
+                        size: 12,
+                        color: '#7f7f7f',
+                    },
+                    rangemode: 'tozero'
+                },
+                yaxis2: {
+                    title: 'Dist. to goal',
+                    titlefont: {
+                        family: 'Courier New, monospace',
+                        size: 12,
+                        color: 'green'
+                    },
+                    side: 'right',
+                    overlaying: 'y',
+                    rangemode: 'tozero'
+                },
+                showlegend: true,
+                legend: {
+                    x: 1.1,
+                    y: 1
                 }
-            },
-            yaxis: {
-                title: 'Net good moves',
-                titlefont: {
-                    family: 'Courier New, monospace',
-                    size: 12,
-                    color: '#7f7f7f',
-                },
-                rangemode: 'tozero'
-            },
-            yaxis2: {
-                title: 'Dist. to goal',
-                titlefont: {
-                    family: 'Courier New, monospace',
-                    size: 12,
-                    color: 'green'
-                },
-                side: 'right',
+            }
+            let graphData1 = [closenessTrace1, distanceTrace1]
+    
+            if (graphData1[0].x.length > 0 && graphData1[0].y.length > 0 && 
+                graphData1[1].x.length > 0 && graphData1[1].y.length > 0) {
+                $('#slopeDiv1').html('Net good moves slope: ' + goalSlope1.toFixed(2))
+                Plotly.newPlot(goalsGraph1, graphData1, layout)
+            }
+    
+            $('#goalsDiv2').html('Goal 2: Maxing slider values')
+            $('#goalsDiv2').css('display', 'block')
+            $('#goalsGraph2').css('display', 'block')
+    
+            let distanceTrace2 = {
+                x: data.moveNumbers,
+                y: data.absDistanceToGoal2,
+                xaxis: 'x1',
+                yaxis: 'y2',
                 overlaying: 'y',
-                rangemode: 'tozero'
-            },
-            showlegend: true,
-            legend: {
-                x: 1.1,
-                y: 1
+                line: {color: 'green'},
+                name: 'Distance to goal'
             }
-        }
-        let graphData1 = [closenessTrace1, distanceTrace1]
-
-        if (graphData1[0].x.length > 0 && graphData1[0].y.length > 0 && 
-            graphData1[1].x.length > 0 && graphData1[1].y.length > 0) {
-            $('#slopeDiv1').html('Net good moves slope: ' + goalSlope1.toFixed(2))
-            Plotly.newPlot(goalsGraph1, graphData1, layout)
-        }
-
-        $('#goalsDiv2').html('Goal 2: Maxing slider values')
-        $('#goalsDiv2').css('display', 'block')
-        $('#goalsGraph2').css('display', 'block')
-        if (numMovesPerChallenge) {
-            absDistanceToGoal = new Array(numMovesPerChallenge.length).fill(0)
-            distanceToGoal = new Array(numMovesPerChallenge.length).fill(0)
-            moveGoodness = new Array(numMovesPerChallenge.length).fill(0) // an array of 0s
-        }
-        cumulativeDistance = 0
-        indicesToSplice = []
-        let graph_min_x = -50
-        let graph_max_x =  50
-        let graph_max_y =  50
-        let graph_max_offset = graph_max_x
-        let graph_max_wavelength = graph_max_x*2
-        let graph_max_amplitude = graph_max_y*(3/5)
-        let graph_default_offset = (graph_min_x+graph_max_x)/2
-        let graph_default_wavelength = (2+(graph_max_x*2))/2
-        let graph_default_amplitude = graph_max_y/4
-        let lastCloseness = [], thisCloseness = []
-        lastCloseness['OFFSET', 'left'] = lastCloseness['OFFSET', 'right'] = graph_max_offset-graph_default_offset
-        lastCloseness['AMPLITUDE', 'left'] = lastCloseness['AMPLITUDE', 'right'] = graph_max_amplitude-graph_default_amplitude
-        lastCloseness['WAVELENGTH', 'left'] = lastCloseness['WAVELENGTH', 'right'] = graph_max_wavelength-graph_default_wavelength
-        for (let i in numMovesPerChallenge) {
-            let dataJson = JSON.parse(dataObj.data[i])
-            if (dataObj.events[i] === 'CUSTOM' && (dataJson.event_custom === 'SLIDER_MOVE_RELEASE' || dataJson.event_custom === 'ARROW_MOVE_RELEASE')) {
-                if (dataJson.slider ===  'AMPLITUDE') {
-                    thisCloseness[dataJson.slider, dataJson.wave] = graph_max_amplitude-dataJson.end_val
-                } else if (dataJson.slider === 'OFFSET') {
-                    thisCloseness[dataJson.slider, dataJson.wave] = graph_max_offset-dataJson.end_val
-                } else if (dataJson.slider === 'WAVELENGTH') {
-                    thisCloseness[dataJson.slider, dataJson.wave] = graph_max_wavelength-dataJson.end_val
-                }
-
-                if (dataJson.event_custom === 'SLIDER_MOVE_RELEASE') { // sliders have before and after closeness
-                    if (thisCloseness[dataJson.slider, dataJson.wave] < lastCloseness[dataJson.slider, dataJson.wave]) moveGoodness[i] = 1
-                    else if (thisCloseness[dataJson.slider, dataJson.wave] > lastCloseness[dataJson.slider, dataJson.wave]) moveGoodness[i] = -1
-
-                    lastCloseness[dataJson.slider, dataJson.wave] = thisCloseness[dataJson.slider, dataJson.wave]
-                } else { // arrow
-                    if (thisCloseness[dataJson.slider, dataJson.wave] < lastCloseness[dataJson.slider, dataJson.wave]) moveGoodness[i] = 1
-                    else if (thisCloseness[dataJson.slider, dataJson.wave] > lastCloseness[dataJson.slider, dataJson.wave]) moveGoodness[i] = -1
-
-                    lastCloseness[dataJson.slider, dataJson.wave] = thisCloseness[dataJson.slider, dataJson.wave]
-                }
-                if (thisCloseness[dataJson.slider, dataJson.wave] < 99999)
-                    absDistanceToGoal[i] = Math.round(thisCloseness[dataJson.slider, dataJson.wave]*10)/10
+            let closenessTrace2 = {
+                x: data.moveNumbers,
+                y: data.distanceToGoal2,
+                line: {color: 'orange'},
+                name: 'Net good moves'
             }
-            moveNumbers[i] = i
-            cumulativeDistance += moveGoodness[i]
-            distanceToGoal[i] = cumulativeDistance
-        }
-
-        goalSlope2 = (distanceToGoal[distanceToGoal.length-1] - distanceToGoal[0]) / (moveNumbers[moveNumbers.length-1] - moveNumbers[0])
-
-        let distanceTrace2 = {
-            x: moveNumbers,
-            y: absDistanceToGoal,
-            xaxis: 'x1',
-            yaxis: 'y2',
-            overlaying: 'y',
-            line: {color: 'green'},
-            name: 'Distance to goal'
-        }
-        let closenessTrace2 = {
-            x: moveNumbers,
-            y: distanceToGoal,
-            line: {color: 'orange'},
-            name: 'Net good moves'
-        }
-        let graphData2 = [closenessTrace2, distanceTrace2]
-
-        if (graphData2[0].x.length > 0 && graphData2[0].y.length > 0 && 
-            graphData2[1].x.length > 0 && graphData2[1].y.length > 0) {
-            $('#slopeDiv2').html('Net good moves slope: ' + goalSlope2.toFixed(2))
-            Plotly.newPlot(goalsGraph2, graphData2, layout)
-        }
+            let graphData2 = [closenessTrace2, distanceTrace2]
+    
+            if (graphData2[0].x.length > 0 && graphData2[0].y.length > 0 && 
+                graphData2[1].x.length > 0 && graphData2[1].y.length > 0) {
+                $('#slopeDiv2').html('Net good moves slope: ' + goalSlope2.toFixed(2))
+                Plotly.newPlot(goalsGraph2, graphData2, layout)
+            }
+            hideError()
+            off();
+        }, 'json').error((jqXHR, textStatus, errorThrown) => {
+            off()
+            showError(jqXHR.responseText)
+        })
     }
 
     function drawWavesChart(inData) {
