@@ -3,7 +3,7 @@
 header('Content-Type: application/json');
 
 // Establish the database connection
-include "database.php";
+include "database.php.template";
 ini_set('memory_limit','256M');
 
 $db = connectToDatabase(DBDeets::DB_NAME_DATA);
@@ -31,25 +31,46 @@ function sum($arr) {
     return $total;
 }
 
-function getNumSessions($gameID, $db) {
-    $query = "SELECT COUNT(DISTINCT session_id) FROM log WHERE app_id=?;";
-    $stmt = simpleQueryParam($db, $query, "s", $gameID);
+if (isset($_GET['asdf'])) {
+    getAndParseData("WAVES", $db);
+}
+
+function getAndParseData($gameID, $db) {
+    // Main query that returns ALL data
+    $query = "SELECT session_id, level, event, event_custom, event_data_complex, client_time FROM log WHERE app_id='$gameID';";
+    $stmt = $db->prepare($query);
+    $stmt->execute();
     if($stmt === NULL) {
         http_response_code(500);
         die('{ "errMessage": "Error running query." }');
     }
-    // Bind variables to the results
-    if (!$stmt->bind_result($numSessions)) {
+    if (!$stmt->bind_result($session_id, $level, $event, $event_custom, $event_data_complex, $client_time)) {
         http_response_code(500);
         die('{ "errMessage": "Failed to bind to results." }');
     }
-    // Fetch and display the results
-    if(!$stmt->fetch()) {
-        http_response_code(404);
-        die('{ "errMessage": "Resource not found." }');                
+    $sessionAttributes = array(); // the master array of all sessions that will be built with attributes
+    $allEvents = array();
+    while($stmt->fetch()) {
+        $tuple = array("session_id"=>$session_id, "level"=>$level, "event"=>$event, "event_custom"=>$event_custom, 
+        "event_data_complex"=>$event_data_complex, "time"=>$client_time);
+        // Group the variables into their sessionIDs in a big associative array
+        $sessionAttributes[$session_id][] = $tuple;
+        // Also make one big array of every event for easier extraction of unique attributes
+        $allEvents[] = $tuple;
     }
     $stmt->close();
-    return $numSessions;
+
+    ksort($sessionAttributes);
+
+    $sessions = array_keys($sessionAttributes);
+    $uniqueSessions = array_unique($sessions);
+    $numSessions = count($uniqueSessions);
+    $numEvents = count($allEvents);
+    $levels = array_unique(array_column($allEvents, "level"));
+    sort($levels);
+    
+
+    echo json_encode($sessionAttributes);
 }
 
 function getLevels($gameID, $db) {
@@ -782,8 +803,8 @@ if (!isset($_GET['isAll'])) {
         }
         
         else {
-            echo "{ 'error': 'Invalid set of parameters provided.' }";
-            file_put_contents("log.log", print_r($_GET, true));
+            //echo "{ 'error': 'Invalid set of parameters provided.' }";
+            //file_put_contents("log.log", print_r($_GET, true));
         }
     } else {
         $minMoves = $_GET['minMoves'];
