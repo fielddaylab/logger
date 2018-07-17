@@ -566,10 +566,8 @@ $(document).ready((event) => {
     function drawWavesGoals(shouldHideOverlay = true) {
         // Goals stuff
         on();
-        $.get('responsePage.php', { 'gameID': $('gameSelect').val(), 'isGoals': true, 'sessionID': $('#sessionSelect').val(), 'level': $('#levelSelect').val() }, (data, status, jqXHR) => {
+        $.get('responsePage.php', { 'gameID': $('#gameSelect').val(), 'isGoals': true, 'sessionID': $('#sessionSelect').val(), 'level': $('#levelSelect').val() }, (data, status, jqXHR) => {
             $('#goalsDiv1').html('Goal 1: Completing the challenge')
-
-            console.log(data)
 
             let goalSlope1 = data.goalSlope1
             let goalSlope2 = data.goalSlope2

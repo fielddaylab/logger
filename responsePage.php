@@ -3,7 +3,7 @@
 header('Content-Type: application/json');
 
 // Establish the database connection
-include "database.php.template";
+include "database.php";
 ini_set('memory_limit','256M');
 
 $db = connectToDatabase(DBDeets::DB_NAME_DATA);
@@ -704,6 +704,7 @@ function getGoalsData($gameID, $sessionID, $level, $db) {
     $lastCloseness['OFFSET']['left'] = $lastCloseness['OFFSET']['right'] = $graph_max_offset-$graph_default_offset;
     $lastCloseness['AMPLITUDE']['left'] = $lastCloseness['AMPLITUDE']['right'] = $graph_max_amplitude-$graph_default_amplitude;
     $lastCloseness['WAVELENGTH']['left'] = $lastCloseness['WAVELENGTH']['right'] = $graph_max_wavelength-$graph_default_wavelength;
+
     foreach ($numMovesPerChallenge as $i=>$val) {
         $dataJson = json_decode($dataObj["data"][$i], true);
         if ($dataObj["events"][$i] == 'CUSTOM' && ($dataJson["event_custom"] == 'SLIDER_MOVE_RELEASE' || $dataJson["event_custom"] == 'ARROW_MOVE_RELEASE')) {
@@ -735,10 +736,11 @@ function getGoalsData($gameID, $sessionID, $level, $db) {
 
     $goalSlope2 = 0;
     $deltaY = $distanceToGoal2[count($distanceToGoal2)-1] - $distanceToGoal2[0];
+    
     if ($deltaX != 0) {
         $goalSlope2 = $deltaY / $deltaX;
     }
-
+    
     $output = array("moveNumbers"=>$moveNumbers, "distanceToGoal1"=>$distanceToGoal1, "distanceToGoal2"=>$distanceToGoal2,
         "absDistanceToGoal1"=>$absDistanceToGoal1, "absDistanceToGoal2"=>$absDistanceToGoal2, "goalSlope1"=>$goalSlope1, "goalSlope2"=>$goalSlope2, "dataObj"=>$dataObj);
     return $output;
@@ -777,6 +779,11 @@ if (!isset($_GET['isAll'])) {
         if (isset($_GET['gameID'], $_GET['isGoals'], $_GET['sessionID'], $_GET['level'])) {
             $data = getGoalsData($_GET['gameID'], $_GET['sessionID'], $_GET['level'], $db);
             echo json_encode($data);
+        }
+        
+        else {
+            echo "{ 'error': 'Invalid set of parameters provided.' }";
+            file_put_contents("log.log", print_r($_GET, true));
         }
     } else {
         $minMoves = $_GET['minMoves'];
