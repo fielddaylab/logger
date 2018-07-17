@@ -16,11 +16,13 @@ $(document).ready((event) => {
     let currentSessions = []
     
     $(document).on('change', '#gameSelect', (event) => {
+        console.time('gameSelect')
         event.preventDefault()
         on()
         $('#gameIDForm').val($('#gameSelect').val())
         fastClear($('#levelSelect'))
         $.get('responsePage.php', { 'gameID': $('#gameSelect').val() }, (data, status, jqXHR) => {
+            console.timeEnd('gameSelect')
             if (data.levels !== null) {
                 totalSessions = data.numSessions
                 currentSessions = data.sessions
@@ -47,7 +49,7 @@ $(document).ready((event) => {
                 let options = []
                 fastClear($('#sessionSelect'))
 
-                for (let i = 0; i < numSessionsToDisplay; i++) { //for (let i = 0; i < data.sessions.length; i++) {
+                for (let i = 0; i < 5; i++) { //for (let i = 0; i < data.sessions.length; i++) {
                     let newOpt = document.createElement('option')
                     newOpt.value = data.sessions[i]
                     newOpt.text = i + ' | ' + data.sessions[i] + ' | ' + data.times[i]
@@ -87,6 +89,7 @@ $(document).ready((event) => {
     })
 
     $(document).on('submit', '#filterForm', (event) => {
+        console.time('filterForm')
         event.preventDefault()
         if ($('#gameSelect').val() !== 'empty') {
             $('#filterModal').modal('hide')
@@ -209,6 +212,7 @@ $(document).ready((event) => {
             ) // end of promises.push(
 
             $.when.apply($, promises).then(() => {
+                console.timeEnd('filterForm')
                 off()
             })
         } else {
@@ -223,6 +227,7 @@ $(document).ready((event) => {
     })
 
     function selectSession(event, shouldHideOverlay = true) {
+        console.time('selectSession')
         if (event) event.preventDefault()
         on()
         $.get('responsePage.php', { 'gameID': $('#gameSelect').val(), 'sessionID': $('#sessionSelect').val() }, (data, status, jqXHR) => {
@@ -237,6 +242,7 @@ $(document).ready((event) => {
                 if (shouldHideOverlay) {
                     off()
                 }
+                console.timeEnd('selectSession')
                 hideError()
               }, 'json').error((jqXHR, textStatus, errorThrown) => {
                   off()
@@ -249,6 +255,7 @@ $(document).ready((event) => {
     }
 
     function selectGameAll(event) {
+        console.time('selectGameAll')
         if (event) event.preventDefault()
         on()
         $.get('responsePage.php', { 'gameID': $('#gameSelect').val(), 'isAll': true }, (data, status, jqXHR) => {
@@ -256,6 +263,7 @@ $(document).ready((event) => {
             if ($('#gameSelect').val() === "WAVES") {
                 $.get('responsePage.php', { 'isAll': true, 'isHistogram': true, 'gameID': $('#gameSelect').val(), 'isAggregate': true }, (data) => {
                 drawWavesHistograms(data)
+                console.timeEnd('selectGameAll')
             }, 'json').error((jqXHR, textStatus, errorThrown) => {
                 $('#filterModal').modal('hide')
                 off()
@@ -271,6 +279,7 @@ $(document).ready((event) => {
     }
 
     $(document).on('change', '#levelSelect', (event) => {
+        console.time('levelSelect')
         event.preventDefault()
         if ($('#levelSelect').val() !== $('#levelSelectAll').val()) {
             on()
@@ -281,6 +290,7 @@ $(document).ready((event) => {
                     drawWavesChart(dataObj)
                     getWavesData(true, false)
                 }
+                console.timeEnd('levelSelect')
                 off()
                 hideError()
             }, 'json').error((jqXHR, textStatus, errorThrown) => {
@@ -292,6 +302,7 @@ $(document).ready((event) => {
 
     function getWavesData(shouldHideOverlay = true, shouldClearLists = true) {
         on()
+        console.time('getWavesData')
         if (shouldClearLists)
             fastClear($('#basicFeatures'))
         $.get('responsePage.php', { 'isBasicFeatures': true, 'gameID': $('#gameSelect').val(), 'sessionID': $('#sessionSelect').val()}, (data, status, jqXHR) => {
@@ -365,6 +376,7 @@ $(document).ready((event) => {
                 $('#amtsTotal').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.knobSumTotal.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
                 $('#amtsTotal').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.knobTotalAvg.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
             }
+            console.timeEnd('getWavesData')
             drawWavesGoals(shouldHideOverlay)
             if (shouldHideOverlay) {
                 off()
@@ -377,6 +389,7 @@ $(document).ready((event) => {
     }
 
     function getWavesDataAll() {
+        console.time('getWavesDataAll')
         on()
         fastClear($('#basicFeaturesAll'))
         $.get('responsePage.php', { 'isBasicFeatures': true, 'gameID': $('#gameSelect').val(), 'isAll': true, 'isAggregate': true }, (data, status, jqXHR) => {
@@ -444,6 +457,7 @@ $(document).ready((event) => {
             $('#amtsTotalAll').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
             $('#amtsTotalAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.totalKnobTotals.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
             $('#amtsTotalAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.avgKnobTotals.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+            console.timeEnd('getWavesDataAll')
             getWavesTableData()
             off()
             //drawWavesHistogramsAll()
@@ -454,15 +468,18 @@ $(document).ready((event) => {
     }
 
     function getWavesTableData() {
+        console.time('getWavesTableData')
         // $.get...
         $('#tableAllBody tr').each((i, ival) => {
             $(ival).find('td').each((j, jval) => {
                 $(jval).html(i+', '+j)
             })
         })
+        console.timeEnd('getWavesTableData')
     }
 
     function drawWavesHistograms(data) {
+        console.time('drawWavesHistograms')
         $('#goalsDiv1All').html('Histogram 1: Questions answered')
         let trace = {
             x: data.numsQuestions,
@@ -561,10 +578,12 @@ $(document).ready((event) => {
         }
 
         Plotly.newPlot(histogramAll3, [trace3], layout3)
+        console.timeEnd('drawWavesHistograms')
     }
 
     function drawWavesGoals(shouldHideOverlay = true) {
         // Goals stuff
+        console.time('drawWavesGoals')
         on();
         $.get('responsePage.php', { 'gameID': $('#gameSelect').val(), 'isGoals': true, 'sessionID': $('#sessionSelect').val(), 'level': $('#levelSelect').val() }, (data, status, jqXHR) => {
             $('#goalsDiv1').html('Goal 1: Completing the challenge')
@@ -661,7 +680,9 @@ $(document).ready((event) => {
                 Plotly.newPlot(goalsGraph2, graphData2, layout)
             }
             hideError()
-            off();
+            console.timeEnd('drawWavesGoals')
+            if (shouldHideOverlay)
+                off();
         }, 'json').error((jqXHR, textStatus, errorThrown) => {
             off()
             showError(jqXHR.responseText)
@@ -669,6 +690,7 @@ $(document).ready((event) => {
     }
 
     function drawWavesChart(inData) {
+        console.time('drawWavesChart')
         let xSucceed = []
         let xAmpLeft = [], xAmpRight = []
         let xFreqLeft = [], xFreqRight = []
@@ -854,6 +876,7 @@ $(document).ready((event) => {
 
         Plotly.newPlot(graphLeft, wavesDataLeft, layoutLeft)
         Plotly.newPlot(graphRight, wavesDataRight, layoutRight)
+        console.timeEnd('drawWavesChart')
     }
     
     function on() {
