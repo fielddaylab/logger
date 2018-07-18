@@ -32,10 +32,16 @@ function sum($arr) {
 }
 
 if (isset($_GET['asdf'])) {
-    getAndParseData("WAVES", $db);
+    
+    $_GET["minMoves"] = 5;
+    $_GET["minLevels"] = 1;
+    $_GET["minQuestions"] = 0;
+    $_GET["startDate"] = "2018-03-05 14:56:21";
+    $_GET["endDate"] = "2018-07-05 14:56:21";
+    echo json_encode(getAndParseData("WAVES", "getFilteredSessionsAndTimes", $db, true, "18020410454796070"));
 }
 
-function getAndParseData($gameID, $db) {
+function getAndParseData($gameID, $requestedData, $db, $isFiltered, $sessionID) {
     // Main query that returns ALL data
     $query = "SELECT session_id, level, event, event_custom, event_data_complex, client_time FROM log WHERE app_id='$gameID';";
     $stmt = $db->prepare($query);
@@ -51,8 +57,8 @@ function getAndParseData($gameID, $db) {
     $sessionAttributes = array(); // the master array of all sessions that will be built with attributes
     $allEvents = array();
     while($stmt->fetch()) {
-        $tuple = array("session_id"=>$session_id, "level"=>$level, "event"=>$event, "event_custom"=>$event_custom, 
-        "event_data_complex"=>$event_data_complex, "time"=>$client_time);
+        $tuple = array('session_id'=>$session_id, 'level'=>$level, 'event'=>$event, 'event_custom'=>$event_custom, 
+        'event_data_complex'=>$event_data_complex, 'time'=>$client_time);
         // Group the variables into their sessionIDs in a big associative array
         $sessionAttributes[$session_id][] = $tuple;
         // Also make one big array of every event for easier extraction of unique attributes
@@ -60,145 +66,84 @@ function getAndParseData($gameID, $db) {
     }
     $stmt->close();
 
-    ksort($sessionAttributes);
+    // Sort every id's sessions by date
+    foreach ($sessionAttributes as $i=>$val) {
+        uasort($sessionAttributes[$i], function($a, $b) {
+            return ($a['time'] <= $b['time']) ? -1 : 1;
+        });
+    }
+
+    // Sort session ids by date, the default from before
+    uasort($sessionAttributes, function($a, $b) {
+        return ($a[0]['time'] <= $b[0]['time']) ? -1 : 1;
+    });
 
     $sessions = array_keys($sessionAttributes);
     $uniqueSessions = array_unique($sessions);
     $numSessions = count($uniqueSessions);
+    if ($requestedData === 'getNumSessions') return $numSessions;
+
     $numEvents = count($allEvents);
-    $levels = array_unique(array_column($allEvents, "level"));
+    $levels = array_unique(array_column($allEvents, 'level'));
     sort($levels);
-    
+    if ($requestedData === 'getLevels') return $numLevels;
 
-    echo json_encode($sessionAttributes);
-}
+    $times = array(); // Construct array of each session's first time
+    foreach ($sessionAttributes as $i=>$val) {
+        $times[$i] = $val[0]['time'];
+    }
+    $sessionsAndTimes = array('sessions'=>$uniqueSessions, 'times'=>$times);
+    if ($requestedData === 'getSessionsAndTimes') return $sessionsAndTimes;
 
-function getLevels($gameID, $db) {
-    $query = "SELECT DISTINCT level FROM log WHERE app_id=? ORDER BY level ASC;";
-    $stmt = simpleQueryParam($db, $query, "s", $gameID);
-    if($stmt === NULL) {
-        http_response_code(500);
-        die('{ "errMessage": "Error running query." }');
-    }
-    // Bind variables to the results
-    if (!$stmt->bind_result($level)) {
-        http_response_code(500);
-        die('{ "errMessage": "Failed to bind to results." }');
-    }
-    // Fetch and display the results
-    while($stmt->fetch()) {
-        $levels[] = $level;
-    }
-    $stmt->close();
-    return $levels;
-}
-
-function getSessionsAndTimes($gameID, $db) {
-    $query = "SELECT DISTINCT q.session_id, q.cl_time FROM (SELECT session_id, MIN(client_time) as cl_time FROM log WHERE app_id=? GROUP BY session_id) q ORDER BY q.cl_time;";
-    $stmt = simpleQueryParam($db, $query, "s", $gameID);
-    if($stmt === NULL) {
-        http_response_code(500);
-        die('{ "errMessage": "Error running query." }');
-    }
-    // Bind variables to the results
-    if (!$stmt->bind_result($session, $time)) {
-        http_response_code(500);
-        die('{ "errMessage": "Failed to bind to results." }');
-    }
-    // Fetch and display the results
-    while($stmt->fetch()) {
-        $sessions[] = $session;
-        $times[] = $time;
-    }
-    $stmt->close();
-    return array("sessions"=>$sessions, "times"=>$times);
-}
-
-function getQuestions($gameID, $sessionID, $db) {
-    $query = "SELECT event_data_complex FROM log WHERE app_id=? AND session_id=? AND event_custom=?;";
-    $paramArray = array($gameID, $sessionID, 3);
-    $stmt = queryMultiParam($db, $query, "ssi", $paramArray);
-    if($stmt === NULL) {
-        http_response_code(500);
-        die('{ "errMessage": "Error running query." }');
-    }
-    // Bind variables to the results
-    if (!$stmt->bind_result($dataComplex)) {
-        http_response_code(500);
-        die('{ "errMessage": "Failed to bind to results." }');
-    }
-    // Fetch and display the results
-    $data = array();
-    while($stmt->fetch()) {
-        $data[] = $dataComplex;
-    }
-    $numCorrect = 0;
-    $numQuestions = count($data);
-    for ($i = 0; $i < $numQuestions; $i++) {
-        $jsonData = json_decode($data[$i], true);
-        if ($jsonData["answer"] === $jsonData["answered"]) {
-            $numCorrect++;
+    if ($requestedData === 'getQuestions' && isset($sessionID)) {
+        $questionEvents = array();
+        foreach ($sessionAttributes[$sessionID] as $i=>$val) {
+            if ($val['event_custom'] == 3) {
+                $questionEvents []= $val;
+            }
         }
+        $numCorrect = 0;
+        $numQuestions = count($questionEvents);
+        for ($i = 0; $i < $numQuestions; $i++) {
+            $jsonData = json_decode($data[$i], true);
+            if ($jsonData['answer'] === $jsonData['answered']) {
+              $numCorrect++;
+            }
+        }
+        return array('numCorrect'=>$numCorrect, 'numQuestions'=>$numQuestions);
     }
-    $stmt->close();
-    return array("numCorrect"=>$numCorrect, "numQuestions"=>$numQuestions);
-}
 
-function getGraphData($gameID, $sessionID, $level, $db) {
-    $query = "SELECT event, event_data_complex, client_time FROM log WHERE app_id=? AND session_id=? AND level=? AND (event_custom=? OR event_custom=? OR event=?);";
-    $paramArray = array($gameID, $sessionID, $level, 1, 2, "SUCCEED");
-    $stmt = queryMultiParam($db, $query, "ssiiis", $paramArray);
-    if($stmt === NULL) {
-        http_response_code(500);
-        die('{ "errMessage": "Error running query." }');
+    if ($requestedData === 'getGraphData' && isset($sessionID)) {
+        $graphEvents = array();
+        $graphTimes = array();
+        $graphEventData = array();
+        foreach ($sessionAttributes[$sessionID] as $i=>$val) {
+            if ($val['event_custom'] == 1 ||
+                $val['event_custom'] == 2 ||
+                $val['event'] == 'SUCCEED'
+            ) {
+                $graphEvents []= $val['event'];
+                $graphTimes [] = $val['time'];
+                $graphEventData []= $val['event_data_complex'];
+            }
+        } 
+        return array('events'=>$graphEvents, 'times'=>$graphTimes, 'event_data'=>$graphEventData);
     }
-    // Bind variables to the results
-    if (!$stmt->bind_result($event, $singleData, $singleTime)) {
-        http_response_code(500);
-        die('{ "errMessage": "Failed to bind to results." }');
-    }
-    // Fetch and display the results
-    $times = array();
-    $eventData = array();
-    $events = array();
-    while($stmt->fetch()) {
-        $events[] = $event;
-        $times[] = $singleTime;
-        $eventData[] = $singleData;
-    }
-    $stmt->close();
-    return array("events"=>$events, "times"=>$times, "event_data"=>$eventData);
-}
 
-function getBasicInfo($gameID, $sessionID, $db) {
-    $query = "SELECT event_data_complex, client_time, level, event FROM log WHERE app_id=? AND session_id=?;";
-    $paramArray = array($gameID, $sessionID);
-    $stmt = queryMultiParam($db, $query, "ss", $paramArray);
-    if($stmt === NULL) {
-        http_response_code(500);
-        die('{ "errMessage": "Error running query." }');
-    }
-    // Bind variables to the results
-    if (!$stmt->bind_result($singleData, $singleTime, $singleLevel, $singleEvent)) {
-        http_response_code(500);
-        die('{ "errMessage": "Failed to bind to results." }');
-    }
-    // Fetch and display the results
-    while($stmt->fetch()) {
-        $times[] = $singleTime;
-        $eventData[] = $singleData;
-        $levels[] = $singleLevel;
-        $events[] = $singleEvent;
-    }
-    $stmt->close();
-    // TODO: add averages and totals in here
-    return array("times"=>$times, "event_data"=>$eventData, "levels"=>$levels, "events"=>$events);
-}
+    if ($requestedData === 'getAndParseBasicInfo' && isset($sessionID)) {
+        $infoTimes = array();
+        $infoEventData = array();
+        $infoLevels = array();
+        $infoEvents = array();
+        foreach ($sessionAttributes[$sessionID] as $i=>$val) {
+            $infoTimes []= $val['time'];
+            $infoEventData []= $val['event_data_complex'];
+            $infoLevels []= $val['level'];
+            $infoEvents []= $val['event'];
+        }
 
-function parseBasicInfo($data, $gameID, $db) {
-    if ($gameID === "WAVES") {
-        $dataObj = array("data"=>$data["event_data"], "times"=>$data["times"], "events"=>$data["events"], "levels"=>$data["levels"]);
-        // Variables holding "basic features" for waves game, filled by database data
+        $dataObj = array('data'=>$infoEventData, 'times'=>$infoTimes, 'events'=>$infoEvents, 'levels'=>$infoLevels);
+        // Variables holding 'basic features' for waves game, filled by database data
         $avgTime;
         $totalTime = 0;
         $numMovesPerChallenge;
@@ -214,9 +159,9 @@ function parseBasicInfo($data, $gameID, $db) {
         $knobSumTotal = 0;
         $knobSumAvg;
 
-        $numLevels = count(array_unique($dataObj["levels"]));
+        $numLevels = count(array_unique($dataObj['levels']));
         
-        if (isset($dataObj["times"])) {
+        if (isset($dataObj['times'])) {
             // Basic features stuff
             $levelStartTime;
             $levelEndTime;
@@ -237,7 +182,7 @@ function parseBasicInfo($data, $gameID, $db) {
             $levelTimes = array();
             $avgKnobStdDevs = array();
             $knobAvgs = array();
-            foreach ($dataObj["levels"] as $i) {
+            foreach ($dataObj['levels'] as $i) {
                 $numMovesPerChallenge[$i] = array();
                 $indicesToSplice[$i] = array();
                 
@@ -251,31 +196,31 @@ function parseBasicInfo($data, $gameID, $db) {
                 $avgKnobStdDevs[$i] = 0;
             }
 
-            for ($i = 0; $i < count($dataObj["times"]); $i++) {
-                if (!isset($endIndices[$dataObj["levels"][$i]])) {
-                    $dataJson = json_decode($dataObj["data"][$i], true);
-                    if ($dataObj["events"][$i] === "BEGIN") {
-                        if (!isset($startIndices[$dataObj["levels"][$i]])) { // check this space isn't filled by a previous attempt on the same level
-                            $startIndices[$dataObj["levels"][$i]] = $i;
+            for ($i = 0; $i < count($dataObj['times']); $i++) {
+                if (!isset($endIndices[$dataObj['levels'][$i]])) {
+                    $dataJson = json_decode($dataObj['data'][$i], true);
+                    if ($dataObj['events'][$i] === 'BEGIN') {
+                        if (!isset($startIndices[$dataObj['levels'][$i]])) { // check this space isn't filled by a previous attempt on the same level
+                            $startIndices[$dataObj['levels'][$i]] = $i;
                         }
-                    } else if ($dataObj["events"][$i] === "COMPLETE") {
-                        if (!isset($endIndices[$dataObj["levels"][$i]])) {
-                            $endIndices[$dataObj["levels"][$i]] = $i;
+                    } else if ($dataObj['events'][$i] === 'COMPLETE') {
+                        if (!isset($endIndices[$dataObj['levels'][$i]])) {
+                            $endIndices[$dataObj['levels'][$i]] = $i;
                         }
-                    } else if ($dataObj["events"][$i] === "CUSTOM" && ($dataJson["event_custom"] === "SLIDER_MOVE_RELEASE" || $dataJson["event_custom"] === "ARROW_MOVE_RELEASE")) {
-                        if ($lastSlider !== $dataJson["slider"]) {
-                            if (!isset($moveTypeChangesPerLevel[$dataObj["levels"][$i]])) $moveTypeChangesPerLevel[$dataObj["levels"][$i]] = 0;
-                            $moveTypeChangesPerLevel[$dataObj["levels"][$i]]++;
+                    } else if ($dataObj['events'][$i] === 'CUSTOM' && ($dataJson['event_custom'] === 'SLIDER_MOVE_RELEASE' || $dataJson['event_custom'] === 'ARROW_MOVE_RELEASE')) {
+                        if ($lastSlider !== $dataJson['slider']) {
+                            if (!isset($moveTypeChangesPerLevel[$dataObj['levels'][$i]])) $moveTypeChangesPerLevel[$dataObj['levels'][$i]] = 0;
+                            $moveTypeChangesPerLevel[$dataObj['levels'][$i]]++;
                         }
-                        $lastSlider = $dataJson["slider"];
-                        $numMovesPerChallenge[$dataObj["levels"][$i]] []= $i;
-                        if ($dataJson["event_custom"] === "SLIDER_MOVE_RELEASE") { // arrows don't have std devs
-                            //if (!isset($knobNumStdDevs[$dataObj["levels"][$i]])) $knobNumStdDevs[$dataObj["levels"][$i]] = 0;
-                            $knobNumStdDevs[$dataObj["levels"][$i]]++;
-                            //if (!isset($knobStdDevs[$dataObj["levels"][$i]])) $knobStdDevs[$dataObj["levels"][$i]] = 0;
-                            $knobStdDevs[$dataObj["levels"][$i]] += $dataJson["stdev_val"];
-                            //if (!isset($knobAmts[$dataObj["levels"][$i]])) $knobAmts[$dataObj["levels"][$i]] = 0;
-                            $knobAmts[$dataObj["levels"][$i]] += ($dataJson["max_val"]-$dataJson["min_val"]);
+                        $lastSlider = $dataJson['slider'];
+                        $numMovesPerChallenge[$dataObj['levels'][$i]] []= $i;
+                        if ($dataJson['event_custom'] === 'SLIDER_MOVE_RELEASE') { // arrows don't have std devs
+                            //if (!isset($knobNumStdDevs[$dataObj['levels'][$i]])) $knobNumStdDevs[$dataObj['levels'][$i]] = 0;
+                            $knobNumStdDevs[$dataObj['levels'][$i]]++;
+                            //if (!isset($knobStdDevs[$dataObj['levels'][$i]])) $knobStdDevs[$dataObj['levels'][$i]] = 0;
+                            $knobStdDevs[$dataObj['levels'][$i]] += $dataJson['stdev_val'];
+                            //if (!isset($knobAmts[$dataObj['levels'][$i]])) $knobAmts[$dataObj['levels'][$i]] = 0;
+                            $knobAmts[$dataObj['levels'][$i]] += ($dataJson['max_val']-$dataJson['min_val']);
                         }
                     }
                 }
@@ -283,10 +228,10 @@ function parseBasicInfo($data, $gameID, $db) {
             
             foreach ($startIndices as $i=>$value) {
                 if (isset($startIndices[$i])) {
-                    $levelTime = "-";
-                    if (isset($dataObj["times"][$endIndices[$i]], $dataObj["times"][$startIndices[$i]])) {
-                        $levelStartTime = new DateTime($dataObj["times"][$startIndices[$i]]);
-                        $levelEndTime = new DateTime($dataObj["times"][$endIndices[$i]]);
+                    $levelTime = '-';
+                    if (isset($dataObj['times'][$endIndices[$i]], $dataObj['times'][$startIndices[$i]])) {
+                        $levelStartTime = new DateTime($dataObj['times'][$startIndices[$i]]);
+                        $levelEndTime = new DateTime($dataObj['times'][$endIndices[$i]]);
                         $levelTime = $levelEndTime->getTimestamp() - $levelStartTime->getTimestamp();
                         $totalTime += $levelTime;
                     }
@@ -322,10 +267,10 @@ function parseBasicInfo($data, $gameID, $db) {
         foreach ($filteredNumMoves as $j=>$value) {
             $numMoves[$j] = count($numMovesPerChallenge[$j]);
         }
-        return array("levelTimes"=>$levelTimes, "avgTime"=>$avgTime, "totalTime"=>$totalTime, "numMovesPerChallenge"=>$numMoves, "totalMoves"=>$totalMoves, "avgMoves"=>$avgMoves,
-        "moveTypeChangesPerLevel"=>$moveTypeChangesPerLevel, "moveTypeChangesTotal"=>$moveTypeChangesTotal, "moveTypeChangesAvg"=>$moveTypeChangesAvg, "knobStdDevs"=>$avgKnobStdDevs,
-        "knobNumStdDevs"=>$knobNumStdDevs, "knobAvgs"=>$knobAvgs, "knobAmtsTotalAvg"=>$knobAmtsTotal, "knobAmtsAvgAvg"=>$knobAmtsAvg, "knobTotalAmts"=>$knobAmts, "knobSumTotal"=>$knobSumTotal,
-        "knobTotalAvg"=>$knobSumAvg, "numMovesPerChallengeArray"=>$numMovesPerChallenge, "dataObj"=>$dataObj);
+        return array('levelTimes'=>$levelTimes, 'avgTime'=>$avgTime, 'totalTime'=>$totalTime, 'numMovesPerChallenge'=>$numMoves, 'totalMoves'=>$totalMoves, 'avgMoves'=>$avgMoves,
+        'moveTypeChangesPerLevel'=>$moveTypeChangesPerLevel, 'moveTypeChangesTotal'=>$moveTypeChangesTotal, 'moveTypeChangesAvg'=>$moveTypeChangesAvg, 'knobStdDevs'=>$avgKnobStdDevs,
+        'knobNumStdDevs'=>$knobNumStdDevs, 'knobAvgs'=>$knobAvgs, 'knobAmtsTotalAvg'=>$knobAmtsTotal, 'knobAmtsAvgAvg'=>$knobAmtsAvg, 'knobTotalAmts'=>$knobAmts, 'knobSumTotal'=>$knobSumTotal,
+        'knobTotalAvg'=>$knobSumAvg, 'numMovesPerChallengeArray'=>$numMovesPerChallenge, 'dataObj'=>$dataObj);
         /*
          * The above values are
          * levelTimes                -    array       - elements hold time per level for this session
@@ -354,8 +299,57 @@ function parseBasicInfo($data, $gameID, $db) {
          * numMovesPerChallengeArray -    array[][]   - original numMovesPerChallenge (list of indices of moves per level)
          * dataObj                   -    object      - dataObj from old structure
          */
-    } else {
-        return null;
+    }
+
+    if ($requestedData === 'getFilteredSessionsAndTimes' && $isFiltered) {
+        $filteredSessions = array();
+        $filteredSessionsTimes = array();
+
+        $numMoves = array();
+        $numLevels = array();
+        $numQuestions = array();
+        $levelsCompleted = array();
+
+        foreach ($allEvents as $val) {
+            $level = $val['level'];
+            $event = $val['event'];
+            $session_id = $val['session_id'];
+            $event_custom = $val['event_custom'];
+
+            if ($event === 'COMPLETE' && !isset($levelsCompleted[$session_id][$level])) {
+                if (!isset($numLevels[$session_id])) $numLevels[$session_id] = 0;
+                $numLevels[$session_id]++;
+                $levelsCompleted[$session_id][$level] = true;
+            } else if ($event === 'CUSTOM') {
+                if ($event_custom === 1 || $event_custom == 2) {
+                    if (!isset($numMoves[$session_id])) $numMoves[$session_id] = 0;
+                    $numMoves[$session_id]++;
+                } else if ($event_custom === 3) {
+                    if (!isset($numQuestions[$session_id])) $numQuestions[$session_id] = 0;
+                    $numQuestions[$session_id]++;
+                }
+            }
+        }
+        $minMoves = $_GET['minMoves'];
+        $minLevels = $_GET['minLevels'];
+        $minQuestions = $_GET['minQuestions'];
+        $startDate = $_GET['startDate'];
+        $endDate = $_GET['endDate'];
+        foreach ($uniqueSessions as $val) {
+            $time = $times[$val];
+            if (!isset($numMoves[$val])) $numMoves[$val] = 0;
+            if (!isset($numLevels[$val])) $numLevels[$val] = 0;
+            if (!isset($numQuestions[$val])) $numQuestions[$val] = 0;
+
+            if ($numMoves[$val] >= $minMoves && $numLevels[$val] >= $minLevels && $numQuestions[$val] >= $minQuestions &&
+            $startDate <= $time && $time <= $endDate) {
+                $filteredSessions[] = $val;
+                $filteredSessionsTimes[] = $time;
+            }
+        }
+
+        array_multisort($filteredSessionsTimes, SORT_ASC, $filteredSessions, SORT_ASC);
+        return array('sessions'=>$filteredSessions, 'times'=>$filteredSessionsTimes);
     }
 }
 
@@ -767,130 +761,130 @@ function getGoalsData($gameID, $sessionID, $level, $db) {
     return $output;
 }
 
-if (!isset($_GET['isAll'])) {
-    if (!isset($_GET['isHistogram']) && !isset($_GET['minMoves']) && !isset($_GET['minQuestions']) && !isset($_GET['minLevels'])) {
-        // Return number of sessions for a given game and return those session ids
-        if (!isset($_GET['isBasicFeatures']) && !isset($_GET['sessionID']) && !isset($_GET['isGoals']) && isset($_GET['gameID'])) {
-            $numSessions = getNumSessions($_GET['gameID'], $db);
-            $levels = getLevels($_GET['gameID'], $db);
-            $sessionsAndTimes = getSessionsAndTimes($_GET['gameID'], $db);
-            $data = array("numSessions"=>$numSessions, "levels"=>$levels, "sessions"=>$sessionsAndTimes["sessions"], "times"=>$sessionsAndTimes["times"]);
-            echo json_encode($data);
-        } else 
+// if (!isset($_GET['isAll'])) {
+//     if (!isset($_GET['isHistogram']) && !isset($_GET['minMoves']) && !isset($_GET['minQuestions']) && !isset($_GET['minLevels'])) {
+//         // Return number of sessions for a given game and return those session ids
+//         if (!isset($_GET['isBasicFeatures']) && !isset($_GET['sessionID']) && !isset($_GET['isGoals']) && isset($_GET['gameID'])) {
+//             $numSessions = getNumSessions($_GET['gameID'], $db);
+//             $levels = getLevels($_GET['gameID'], $db);
+//             $sessionsAndTimes = getSessionsAndTimes($_GET['gameID'], $db);
+//             $data = array("numSessions"=>$numSessions, "levels"=>$levels, "sessions"=>$sessionsAndTimes["sessions"], "times"=>$sessionsAndTimes["times"]);
+//             echo json_encode($data);
+//         } else 
     
-        // Return number of questions and number correct for a given session id and game
-        if (!isset($_GET['isBasicFeatures']) && !isset($_GET['level']) && !isset($_GET['isGoals']) && isset($_GET['sessionID'], $_GET['gameID'])) {
-            $data = getQuestions($_GET['gameID'], $_GET['sessionID'], $db);
-            echo json_encode($data);
-        } else
+//         // Return number of questions and number correct for a given session id and game
+//         if (!isset($_GET['isBasicFeatures']) && !isset($_GET['level']) && !isset($_GET['isGoals']) && isset($_GET['sessionID'], $_GET['gameID'])) {
+//             $data = getQuestions($_GET['gameID'], $_GET['sessionID'], $db);
+//             echo json_encode($data);
+//         } else
     
-        // Return graphing data
-        if (!isset($_GET['isBasicFeatures']) && !isset($_GET['isGoals']) && isset($_GET['gameID'], $_GET['sessionID'], $_GET['level'])) {
-            $data = getGraphData($_GET['gameID'], $_GET['sessionID'], $_GET['level'], $db);
-            echo json_encode($data);
-        } else
+//         // Return graphing data
+//         if (!isset($_GET['isBasicFeatures']) && !isset($_GET['isGoals']) && isset($_GET['gameID'], $_GET['sessionID'], $_GET['level'])) {
+//             $data = getGraphData($_GET['gameID'], $_GET['sessionID'], $_GET['level'], $db);
+//             echo json_encode($data);
+//         } else
     
-        // Return basic information
-        if (isset($_GET['isBasicFeatures'], $_GET['gameID'], $_GET['sessionID'])) {
-            $data = parseBasicInfo(getBasicInfo($_GET['gameID'], $_GET['sessionID'], $db), $_GET['gameID'], $db);
-            echo json_encode($data);
-        } else
+//         // Return basic information
+//         if (isset($_GET['isBasicFeatures'], $_GET['gameID'], $_GET['sessionID'])) {
+//             $data = parseBasicInfo(getBasicInfo($_GET['gameID'], $_GET['sessionID'], $db), $_GET['gameID'], $db);
+//             echo json_encode($data);
+//         } else
 
-        // Return goals information
-        if (isset($_GET['gameID'], $_GET['isGoals'], $_GET['sessionID'], $_GET['level'])) {
-            $data = getGoalsData($_GET['gameID'], $_GET['sessionID'], $_GET['level'], $db);
-            echo json_encode($data);
-        }
+//         // Return goals information
+//         if (isset($_GET['gameID'], $_GET['isGoals'], $_GET['sessionID'], $_GET['level'])) {
+//             $data = getGoalsData($_GET['gameID'], $_GET['sessionID'], $_GET['level'], $db);
+//             echo json_encode($data);
+//         }
         
-        else {
-            //echo "{ 'error': 'Invalid set of parameters provided.' }";
-            //file_put_contents("log.log", print_r($_GET, true));
-        }
-    } else {
-        $minMoves = $_GET['minMoves'];
-        $minLevels = $_GET['minLevels'];
-        $minQuestions = $_GET['minQuestions'];
-        $gameID = $_GET['gameID'];
+//         else {
+//             //echo "{ 'error': 'Invalid set of parameters provided.' }";
+//             //file_put_contents("log.log", print_r($_GET, true));
+//         }
+//     } else {
+//         $minMoves = $_GET['minMoves'];
+//         $minLevels = $_GET['minLevels'];
+//         $minQuestions = $_GET['minQuestions'];
+//         $gameID = $_GET['gameID'];
 
-        $output = getFilteredSessionsAndTimes($gameID, $minMoves, $minLevels, $minQuestions, $db);
+//         $output = getFilteredSessionsAndTimes($gameID, $minMoves, $minLevels, $minQuestions, $db);
     
-        echo json_encode($output);
-    }
-} else { // The same functions as above but for all sessions
-    // Return number of questions and number correct for a given game
-    if (!isset($_GET['isHistogram']) && !isset($_GET['isAggregate']) && !isset($_GET['isBasicFeatures']) && !isset($_GET['level']) && isset($_GET['gameID'])) {
-        // This query is a lot faster than looping through getQuestions for all sessions
-        $gameID = $_GET['gameID'];
-        $maxSessions;
-        if (isset($_GET['maxSessions'])) {
-            $maxSessions = $_GET['maxSessions'];
-        } else {
-            $maxSessions = 100;
-        }
-        $query = "SELECT q.event_data_complex, q.session_id FROM
-        (SELECT event_data_complex, session_id FROM log WHERE app_id=? AND event_custom=? GROUP BY session_id LIMIT ?) q
-        ORDER BY q.session_id;";
-        $paramArray = array($gameID, 3, $maxSessions);
-        $stmt = queryMultiParam($db, $query, "sii", $paramArray);
-        if($stmt === NULL) {
-            http_response_code(500);
-            die('{ "errMessage": "Error running query." }');
-        }
-        // Bind variables to the results
-        if (!$stmt->bind_result($dataComplex, $sessionID)) {
-            http_response_code(500);
-            die('{ "errMessage": "Failed to bind to results." }');
-        }
-        // Fetch and display the results
-        while($stmt->fetch()) {
-            $data[] = $dataComplex;
-            $sessionIDs[] = $sessionID;
-        }
-        $totalNumCorrect = 0;
-        $totalNumQuestions = 0;
+//         echo json_encode($output);
+//     }
+// } else { // The same functions as above but for all sessions
+//     // Return number of questions and number correct for a given game
+//     if (!isset($_GET['isHistogram']) && !isset($_GET['isAggregate']) && !isset($_GET['isBasicFeatures']) && !isset($_GET['level']) && isset($_GET['gameID'])) {
+//         // This query is a lot faster than looping through getQuestions for all sessions
+//         $gameID = $_GET['gameID'];
+//         $maxSessions;
+//         if (isset($_GET['maxSessions'])) {
+//             $maxSessions = $_GET['maxSessions'];
+//         } else {
+//             $maxSessions = 100;
+//         }
+//         $query = "SELECT q.event_data_complex, q.session_id FROM
+//         (SELECT event_data_complex, session_id FROM log WHERE app_id=? AND event_custom=? GROUP BY session_id LIMIT ?) q
+//         ORDER BY q.session_id;";
+//         $paramArray = array($gameID, 3, $maxSessions);
+//         $stmt = queryMultiParam($db, $query, "sii", $paramArray);
+//         if($stmt === NULL) {
+//             http_response_code(500);
+//             die('{ "errMessage": "Error running query." }');
+//         }
+//         // Bind variables to the results
+//         if (!$stmt->bind_result($dataComplex, $sessionID)) {
+//             http_response_code(500);
+//             die('{ "errMessage": "Failed to bind to results." }');
+//         }
+//         // Fetch and display the results
+//         while($stmt->fetch()) {
+//             $data[] = $dataComplex;
+//             $sessionIDs[] = $sessionID;
+//         }
+//         $totalNumCorrect = 0;
+//         $totalNumQuestions = 0;
 
-        $filteredSessions = $sessionIDs;
-        if (isset($_GET['minMoves'])) {
-            $filteredSessions = array_values(array_intersect(getFilteredSessionsAndTimes($gameID, $_GET['minMoves'], $_GET['minLevels'], $_GET['minQuestions'], $db)["sessions"], $sessionIDs));
-        }
-        $numSessions = count($filteredSessions);
+//         $filteredSessions = $sessionIDs;
+//         if (isset($_GET['minMoves'])) {
+//             $filteredSessions = array_values(array_intersect(getFilteredSessionsAndTimes($gameID, $_GET['minMoves'], $_GET['minLevels'], $_GET['minQuestions'], $db)["sessions"], $sessionIDs));
+//         }
+//         $numSessions = count($filteredSessions);
         
-        $index = 0;
-        for ($i = 0; $i < $numSessions; $i++) {
-            $questions = getQuestions($gameID, $filteredSessions[$i], $db);
-            $totalNumCorrect += $questions["numCorrect"];
-            $totalNumQuestions += $questions["numQuestions"];
-        }
-        $stmt->close();
-        $output = array("totalNumCorrect"=>$totalNumCorrect, "totalNumQuestions"=>$totalNumQuestions);
-        echo json_encode($output);
-    } else
+//         $index = 0;
+//         for ($i = 0; $i < $numSessions; $i++) {
+//             $questions = getQuestions($gameID, $filteredSessions[$i], $db);
+//             $totalNumCorrect += $questions["numCorrect"];
+//             $totalNumQuestions += $questions["numQuestions"];
+//         }
+//         $stmt->close();
+//         $output = array("totalNumCorrect"=>$totalNumCorrect, "totalNumQuestions"=>$totalNumQuestions);
+//         echo json_encode($output);
+//     } else
 
-    // Return basic information
-    if (!isset($_GET['isHistogram']) && isset($_GET['isAggregate'], $_GET['isBasicFeatures'], $_GET['gameID'])) {
-        $gameID = $_GET["gameID"];
-        $output = getBasicInfoAll($gameID, isset($_GET['isFiltered']), $db);
+//     // Return basic information
+//     if (!isset($_GET['isHistogram']) && isset($_GET['isAggregate'], $_GET['isBasicFeatures'], $_GET['gameID'])) {
+//         $gameID = $_GET["gameID"];
+//         $output = getBasicInfoAll($gameID, isset($_GET['isFiltered']), $db);
         
-        echo json_encode($output);
-    } else
+//         echo json_encode($output);
+//     } else
 
-    // Return histogram information
-    if (isset($_GET['isHistogram'], $_GET['isAggregate'], $_GET['gameID']) && !isset($_GET['isBasicFeatures'])) {
-        $gameID = $_GET['gameID'];
-        if (isset($_GET['minMoves'])) {
-            $questions = getQuestionsHistogram($gameID, $_GET['minMoves'], $_GET['minLevels'], $_GET['minQuestions'], $db);
-            $moves = getMovesHistogram($gameID, $_GET['minMoves'], $_GET['minLevels'], $_GET['minQuestions'], $db);
-            $levels = getLevelsHistogram($gameID, $_GET['minMoves'], $_GET['minLevels'], $_GET['minQuestions'], $db);
-        } else {
-            $questions = getQuestionsHistogram($gameID, null, null, null, $db);
-            $moves = getMovesHistogram($gameID, null, null, null, $db);
-            $levels = getLevelsHistogram($gameID, null, null, null, $db);
-        }
+//     // Return histogram information
+//     if (isset($_GET['isHistogram'], $_GET['isAggregate'], $_GET['gameID']) && !isset($_GET['isBasicFeatures'])) {
+//         $gameID = $_GET['gameID'];
+//         if (isset($_GET['minMoves'])) {
+//             $questions = getQuestionsHistogram($gameID, $_GET['minMoves'], $_GET['minLevels'], $_GET['minQuestions'], $db);
+//             $moves = getMovesHistogram($gameID, $_GET['minMoves'], $_GET['minLevels'], $_GET['minQuestions'], $db);
+//             $levels = getLevelsHistogram($gameID, $_GET['minMoves'], $_GET['minLevels'], $_GET['minQuestions'], $db);
+//         } else {
+//             $questions = getQuestionsHistogram($gameID, null, null, null, $db);
+//             $moves = getMovesHistogram($gameID, null, null, null, $db);
+//             $levels = getLevelsHistogram($gameID, null, null, null, $db);
+//         }
 
-        $output = array_merge($questions, $moves, $levels);
-        echo json_encode($output);
-    }
-}
+//         $output = array_merge($questions, $moves, $levels);
+//         echo json_encode($output);
+//     }
+// }
 
 // Close the database connection
 $db->close();
