@@ -20,13 +20,18 @@ function average($arr) {
 }
 
 if (isset($_GET['gameID'])) {
+    $returned;
     if (isset($_GET['sessionID'])) {
-        $returned = json_encode(getAndParseData($_GET['gameID'], $db, $_GET['sessionID'], $_GET['level']));
-        echo $returned;//substr($returned, 0, 1000);
+        if (isset($_GET['level'])) {
+            $returned = json_encode(getAndParseData($_GET['gameID'], $db, $_GET['sessionID'], $_GET['level']));
+        } else {
+            $returned = json_encode(getAndParseData($_GET['gameID'], $db, $_GET['sessionID'], null));
+        }
+
     } else {
         $returned = json_encode(getAndParseData($_GET['gameID'], $db, null, null));
-        echo $returned;//substr($returned, 0, 1000);
     }
+    echo $returned;//substr($returned, 0, 1000);
 }
 
 function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
@@ -85,7 +90,7 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
 
     // Questions answered for session provided
     $questionsSingle = array();
-    if (isset($reqSessionID)) {
+    if (isset($reqSessionID) && !isset($reqLevel)) {
         $questionEvents = array();
         foreach ($sessionAttributes[$reqSessionID] as $i=>$val) {
             if ($val['event_custom'] === 3) {
@@ -110,14 +115,17 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
         $graphEvents = array();
         $graphTimes = array();
         $graphEventData = array();
+        $graphLevels = array();
         foreach ($sessionAttributes[$reqSessionID] as $i=>$val) {
-            if ($val['event_custom'] === 1 ||
-                $val['event_custom'] === 2 ||
-                $val['event'] === 'SUCCEED'
-            ) {
-                $graphEvents []= $val['event'];
-                $graphTimes [] = $val['time'];
-                $graphEventData []= $val['event_data_complex'];
+            if (isset($reqLevel) && $val['level'] == $reqLevel) {
+                if ($val['event_custom'] === 1 ||
+                    $val['event_custom'] === 2 ||
+                    $val['event'] === 'SUCCEED'
+                ) {
+                    $graphEvents []= $val['event'];
+                    $graphTimes [] = $val['time'];
+                    $graphEventData []= $val['event_data_complex'];
+                }
             }
         } 
         $graphDataSingle = array('events'=>$graphEvents, 'times'=>$graphTimes, 'event_data'=>$graphEventData);
@@ -650,7 +658,7 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
 
     // Get goals data for a session
     $goalsSingle = array();
-    if (isset($reqSessionID)) {
+    if (isset($reqSessionID, $reqLevel)) {
         $data = $basicInfoSingle;
         $dataObj = $data['dataObj'];
         $numMovesPerChallenge = $data['numMovesPerChallengeArray'][$reqLevel];

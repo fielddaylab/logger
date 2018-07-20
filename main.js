@@ -14,10 +14,10 @@ $(document).ready((event) => {
 
     let totalSessions
     let currentSessions = []
-    let bigData
+    let allData, singleData
     
     $(document).on('change', '#gameSelect', (event) => {
-        console.time('gameSelect')
+        // console.time('gameSelect')
         event.preventDefault()
         on()
         $('#gameIDForm').val($('#gameSelect').val())
@@ -25,11 +25,11 @@ $(document).ready((event) => {
     })
 
     $(document).on('change', '#sessionSelect', (event) => {
-        getSingleData()
+        getSingleData(true, false)
     })
 
     $(document).on('submit', '#filterForm', (event) => {
-        console.time('filterForm')
+        // console.time('filterForm')
         event.preventDefault()
         if ($('#gameSelect').val() !== 'empty') {
             $('#filterModal').modal('hide')
@@ -152,7 +152,7 @@ $(document).ready((event) => {
             ) // end of promises.push(
 
             $.when.apply($, promises).then(() => {
-                console.timeEnd('filterForm')
+                // console.timeEnd('filterForm')
                 off()
             })
         } else {
@@ -164,6 +164,20 @@ $(document).ready((event) => {
 
     $(document).on('hide.bs.modal', '#filterModal', (event) => {
         $('#formError').hide()
+    })
+
+    $(document).on('change', '#levelSelect', (event) => {
+        // console.time('levelSelect')
+        event.preventDefault()
+        if ($('#levelSelect').val() !== $('#levelSelectAll').val()) {
+            on()
+            if ($('#gameSelect').val() === "WAVES") {
+                getSingleData(false, true)
+            }
+            // console.timeEnd('levelSelect')
+            off()
+            hideError()
+        }
     })
 
     function getAllData(isFiltered, isFirstTime = false) {
@@ -179,12 +193,33 @@ $(document).ready((event) => {
             parameters['endDate'] = $('#endDate').val()
         }
         $.get('responsePage.php', parameters, (data, status, jqXHR) => {
+            allData = data
             $('#scoreDisplayAll').html(data.questionsTotal.totalNumCorrect + ' / ' + data.questionsTotal.totalNumQuestions + ' (' + 
                 (100 * data.questionsTotal.totalNumCorrect / data.questionsTotal.totalNumQuestions).toFixed(1) + '%)')
-            if (data.levels !== null) {
+            if (data.levels !== null) { 
+                currentSessions = data.sessionsAndTimes.sessions
+                let numSessionsToDisplay = data.numSessions
+                if (isFirstTime) totalSessions = data.numSessions
+                $('#sessions').text('Showing ' + numSessionsToDisplay + ' of ' + totalSessions + ' available sessions')
+
+                let options = []
+                fastClear($('#sessionSelect'))
+
+                for (let i = 0; i < data.sessionsAndTimes.sessions.length; i++) {
+                    let newOpt = document.createElement('option')
+                    newOpt.value = data.sessionsAndTimes.sessions[i]
+                    newOpt.text = i + ' | ' + data.sessionsAndTimes.sessions[i] + ' | ' + data.sessionsAndTimes.times[i]
+                    options.push(newOpt)
+                }
+                $('#sessionSelect').append(options)
+                $('#sessionSelect').val('18020410454796070') // the most interesting session
+
                 if (isFirstTime) {
+                    // Get basic info for the level
+                    getSingleData(true, false)
+
+                    // Get the levels and then information for a specific level (0)
                     fastClear($('#levelSelect'))
-                    totalSessions = data.numSessions
                     // Get default dates from first (that isn't the epoch date) and last times
                     let startDate = new Date(data.sessionsAndTimes.times[data.sessionsAndTimes.times.lastIndexOf('0000-00-00 00:00:00')+1].replace(/-/g, "/"))
                     let startdd = startDate.getDate()
@@ -215,24 +250,8 @@ $(document).ready((event) => {
 
                     $('#levelSelect').append(opt)
                     $('#levelSelect').val($('#levelSelect option:first').val())
-                } 
-                currentSessions = data.sessionsAndTimes.sessions
-                let numSessionsToDisplay = data.numSessions
-                $('#sessions').text('Showing ' + numSessionsToDisplay + ' of ' + totalSessions + ' available sessions')
-
-                let options = []
-                fastClear($('#sessionSelect'))
-
-                for (let i = 0; i < data.sessionsAndTimes.sessions.length; i++) {
-                    let newOpt = document.createElement('option')
-                    newOpt.value = data.sessionsAndTimes.sessions[i]
-                    newOpt.text = i + ' | ' + data.sessionsAndTimes.sessions[i] + ' | ' + data.sessionsAndTimes.times[i]
-                    options.push(newOpt)
+                    getSingleData(false, true)
                 }
-                $('#sessionSelect').append(options)
-                $('#sessionSelect').append($('<option>18020410454796070</option>').attr({'value':18020410454796070}))
-                $('#sessionSelect').val('18020410454796070') // the most interesting session
-
                 // All page basic info
                 fastClear($('#basicFeaturesAll'))
                 let timesList = $('<ul></ul>').attr('id', 'timesAll').addClass('collapse').css('font-size', '18px')
@@ -298,110 +317,34 @@ $(document).ready((event) => {
                 $('#amtsTotalAll').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
                 $('#amtsTotalAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.totalKnobTotals.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
                 $('#amtsTotalAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.avgKnobTotals.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-                off();
-                //selectGameAll(event)
-                //getSingleData()
+                let dataHistogram = { 'numsQuestions': data.questionsAll.numsQuestions, 'numMoves': data.numMovesAll, 'numLevels': data.numLevelsAll }
+                drawWavesHistograms(dataHistogram)
+                getWavesTableData()
+                off()
             } else {
                 off()
                 hideError()
             }
         }, 'json').error((jqXHR, textStatus, errorThrown) => {
             off()
+            console.log('Error triggered by getAllData')
             showError(errorThrown)
         })
     }
 
-    function getSingleData() {
-        $.get('responsePage.php', { 'gameID': $('#gameSelect').val(), 'isFiltered': false, 'sessionID': $('#sessionSelect').val() }, (data, status, jqXHR) => {
-            $("#scoreDisplay").html(data.questionsSingle.numCorrect + " / " + data.questionsSingle.numQuestions)
-            
-        }, 'json').error((jqXHR, textStatus, errorThrown) => {
-            off()
-            showError(jqXHR.responseText)
-        })
-    }
-
-    function selectSession(event, shouldHideOverlay = true) {
-        console.time('selectSession')
-        if (event) event.preventDefault()
-        on()
-        $.get('responsePage.php', { 'gameID': $('#gameSelect').val(), 'sessionID': $('#sessionSelect').val() }, (data, status, jqXHR) => {
-            $("#scoreDisplay").html(data.numCorrect + " / " + data.numQuestions)
-            hideError()
-            $.get('responsePage.php', { 'gameID': $('#gameSelect').val(), 'sessionID': $('#sessionSelect').val(), 'level': $('#levelSelect').val() }, (data, status, jqXHR) => {
-                if ($('#gameSelect').val() === "WAVES") {
-                    let dataObj = {events:data.events, data:data.event_data, times:data.times}
-                    drawWavesChart(dataObj)
-                    getWavesData(shouldHideOverlay)
-                }
-                if (shouldHideOverlay) {
-                    off()
-                }
-                console.timeEnd('selectSession')
-                hideError()
-              }, 'json').error((jqXHR, textStatus, errorThrown) => {
-                  off()
-                  showError(jqXHR.responseText)
-              })
-        }, 'json').error((jqXHR, textStatus, errorThrown) => {
-            off()
-            showError(jqXHR.responseText)
-        })
-    }
-
-    function selectGameAll(event) {
-        console.time('selectGameAll')
-        if (event) event.preventDefault()
-        on()
-        $.get('responsePage.php', { 'gameID': $('#gameSelect').val(), 'isAll': true }, (data, status, jqXHR) => {
-            $('#scoreDisplayAll').html(data.totalNumCorrect + ' / ' + data.totalNumQuestions + ' (' + (100*data.totalNumCorrect/data.totalNumQuestions).toFixed(1) + '%)')
-            if ($('#gameSelect').val() === "WAVES") {
-                $.get('responsePage.php', { 'isAll': true, 'isHistogram': true, 'gameID': $('#gameSelect').val(), 'isAggregate': true }, (data) => {
-                drawWavesHistograms(data)
-                console.timeEnd('selectGameAll')
-            }, 'json').error((jqXHR, textStatus, errorThrown) => {
-                $('#filterModal').modal('hide')
-                off()
-                showError(jqXHR.responseText)
-            })
-                getWavesDataAll()
-            }
-            hideError()
-        }, 'json').error((jqXHR, textStatus, errorThrown) => {
-            off()
-            showError(jqXHR.responseText)
-        })
-    }
-
-    $(document).on('change', '#levelSelect', (event) => {
-        console.time('levelSelect')
-        event.preventDefault()
-        if ($('#levelSelect').val() !== $('#levelSelectAll').val()) {
-            on()
-            //$('#levelSelectAll').val($('#levelSelect').val()).trigger('change')
-            $.get('responsePage.php', { 'gameID': $('#gameSelect').val(), 'sessionID': $('#sessionSelect').val(), 'level': $('#levelSelect').val()}, (data, status, jqXHR) => {
-                if ($('#gameSelect').val() === "WAVES") {
-                    let dataObj = {events:data.events, data:data.event_data, times:data.times}
-                    drawWavesChart(dataObj)
-                    getWavesData(true, false)
-                }
-                console.timeEnd('levelSelect')
-                off()
-                hideError()
-            }, 'json').error((jqXHR, textStatus, errorThrown) => {
-                off()
-                showError(jqXHR.responseText)
-            })
+    function getSingleData(shouldClearLists, shouldSendLevel) {
+        let reqParams = { 
+            'gameID': $('#gameSelect').val(), 
+            'isFiltered': false, 
+            'sessionID': $('#sessionSelect').val() 
         }
-    })
+        if (shouldSendLevel) reqParams['level'] = $('#levelSelect').val()
 
-    function getWavesData(shouldHideOverlay = true, shouldClearLists = true) {
-        on()
-        console.time('getWavesData')
         if (shouldClearLists)
             fastClear($('#basicFeatures'))
-        $.get('responsePage.php', { 'isBasicFeatures': true, 'gameID': $('#gameSelect').val(), 'sessionID': $('#sessionSelect').val()}, (data, status, jqXHR) => {
-            if ($('#gameSelect').val() === "WAVES" && shouldClearLists) {
+        $.get('responsePage.php', reqParams, (data, status, jqXHR) => {
+            if ($('#gameSelect').val() === "WAVES" && shouldClearLists && !shouldSendLevel) {
+                $("#scoreDisplay").html(data.questionsSingle.numCorrect + " / " + data.questionsSingle.numQuestions)
                 let timesList = $('<ul></ul>').attr('id', 'times').addClass('collapse').css('font-size', '18px')
                 $('#basicFeatures').append($(`<span><li>Times: <a href='#times' data-toggle='collapse' id='timesCollapseBtn' class='collapseBtn'>[+]</a></li></span>`).append(timesList)
                     .on('hide.bs.collapse', () => {$('#timesCollapseBtn').html('[+]')})
@@ -426,155 +369,77 @@ $(document).ready((event) => {
                 $('#basicFeatures').append($(`<span><li style='margin-top:5px'>Knob max-min (total): <a href='#amtsTotal' data-toggle='collapse' id='amtsTotalCollapseBtn' class='collapseBtn'>[+]</a></li></span>`).append(amtsTotalList)
                     .on('hide.bs.collapse', () => {$('#amtsTotalCollapseBtn').html('[+]')})
                     .on('show.bs.collapse', () => {$('#amtsTotalCollapseBtn').html('[−]')}))
- 
-                let levels = data.dataObj.levels.filter((element, i, array) => {
-                    return i == array.indexOf(element)
-                })
 
-                levels.forEach((i) => {
+                for (let i = 0; i < data.basicInfoSingle.levelTimes.length; i++) {
                     // append times
-                    $('#times').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.levelTimes[i]} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                    $('#times').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoSingle.levelTimes[i]} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
 
                     // append moves
-                    $('#moves').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.numMovesPerChallenge[i]}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                    $('#moves').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoSingle.numMovesPerChallenge[i]}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
                     
                     // append types
-                    $('#types').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.moveTypeChangesPerLevel[i]}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                    $('#types').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoSingle.moveTypeChangesPerLevel[i]}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
 
                     // append std devs
-                    $('#stdDevs').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.knobStdDevs[i].toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                    $('#stdDevs').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoSingle.knobStdDevs[i].toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
 
                     // append knob amounts
-                    $('#amts').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.knobAvgs[i].toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                    $('#amts').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoSingle.knobAvgs[i].toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
 
                     // append knob total amounts
-                    $('#amtsTotal').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${(data.knobTotalAmts[i]).toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-                })
+                    $('#amtsTotal').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${(data.basicInfoSingle.knobTotalAmts[i]).toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                }
 
                 $('#times').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
-                $('#times').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.totalTime} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-                $('#times').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.avgTime.toFixed(1)} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                $('#times').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoSingle.totalTime} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                $('#times').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoSingle.avgTime.toFixed(1)} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
 
                 $('#moves').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
-                $('#moves').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.totalMoves}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-                $('#moves').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.avgMoves.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                $('#moves').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoSingle.totalMoves}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                $('#moves').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoSingle.avgMoves.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
 
                 $('#types').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
-                $('#types').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.moveTypeChangesTotal}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-                $('#types').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.moveTypeChangesAvg.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                $('#types').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoSingle.moveTypeChangesTotal}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                $('#types').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoSingle.moveTypeChangesAvg.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
 
                 $('#amts').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
-                $('#amts').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.knobAmtsTotalAvg.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-                $('#amts').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.knobAmtsAvgAvg.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                $('#amts').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoSingle.knobAmtsTotalAvg.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                $('#amts').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoSingle.knobAmtsAvgAvg.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
 
                 $('#amtsTotal').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
-                $('#amtsTotal').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.knobSumTotal.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-                $('#amtsTotal').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.knobTotalAvg.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                $('#amtsTotal').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoSingle.knobSumTotal.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                $('#amtsTotal').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoSingle.knobTotalAvg.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
             }
-            console.timeEnd('getWavesData')
-            drawWavesGoals(shouldHideOverlay)
-            if (shouldHideOverlay) {
-                off()
+            if (shouldSendLevel) {
+                let dataObj = {events:data.graphDataSingle.events, data:data.graphDataSingle.event_data, times:data.graphDataSingle.times}
+                drawWavesChart(dataObj)
+                drawWavesGoals(data)
             }
+            // console.timeEnd('getWavesData')
+
+            off()
             hideError()
         }, 'json').error((jqXHR, textStatus, errorThrown) => {
             off()
-            showError(jqXHR.responseText)
-        })
-    }
-
-    function getWavesDataAll() {
-        console.time('getWavesDataAll')
-        on()
-        fastClear($('#basicFeaturesAll'))
-        $.get('responsePage.php', { 'isBasicFeatures': true, 'gameID': $('#gameSelect').val(), 'isAll': true, 'isAggregate': true }, (data, status, jqXHR) => {
-            let timesList = $('<ul></ul>').attr('id', 'timesAll').addClass('collapse').css('font-size', '18px')
-            $('#basicFeaturesAll').append($(`<span><li>Times: <a href='#timesAll' data-toggle='collapse' id='timesCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(timesList)
-                .on('hide.bs.collapse', () => {$('#timesCollapseBtnAll').html('[+]')})
-                .on('show.bs.collapse', () => {$('#timesCollapseBtnAll').html('[−]')}))
-            let movesList = $('<ul></ul>').attr('id', 'movesAll').addClass('collapse').css({'font-size':'18px'})
-            $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Number of moves: <a href='#movesAll' data-toggle='collapse' id='movesCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(movesList)
-                .on('hide.bs.collapse', () => {$('#movesCollapseBtnAll').html('[+]')})
-                .on('show.bs.collapse', () => {$('#movesCollapseBtnAll').html('[−]')}))
-            let typesList = $('<ul></ul>').attr('id', 'typesAll').addClass('collapse').css({'font-size':'18px'})
-            $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Move type changes: <a href='#typesAll' data-toggle='collapse' id='typesCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(typesList)
-                .on('hide.bs.collapse', () => {$('#typesCollapseBtnAll').html('[+]')})
-                .on('show.bs.collapse', () => {$('#typesCollapseBtnAll').html('[−]')}))
-            let stdDevList = $('<ul></ul>').attr('id', 'stdDevsAll').addClass('collapse').css({'font-size':'18px'})
-            $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Knob std devs (avg): <a href='#stdDevsAll' data-toggle='collapse' id='stdDevsCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(stdDevList)
-                .on('hide.bs.collapse', () => {$('#stdDevsCollapseBtnAll').html('[+]')})
-                .on('show.bs.collapse', () => {$('#stdDevsCollapseBtnAll').html('[−]')}))
-            let amtsList = $('<ul></ul>').attr('id', 'amtsAll').addClass('collapse').css({'font-size':'18px'})
-            $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Knob max-min (avg): <a href='#amtsAll' data-toggle='collapse' id='amtsCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(amtsList)
-                .on('hide.bs.collapse', () => {$('#amtsCollapseBtnAll').html('[+]')})
-                .on('show.bs.collapse', () => {$('#amtsCollapseBtnAll').html('[−]')}))
-            let amtsTotalList = $('<ul></ul>').attr('id', 'amtsTotalAll').addClass('collapse').css({'font-size':'18px'})
-            $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Knob max-min (total): <a href='#amtsTotalAll' data-toggle='collapse' id='amtsTotalCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(amtsTotalList)
-                .on('hide.bs.collapse', () => {$('#amtsTotalCollapseBtnAll').html('[+]')})
-                .on('show.bs.collapse', () => {$('#amtsTotalCollapseBtnAll').html('[−]')}))
-
-            for (let i = 0; i < data.times.length; i++) {
-                // append times
-                $('#timesAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.times[i].toFixed(1)} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-
-                // append moves
-                $('#movesAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.numMoves[i].toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-                
-                // append types
-                $('#typesAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.moveTypeChanges[i].toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-
-                // append std devs
-                $('#stdDevsAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.knobStdDevs[i].toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-
-                // append knob amounts
-                $('#amtsAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.avgMaxMin[i].toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-
-                // append knob total amounts
-                $('#amtsTotalAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.totalMaxMin[i].toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-            }
-
-            $('#timesAll').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
-            $('#timesAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.totalTime.toFixed(1)} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-            $('#timesAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.avgTime.toFixed(1)} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-
-            $('#movesAll').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
-            $('#movesAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.totalMoves.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-            $('#movesAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.avgMoves.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-
-            $('#typesAll').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
-            $('#typesAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.totalMoveChanges.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-            $('#typesAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.avgMoveChanges.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-
-            $('#amtsAll').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
-            $('#amtsAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.totalKnobAvgs.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-            $('#amtsAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.avgKnobAvgs.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-
-            $('#amtsTotalAll').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
-            $('#amtsTotalAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.totalKnobTotals.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-            $('#amtsTotalAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.avgKnobTotals.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-            console.timeEnd('getWavesDataAll')
-            getWavesTableData()
-            off()
-            //drawWavesHistogramsAll()
-        }, 'json').error((jqXHR, textStatus, errorThrown) => {
-            off()
+            console.log(reqParams)
+            console.log('Error triggered by getSingleData')
             showError(jqXHR.responseText)
         })
     }
 
     function getWavesTableData() {
-        console.time('getWavesTableData')
+        // console.time('getWavesTableData')
         // $.get...
         $('#tableAllBody tr').each((i, ival) => {
             $(ival).find('td').each((j, jval) => {
                 $(jval).html(i+', '+j)
             })
         })
-        console.timeEnd('getWavesTableData')
+        // console.timeEnd('getWavesTableData')
     }
 
     function drawWavesHistograms(data) {
-        console.time('drawWavesHistograms')
+        // console.time('drawWavesHistograms')
         $('#goalsDiv1All').html('Histogram 1: Questions answered')
         let trace = {
             x: data.numsQuestions,
@@ -673,119 +538,110 @@ $(document).ready((event) => {
         }
 
         Plotly.newPlot(histogramAll3, [trace3], layout3)
-        console.timeEnd('drawWavesHistograms')
+        // console.timeEnd('drawWavesHistograms')
     }
 
-    function drawWavesGoals(shouldHideOverlay = true) {
+    function drawWavesGoals(data) {
         // Goals stuff
-        console.time('drawWavesGoals')
-        on();
-        $.get('responsePage.php', { 'gameID': $('#gameSelect').val(), 'isGoals': true, 'sessionID': $('#sessionSelect').val(), 'level': $('#levelSelect').val() }, (data, status, jqXHR) => {
-            $('#goalsDiv1').html('Goal 1: Completing the challenge')
+        // console.time('drawWavesGoals')
+        $('#goalsDiv1').html('Goal 1: Completing the challenge')
 
-            let goalSlope1 = data.goalSlope1
-            let goalSlope2 = data.goalSlope2
+        let goalSlope1 = data.goalsSingle.goalSlope1
+        let goalSlope2 = data.goalsSingle.goalSlope2
 
-            let distanceTrace1 = {
-                x: data.moveNumbers,
-                y: data.absDistanceToGoal1,
-                xaxis: 'x1',
-                yaxis: 'y2',
-                line: {color: 'green'},
-                name: 'Distance to goal'
-            }
-            let closenessTrace1 = {
-                x: data.moveNumbers,
-                y: data.distanceToGoal1,
-                line: {color: 'orange'},
-                name: 'Net good moves',
-            }
-            let layout = {
-                margin: { t: 35 },
-                title: `Level ${$('#levelSelect').val()}`,
-                plot_bgcolor: '#F6F6F3',
-                paper_bgcolor: '#F6F6F3',
-                height: 200,
-                xaxis: {
-                    title: 'Move number',
-                    titlefont: {
-                        family: 'Courier New, monospace',
-                        size: 12,
-                        color: '#7f7f7f'
-                    }
-                },
-                yaxis: {
-                    title: 'Net good moves',
-                    titlefont: {
-                        family: 'Courier New, monospace',
-                        size: 12,
-                        color: '#7f7f7f',
-                    },
-                    rangemode: 'tozero'
-                },
-                yaxis2: {
-                    title: 'Dist. to goal',
-                    titlefont: {
-                        family: 'Courier New, monospace',
-                        size: 12,
-                        color: 'green'
-                    },
-                    side: 'right',
-                    overlaying: 'y',
-                    rangemode: 'tozero'
-                },
-                showlegend: true,
-                legend: {
-                    x: 1.1,
-                    y: 1
+        let distanceTrace1 = {
+            x: data.goalsSingle.moveNumbers,
+            y: data.goalsSingle.absDistanceToGoal1,
+            xaxis: 'x1',
+            yaxis: 'y2',
+            line: {color: 'green'},
+            name: 'Distance to goal'
+        }
+        let closenessTrace1 = {
+            x: data.goalsSingle.moveNumbers,
+            y: data.goalsSingle.distanceToGoal1,
+            line: {color: 'orange'},
+            name: 'Net good moves',
+        }
+        let layout = {
+            margin: { t: 35 },
+            title: `Level ${$('#levelSelect').val()}`,
+            plot_bgcolor: '#F6F6F3',
+            paper_bgcolor: '#F6F6F3',
+            height: 200,
+            xaxis: {
+                title: 'Move number',
+                titlefont: {
+                    family: 'Courier New, monospace',
+                    size: 12,
+                    color: '#7f7f7f'
                 }
-            }
-            let graphData1 = [closenessTrace1, distanceTrace1]
-    
-            if (graphData1[0].x.length > 0 && graphData1[0].y.length > 0 && 
-                graphData1[1].x.length > 0 && graphData1[1].y.length > 0) {
-                $('#slopeDiv1').html('Net good moves slope: ' + goalSlope1.toFixed(2))
-                Plotly.newPlot(goalsGraph1, graphData1, layout)
-            }
-    
-            $('#goalsDiv2').html('Goal 2: Maxing slider values')
-            $('#goalsDiv2').css('display', 'block')
-            $('#goalsGraph2').css('display', 'block')
-    
-            let distanceTrace2 = {
-                x: data.moveNumbers,
-                y: data.absDistanceToGoal2,
-                xaxis: 'x1',
-                yaxis: 'y2',
+            },
+            yaxis: {
+                title: 'Net good moves',
+                titlefont: {
+                    family: 'Courier New, monospace',
+                    size: 12,
+                    color: '#7f7f7f',
+                },
+                rangemode: 'tozero'
+            },
+            yaxis2: {
+                title: 'Dist. to goal',
+                titlefont: {
+                    family: 'Courier New, monospace',
+                    size: 12,
+                    color: 'green'
+                },
+                side: 'right',
                 overlaying: 'y',
-                line: {color: 'green'},
-                name: 'Distance to goal'
+                rangemode: 'tozero'
+            },
+            showlegend: true,
+            legend: {
+                x: 1.1,
+                y: 1
             }
-            let closenessTrace2 = {
-                x: data.moveNumbers,
-                y: data.distanceToGoal2,
-                line: {color: 'orange'},
-                name: 'Net good moves'
-            }
-            let graphData2 = [closenessTrace2, distanceTrace2]
-    
-            if (graphData2[0].x.length > 0 && graphData2[0].y.length > 0 && 
-                graphData2[1].x.length > 0 && graphData2[1].y.length > 0) {
-                $('#slopeDiv2').html('Net good moves slope: ' + goalSlope2.toFixed(2))
-                Plotly.newPlot(goalsGraph2, graphData2, layout)
-            }
-            hideError()
-            console.timeEnd('drawWavesGoals')
-            if (shouldHideOverlay)
-                off();
-        }, 'json').error((jqXHR, textStatus, errorThrown) => {
-            off()
-            showError(jqXHR.responseText)
-        })
+        }
+        let graphData1 = [closenessTrace1, distanceTrace1]
+
+        if (graphData1[0].x.length > 0 && graphData1[0].y.length > 0 && 
+            graphData1[1].x.length > 0 && graphData1[1].y.length > 0) {
+            $('#slopeDiv1').html('Net good moves slope: ' + goalSlope1.toFixed(2))
+            Plotly.newPlot(goalsGraph1, graphData1, layout)
+        }
+
+        $('#goalsDiv2').html('Goal 2: Maxing slider values')
+        $('#goalsDiv2').css('display', 'block')
+        $('#goalsGraph2').css('display', 'block')
+
+        let distanceTrace2 = {
+            x: data.goalsSingle.moveNumbers,
+            y: data.goalsSingle.absDistanceToGoal2,
+            xaxis: 'x1',
+            yaxis: 'y2',
+            overlaying: 'y',
+            line: {color: 'green'},
+            name: 'Distance to goal'
+        }
+        let closenessTrace2 = {
+            x: data.goalsSingle.moveNumbers,
+            y: data.goalsSingle.distanceToGoal2,
+            line: {color: 'orange'},
+            name: 'Net good moves'
+        }
+        let graphData2 = [closenessTrace2, distanceTrace2]
+
+        if (graphData2[0].x.length > 0 && graphData2[0].y.length > 0 && 
+            graphData2[1].x.length > 0 && graphData2[1].y.length > 0) {
+            $('#slopeDiv2').html('Net good moves slope: ' + goalSlope2.toFixed(2))
+            Plotly.newPlot(goalsGraph2, graphData2, layout)
+        }
+        // console.timeEnd('drawWavesGoals')
     }
 
     function drawWavesChart(inData) {
-        console.time('drawWavesChart')
+        // console.time('drawWavesChart')
         let xSucceed = []
         let xAmpLeft = [], xAmpRight = []
         let xFreqLeft = [], xFreqRight = []
@@ -971,7 +827,7 @@ $(document).ready((event) => {
 
         Plotly.newPlot(graphLeft, wavesDataLeft, layoutLeft)
         Plotly.newPlot(graphRight, wavesDataRight, layoutRight)
-        console.timeEnd('drawWavesChart')
+        // console.timeEnd('drawWavesChart')
     }
     
     function on() {
