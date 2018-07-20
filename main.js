@@ -14,78 +14,18 @@ $(document).ready((event) => {
 
     let totalSessions
     let currentSessions = []
+    let bigData
     
     $(document).on('change', '#gameSelect', (event) => {
         console.time('gameSelect')
         event.preventDefault()
         on()
         $('#gameIDForm').val($('#gameSelect').val())
-        fastClear($('#levelSelect'))
-        $.get('responsePage.php', { 'gameID': $('#gameSelect').val() }, (data, status, jqXHR) => {
-            console.timeEnd('gameSelect')
-            if (data.levels !== null) {
-                totalSessions = data.numSessions
-                currentSessions = data.sessions
-                let numSessionsToDisplay = Math.min($('#maxSessions').val(), data.numSessions)
-                $('#sessions').text('Showing ' + numSessionsToDisplay + ' of ' + totalSessions + ' available sessions')
-                // Get default dates from first and last times
-                let startDate = new Date(data.times[data.times.lastIndexOf('0000-00-00 00:00:00')+1].replace(/-/g, "/"))
-                let startdd = startDate.getDate()
-                let startmm = startDate.getMonth() + 1
-                let startyyyy = startDate.getFullYear()
-                if (startdd < 10) { startdd = '0' + startdd }
-                if (startmm < 10) { startmm = '0' + startmm }
-
-                let endDate = new Date(data.times[data.times.length-1].replace(/-/g, "/"))
-                let enddd = endDate.getDate()
-                let endmm = endDate.getMonth() + 1
-                let endyyyy = endDate.getFullYear()
-                if (enddd < 10) { enddd = '0' + enddd }
-                if (endmm < 10) { endmm = '0' + endmm }
-
-                $('#startDate').val(startyyyy+'-'+startmm+'-'+startdd)
-                $('#endDate').val(endyyyy+'-'+endmm+'-'+enddd)
-
-                let options = []
-                fastClear($('#sessionSelect'))
-
-                for (let i = 0; i < 5; i++) { //for (let i = 0; i < data.sessions.length; i++) {
-                    let newOpt = document.createElement('option')
-                    newOpt.value = data.sessions[i]
-                    newOpt.text = i + ' | ' + data.sessions[i] + ' | ' + data.times[i]
-                    options.push(newOpt)
-                }
-                $('#sessionSelect').append(options)
-                $('#sessionSelect').append($('<option>18020410454796070</option>').attr({'value':18020410454796070}))
-                $('#sessionSelect').val('18020410454796070') // the most interesting session
-
-                options = []
-                for (let i = 0; i < data.levels.length; i++) {
-                    let newOpt = document.createElement('option')
-                    newOpt.value = data.levels[i]
-                    newOpt.text = data.levels[i]
-                    options.push(newOpt)
-                }
-                $('#levelSelect').append(options)
-                let opt = $('#levelSelect option').sort(function (a,b) { return a.value.toUpperCase().localeCompare(b.value.toUpperCase(), {}, {numeric:true}) })
-
-                $('#levelSelect').append(opt)
-                $('#levelSelect').val($('#levelSelect option:first').val())
-
-                selectGameAll(event)
-                selectSession(event, false)
-            } else {
-                off()
-                hideError()
-            }
-        }, 'json').error((jqXHR, textStatus, errorThrown) => {
-            off()
-            showError(jqXHR.responseText)
-        })
+        getAllData(false, true)
     })
 
     $(document).on('change', '#sessionSelect', (event) => {
-        selectSession(event)
+        getSingleData()
     })
 
     $(document).on('submit', '#filterForm', (event) => {
@@ -225,6 +165,161 @@ $(document).ready((event) => {
     $(document).on('hide.bs.modal', '#filterModal', (event) => {
         $('#formError').hide()
     })
+
+    function getAllData(isFiltered, isFirstTime = false) {
+        let parameters = {
+            'gameID': $('#gameSelect').val(),
+            'isFiltered': isFiltered
+        }
+        if (isFiltered) {
+            parameters['minLevels'] = $('#minMoves').val()
+            parameters['minQuestions'] = $('#minQuestions').val()
+            parameters['minLevels'] = $('#minLevels').val()
+            parameters['startDate'] = $('#startDate').val()
+            parameters['endDate'] = $('#endDate').val()
+        }
+        $.get('responsePage.php', parameters, (data, status, jqXHR) => {
+            $('#scoreDisplayAll').html(data.questionsTotal.totalNumCorrect + ' / ' + data.questionsTotal.totalNumQuestions + ' (' + 
+                (100 * data.questionsTotal.totalNumCorrect / data.questionsTotal.totalNumQuestions).toFixed(1) + '%)')
+            if (data.levels !== null) {
+                if (isFirstTime) {
+                    fastClear($('#levelSelect'))
+                    totalSessions = data.numSessions
+                    // Get default dates from first (that isn't the epoch date) and last times
+                    let startDate = new Date(data.sessionsAndTimes.times[data.sessionsAndTimes.times.lastIndexOf('0000-00-00 00:00:00')+1].replace(/-/g, "/"))
+                    let startdd = startDate.getDate()
+                    let startmm = startDate.getMonth() + 1
+                    let startyyyy = startDate.getFullYear()
+                    if (startdd < 10) { startdd = '0' + startdd }
+                    if (startmm < 10) { startmm = '0' + startmm }
+
+                    let endDate = new Date(data.sessionsAndTimes.times[data.sessionsAndTimes.times.length-1].replace(/-/g, "/"))
+                    let enddd = endDate.getDate()
+                    let endmm = endDate.getMonth() + 1
+                    let endyyyy = endDate.getFullYear()
+                    if (enddd < 10) { enddd = '0' + enddd }
+                    if (endmm < 10) { endmm = '0' + endmm }
+
+                    $('#startDate').val(startyyyy+'-'+startmm+'-'+startdd)
+                    $('#endDate').val(endyyyy+'-'+endmm+'-'+enddd)
+
+                    let options = []
+                    for (let i = 0; i < data.levels.length; i++) {
+                        let newOpt = document.createElement('option')
+                        newOpt.value = data.levels[i]
+                        newOpt.text = data.levels[i]
+                        options.push(newOpt)
+                    }
+                    $('#levelSelect').append(options)
+                    let opt = $('#levelSelect option').sort(function (a,b) { return a.value.toUpperCase().localeCompare(b.value.toUpperCase(), {}, {numeric:true}) })
+
+                    $('#levelSelect').append(opt)
+                    $('#levelSelect').val($('#levelSelect option:first').val())
+                } 
+                currentSessions = data.sessionsAndTimes.sessions
+                let numSessionsToDisplay = data.numSessions
+                $('#sessions').text('Showing ' + numSessionsToDisplay + ' of ' + totalSessions + ' available sessions')
+
+                let options = []
+                fastClear($('#sessionSelect'))
+
+                for (let i = 0; i < data.sessionsAndTimes.sessions.length; i++) {
+                    let newOpt = document.createElement('option')
+                    newOpt.value = data.sessionsAndTimes.sessions[i]
+                    newOpt.text = i + ' | ' + data.sessionsAndTimes.sessions[i] + ' | ' + data.sessionsAndTimes.times[i]
+                    options.push(newOpt)
+                }
+                $('#sessionSelect').append(options)
+                $('#sessionSelect').append($('<option>18020410454796070</option>').attr({'value':18020410454796070}))
+                $('#sessionSelect').val('18020410454796070') // the most interesting session
+
+                // All page basic info
+                fastClear($('#basicFeaturesAll'))
+                let timesList = $('<ul></ul>').attr('id', 'timesAll').addClass('collapse').css('font-size', '18px')
+                $('#basicFeaturesAll').append($(`<span><li>Times: <a href='#timesAll' data-toggle='collapse' id='timesCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(timesList)
+                    .on('hide.bs.collapse', () => {$('#timesCollapseBtnAll').html('[+]')})
+                    .on('show.bs.collapse', () => {$('#timesCollapseBtnAll').html('[−]')}))
+                let movesList = $('<ul></ul>').attr('id', 'movesAll').addClass('collapse').css({'font-size':'18px'})
+                $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Number of moves: <a href='#movesAll' data-toggle='collapse' id='movesCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(movesList)
+                    .on('hide.bs.collapse', () => {$('#movesCollapseBtnAll').html('[+]')})
+                    .on('show.bs.collapse', () => {$('#movesCollapseBtnAll').html('[−]')}))
+                let typesList = $('<ul></ul>').attr('id', 'typesAll').addClass('collapse').css({'font-size':'18px'})
+                $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Move type changes: <a href='#typesAll' data-toggle='collapse' id='typesCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(typesList)
+                    .on('hide.bs.collapse', () => {$('#typesCollapseBtnAll').html('[+]')})
+                    .on('show.bs.collapse', () => {$('#typesCollapseBtnAll').html('[−]')}))
+                let stdDevList = $('<ul></ul>').attr('id', 'stdDevsAll').addClass('collapse').css({'font-size':'18px'})
+                $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Knob std devs (avg): <a href='#stdDevsAll' data-toggle='collapse' id='stdDevsCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(stdDevList)
+                    .on('hide.bs.collapse', () => {$('#stdDevsCollapseBtnAll').html('[+]')})
+                    .on('show.bs.collapse', () => {$('#stdDevsCollapseBtnAll').html('[−]')}))
+                let amtsList = $('<ul></ul>').attr('id', 'amtsAll').addClass('collapse').css({'font-size':'18px'})
+                $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Knob max-min (avg): <a href='#amtsAll' data-toggle='collapse' id='amtsCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(amtsList)
+                    .on('hide.bs.collapse', () => {$('#amtsCollapseBtnAll').html('[+]')})
+                    .on('show.bs.collapse', () => {$('#amtsCollapseBtnAll').html('[−]')}))
+                let amtsTotalList = $('<ul></ul>').attr('id', 'amtsTotalAll').addClass('collapse').css({'font-size':'18px'})
+                $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Knob max-min (total): <a href='#amtsTotalAll' data-toggle='collapse' id='amtsTotalCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(amtsTotalList)
+                    .on('hide.bs.collapse', () => {$('#amtsTotalCollapseBtnAll').html('[+]')})
+                    .on('show.bs.collapse', () => {$('#amtsTotalCollapseBtnAll').html('[−]')}))
+                for (let i = 0; i < data.basicInfoAll.times.length; i++) {
+                    // append times
+                    $('#timesAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.times[i].toFixed(2)} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+
+                    // append moves
+                    $('#movesAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.numMoves[i].toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                    
+                    // append types
+                    $('#typesAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.moveTypeChanges[i].toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+
+                    // append std devs
+                    $('#stdDevsAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.knobStdDevs[i].toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+
+                    // append knob amounts
+                    $('#amtsAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.avgMaxMin[i].toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+
+                    // append knob total amounts
+                    $('#amtsTotalAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.totalMaxMin[i].toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                }
+
+                $('#timesAll').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
+                $('#timesAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.totalTime.toFixed(2)} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                $('#timesAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.avgTime.toFixed(2)} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+
+                $('#movesAll').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
+                $('#movesAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.totalMoves.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                $('#movesAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.avgMoves.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+
+                $('#typesAll').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
+                $('#typesAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.totalMoveChanges.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                $('#typesAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.avgMoveChanges.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+
+                $('#amtsAll').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
+                $('#amtsAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.totalKnobAvgs.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                $('#amtsAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.avgKnobAvgs.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+
+                $('#amtsTotalAll').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
+                $('#amtsTotalAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.totalKnobTotals.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                $('#amtsTotalAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.avgKnobTotals.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                off();
+                //selectGameAll(event)
+                //getSingleData()
+            } else {
+                off()
+                hideError()
+            }
+        }, 'json').error((jqXHR, textStatus, errorThrown) => {
+            off()
+            showError(errorThrown)
+        })
+    }
+
+    function getSingleData() {
+        $.get('responsePage.php', { 'gameID': $('#gameSelect').val(), 'isFiltered': false, 'sessionID': $('#sessionSelect').val() }, (data, status, jqXHR) => {
+            $("#scoreDisplay").html(data.questionsSingle.numCorrect + " / " + data.questionsSingle.numQuestions)
+            
+        }, 'json').error((jqXHR, textStatus, errorThrown) => {
+            off()
+            showError(jqXHR.responseText)
+        })
+    }
 
     function selectSession(event, shouldHideOverlay = true) {
         console.time('selectSession')
