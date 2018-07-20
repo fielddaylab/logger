@@ -13,8 +13,6 @@ $(document).ready((event) => {
     let histogramAll3 = $('#goalsGraph3All')[0]
 
     let totalSessions
-    let currentSessions = []
-    let allData, singleData
     
     $(document).on('change', '#gameSelect', (event) => {
         // console.time('gameSelect')
@@ -26,6 +24,7 @@ $(document).ready((event) => {
 
     $(document).on('change', '#sessionSelect', (event) => {
         getSingleData(true, false)
+        getSingleData(false, true)
     })
 
     $(document).on('submit', '#filterForm', (event) => {
@@ -34,127 +33,7 @@ $(document).ready((event) => {
         if ($('#gameSelect').val() !== 'empty') {
             $('#filterModal').modal('hide')
             on()
-            let promises = []
-            // Single tab stuff
-            promises.push($.get('responsePage.php', { 'gameID': $('#gameSelect').val(), 'minMoves': $('#minMoves').val(), 'minQuestions': $('#minQuestions').val(),
-                    'minLevels': $('#minLevels').val(), 'startDate': $('#startDate').val(), 'endDate': $('#endDate').val(), 'maxSessions': $('#maxSessions').val() }, (data, status, jqXHR) => {
-                let numSessionsToDisplay = Math.min(data.sessions.length, $('#maxSessions').val())
-                $('#sessions').text('Showing ' + numSessionsToDisplay + ' of ' + totalSessions + ' available sessions')
-                currentSessions = data.sessions
-
-                let options = []
-
-                fastClear($('#sessionSelect'))
-
-                for (let i = 0; i < numSessionsToDisplay; i++) { //for (let i = 0; i < data.sessions.length; i++) {
-                    let newOpt = document.createElement('option')
-                    newOpt.value = data.sessions[i]
-                    newOpt.text = i + ' | ' + data.sessions[i] + ' | ' + data.times[i]
-                    options.push(newOpt)
-                }
-                $('#sessionSelect').append(options)
-                $('#sessionSelect').val($('#sessionSelect option:first').val())
-                selectSession(event, false)
-            }, 'json').error((jqXHR, textStatus, errorThrown) => {
-                $('#filterModal').modal('hide')
-                off()
-                showError(jqXHR.responseText)
-            }), // All page stuff
-            $.get('responsePage.php', { 'gameID': $('#gameSelect').val(), 'isAll': true, 'minMoves': $('#minMoves').val(), 'minQuestions': $('#minQuestions').val(),
-            'minLevels': $('#minLevels').val(), 'startDate': $('#startDate').val(), 'endDate': $('#endDate').val(), 'maxSessions': $('#maxSessions').val(), 'isFiltered': true}, (data, status, jqXHR) => {
-                $('#scoreDisplayAll').html(data.totalNumCorrect + ' / ' + data.totalNumQuestions + ' (' + (100*data.totalNumCorrect/data.totalNumQuestions).toFixed(1) + '%)')
-                hideError()
-            }, 'json').error((jqXHR, textStatus, errorThrown) => {
-                off()
-                showError(jqXHR.responseText)
-            }), 
-            $.get('responsePage.php', { 'isAll': true, 'isAggregate': true, 'isBasicFeatures': true, 'gameID': $('#gameSelect').val(), 'minMoves': $('#minMoves').val(), 'minQuestions': $('#minQuestions').val(),
-                    'minLevels': $('#minLevels').val(), 'startDate': $('#startDate').val(), 'endDate': $('#endDate').val(), 'maxSessions': $('#maxSessions').val(), 'isFiltered': true }, (data, status, jqXHR) => {
-                fastClear($('#basicFeaturesAll'))
-                let timesList = $('<ul></ul>').attr('id', 'timesAll').addClass('collapse').css('font-size', '18px')
-                $('#basicFeaturesAll').append($(`<span><li>Times: <a href='#timesAll' data-toggle='collapse' id='timesCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(timesList)
-                    .on('hide.bs.collapse', () => {$('#timesCollapseBtnAll').html('[+]')})
-                    .on('show.bs.collapse', () => {$('#timesCollapseBtnAll').html('[−]')}))
-                let movesList = $('<ul></ul>').attr('id', 'movesAll').addClass('collapse').css({'font-size':'18px'})
-                $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Number of moves: <a href='#movesAll' data-toggle='collapse' id='movesCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(movesList)
-                    .on('hide.bs.collapse', () => {$('#movesCollapseBtnAll').html('[+]')})
-                    .on('show.bs.collapse', () => {$('#movesCollapseBtnAll').html('[−]')}))
-                let typesList = $('<ul></ul>').attr('id', 'typesAll').addClass('collapse').css({'font-size':'18px'})
-                $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Move type changes: <a href='#typesAll' data-toggle='collapse' id='typesCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(typesList)
-                    .on('hide.bs.collapse', () => {$('#typesCollapseBtnAll').html('[+]')})
-                    .on('show.bs.collapse', () => {$('#typesCollapseBtnAll').html('[−]')}))
-                let stdDevList = $('<ul></ul>').attr('id', 'stdDevsAll').addClass('collapse').css({'font-size':'18px'})
-                $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Knob std devs (avg): <a href='#stdDevsAll' data-toggle='collapse' id='stdDevsCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(stdDevList)
-                    .on('hide.bs.collapse', () => {$('#stdDevsCollapseBtnAll').html('[+]')})
-                    .on('show.bs.collapse', () => {$('#stdDevsCollapseBtnAll').html('[−]')}))
-                let amtsList = $('<ul></ul>').attr('id', 'amtsAll').addClass('collapse').css({'font-size':'18px'})
-                $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Knob max-min (avg): <a href='#amtsAll' data-toggle='collapse' id='amtsCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(amtsList)
-                    .on('hide.bs.collapse', () => {$('#amtsCollapseBtnAll').html('[+]')})
-                    .on('show.bs.collapse', () => {$('#amtsCollapseBtnAll').html('[−]')}))
-                let amtsTotalList = $('<ul></ul>').attr('id', 'amtsTotalAll').addClass('collapse').css({'font-size':'18px'})
-                $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Knob max-min (total): <a href='#amtsTotalAll' data-toggle='collapse' id='amtsTotalCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(amtsTotalList)
-                    .on('hide.bs.collapse', () => {$('#amtsTotalCollapseBtnAll').html('[+]')})
-                    .on('show.bs.collapse', () => {$('#amtsTotalCollapseBtnAll').html('[−]')}))
-    
-                for (let i = 0; i < data.times.length; i++) {
-                    // append times
-                    $('#timesAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.times[i].toFixed(1)} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-    
-                    // append moves
-                    $('#movesAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.numMoves[i].toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-                    
-                    // append types
-                    $('#typesAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.moveTypeChanges[i].toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-    
-                    // append std devs
-                    $('#stdDevsAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.knobStdDevs[i].toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-    
-                    // append knob amounts
-                    $('#amtsAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.avgMaxMin[i].toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-    
-                    // append knob total amounts
-                    $('#amtsTotalAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.totalMaxMin[i].toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-                }
-    
-                $('#timesAll').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
-                $('#timesAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.totalTime.toFixed(1)} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-                $('#timesAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.avgTime.toFixed(1)} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-    
-                $('#movesAll').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
-                $('#movesAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.totalMoves.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-                $('#movesAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.avgMoves.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-    
-                $('#typesAll').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
-                $('#typesAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.totalMoveChanges.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-                $('#typesAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.avgMoveChanges.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-    
-                $('#amtsAll').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
-                $('#amtsAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.totalKnobAvgs.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-                $('#amtsAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.avgKnobAvgs.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-    
-                $('#amtsTotalAll').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
-                $('#amtsTotalAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.totalKnobTotals.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-                $('#amtsTotalAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.avgKnobTotals.toFixed(1)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-                //drawWavesGoalsAll(dataObj, numMovesPerChallenge[$('#levelSelect').val()])
-            }, 'json').error((jqXHR, textStatus, errorThrown) => {
-                $('#filterModal').modal('hide')
-                off()
-                showError(jqXHR.responseText)
-            }),
-            $.get('responsePage.php', { 'isAll': true, 'isHistogram': true, 'gameID': $('#gameSelect').val(), 'isAggregate': true, 'minMoves': $('#minMoves').val(), 'minQuestions': $('#minQuestions').val(),
-                    'minLevels': $('#minLevels').val(), 'startDate': $('#startDate').val(), 'endDate': $('#endDate').val(), 'maxSessions': $('#maxSessions').val()}, (data) => {
-                drawWavesHistograms(data)
-            }, 'json').error((jqXHR, textStatus, errorThrown) => {
-                $('#filterModal').modal('hide')
-                off()
-                showError(jqXHR.responseText)
-            })
-            ) // end of promises.push(
-
-            $.when.apply($, promises).then(() => {
-                // console.timeEnd('filterForm')
-                off()
-            })
+            getAllData(true, false)
         } else {
             $('#formError').show()
             $('#filterModal').modal('hide')
@@ -186,7 +65,7 @@ $(document).ready((event) => {
             'isFiltered': isFiltered
         }
         if (isFiltered) {
-            parameters['minLevels'] = $('#minMoves').val()
+            parameters['minMoves'] = $('#minMoves').val()
             parameters['minQuestions'] = $('#minQuestions').val()
             parameters['minLevels'] = $('#minLevels').val()
             parameters['startDate'] = $('#startDate').val()
@@ -197,23 +76,37 @@ $(document).ready((event) => {
             $('#scoreDisplayAll').html(data.questionsTotal.totalNumCorrect + ' / ' + data.questionsTotal.totalNumQuestions + ' (' + 
                 (100 * data.questionsTotal.totalNumCorrect / data.questionsTotal.totalNumQuestions).toFixed(1) + '%)')
             if (data.levels !== null) { 
-                currentSessions = data.sessionsAndTimes.sessions
-                let numSessionsToDisplay = data.numSessions
+                let numSessionsToDisplay = isFiltered ? data.numFilteredSessions : data.numSessions
                 if (isFirstTime) totalSessions = data.numSessions
                 $('#sessions').text('Showing ' + numSessionsToDisplay + ' of ' + totalSessions + ' available sessions')
 
                 let options = []
                 fastClear($('#sessionSelect'))
 
-                for (let i = 0; i < data.sessionsAndTimes.sessions.length; i++) {
+                let sessions = isFiltered ? data.filteredSessionsAndTimes.sessions : data.sessionsAndTimes.sessions
+                let times = isFiltered ? data.filteredSessionsAndTimes.times : data.sessionsAndTimes.times
+
+                for (let i = 0; i < sessions.length; i++) {
                     let newOpt = document.createElement('option')
-                    newOpt.value = data.sessionsAndTimes.sessions[i]
-                    newOpt.text = i + ' | ' + data.sessionsAndTimes.sessions[i] + ' | ' + data.sessionsAndTimes.times[i]
+                    newOpt.value = sessions[i]
+                    newOpt.text = i + ' | ' + sessions[i] + ' | ' + times[i]
                     options.push(newOpt)
                 }
                 $('#sessionSelect').append(options)
-                $('#sessionSelect').val('18020410454796070') // the most interesting session
-
+                if ($('#sessionSelect option[value="18020410454796070"]').length > 0) {
+                    $('#sessionSelect').val('18020410454796070') // the most interesting session
+                } else {
+                    if ($('#sessionSelect option').length > 0) {
+                        $('#sessionSelect').val($('#sessionSelect option:first').val())
+                    } else {
+                        showNoDataGoals()
+                        showNoDataLeft()
+                        showNoDataRight()
+                        fastClear($('#basicFeatures'))
+                        $('#scoreDisplay').html('- / -')
+                    }
+                }
+                    
                 if (isFirstTime) {
                     // Get basic info for the level
                     getSingleData(true, false)
@@ -221,14 +114,14 @@ $(document).ready((event) => {
                     // Get the levels and then information for a specific level (0)
                     fastClear($('#levelSelect'))
                     // Get default dates from first (that isn't the epoch date) and last times
-                    let startDate = new Date(data.sessionsAndTimes.times[data.sessionsAndTimes.times.lastIndexOf('0000-00-00 00:00:00')+1].replace(/-/g, "/"))
+                    let startDate = new Date(times[times.lastIndexOf('0000-00-00 00:00:00')+1].replace(/-/g, "/"))
                     let startdd = startDate.getDate()
                     let startmm = startDate.getMonth() + 1
                     let startyyyy = startDate.getFullYear()
                     if (startdd < 10) { startdd = '0' + startdd }
                     if (startmm < 10) { startmm = '0' + startmm }
 
-                    let endDate = new Date(data.sessionsAndTimes.times[data.sessionsAndTimes.times.length-1].replace(/-/g, "/"))
+                    let endDate = new Date(times[times.length-1].replace(/-/g, "/"))
                     let enddd = endDate.getDate()
                     let endmm = endDate.getMonth() + 1
                     let endyyyy = endDate.getFullYear()
@@ -318,9 +211,16 @@ $(document).ready((event) => {
                 $('#amtsTotalAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.totalKnobTotals.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
                 $('#amtsTotalAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.avgKnobTotals.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
                 let dataHistogram = { 'numsQuestions': data.questionsAll.numsQuestions, 'numMoves': data.numMovesAll, 'numLevels': data.numLevelsAll }
+                if (isFiltered && $('#sessionSelect option').length > 0) {
+                    getSingleData(true, false) 
+                } else if ($('#sessionSelect option').length === 0) {
+                    $('#scoreDisplayAll').html('- / -')
+                    fastClear($('#basicFeaturesAll'))
+                    showNoDataHistograms()
+                    off()
+                }
                 drawWavesHistograms(dataHistogram)
                 getWavesTableData()
-                off()
             } else {
                 off()
                 hideError()
@@ -478,6 +378,12 @@ $(document).ready((event) => {
         $('#goalsGraph2All').css('display', 'block')
         let trace2 = {
             x: data.numMoves,
+            autobinx: false,
+            xbins: {
+                start: 0,
+                end: data.numMoves.length-1,
+                size: 25
+            },
             type: 'histogram'
         }
         let layout2 = {
@@ -850,6 +756,13 @@ $(document).ready((event) => {
     function showNoDataLeft() {
         $('#noDataOverlayLeft').css('display', 'block')
         $('#noDataOverlayGoals').css('display', 'block')
+        let layout = {
+            margin: { t: 35 },
+            title: 'Left Sliders',
+            showlegend: true,
+            shapes: []
+        }
+        Plotly.newPlot(graphLeft, [], layout)
     }
 
     function hideNoDataLeft() {
@@ -859,6 +772,13 @@ $(document).ready((event) => {
 
     function showNoDataRight() {
         $('#noDataOverlayRight').css('display', 'block')
+        let layout = {
+            margin: { t: 35 },
+            title: 'Left Sliders',
+            showlegend: true,
+            shapes: []
+        }
+        Plotly.newPlot(graphRight, [], layout)
     }
 
     function hideNoDataRight() {
@@ -868,6 +788,8 @@ $(document).ready((event) => {
     function showNoDataGoals() {
         $('#noDataOverlayGoals1').css('display', 'block')
         $('#noDataOverlayGoals2').css('display', 'block')
+        $('#slopeDiv1').html('Net good moves slope: 0')
+        $('#slopeDiv2').html('Net good moves slope: 0')
         let layout = {
             plot_bgcolor: '#F6F6F3',
             paper_bgcolor: '#F6F6F3',
@@ -898,6 +820,20 @@ $(document).ready((event) => {
     function hideNoDataGoals() {
         $('#noDataOverlayGoals1').css('display', 'none')
         $('#noDataOverlayGoals2').css('display', 'none')
+    }
+
+    function showNoDataHistograms() {
+        //$('#noDataOverlayGoals1').css('display', 'block')
+        //$('#noDataOverlayGoals2').css('display', 'block')
+        let layout = {
+            plot_bgcolor: '#F6F6F3',
+            paper_bgcolor: '#F6F6F3',
+            margin: { t: 35 },
+            height: 200
+        }
+        Plotly.newPlot(goalsGraph1All, [], layout)
+        Plotly.newPlot(goalsGraph2All, [], layout)
+        Plotly.newPlot(goalsGraph3All, [], layout)
     }
 
     function fastClear(selectElement) {

@@ -112,16 +112,22 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
     $graphDataSingle = array();
     $basicInfoSingle = array();
     if (isset($reqSessionID)) {
-        $graphEvents = array();
-        $graphTimes = array();
-        $graphEventData = array();
-        $graphLevels = array();
+        $graphEvents = null;
+        $graphTimes = null;
+        $graphEventData = null;
+        $graphLevels = null;
         foreach ($sessionAttributes[$reqSessionID] as $i=>$val) {
             if (isset($reqLevel) && $val['level'] == $reqLevel) {
                 if ($val['event_custom'] === 1 ||
                     $val['event_custom'] === 2 ||
                     $val['event'] === 'SUCCEED'
                 ) {
+                    if (!isset($graphEvents, $graphTimes, $graphEventData, $graphLevels)) {
+                        $graphEvents = array();
+                        $graphTimes = array();
+                        $graphEventData = array();
+                        $graphLevels = array();
+                    }
                     $graphEvents []= $val['event'];
                     $graphTimes [] = $val['time'];
                     $graphEventData []= $val['event_data_complex'];
@@ -698,8 +704,15 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
             $distanceToGoal1[$i] = $cumulativeDistance1;
         }
         $goalSlope1 = 0;
-        $deltaX = $moveNumbers[count($moveNumbers)-1] - $moveNumbers[0];
-        $deltaY = $distanceToGoal1[count($distanceToGoal1)-1] - $distanceToGoal1[0];
+        $deltaX = 0;
+        $deltaY = 0;
+        if (count($moveNumbers) > 0) {
+            $deltaX = $moveNumbers[count($moveNumbers)-1] - $moveNumbers[0];
+        }
+        if (count($distanceToGoal1) > 0) {
+            $deltaY = $distanceToGoal1[count($distanceToGoal1)-1] - $distanceToGoal1[0];
+        }
+
         if ($deltaX != 0) {
             $goalSlope1 = $deltaY / $deltaX;
         }
@@ -760,7 +773,10 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
         }
     
         $goalSlope2 = 0;
-        $deltaY = $distanceToGoal2[count($distanceToGoal2)-1] - $distanceToGoal2[0];
+        $deltaY = 0;
+        if (count($distanceToGoal2) > 0 ) {
+            $deltaY = $distanceToGoal2[count($distanceToGoal2)-1] - $distanceToGoal2[0];
+        }
         
         if ($deltaX != 0) {
             $goalSlope2 = $deltaY / $deltaX;
