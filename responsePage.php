@@ -4,6 +4,9 @@ header('Content-Type: application/json');
 
 // Establish the database connection
 include "database.php.template";
+require 'bootstrap.php';
+use Regression\Matrix;
+use Regression\Regression;
 ini_set('memory_limit','256M');
 
 $db = connectToDatabase(DBDeets::DB_NAME_DATA);
@@ -230,7 +233,7 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
             
             foreach ($startIndices as $i=>$value) {
                 if (isset($startIndices[$i])) {
-                    $levelTime = 'Incomplete';
+                    $levelTime = 99999;
                     if (isset($dataObj['times'][$endIndices[$i]], $dataObj['times'][$startIndices[$i]])) {
                         $levelStartTime = new DateTime($dataObj['times'][$startIndices[$i]]);
                         $levelEndTime = new DateTime($dataObj['times'][$endIndices[$i]]);
@@ -516,7 +519,7 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
                 
                 foreach ($startIndices as $i=>$value) {
                     if (isset($startIndices[$i])) {
-                        $levelTime = 'Incomplete';
+                        $levelTime = 99999;
                         if (isset($dataObj['times'][$endIndices[$i]], $dataObj['times'][$startIndices[$i]])) {
                             $levelStartTime = new DateTime($dataObj['times'][$startIndices[$i]]);
                             $levelEndTime = new DateTime($dataObj['times'][$endIndices[$i]]);
@@ -786,10 +789,34 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
             'absDistanceToGoal1'=>$absDistanceToGoal1, 'absDistanceToGoal2'=>$absDistanceToGoal2, 'goalSlope1'=>$goalSlope1, 'goalSlope2'=>$goalSlope2, 'dataObj'=>$dataObj);
     }
 
-    // Return ALL the above information at once in a big array
-    return array('goalsSingle'=>$goalsSingle, 'numLevelsAll'=>$numLevelsAll, 'numMovesAll'=>$numMovesAll, "questionsAll"=>$questionsAll, "basicInfoAll"=>$basicInfoAll,
+    $output = array('goalsSingle'=>$goalsSingle, 'numLevelsAll'=>$numLevelsAll, 'numMovesAll'=>$numMovesAll, "questionsAll"=>$questionsAll, "basicInfoAll"=>$basicInfoAll,
     "sessionsAndTimes"=>$sessionsAndTimes, "filteredSessionsAndTimes"=>$filteredSessionsAndTimes, "basicInfoSingle"=>$basicInfoSingle, "graphDataSingle"=>$graphDataSingle, 
     "questionsSingle"=>$questionsSingle, "levels"=>$levels, "numSessions"=>$numSessions, "numFilteredSessions"=>count($filteredSessions), "questionsTotal"=>$questionsTotal);
+
+    // Linear regression stuff
+    // if (!isset($reqSessionID)) {
+    //     $predictors = array();
+    //     $predictedLevel10 = array();
+    //     $gameCompletes = array();
+
+    //     $numSessionsTemp = count($sessionIDs);
+    //     for ($i = 0; $i < $numSessionsTemp; $i++) {
+    //         $predictors []= array($numMovesAll[$i], $numLevelsAll[$i], array_column($levelCol, $i));
+    //         $level10Complete = ($numLevelsAll[$i] >= 9) ? 1 : 0;
+    //         $level20Complete = ($numLevelsAll[$i] >= 20) ? 1 : 0;
+    //         $predictedLevel10 []= array($level10Complete);
+    //     }
+
+    //     $regression = new Regression();
+    //     $regression->setX(new Matrix($predictors));
+    //     $regression->setY(new Matrix($predictedLevel10));
+    //     $regression->exec();
+
+    //     return array('coefficients'=>$regression->getCoefficients(), 'stderr'=>$regression->getStandardError(), 'pvalues'=>$regression->getPValues());
+    // }
+
+    // Return ALL the above information at once in a big array
+    return $output;
 }
 
 $db->close();
