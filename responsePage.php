@@ -3,7 +3,7 @@
 header('Content-Type: application/json');
 
 // Establish the database connection
-include "database.php.template";
+include "database.php";
 require 'bootstrap.php';
 use Regression\Matrix;
 use Regression\Regression;
