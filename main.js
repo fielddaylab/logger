@@ -265,7 +265,7 @@ $(document).ready((event) => {
                                 column = 'q4d'; break
                         }
                         if (data.linRegCoefficients[column] && i < 4)
-                        $(jval).html((data.linRegCoefficients[column][i]).toFixed(8))
+                        $(jval).html((data.linRegCoefficients[column][i]).toFixed(4))
                     })
                 })
             } else {
