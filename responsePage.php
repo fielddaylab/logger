@@ -342,7 +342,7 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
         $minQuestions = $_GET['minQuestions'];
         $startDate = $_GET['startDate'];
         $endDate = $_GET['endDate'];
-        foreach ($uniqueSessions as $val) {
+        foreach ($uniqueSessions as $i=>$val) {
             $time = $times[$val];
             if (!isset($numMoves[$val])) $numMoves[$val] = 0;
             if (!isset($numLevelsAllSessions[$val])) $numLevelsAllSessions[$val] = 0;
@@ -350,11 +350,11 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
 
             if ($numMoves[$val] >= $minMoves && $numLevelsAllSessions[$val] >= $minLevels && $numQuestions[$val] >= $minQuestions &&
             $startDate <= $time && $time <= $endDate) {
-                $filteredSessions[] = $val;
-                $filteredSessionsTimes[] = $time;
-                $filteredMoves[] = $numMoves[$val];
-                $filteredQuestions[] = $numQuestions[$val];
-                $filteredLevels[] = $numLevelsAllSessions[$val];
+                $filteredSessions[$i] = $val;
+                $filteredSessionsTimes[$i] = $time;
+                $filteredMoves[$i] = $numMoves[$val];
+                $filteredQuestions[$i] = $numQuestions[$val];
+                $filteredLevels[$i] = $numLevelsAllSessions[$val];
             }
         }
         array_multisort($filteredSessionsTimes, SORT_ASC, $filteredSessions, SORT_ASC);
@@ -793,82 +793,68 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
 
     // Linear regression stuff
     $linRegCoefficients = array();
-    // if (!isset($reqSessionID)) {
-    //     $predictors = array();
-    //     $predictedGameComplete = array();
-    //     $predictedLevel10 = array();
-    //     $predictedLevel20 = array();
-    //     $predictedQ1 = array();
-    //     $predictedQ2 = array();
-    //     $predictedQ3 = array();
-    //     $predictedQ4 = array();
+    if (!isset($reqSessionID)) {
+        $predictors = array();
+        $predictedGameComplete = array();
+        $predictedLevel10 = array();
+        $predictedLevel20 = array();
 
-    //     $numSessionsTemp = count($sessionIDs);
-    //     for ($i = 0; $i < $numSessionsTemp; $i++) {
-    //         $predictors []= array($numMovesAll[$i], array_sum($typeCol[$i]), array_sum($levelCol[$i]), array_sum($avgCol[$i]));
+        $numSessionsTemp = count($sessionIDs);
+        for ($i = 0; $i < $numSessionsTemp; $i++) {
+            $predictors []= array($numMovesAll[$i], array_sum($typeCol[$i]), array_sum($levelCol[$i]), array_sum($avgCol[$i]));
 
-    //         $gameComplete = ($numLevelsAll[$i] >= 30) ? 1 : 0;
-    //         $level10Complete = ($numLevelsAll[$i] >= 9) ? 1 : 0;
-    //         $level20Complete = ($numLevelsAll[$i] >= 20) ? 1 : 0;
+            $gameComplete = ($numLevelsAll[$i] >= 30) ? 1 : 0;
+            $level10Complete = ($numLevelsAll[$i] >= 9) ? 1 : 0;
+            $level20Complete = ($numLevelsAll[$i] >= 20) ? 1 : 0;
 
-    //         $q1a = ($questionAnswereds[$i][0] === 0) ? 1 : 0
-    //         $q1b = ($questionAnswereds[$i][0] === 1) ? 1 : 0
-    //         $q1c = ($questionAnswereds[$i][0] === 2) ? 1 : 0
-    //         $q1d = ($questionAnswereds[$i][0] === 3) ? 1 : 0
+            $predictedGameComplete []= array($gameComplete);
+            $predictedLevel10 []= array($level10Complete);
+            $predictedLevel20 []= array($level20Complete);
+        }
 
-    //         $q2a = ($questionAnswereds[$i][1] === 0) ? 1 : 0
-    //         $q2b = ($questionAnswereds[$i][1] === 1) ? 1 : 0
-    //         $q2c = ($questionAnswereds[$i][1] === 2) ? 1 : 0
-    //         $q2d = ($questionAnswereds[$i][1] === 3) ? 1 : 0
+        $regression1 = new \mnshankar\LinearRegression\Regression();
+        $regression1->setX($predictors);
+        $regression1->setY($predictedGameComplete);
+        $regression1->compute();
+        $linRegCoefficients['gameComplete'] = $regression1->getCoefficients();
 
-    //         $q3a = ($questionAnswereds[$i][2] === 0) ? 1 : 0
-    //         $q3b = ($questionAnswereds[$i][2] === 1) ? 1 : 0
-    //         $q3c = ($questionAnswereds[$i][2] === 2) ? 1 : 0
-    //         $q3d = ($questionAnswereds[$i][2] === 3) ? 1 : 0
+        $regression2 = new \mnshankar\LinearRegression\Regression();
+        $regression2->setX($predictors);
+        $regression2->setY($predictedLevel10);
+        $regression2->compute();
+        $linRegCoefficients['level10'] = $regression2->getCoefficients();
 
-    //         $q4a = ($questionAnswereds[$i][3] === 0) ? 1 : 0
-    //         $q4b = ($questionAnswereds[$i][3] === 1) ? 1 : 0
-    //         $q4c = ($questionAnswereds[$i][3] === 2) ? 1 : 0
-    //         $q4d = ($questionAnswereds[$i][3] === 3) ? 1 : 0
+        $regression3 = new \mnshankar\LinearRegression\Regression();
+        $regression3->setX($predictors);
+        $regression3->setY($predictedLevel20);
+        $regression3->compute();
+        $linRegCoefficients['level20'] = $regression3->getCoefficients();
 
-    //         $predictedGameComplete []= array($gameComplete);
-    //         $predictedLevel10 []= array($level10Complete);
-    //         $predictedLevel20 []= array($level20Complete);
-            
-    //         $predictedQ1 []= array($q1a, $q1b, $q1c, $q1d);
-    //         $predictedQ2 []= array($q2a, $q2b, $q2c, $q2d);
-    //         $predictedQ3 []= array($q3a, $q3b, $q3c, $q3d);
-    //         $predictedQ4 []= array($q4a, $q4b, $q4c, $q4d);
-    //     }
+        $predictorsQ = array();
+        $predictedQ = array();
+        foreach ($questionAnswereds as $i=>$val) {
+            for ($j = 0; $j < 4; $j++) {
+                if (isset($val[$j])) {
+                    $predictorsQ[$i] []= array($numMovesAll[$i], array_sum($typeCol[$i]), array_sum($levelCol[$i]), array_sum($avgCol[$i]));
+                    $q1a = ($val[$j] === 0) ? 1 : 0;
+                    $q1b = ($val[$j] === 1) ? 1 : 0;
+                    $q1c = ($val[$j] === 2) ? 1 : 0;
+                    $q1d = ($val[$j] === 3) ? 1 : 0;
+                    $predictedQ[$j] []= array($q1a, $q1b, $q1c, $q1d);
+                }
+            }
+        }
 
-    //     $regression1 = new \mnshankar\LinearRegression\Regression();
-    //     $regression1->setX($predictors);
-    //     $regression1->setY($predictedGameComplete);
-    //     $regression1->compute();
-    //     $linRegCoefficients['gameComplete'] = $regression1->getCoefficients();
-
-    //     $regression2 = new \mnshankar\LinearRegression\Regression();
-    //     $regression2->setX($predictors);
-    //     $regression2->setY($predictedLevel10);
-    //     $regression2->compute();
-    //     $linRegCoefficients['level10'] = $regression2->getCoefficients();
-
-    //     $regression3 = new \mnshankar\LinearRegression\Regression();
-    //     $regression3->setX($predictors);
-    //     $regression3->setY($predictedLevel20);
-    //     $regression3->compute();
-    //     $linRegCoefficients['level20'] = $regression3->getCoefficients();
-
-    //     for ($i = 0; $i < 4; $i++) {
-    //         for ($j = 0; $j < 4; $j++) {
-    //             $regression = new \mnshankar\LinearRegression\Regression();
-    //             $regression->setX($predictors);
-    //             $regression->setY($predictedQ1[$i]);
-    //             $regression->compute();
-    //             $linRegCoefficients['q1'.$i] = $regression->getCoefficients();
-    //         }
-    //     }
-    // }
+        for ($i = 0; $i < 4; $i++) {
+            for ($j = 0; $j < 4; $j++) {
+                $regression = new \mnshankar\LinearRegression\Regression();
+                $regression->setX($predictorsQ[$i]);
+                $regression->setY($predictedQ[$i][$j]);
+                $regression->compute();
+                $linRegCoefficients['q'.$i.$j] = $regression->getCoefficients();
+            }
+        }
+    }
 
 
     $output = array('goalsSingle'=>$goalsSingle, 'numLevelsAll'=>$numLevelsAll, 'numMovesAll'=>$numMovesAll, 'questionsAll'=>$questionsAll, 'basicInfoAll'=>$basicInfoAll,
