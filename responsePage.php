@@ -4,10 +4,9 @@ header('Content-Type: application/json');
 
 // Establish the database connection
 include "database.php";
-require 'bootstrap.php';
-use Regression\Matrix;
-use Regression\Regression;
-ini_set('memory_limit','256M');
+include "Regression.php";
+include "Matrix.php";
+ini_set('memory_limit','512M');
 
 $db = connectToDatabase(DBDeets::DB_NAME_DATA);
 if ($db->connect_error) {
@@ -789,31 +788,49 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
             'absDistanceToGoal1'=>$absDistanceToGoal1, 'absDistanceToGoal2'=>$absDistanceToGoal2, 'goalSlope1'=>$goalSlope1, 'goalSlope2'=>$goalSlope2, 'dataObj'=>$dataObj);
     }
 
-    $output = array('goalsSingle'=>$goalsSingle, 'numLevelsAll'=>$numLevelsAll, 'numMovesAll'=>$numMovesAll, "questionsAll"=>$questionsAll, "basicInfoAll"=>$basicInfoAll,
-    "sessionsAndTimes"=>$sessionsAndTimes, "filteredSessionsAndTimes"=>$filteredSessionsAndTimes, "basicInfoSingle"=>$basicInfoSingle, "graphDataSingle"=>$graphDataSingle, 
-    "questionsSingle"=>$questionsSingle, "levels"=>$levels, "numSessions"=>$numSessions, "numFilteredSessions"=>count($filteredSessions), "questionsTotal"=>$questionsTotal);
-
     // Linear regression stuff
-    // if (!isset($reqSessionID)) {
-    //     $predictors = array();
-    //     $predictedLevel10 = array();
-    //     $gameCompletes = array();
+    $linRegCoefficients = array();
+    if (!isset($reqSessionID)) {
+        $predictors = array();
+        $predictedGameComplete = array();
+        $predictedLevel10 = array();
+        $predictedLevel20 = array();
 
-    //     $numSessionsTemp = count($sessionIDs);
-    //     for ($i = 0; $i < $numSessionsTemp; $i++) {
-    //         $predictors []= array($numMovesAll[$i], $numLevelsAll[$i], array_column($levelCol, $i));
-    //         $level10Complete = ($numLevelsAll[$i] >= 9) ? 1 : 0;
-    //         $level20Complete = ($numLevelsAll[$i] >= 20) ? 1 : 0;
-    //         $predictedLevel10 []= array($level10Complete);
-    //     }
+        $numSessionsTemp = count($sessionIDs);
+        for ($i = 0; $i < $numSessionsTemp; $i++) {
+            $predictors []= array($numMovesAll[$i], array_sum($typeCol[$i]), array_sum($levelCol[$i]), array_sum($avgCol[$i]));
+            $gameComplete = ($numLevelsAll[$i] >= 30) ? 1 : 0;
+            $level10Complete = ($numLevelsAll[$i] >= 9) ? 1 : 0;
+            $level20Complete = ($numLevelsAll[$i] >= 20) ? 1 : 0;
+            $predictedGameComplete []= array($gameComplete);
+            $predictedLevel10 []= array($level10Complete);
+            $predictedLevel20 []= array($level20Complete);
+        }
 
-    //     $regression = new Regression();
-    //     $regression->setX(new Matrix($predictors));
-    //     $regression->setY(new Matrix($predictedLevel10));
-    //     $regression->exec();
+        $regression1 = new \mnshankar\LinearRegression\Regression();
+        $regression1->setX($predictors);
+        $regression1->setY($predictedGameComplete);
+        $regression1->compute();
+        $linRegCoefficients['gameComplete'] = $regression1->getCoefficients();
 
-    //     return array('coefficients'=>$regression->getCoefficients(), 'stderr'=>$regression->getStandardError(), 'pvalues'=>$regression->getPValues());
-    // }
+        $regression2 = new \mnshankar\LinearRegression\Regression();
+        $regression2->setX($predictors);
+        $regression2->setY($predictedLevel10);
+        $regression2->compute();
+        $linRegCoefficients['level10'] = $regression2->getCoefficients();
+
+        $regression3 = new \mnshankar\LinearRegression\Regression();
+        $regression3->setX($predictors);
+        $regression3->setY($predictedLevel20);
+        $regression3->compute();
+        $linRegCoefficients['level20'] = $regression3->getCoefficients();
+    }
+
+
+    $output = array('goalsSingle'=>$goalsSingle, 'numLevelsAll'=>$numLevelsAll, 'numMovesAll'=>$numMovesAll, 'questionsAll'=>$questionsAll, 'basicInfoAll'=>$basicInfoAll,
+    'sessionsAndTimes'=>$sessionsAndTimes, 'filteredSessionsAndTimes'=>$filteredSessionsAndTimes, 'basicInfoSingle'=>$basicInfoSingle, 'graphDataSingle'=>$graphDataSingle, 
+    'questionsSingle'=>$questionsSingle, 'levels'=>$levels, 'numSessions'=>$numSessions, 'numFilteredSessions'=>count($filteredSessions), 'questionsTotal'=>$questionsTotal,
+    'linRegCoefficients'=>$linRegCoefficients);
 
     // Return ALL the above information at once in a big array
     return $output;

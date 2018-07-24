@@ -220,7 +220,54 @@ $(document).ready((event) => {
                     off()
                 }
                 drawWavesHistograms(dataHistogram)
-                getWavesTableData()
+                console.log(data.linRegCoefficients)
+                $('#tableAllBody tr').each((i, ival) => {
+                    $(ival).find('td').each((j, jval) => {
+                        let column
+                        switch (j) {
+                            case 0:
+                                column = 'gameComplete'; break
+                            case 1:
+                                column = 'level10'; break
+                            case 2:
+                                column = 'level20'; break
+                            case 3:
+                                column = 'q1a'; break
+                            case 4:
+                                column = 'q1b'; break
+                            case 5:
+                                column = 'q1c'; break
+                            case 6:
+                                column = 'q1d'; break
+                            case 7:
+                                column = 'q2a'; break
+                            case 8:
+                                column = 'q2b'; break
+                            case 9:
+                                column = 'q2c'; break
+                            case 10:
+                                column = 'q2d'; break
+                            case 11:
+                                column = 'q3a'; break
+                            case 12:
+                                column = 'q3b'; break
+                            case 13:
+                                column = 'q3c'; break
+                            case 14:
+                                column = 'q3d'; break
+                            case 15:
+                                column = 'q4a'; break
+                            case 16:
+                                column = 'q4b'; break
+                            case 17:
+                                column = 'q4c'; break
+                            case 18:
+                                column = 'q4d'; break
+                        }
+                        if (data.linRegCoefficients[column] && i < 4)
+                        $(jval).html((data.linRegCoefficients[column][i]).toFixed(8))
+                    })
+                })
             } else {
                 off()
                 hideError()
@@ -325,17 +372,6 @@ $(document).ready((event) => {
             console.log('Error triggered by getSingleData')
             showError(jqXHR.responseText)
         })
-    }
-
-    function getWavesTableData() {
-        // console.time('getWavesTableData')
-        // $.get...
-        $('#tableAllBody tr').each((i, ival) => {
-            $(ival).find('td').each((j, jval) => {
-                $(jval).html(i+', '+j)
-            })
-        })
-        // console.timeEnd('getWavesTableData')
     }
 
     function drawWavesHistograms(data) {
