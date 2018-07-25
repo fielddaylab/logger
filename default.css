@@ -68,3 +68,7 @@ select, .select2 {
     float: right;
     margin-right: 70px;
 }
+
+td {
+    font: 12px "Open Sans", sans-serif;
+}

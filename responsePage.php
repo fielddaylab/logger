@@ -235,8 +235,8 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
                 }
             }
             
-            foreach ($startIndices as $i=>$value) {
-                if (isset($startIndices[$i])) {
+            foreach ($endIndices as $i=>$value) {
+                if (isset($endIndices[$i])) {
                     $levelTime = 99999;
                     if (isset($dataObj['times'][$endIndices[$i]], $dataObj['times'][$startIndices[$i]])) {
                         $levelStartTime = new DateTime($dataObj['times'][$startIndices[$i]]);
@@ -522,9 +522,9 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
                     }
                 }
                 
-                foreach ($startIndices as $i=>$value) {
-                    if (isset($startIndices[$i])) {
-                        $levelTime = 99999;
+                foreach ($endIndices as $i=>$value) {
+                    if (isset($endIndices[$i])) {
+                        $levelTime = 999999;
                         if (isset($dataObj['times'][$endIndices[$i]], $dataObj['times'][$startIndices[$i]])) {
                             $levelStartTime = new DateTime($dataObj['times'][$startIndices[$i]]);
                             $levelEndTime = new DateTime($dataObj['times'][$endIndices[$i]]);
@@ -859,23 +859,32 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
         foreach ($questionAnswereds as $i=>$val) {
             for ($j = 0; $j < 4; $j++) {
                 if (isset($val[$j])) {
-                    $predictorsQ[$i] []= array($numMovesAll[$i], array_sum($typeCol[$i]), array_sum($levelCol[$i]), array_sum($avgCol[$i]));
+                    $predictorsQ[$j] []= array($numMovesAll[$i], array_sum($typeCol[$i]), array_sum($levelCol[$i]), array_sum($avgCol[$i]));
                     $q1a = ($val[$j] === 0) ? 1 : 0;
                     $q1b = ($val[$j] === 1) ? 1 : 0;
                     $q1c = ($val[$j] === 2) ? 1 : 0;
                     $q1d = ($val[$j] === 3) ? 1 : 0;
-                    $predictedQ[$j] []= array($q1a, $q1b, $q1c, $q1d);
+                    $predictedQ[$j][0] []= array($q1a);
+                    $predictedQ[$j][1] []= array($q1b);
+                    $predictedQ[$j][2] []= array($q1c);
+                    $predictedQ[$j][3] []= array($q1d);
                 }
             }
         }
 
         for ($i = 0; $i < 4; $i++) {
-            for ($j = 0; $j < 4; $j++) {
-                $regression = new \mnshankar\LinearRegression\Regression();
-                $regression->setX($predictorsQ[$i]);
-                $regression->setY($predictedQ[$i][$j]);
-                $regression->compute();
-                $linRegCoefficients['q'.$i.$j] = $regression->getCoefficients();
+            if (count($predictorsQ[$i]) > 1) {
+                for ($j = 0; $j < 4; $j++) {
+                    $regression = new \mnshankar\LinearRegression\Regression();
+                    $regression->setX($predictorsQ[$i]);
+                    $regression->setY($predictedQ[$i][$j]);
+                    $regression->compute();
+                    $linRegCoefficients['q'.$i.$j] = $regression->getCoefficients();
+                }
+            } else {
+                for ($j = 0; $j < 4; $j++) {
+                    $linRegCoefficients['q'.$i.$j] = array('Insufficient data', 'Insufficient data', 'Insufficient data', 'Insufficient data');
+                }
             }
         }
     }

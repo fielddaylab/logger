@@ -221,7 +221,6 @@ $(document).ready((event) => {
                     off()
                 }
                 drawWavesHistograms(dataHistogram)
-                console.log(data.linRegCoefficients)
                 $('#tableAllBody tr').each((i, ival) => {
                     $(ival).find('td').each((j, jval) => {
                         let column
@@ -233,40 +232,54 @@ $(document).ready((event) => {
                             case 2:
                                 column = 'level20'; break
                             case 3:
-                                column = 'q1a'; break
+                                column = 'q00'; break
                             case 4:
-                                column = 'q1b'; break
+                                column = 'q01'; break
                             case 5:
-                                column = 'q1c'; break
+                                column = 'q02'; break
                             case 6:
-                                column = 'q1d'; break
+                                column = 'q03'; break
                             case 7:
-                                column = 'q2a'; break
+                                column = 'q10'; break
                             case 8:
-                                column = 'q2b'; break
+                                column = 'q11'; break
                             case 9:
-                                column = 'q2c'; break
+                                column = 'q12'; break
                             case 10:
-                                column = 'q2d'; break
+                                column = 'q13'; break
                             case 11:
-                                column = 'q3a'; break
+                                column = 'q20'; break
                             case 12:
-                                column = 'q3b'; break
+                                column = 'q21'; break
                             case 13:
-                                column = 'q3c'; break
+                                column = 'q22'; break
                             case 14:
-                                column = 'q3d'; break
+                                column = 'q23'; break
                             case 15:
-                                column = 'q4a'; break
+                                column = 'q30'; break
                             case 16:
-                                column = 'q4b'; break
+                                column = 'q31'; break
                             case 17:
-                                column = 'q4c'; break
+                                column = 'q32'; break
                             case 18:
-                                column = 'q4d'; break
+                                column = 'q33'; break
                         }
-                        if (i < 4)
-                        $(jval).html((data.linRegCoefficients[column][i]).toFixed(4))
+                        if (i < 4) {
+                            if (typeof data.linRegCoefficients[column][i] === 'number') {
+                                $(jval).html((data.linRegCoefficients[column][i]).toFixed(4))
+                            } else {
+                                $(jval).html(data.linRegCoefficients[column][i])
+                            }
+                        }
+                        // Color the correct answer for each question
+                        switch (column) {
+                            case 'q00':
+                            case 'q11':
+                            case 'q20':
+                            case 'q31':
+                                $(jval).addClass('success')
+                                break
+                        }
                     })
                 })
             } else {
