@@ -11,6 +11,7 @@ $(document).ready((event) => {
     let histogramAll1 = $('#goalsGraph1All')[0]
     let histogramAll2 = $('#goalsGraph2All')[0]
     let histogramAll3 = $('#goalsGraph3All')[0]
+    let clusterGraph = $('#goalsGraph4All')[0]
 
     let totalSessions
     
@@ -210,7 +211,7 @@ $(document).ready((event) => {
                 $('#amtsTotalAll').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
                 $('#amtsTotalAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.totalKnobTotals.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
                 $('#amtsTotalAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.avgKnobTotals.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-                let dataHistogram = { 'numsQuestions': data.questionsAll.numsQuestions, 'numMoves': data.numMovesAll, 'numLevels': data.numLevelsAll }
+                let dataHistogram = { 'numsQuestions': data.questionsAll.numsQuestions, 'numMoves': data.numMovesAll, 'numLevels': data.numLevelsAll, 'clusters': data.clusters }
                 if (isFiltered && $('#sessionSelect option').length > 0) {
                     getSingleData(true, false) 
                 } else if ($('#sessionSelect option').length === 0) {
@@ -499,6 +500,44 @@ $(document).ready((event) => {
         }
 
         Plotly.newPlot(histogramAll3, [trace3], layout3)
+        // console.timeEnd('drawWavesHistograms')
+
+        $('#goalsDiv4All').html('Cluster graph')
+        $('#goalsDiv4All').css('display', 'block')
+        $('#goalsGraph4All').css('display', 'block')
+        let trace4 = data.clusters.map(function(cluster, i){
+            return {
+                x: cluster.map((ary) => ary[0]),
+                y: cluster.map((ary) => ary[1]),
+                mode: 'markers',
+                type: 'scatter',
+            };
+        });
+        let layout4 = {
+            margin: { t: 35 },
+            height: 200,
+            plot_bgcolor: '#F6F6F3',
+            paper_bgcolor: '#F6F6F3',
+            xaxis: {
+                title: 'Average knob max-min',
+                titlefont: {
+                    family: 'Courier New, monospace',
+                    size: 12,
+                    color: '#7f7f7f'
+                }
+            },
+            yaxis: {
+                title: 'Average number of moves',
+                titlefont: {
+                    family: 'Courier New, monospace',
+                    size: 12,
+                    color: '#7f7f7f'
+                }
+            },
+            showlegend: false
+        }
+
+        Plotly.newPlot(clusterGraph, trace4, layout4)
         // console.timeEnd('drawWavesHistograms')
     }
 

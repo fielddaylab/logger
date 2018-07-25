@@ -6,7 +6,12 @@ header('Content-Type: application/json');
 include "database.php";
 include "Regression.php";
 include "Matrix.php";
-ini_set('memory_limit','1024M');
+
+require_once "KMeans/Space.php";
+require_once "KMeans/Point.php";
+require_once "KMeans/Cluster.php";
+
+ini_set('memory_limit','512M');
 
 $db = connectToDatabase(DBDeets::DB_NAME_DATA);
 if ($db->connect_error) {
@@ -604,6 +609,25 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
         //$avgStdDevAll = average($totalStdDevsPerLevelAll);
         $avgKnobTotalsAll = average($totalKnobTotalsPerLevelAll);
         $avgKnobAvgsAll = average($totalKnobAvgsPerLevelAll);
+
+        $space = new KMeans\Space(2);
+        $xs = array_column($avgCol, 0);
+        $ys = array_column($moveCol, 0);
+        foreach ($xs as $i => $x) {
+            $y = $ys[$i];
+            if (is_numeric($x) && is_numeric($y)) {
+                $space->addPoint([$x, $y]);
+            }
+        }
+        $clusters = $space->solve(4);
+        $clusterPoints = [];
+        foreach ($clusters as $cluster) {
+            $points = [];
+            foreach ($cluster->getIterator() as $point) {
+                $points[] = [$point[0], $point[1]];
+            }
+            $clusterPoints[] = $points;
+        }
         
         $basicInfoAll = array('times'=>$totalTimesPerLevelAll, 'numMoves'=>$totalMovesPerLevelArray, 'moveTypeChanges'=>$totalMoveTypeChangesPerLevelAll,
             'knobStdDevs'=>$totalStdDevsPerLevelAll, 'totalMaxMin'=>$totalKnobTotalsPerLevelAll, 'avgMaxMin'=>$totalKnobAvgsPerLevelAll,
@@ -873,7 +897,7 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
     $output = array('goalsSingle'=>$goalsSingle, 'numLevelsAll'=>$numLevelsAll, 'numMovesAll'=>$numMovesAll, 'questionsAll'=>$questionsAll, 'basicInfoAll'=>$basicInfoAll,
     'sessionsAndTimes'=>$sessionsAndTimes, 'filteredSessionsAndTimes'=>$filteredSessionsAndTimes, 'basicInfoSingle'=>$basicInfoSingle, 'graphDataSingle'=>$graphDataSingle, 
     'questionsSingle'=>$questionsSingle, 'levels'=>$levels, 'numSessions'=>$numSessions, 'numFilteredSessions'=>count($filteredSessions), 'questionsTotal'=>$questionsTotal,
-    'linRegCoefficients'=>$linRegCoefficients);
+    'linRegCoefficients'=>$linRegCoefficients, 'clusters'=>$clusterPoints);
 
     // Return ALL the above information at once in a big array
     return $output;
