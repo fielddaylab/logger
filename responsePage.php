@@ -6,7 +6,7 @@ header('Content-Type: application/json');
 include "database.php";
 include "Regression.php";
 include "Matrix.php";
-ini_set('memory_limit','512M');
+ini_set('memory_limit','1024M');
 
 $db = connectToDatabase(DBDeets::DB_NAME_DATA);
 if ($db->connect_error) {
@@ -367,7 +367,6 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
     $numLevelsAll = array();
     $questionsAll = array();
     $numMovesAll = array();
-    $questionsAll = array();
     $questionsTotal = array();
     $questionAnswereds = array();
     if (!isset($reqSessionID)) {
@@ -849,13 +848,19 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
         }
 
         for ($i = 0; $i < 4; $i++) {
-            if (count($predictorsQ[$i]) > 1) {
-                for ($j = 0; $j < 4; $j++) {
-                    $regression = new \mnshankar\LinearRegression\Regression();
-                    $regression->setX($predictorsQ[$i]);
-                    $regression->setY($predictedQ[$i][$j]);
-                    $regression->compute();
-                    $linRegCoefficients['q'.$i.$j] = $regression->getCoefficients();
+            if ($i < 2) {
+                if (count($predictorsQ[$i]) > 1) {
+                    for ($j = 0; $j < 4; $j++) {
+                        $regression = new \mnshankar\LinearRegression\Regression();
+                        $regression->setX($predictorsQ[$i]);
+                        $regression->setY($predictedQ[$i][$j]);
+                        $regression->compute();
+                        $linRegCoefficients['q'.$i.$j] = $regression->getPValues();
+                    }
+                } else {
+                    for ($j = 0; $j < 4; $j++) {
+                        $linRegCoefficients['q'.$i.$j] = array('Insufficient data', 'Insufficient data', 'Insufficient data', 'Insufficient data');
+                    }
                 }
             } else {
                 for ($j = 0; $j < 4; $j++) {
@@ -864,7 +869,6 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
             }
         }
     }
-
 
     $output = array('goalsSingle'=>$goalsSingle, 'numLevelsAll'=>$numLevelsAll, 'numMovesAll'=>$numMovesAll, 'questionsAll'=>$questionsAll, 'basicInfoAll'=>$basicInfoAll,
     'sessionsAndTimes'=>$sessionsAndTimes, 'filteredSessionsAndTimes'=>$filteredSessionsAndTimes, 'basicInfoSingle'=>$basicInfoSingle, 'graphDataSingle'=>$graphDataSingle, 

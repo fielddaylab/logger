@@ -4,4 +4,4 @@ build:
 	
 
 deploy:
-	rsync -vrc * mli-field@fielddaylab.wisc.edu:/httpdocs/logger
+	rsync -vrc --exclude-from 'rsync-exclude' * mli-field@fielddaylab.wisc.edu:/httpdocs/logger 

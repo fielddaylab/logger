@@ -265,7 +265,13 @@ $(document).ready((event) => {
                         }
                         if (i < 4) {
                             if (typeof data.linRegCoefficients[column][i] === 'number') {
-                                $(jval).html((data.linRegCoefficients[column][i]).toFixed(4))
+                                let innerText = $('<span>')
+                                innerText.html(' ' + data.linRegCoefficients[column][i].toFixed(4) + ' ')
+                                $(jval).html(innerText)
+                                if (data.linRegCoefficients[column][i] < 0.05) {
+                                    $(innerText).css('background-color', 'green')
+                                    $(innerText).css('color', 'white')
+                                }
                             } else {
                                 $(jval).html(data.linRegCoefficients[column][i])
                             }
