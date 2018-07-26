@@ -13,7 +13,13 @@ $(document).ready((event) => {
     let histogramAll3 = $('#goalsGraph3All')[0]
     let clusterGraph = $('#goalsGraph4All')[0]
 
-    $('#endDate').val((new Date()).getTime())
+    let endDate = new Date()
+    let enddd = endDate.getDate()
+    let endmm = endDate.getMonth() + 1
+    let endyyyy = endDate.getFullYear()
+    if (enddd < 10) { enddd = '0' + enddd }
+    if (endmm < 10) { endmm = '0' + endmm }
+    $('#endDate').val(endyyyy+'-'+endmm+'-'+enddd)
 
     let totalSessions
     
@@ -81,7 +87,7 @@ $(document).ready((event) => {
                 (100 * data.questionsTotal.totalNumCorrect / data.questionsTotal.totalNumQuestions).toFixed(1) + '%)')
             if (data.levels !== null) { 
                 let numSessionsToDisplay = isFiltered ? data.numFilteredSessions : data.numSessions
-                if (isFirstTime) totalSessions = data.numSessions
+                totalSessions = data.totalNumSessions
                 $('#sessions').text('Showing ' + numSessionsToDisplay + ' of ' + totalSessions + ' available sessions')
 
                 let options = []
@@ -117,23 +123,6 @@ $(document).ready((event) => {
 
                     // Get the levels and then information for a specific level (0)
                     fastClear($('#levelSelect'))
-                    // Get default dates from first (that isn't the epoch date) and last times
-                    let startDate = new Date(times[times.lastIndexOf('0000-00-00 00:00:00')+1].replace(/-/g, "/"))
-                    let startdd = startDate.getDate()
-                    let startmm = startDate.getMonth() + 1
-                    let startyyyy = startDate.getFullYear()
-                    if (startdd < 10) { startdd = '0' + startdd }
-                    if (startmm < 10) { startmm = '0' + startmm }
-
-                    let endDate = new Date(times[times.length-1].replace(/-/g, "/"))
-                    let enddd = endDate.getDate()
-                    let endmm = endDate.getMonth() + 1
-                    let endyyyy = endDate.getFullYear()
-                    if (enddd < 10) { enddd = '0' + enddd }
-                    if (endmm < 10) { endmm = '0' + endmm }
-
-                    $('#startDate').val(startyyyy+'-'+startmm+'-'+startdd)
-                    $('#endDate').val(endyyyy+'-'+endmm+'-'+enddd)
 
                     let options = []
                     for (let i = 0; i < data.levels.length; i++) {

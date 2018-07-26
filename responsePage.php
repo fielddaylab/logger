@@ -41,6 +41,25 @@ if (isset($_GET['gameID'])) {
     echo $returned;//substr($returned, 0, 1000);
 }
 
+function getTotalNumSessions($gameID, $db) {
+    $query = "SELECT COUNT(session_id) FROM (SELECT DISTINCT session_id FROM log WHERE app_id=?) q;";
+    $params = array($gameID);
+    $stmt = queryMultiParam($db, $query, 's', $params);
+    if($stmt === NULL) {
+        http_response_code(500);
+        die('{ "errMessage": "Error running query." }');
+    }
+    if (!$stmt->bind_result($numSessions)) {
+        http_response_code(500);
+        die('{ "errMessage": "Failed to bind to results." }');
+    }
+    $sessionAttributes = array(); // the master array of all sessions that will be built with attributes
+    $allEvents = array();
+    $stmt->fetch();
+    $stmt->close();
+    return $numSessions;
+}
+
 function getAndParseData($gameID, $db, $reqSessionID, $reqLevel, $maxRows) {
     $isFiltered = ($_GET['isFiltered'] == false || (strToUpper($_GET['isFiltered']) == 'FALSE')) ? false : true;
     // Main query that returns ALL data
@@ -932,7 +951,7 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel, $maxRows) {
         }
         for ($i = 0; $i < 4; $i++) {
             for ($j = 0; $j < 4; $j++) {
-                if (count($predictorsQ[$i]) > 0) {
+                if (isset($predictorsQ[$i]) && count($predictorsQ[$i]) > 0) {
                     $regression = new \mnshankar\LinearRegression\Regression();
                     $regression->setX($predictorsQ[$i]);
                     $regression->setY($predictedQ[$i][$j]);
@@ -948,15 +967,14 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel, $maxRows) {
                 }                  
             }
         }
-
-        $linRegCoefficients['hasQuestions12'] = $hasQuestions12;
-        $linRegCoefficients['hasQuestions34'] = $hasQuestions34;
     }
+    $totalNumSessions = getTotalNumSessions($_GET['gameID'], $db);
 
     $output = array('goalsSingle'=>$goalsSingle, 'numLevelsAll'=>$numLevelsAll, 'numMovesAll'=>$numMovesAll, 'questionsAll'=>$questionsAll, 'basicInfoAll'=>$basicInfoAll,
     'sessionsAndTimes'=>$sessionsAndTimes, 'filteredSessionsAndTimes'=>$filteredSessionsAndTimes, 'basicInfoSingle'=>$basicInfoSingle, 'graphDataSingle'=>$graphDataSingle, 
     'questionsSingle'=>$questionsSingle, 'levels'=>$levels, 'numSessions'=>$numSessions, 'numFilteredSessions'=>count($filteredSessions), 'questionsTotal'=>$questionsTotal,
-    'linRegCoefficients'=>$linRegCoefficients, 'clusters'=>array('col1'=>$bestColumn1, 'col2'=>$bestColumn2, 'clusters'=>$clusterPoints, 'dunn'=>$bestDunn));
+    'linRegCoefficients'=>$linRegCoefficients, 'clusters'=>array('col1'=>$bestColumn1, 'col2'=>$bestColumn2, 'clusters'=>$clusterPoints, 'dunn'=>$bestDunn),
+    'totalNumSessions'=>$totalNumSessions);
 
     // Return ALL the above information at once in a big array
     return $output;
