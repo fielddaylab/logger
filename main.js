@@ -13,6 +13,8 @@ $(document).ready((event) => {
     let histogramAll3 = $('#goalsGraph3All')[0]
     let clusterGraph = $('#goalsGraph4All')[0]
 
+    $('#endDate').val((new Date()).getTime())
+
     let totalSessions
     
     $(document).on('change', '#gameSelect', (event) => {
@@ -63,7 +65,8 @@ $(document).ready((event) => {
     function getAllData(isFiltered, isFirstTime = false) {
         let parameters = {
             'gameID': $('#gameSelect').val(),
-            'isFiltered': isFiltered
+            'isFiltered': isFiltered,
+            'maxRows': $('#maxRows').val()
         }
         if (isFiltered) {
             parameters['minMoves'] = $('#minMoves').val()
@@ -265,17 +268,17 @@ $(document).ready((event) => {
                                 column = 'q33'; break
                         }
                         if (i < 4) {
+                            let innerText = $('<span>')
                             if (typeof data.linRegCoefficients[column][i] === 'number') {
-                                let innerText = $('<span>')
                                 innerText.html(' ' + data.linRegCoefficients[column][i].toFixed(4) + ' ')
-                                $(jval).html(innerText)
                                 if (data.linRegCoefficients[column][i] < 0.05) {
                                     $(innerText).css('background-color', 'green')
                                     $(innerText).css('color', 'white')
                                 }
                             } else {
-                                $(jval).html(data.linRegCoefficients[column][i])
+                                innerText.html(data.linRegCoefficients[column])
                             }
+                            $(jval).html(innerText)
                         }
                         // Color the correct answer for each question
                         switch (column) {
@@ -303,7 +306,8 @@ $(document).ready((event) => {
         let reqParams = { 
             'gameID': $('#gameSelect').val(), 
             'isFiltered': false, 
-            'sessionID': $('#sessionSelect').val() 
+            'sessionID': $('#sessionSelect').val(),
+            'maxRows': $('#maxRows').val()
         }
         if (shouldSendLevel) reqParams['level'] = $('#levelSelect').val()
 

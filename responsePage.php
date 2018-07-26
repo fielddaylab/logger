@@ -30,22 +30,22 @@ if (isset($_GET['gameID'])) {
     $returned;
     if (isset($_GET['sessionID'])) {
         if (isset($_GET['level'])) {
-            $returned = json_encode(getAndParseData($_GET['gameID'], $db, $_GET['sessionID'], $_GET['level']));
+            $returned = json_encode(getAndParseData($_GET['gameID'], $db, $_GET['sessionID'], $_GET['level'], $_GET['maxRows']));
         } else {
-            $returned = json_encode(getAndParseData($_GET['gameID'], $db, $_GET['sessionID'], null));
+            $returned = json_encode(getAndParseData($_GET['gameID'], $db, $_GET['sessionID'], null, $_GET['maxRows']));
         }
-
     } else {
-        $returned = json_encode(getAndParseData($_GET['gameID'], $db, null, null));
+        $returned = json_encode(getAndParseData($_GET['gameID'], $db, null, null, $_GET['maxRows']));
     }
     echo $returned;//substr($returned, 0, 1000);
 }
 
-function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
+function getAndParseData($gameID, $db, $reqSessionID, $reqLevel, $maxRows) {
     $isFiltered = ($_GET['isFiltered'] == false || (strToUpper($_GET['isFiltered']) == 'FALSE')) ? false : true;
     // Main query that returns ALL data
-    $query = "SELECT session_id, level, event, event_custom, event_data_complex, client_time FROM log WHERE app_id=?;";
-    $stmt = simpleQueryParam($db, $query, 's', $gameID);
+    $query = "SELECT session_id, level, event, event_custom, event_data_complex, client_time FROM log WHERE app_id=? LIMIT ?;";
+    $params = array($gameID, $maxRows);
+    $stmt = queryMultiParam($db, $query, 'si', $params);
     if($stmt === NULL) {
         http_response_code(500);
         die('{ "errMessage": "Error running query." }');
@@ -858,6 +858,10 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
         foreach ($questionAnswereds as $i=>$val) {
             for ($j = 0; $j < 4; $j++) {
                 if (isset($val[$j])) {
+                    $numMoves = $numMovesAll[$i];
+                    $numTypeChanges = array_sum($typeCol[$i]);
+                    $time = array_sum($levelCol[$i]);
+                    $minMax = array_sum($avgCol[$i]);
                     $predictorsQ[$j] []= array($numMovesAll[$i], array_sum($typeCol[$i]), array_sum($levelCol[$i]), array_sum($avgCol[$i]));
                     $q1a = ($val[$j] === 0) ? 1 : 0;
                     $q1b = ($val[$j] === 1) ? 1 : 0;
@@ -870,28 +874,27 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
                 }
             }
         }
-
         for ($i = 0; $i < 4; $i++) {
-            if ($i < 2) {
-                if (count($predictorsQ[$i]) > 1) {
-                    for ($j = 0; $j < 4; $j++) {
-                        $regression = new \mnshankar\LinearRegression\Regression();
-                        $regression->setX($predictorsQ[$i]);
-                        $regression->setY($predictedQ[$i][$j]);
-                        $regression->compute();
-                        $linRegCoefficients['q'.$i.$j] = $regression->getPValues();
+            for ($j = 0; $j < 4; $j++) {
+                if (count($predictorsQ[$i]) > 0) {
+                    $regression = new \mnshankar\LinearRegression\Regression();
+                    $regression->setX($predictorsQ[$i]);
+                    $regression->setY($predictedQ[$i][$j]);
+                    $regression->compute();
+                    $pvalues = array_values($regression->getPValues());
+                    if (!is_nan($pvalues[0])) {
+                        $linRegCoefficients['q'.$i.$j] = $pvalues;
+                    } else {
+                        $linRegCoefficients['q'.$i.$j] = 'No data';
                     }
                 } else {
-                    for ($j = 0; $j < 4; $j++) {
-                        $linRegCoefficients['q'.$i.$j] = array('Insufficient data', 'Insufficient data', 'Insufficient data', 'Insufficient data');
-                    }
-                }
-            } else {
-                for ($j = 0; $j < 4; $j++) {
-                    $linRegCoefficients['q'.$i.$j] = array('Insufficient data', 'Insufficient data', 'Insufficient data', 'Insufficient data');
-                }
+                    $linRegCoefficients['q'.$i.$j] = 'No data';
+                }                  
             }
         }
+
+        $linRegCoefficients['hasQuestions12'] = $hasQuestions12;
+        $linRegCoefficients['hasQuestions34'] = $hasQuestions34;
     }
 
     $output = array('goalsSingle'=>$goalsSingle, 'numLevelsAll'=>$numLevelsAll, 'numMovesAll'=>$numMovesAll, 'questionsAll'=>$questionsAll, 'basicInfoAll'=>$basicInfoAll,
