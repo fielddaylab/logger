@@ -611,8 +611,8 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
         $avgKnobTotalsAll = average($totalKnobTotalsPerLevelAll);
         $avgKnobAvgsAll = average($totalKnobAvgsPerLevelAll);
 
-        $columns = [$moveCol, $typeCol, $avgCol];
-        $columnNames = ['numMovesPerChallenge', 'moveTypeChangesPerLevel', 'knobAvgs'];
+        $columns = [];
+        $columnNames = [];
         $bestDunn = 0;
         $bestColumn1 = null;
         $bestColumn2 = null;
