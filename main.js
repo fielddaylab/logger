@@ -506,10 +506,10 @@ $(document).ready((event) => {
         Plotly.newPlot(histogramAll3, [trace3], layout3)
         // console.timeEnd('drawWavesHistograms')
 
-        $('#goalsDiv4All').html('Cluster graph')
+        $('#goalsDiv4All').html('Cluster graph, dunn = ' + data.clusters.dunn)
         $('#goalsDiv4All').css('display', 'block')
         $('#goalsGraph4All').css('display', 'block')
-        let trace4 = data.clusters.map(function(cluster, i){
+        let trace4 = data.clusters.clusters.map(function(cluster, i){
             return {
                 x: cluster.map((ary) => ary[0]),
                 y: cluster.map((ary) => ary[1]),
@@ -519,11 +519,11 @@ $(document).ready((event) => {
         });
         let layout4 = {
             margin: { t: 35 },
-            height: 200,
+            height: 500,
             plot_bgcolor: '#F6F6F3',
             paper_bgcolor: '#F6F6F3',
             xaxis: {
-                title: 'Average knob max-min',
+                title: data.clusters.col1,
                 titlefont: {
                     family: 'Courier New, monospace',
                     size: 12,
@@ -531,7 +531,7 @@ $(document).ready((event) => {
                 }
             },
             yaxis: {
-                title: 'Average number of moves',
+                title: data.clusters.col2,
                 titlefont: {
                     family: 'Courier New, monospace',
                     size: 12,

@@ -12,6 +12,7 @@ require_once "KMeans/Point.php";
 require_once "KMeans/Cluster.php";
 
 ini_set('memory_limit','512M');
+ini_set('max_execution_time', 300);
 
 $db = connectToDatabase(DBDeets::DB_NAME_DATA);
 if ($db->connect_error) {
@@ -610,18 +611,73 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel, $maxRows) {
         $avgKnobTotalsAll = average($totalKnobTotalsPerLevelAll);
         $avgKnobAvgsAll = average($totalKnobAvgsPerLevelAll);
 
-        $space = new KMeans\Space(2);
-        $xs = array_column($avgCol, 0);
-        $ys = array_column($moveCol, 0);
-        foreach ($xs as $i => $x) {
-            $y = $ys[$i];
-            if (is_numeric($x) && is_numeric($y)) {
-                $space->addPoint([$x, $y]);
+        $columns = [];
+        $columnNames = [];
+        $bestDunn = 0;
+        $bestColumn1 = null;
+        $bestColumn2 = null;
+        $bestClusters = [];
+        $clusterLevel = 0;
+
+        for ($i = 0; $i < count($columns); $i++) {
+            for ($j = $i + 1; $j < count($columns); $j++) {
+                for ($k = 2; $k < 5; $k++) {
+                    $space = new KMeans\Space(2);
+                    $xs = array_column($columns[$i], $clusterLevel);
+                    $ys = array_column($columns[$j], $clusterLevel);
+                    foreach ($xs as $xi => $x) {
+                        $y = $ys[$xi];
+                        if (is_numeric($x) && is_numeric($y)) {
+                            $space->addPoint([$x, $y]);
+                        }
+                    }
+                    $clusters = $space->solve($k);
+
+                    $minInterDist = null;
+                    $maxIntraDist = null;
+                    for ($ci = 0; $ci < count($clusters); $ci++) {
+                        for ($cj = $ci + 1; $cj < count($clusters); $cj++) {
+                            // use distance between centers for simplicity
+                            $interDist = sqrt
+                                ( (($clusters[$ci][0] - $clusters[$cj][0]) ** 2)
+                                + (($clusters[$ci][1] - $clusters[$cj][1]) ** 2)
+                                );
+                            if (is_null($minInterDist) || $interDist < $minInterDist) {
+                                $minInterDist = $interDist;
+                            }
+                        }
+                    }
+                    for ($ci = 0; $ci < count($clusters); $ci++) {
+                        $cluster = $clusters[$ci];
+                        $intraDist = null;
+                        // fudge intracluster distance by finding max distance from center to a point
+                        foreach ($cluster as $point) {
+                            $pointDist = sqrt
+                                ( (($point[0] - $cluster[0]) ** 2)
+                                + (($point[1] - $cluster[1]) ** 2)
+                                );
+                            if (is_null($intraDist) || $pointDist > $intraDist) {
+                                $intraDist = $pointDist;
+                            }
+                        }
+                        if (is_null($maxIntraDist) || $intraDist > $maxIntraDist) {
+                            $maxIntraDist = $intraDist;
+                        }
+                    }
+
+                    $thisDunn = $minInterDist / $maxIntraDist;
+                    if ($thisDunn > $bestDunn) {
+                        $bestDunn = $thisDunn;
+                        $bestColumn1 = $columnNames[$i];
+                        $bestColumn2 = $columnNames[$j];
+                        $bestClusters = $clusters;
+                    }
+                }
             }
         }
-        $clusters = $space->solve(4);
+
         $clusterPoints = [];
-        foreach ($clusters as $cluster) {
+        foreach ($bestClusters as $cluster) {
             $points = [];
             foreach ($cluster->getIterator() as $point) {
                 $points[] = [$point[0], $point[1]];
@@ -900,7 +956,7 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel, $maxRows) {
     $output = array('goalsSingle'=>$goalsSingle, 'numLevelsAll'=>$numLevelsAll, 'numMovesAll'=>$numMovesAll, 'questionsAll'=>$questionsAll, 'basicInfoAll'=>$basicInfoAll,
     'sessionsAndTimes'=>$sessionsAndTimes, 'filteredSessionsAndTimes'=>$filteredSessionsAndTimes, 'basicInfoSingle'=>$basicInfoSingle, 'graphDataSingle'=>$graphDataSingle, 
     'questionsSingle'=>$questionsSingle, 'levels'=>$levels, 'numSessions'=>$numSessions, 'numFilteredSessions'=>count($filteredSessions), 'questionsTotal'=>$questionsTotal,
-    'linRegCoefficients'=>$linRegCoefficients, 'clusters'=>$clusterPoints);
+    'linRegCoefficients'=>$linRegCoefficients, 'clusters'=>array('col1'=>$bestColumn1, 'col2'=>$bestColumn2, 'clusters'=>$clusterPoints, 'dunn'=>$bestDunn));
 
     // Return ALL the above information at once in a big array
     return $output;
