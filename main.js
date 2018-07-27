@@ -50,8 +50,7 @@ $(document).ready((event) => {
             if ($('#sessionInput').val() !== '') {
                 if ($(`#sessionSelect option[value="${$('#sessionInput').val()}"]`).length === 0) {
                     let newOpt = document.createElement('option')
-                    newOpt.value = sessions[i]
-                    newOpt.text = i + ' | ' + sessions[i] + ' | ' + times[i]
+                    newOpt.value = $('#sessionInput').val()
                     $('#sessionSelect').append(newOpt)
                 }
                 $('#sessionSelect').val($('#sessionInput').val())
