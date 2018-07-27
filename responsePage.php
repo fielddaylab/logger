@@ -11,7 +11,7 @@ require_once "KMeans/Space.php";
 require_once "KMeans/Point.php";
 require_once "KMeans/Cluster.php";
 
-ini_set('memory_limit','512M');
+ini_set('memory_limit','1024M');
 ini_set('max_execution_time', 300);
 
 $db = connectToDatabase(DBDeets::DB_NAME_DATA);
@@ -31,12 +31,12 @@ if (isset($_GET['gameID'])) {
     $returned;
     if (isset($_GET['sessionID'])) {
         if (isset($_GET['level'])) {
-            $returned = json_encode(getAndParseData($_GET['gameID'], $db, $_GET['sessionID'], $_GET['level'], $_GET['maxRows']));
+            $returned = json_encode(getAndParseData($_GET['gameID'], $db, $_GET['sessionID'], $_GET['level']));
         } else {
-            $returned = json_encode(getAndParseData($_GET['gameID'], $db, $_GET['sessionID'], null, $_GET['maxRows']));
+            $returned = json_encode(getAndParseData($_GET['gameID'], $db, $_GET['sessionID'], null));
         }
     } else {
-        $returned = json_encode(getAndParseData($_GET['gameID'], $db, null, null, $_GET['maxRows']));
+        $returned = json_encode(getAndParseData($_GET['gameID'], $db, null, null));
     }
     echo $returned;//substr($returned, 0, 1000);
 }
@@ -60,31 +60,121 @@ function getTotalNumSessions($gameID, $db) {
     return $numSessions;
 }
 
-function getAndParseData($gameID, $db, $reqSessionID, $reqLevel, $maxRows) {
-    $isFiltered = ($_GET['isFiltered'] == false || (strToUpper($_GET['isFiltered']) == 'FALSE')) ? false : true;
-    // Main query that returns ALL data
-    $query = "SELECT session_id, level, event, event_custom, event_data_complex, client_time FROM log WHERE app_id=? LIMIT ?;";
-    $params = array($gameID, $maxRows);
-    $stmt = queryMultiParam($db, $query, 'si', $params);
-    if($stmt === NULL) {
-        http_response_code(500);
-        die('{ "errMessage": "Error running query." }');
+function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
+    if (!isset($reqSessionID)) {
+        $minMoves = $_GET['minMoves'];
+        $minLevels = $_GET['minLevels'];
+        $minQuestions = $_GET['minQuestions'];
+        $startDate = $_GET['startDate'];
+        $endDate = $_GET['endDate'];
+        $maxRows = $_GET['maxRows'];
+
+        // Main query that returns filtered data
+        $query = "SELECT a.session_id, a.level, a.event, a.event_custom, a.event_data_complex, a.client_time, a.app_id
+        FROM log as a
+        WHERE a.client_time>=? AND a.client_time<=? AND a.app_id=? ";
+        $params = array($startDate, $endDate, $gameID);
+        $paramTypes = 'sss';
+
+        if ($minMoves > 0) {
+            $query .= "AND a.session_id IN
+            (
+                SELECT session_id FROM
+                (
+                    SELECT session_id, event_custom
+                    FROM log
+                    WHERE event_custom=1 OR event_custom=2
+                    GROUP BY session_id
+                    HAVING COUNT(*) >= 0
+                ) AS moves
+            ) ";
+            $params []= $minMoves;
+            $paramTypes .= 'i';
+        }
+        if ($minLevels > 0) {
+            $query .= "AND a.session_id IN
+            (
+                SELECT session_id FROM
+                (
+                    SELECT session_id, event
+                    FROM log
+                    WHERE event='COMPLETE'
+                    GROUP BY session_id
+                    HAVING COUNT(*) >= 0
+                ) AS levels
+            ) ";
+            $params []= $minLevels;
+            $paramTypes .= 'i';
+        }
+        if ($minQuestions > 0) {
+            $query .= "AND a.session_id IN
+            (
+                SELECT session_id FROM
+                (
+                    SELECT session_id, event_custom
+                    FROM log
+                    WHERE event_custom=3
+                    GROUP BY session_id
+                    HAVING COUNT(*) >= 0
+                ) AS questions
+            ) ";
+            $params []= $minQuestions;
+            $paramTypes .= 'i';
+        }
+
+        $query .= "ORDER BY a.client_time LIMIT ?";
+        $params []= $maxRows;
+        $paramTypes .= 'i';
+
+        $stmt = queryMultiParam($db, $query, $paramTypes, $params);
+        if($stmt === NULL) {
+            http_response_code(500);
+            die('{ "errMessage": "Error running query." }');
+        }
+        if (!$stmt->bind_result($session_id, $level, $event, $event_custom, $event_data_complex, $client_time, $app_id)) {
+            http_response_code(500);
+            die('{ "errMessage": "Failed to bind to results." }');
+        }
+        $sessionAttributes = array(); // the master array of all sessions that will be built with attributes
+        $allEvents = array();
+        while($stmt->fetch()) {
+            $tuple = array('session_id'=>$session_id, 'level'=>$level, 'event'=>$event, 'event_custom'=>$event_custom, 
+            'event_data_complex'=>$event_data_complex, 'time'=>$client_time);
+            // Group the variables into their sessionIDs in a big associative array
+            $sessionAttributes[$session_id][] = $tuple;
+            // Also make one big array of every event for easier extraction of unique attributes
+            $allEvents[] = $tuple;
+        }
+        $stmt->close();
+    } else {
+        $query =
+        "SELECT session_id, level, event, event_custom, event_data_complex, client_time
+        FROM log
+        WHERE session_id=?
+        ORDER BY client_time;";
+
+        $params = array($reqSessionID);
+        $stmt = queryMultiParam($db, $query, 's', $params);
+        if($stmt === NULL) {
+            http_response_code(500);
+            die('{ "errMessage": "Error running query." }');
+        }
+        if (!$stmt->bind_result($session_id, $level, $event, $event_custom, $event_data_complex, $client_time)) {
+            http_response_code(500);
+            die('{ "errMessage": "Failed to bind to results." }');
+        }
+        $sessionAttributes = array(); // the master array of all sessions that will be built with attributes
+        $allEvents = array();
+        while($stmt->fetch()) {
+            $tuple = array('session_id'=>$session_id, 'level'=>$level, 'event'=>$event, 'event_custom'=>$event_custom, 
+            'event_data_complex'=>$event_data_complex, 'time'=>$client_time);
+            // Group the variables into their sessionIDs in a big associative array
+            $sessionAttributes[$session_id][] = $tuple;
+            // Also make one big array of every event for easier extraction of unique attributes
+            $allEvents[] = $tuple;
+        }
+        $stmt->close();
     }
-    if (!$stmt->bind_result($session_id, $level, $event, $event_custom, $event_data_complex, $client_time)) {
-        http_response_code(500);
-        die('{ "errMessage": "Failed to bind to results." }');
-    }
-    $sessionAttributes = array(); // the master array of all sessions that will be built with attributes
-    $allEvents = array();
-    while($stmt->fetch()) {
-        $tuple = array('session_id'=>$session_id, 'level'=>$level, 'event'=>$event, 'event_custom'=>$event_custom, 
-        'event_data_complex'=>$event_data_complex, 'time'=>$client_time);
-        // Group the variables into their sessionIDs in a big associative array
-        $sessionAttributes[$session_id][] = $tuple;
-        // Also make one big array of every event for easier extraction of unique attributes
-        $allEvents[] = $tuple;
-    }
-    $stmt->close();
 
     // Sort every id's sessions by date
     foreach ($sessionAttributes as $i=>$val) {
@@ -330,62 +420,6 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel, $maxRows) {
         'knobTotalAvg'=>$knobSumAvg, 'numMovesPerChallengeArray'=>$numMovesPerChallenge, 'dataObj'=>$dataObj);
     }
 
-    $filteredSessions = array();
-    $filteredSessionsTimes = array();
-    if ($isFiltered) {
-        $filteredMoves = array();
-        $filteredQuestions = array();
-        $filteredLevels = array();
-
-        $numMoves = array();
-        $numLevelsAllSessions = array();
-        $numQuestions = array();
-        $levelsCompleted = array();
-
-        foreach ($allEvents as $val) {
-            $level = $val['level'];
-            $event = $val['event'];
-            $session_id = $val['session_id'];
-            $event_custom = $val['event_custom'];
-
-            if ($event === 'COMPLETE' && !isset($levelsCompleted[$session_id][$level])) {
-                if (!isset($numLevelsAllSessions[$session_id])) $numLevelsAllSessions[$session_id] = 0;
-                $numLevelsAllSessions[$session_id]++;
-                $levelsCompleted[$session_id][$level] = true;
-            } else if ($event === 'CUSTOM') {
-                if ($event_custom === 1 || $event_custom === 2) {
-                    if (!isset($numMoves[$session_id])) $numMoves[$session_id] = 0;
-                    $numMoves[$session_id]++;
-                } else if ($event_custom === 3) {
-                    if (!isset($numQuestions[$session_id])) $numQuestions[$session_id] = 0;
-                    $numQuestions[$session_id]++;
-                }
-            }
-        }
-        $minMoves = $_GET['minMoves'];
-        $minLevels = $_GET['minLevels'];
-        $minQuestions = $_GET['minQuestions'];
-        $startDate = $_GET['startDate'];
-        $endDate = $_GET['endDate'];
-        foreach ($uniqueSessions as $i=>$val) {
-            $time = $times[$val];
-            if (!isset($numMoves[$val])) $numMoves[$val] = 0;
-            if (!isset($numLevelsAllSessions[$val])) $numLevelsAllSessions[$val] = 0;
-            if (!isset($numQuestions[$val])) $numQuestions[$val] = 0;
-
-            if ($numMoves[$val] >= $minMoves && $numLevelsAllSessions[$val] >= $minLevels && $numQuestions[$val] >= $minQuestions &&
-            $startDate <= $time && $time <= $endDate) {
-                $filteredSessions[$i] = $val;
-                $filteredSessionsTimes[$i] = $time;
-                $filteredMoves[$i] = $numMoves[$val];
-                $filteredQuestions[$i] = $numQuestions[$val];
-                $filteredLevels[$i] = $numLevelsAllSessions[$val];
-            }
-        }
-        array_multisort($filteredSessionsTimes, SORT_ASC, $filteredSessions, SORT_ASC);
-    }
-    $filteredSessionsAndTimes = array('sessions'=>$filteredSessions, 'times'=>$filteredSessionsTimes);//, 'moves'=>$filteredMoves, 'questions'=>$filteredQuestions, 'levels'=>$filteredLevels);
-
     // Get basic info for all sessions
     $sessionIDs = array();
     $basicInfoAll = array();
@@ -395,11 +429,7 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel, $maxRows) {
     $questionsTotal = array();
     $questionAnswereds = array();
     if (!isset($reqSessionID)) {
-        if ($isFiltered) {
-            $sessionIDs = $filteredSessions;
-        } else {
-            $sessionIDs = $sessionsAndTimes['sessions'];
-        }
+        $sessionIDs = $sessionsAndTimes['sessions'];
         $allData = array();
         // arrays of arrays (temp)
         $levelTimesPerLevelAll = array();
@@ -1006,8 +1036,8 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel, $maxRows) {
     $totalNumSessions = getTotalNumSessions($_GET['gameID'], $db);
 
     $output = array('goalsSingle'=>$goalsSingle, 'numLevelsAll'=>$numLevelsAll, 'numMovesAll'=>$numMovesAll, 'questionsAll'=>$questionsAll, 'basicInfoAll'=>$basicInfoAll,
-    'sessionsAndTimes'=>$sessionsAndTimes, 'filteredSessionsAndTimes'=>$filteredSessionsAndTimes, 'basicInfoSingle'=>$basicInfoSingle, 'graphDataSingle'=>$graphDataSingle, 
-    'questionsSingle'=>$questionsSingle, 'levels'=>$levels, 'numSessions'=>$numSessions, 'numFilteredSessions'=>count($filteredSessions), 'questionsTotal'=>$questionsTotal,
+    'sessionsAndTimes'=>$sessionsAndTimes, 'basicInfoSingle'=>$basicInfoSingle, 'graphDataSingle'=>$graphDataSingle, 
+    'questionsSingle'=>$questionsSingle, 'levels'=>$levels, 'numSessions'=>$numSessions, 'questionsTotal'=>$questionsTotal,
     'linRegCoefficients'=>$linRegCoefficients, 'clusters'=>array('col1'=>$bestColumn1, 'col2'=>$bestColumn2, 'clusters'=>$clusterPoints, 'dunn'=>$bestDunn),
     'totalNumSessions'=>$totalNumSessions);
 

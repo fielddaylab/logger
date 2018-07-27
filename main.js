@@ -28,7 +28,7 @@ $(document).ready((event) => {
         event.preventDefault()
         on()
         $('#gameIDForm').val($('#gameSelect').val())
-        getAllData(false, true)
+        getAllData(true)
     })
 
     $(document).on('change', '#sessionSelect', (event) => {
@@ -42,7 +42,7 @@ $(document).ready((event) => {
         if ($('#gameSelect').val() !== 'empty') {
             $('#filterModal').modal('hide')
             on()
-            getAllData(true, false)
+            getAllData(false)
         } else {
             $('#formError').show()
             $('#filterModal').modal('hide')
@@ -68,33 +68,30 @@ $(document).ready((event) => {
         }
     })
 
-    function getAllData(isFiltered, isFirstTime = false) {
+    function getAllData(isFirstTime = false) {
         let parameters = {
             'gameID': $('#gameSelect').val(),
-            'isFiltered': isFiltered,
-            'maxRows': $('#maxRows').val()
-        }
-        if (isFiltered) {
-            parameters['minMoves'] = $('#minMoves').val()
-            parameters['minQuestions'] = $('#minQuestions').val()
-            parameters['minLevels'] = $('#minLevels').val()
-            parameters['startDate'] = $('#startDate').val()
-            parameters['endDate'] = $('#endDate').val()
+            'maxRows': $('#maxRows').val(),
+            'minMoves': $('#minMoves').val(),
+            'minQuestions': $('#minQuestions').val(),
+            'minLevels': $('#minLevels').val(),
+            'startDate': $('#startDate').val(),
+            'endDate': $('#endDate').val()
         }
         $.get('responsePage.php', parameters, (data, status, jqXHR) => {
             allData = data
             $('#scoreDisplayAll').html(data.questionsTotal.totalNumCorrect + ' / ' + data.questionsTotal.totalNumQuestions + ' (' + 
                 (100 * data.questionsTotal.totalNumCorrect / data.questionsTotal.totalNumQuestions).toFixed(1) + '%)')
             if (data.levels !== null) { 
-                let numSessionsToDisplay = isFiltered ? data.numFilteredSessions : data.numSessions
+                let numSessionsToDisplay = data.numSessions
                 totalSessions = data.totalNumSessions
                 $('#sessions').text('Showing ' + numSessionsToDisplay + ' of ' + totalSessions + ' available sessions')
 
                 let options = []
                 fastClear($('#sessionSelect'))
 
-                let sessions = isFiltered ? data.filteredSessionsAndTimes.sessions : data.sessionsAndTimes.sessions
-                let times = isFiltered ? data.filteredSessionsAndTimes.times : data.sessionsAndTimes.times
+                let sessions = data.sessionsAndTimes.sessions
+                let times = data.sessionsAndTimes.times
 
                 for (let i = 0; i < sessions.length; i++) {
                     let newOpt = document.createElement('option')
@@ -204,7 +201,7 @@ $(document).ready((event) => {
                 $('#amtsTotalAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.totalKnobTotals.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
                 $('#amtsTotalAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.avgKnobTotals.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
                 let dataHistogram = { 'numsQuestions': data.questionsAll.numsQuestions, 'numMoves': data.numMovesAll, 'numLevels': data.numLevelsAll, 'clusters': data.clusters }
-                if (isFiltered && $('#sessionSelect option').length > 0) {
+                if ($('#sessionSelect option').length > 0) {
                     getSingleData(true, false) 
                 } else if ($('#sessionSelect option').length === 0) {
                     $('#scoreDisplayAll').html('- / -')
@@ -259,7 +256,7 @@ $(document).ready((event) => {
                         if (i < 4) {
                             let innerText = $('<span>')
                             if (typeof data.linRegCoefficients[column][i] === 'number') {
-                                innerText.html(' ' + data.linRegCoefficients[column][i].toFixed(4) + ' ')
+                                innerText.html(' ' + Math.min(Math.max(data.linRegCoefficients[column][i], 0), 1).toFixed(4) + ' ')
                                 if (data.linRegCoefficients[column][i] < 0.05) {
                                     $(innerText).css('background-color', 'green')
                                     $(innerText).css('color', 'white')
