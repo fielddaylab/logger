@@ -85,7 +85,7 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
                     FROM log
                     WHERE event_custom=1 OR event_custom=2
                     GROUP BY session_id
-                    HAVING COUNT(*) >= 0
+                    HAVING COUNT(*) >= ?
                 ) AS moves
             ) ";
             $params []= $minMoves;
@@ -100,7 +100,7 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
                     FROM log
                     WHERE event='COMPLETE'
                     GROUP BY session_id
-                    HAVING COUNT(*) >= 0
+                    HAVING COUNT(*) >= ?
                 ) AS levels
             ) ";
             $params []= $minLevels;
@@ -115,7 +115,7 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
                     FROM log
                     WHERE event_custom=3
                     GROUP BY session_id
-                    HAVING COUNT(*) >= 0
+                    HAVING COUNT(*) >= ?
                 ) AS questions
             ) ";
             $params []= $minQuestions;
