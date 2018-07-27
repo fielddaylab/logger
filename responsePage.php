@@ -629,104 +629,6 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel, $maxRows) {
         //$avgStdDevAll = average($totalStdDevsPerLevelAll);
         $avgKnobTotalsAll = average($totalKnobTotalsPerLevelAll);
         $avgKnobAvgsAll = average($totalKnobAvgsPerLevelAll);
-
-        $columns = [$typeCol, $avgCol];
-        $columnNames = ['moveTypeChangesPerLevel', 'knobAvgs'];
-        $bestDunn = 0;
-        $bestColumn1 = null;
-        $bestColumn2 = null;
-        $bestClusters = [];
-        $clusterLevel = 0;
-
-        for ($i = 0; $i < count($columns); $i++) {
-            for ($j = $i + 1; $j < count($columns); $j++) {
-                for ($k = 4; $k < 5; $k++) {
-                    $space = new KMeans\Space(2);
-                    $xs = array_column($columns[$i], $clusterLevel);
-                    $ys = array_column($columns[$j], $clusterLevel);
-                    $min_x = null;
-                    $max_x = null;
-                    foreach ($xs as $x) {
-                        if (is_numeric($x)) {
-                            if (is_null($min_x) || $x < $min_x) {
-                                $min_x = $x;
-                            }
-                            if (is_null($max_x) || $x > $max_x) {
-                                $max_x = $x;
-                            }
-                        }
-                    }
-                    $min_y = null;
-                    $max_y = null;
-                    foreach ($ys as $y) {
-                        if (is_numeric($y)) {
-                            if (is_null($min_y) || $y < $min_y) {
-                                $min_y = $y;
-                            }
-                            if (is_null($max_y) || $y > $max_y) {
-                                $max_y = $y;
-                            }
-                        }
-                    }
-                    foreach ($xs as $xi => $x) {
-                        $y = $ys[$xi];
-                        if (is_numeric($x) && is_numeric($y)) {
-                            $space->addPoint([($x - $min_x) / ($max_x - $min_x), ($y - $min_y) / ($max_y - $min_y)]);
-                        }
-                    }
-                    $clusters = $space->solve($k);
-
-                    $minInterDist = null;
-                    $maxIntraDist = null;
-                    for ($ci = 0; $ci < count($clusters); $ci++) {
-                        for ($cj = $ci + 1; $cj < count($clusters); $cj++) {
-                            // use distance between centers for simplicity
-                            $interDist = sqrt
-                                ( (($clusters[$ci][0] - $clusters[$cj][0]) ** 2)
-                                + (($clusters[$ci][1] - $clusters[$cj][1]) ** 2)
-                                );
-                            if (is_null($minInterDist) || $interDist < $minInterDist) {
-                                $minInterDist = $interDist;
-                            }
-                        }
-                    }
-                    for ($ci = 0; $ci < count($clusters); $ci++) {
-                        $cluster = $clusters[$ci];
-                        $intraDist = null;
-                        // fudge intracluster distance by finding max distance from center to a point
-                        foreach ($cluster as $point) {
-                            $pointDist = sqrt
-                                ( (($point[0] - $cluster[0]) ** 2)
-                                + (($point[1] - $cluster[1]) ** 2)
-                                );
-                            if (is_null($intraDist) || $pointDist > $intraDist) {
-                                $intraDist = $pointDist;
-                            }
-                        }
-                        if (is_null($maxIntraDist) || $intraDist > $maxIntraDist) {
-                            $maxIntraDist = $intraDist;
-                        }
-                    }
-
-                    $thisDunn = $minInterDist / $maxIntraDist;
-                    if ($thisDunn > $bestDunn) {
-                        $bestDunn = $thisDunn;
-                        $bestColumn1 = $columnNames[$i] . ' (' . $min_x . ' to ' . $max_x . ')';
-                        $bestColumn2 = $columnNames[$j] . ' (' . $min_y . ' to ' . $max_y . ')';
-                        $bestClusters = $clusters;
-                    }
-                }
-            }
-        }
-
-        $clusterPoints = [];
-        foreach ($bestClusters as $cluster) {
-            $points = [];
-            foreach ($cluster->getIterator() as $point) {
-                $points[] = [$point[0], $point[1]];
-            }
-            $clusterPoints[] = $points;
-        }
         
         $basicInfoAll = array('times'=>$totalTimesPerLevelAll, 'numMoves'=>$totalMovesPerLevelArray, 'moveTypeChanges'=>$totalMoveTypeChangesPerLevelAll,
             'knobStdDevs'=>$totalStdDevsPerLevelAll, 'totalMaxMin'=>$totalKnobTotalsPerLevelAll, 'avgMaxMin'=>$totalKnobAvgsPerLevelAll,
@@ -911,6 +813,115 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel, $maxRows) {
         
         $goalsSingle = array('moveNumbers'=>$moveNumbers, 'distanceToGoal1'=>$distanceToGoal1, 'distanceToGoal2'=>$distanceToGoal2,
             'absDistanceToGoal1'=>$absDistanceToGoal1, 'absDistanceToGoal2'=>$absDistanceToGoal2, 'goalSlope1'=>$goalSlope1, 'goalSlope2'=>$goalSlope2, 'dataObj'=>$dataObj);
+    }
+
+    // Cluster stuff
+    if (!isset($reqSessionID)) {
+        // $moveCol 'numMovesPerChallenge' [216]
+        // $avgCol 'knobAvgs' []
+        // $levelCol 'levelTimes' [999999]
+        // $typeCol 'moveTypeChangesPerLevel' []
+        // $stdCol 'knobStdDevs' []
+        // $totalCol 'knobTotalAmts' []
+
+        $columns = [$moveCol, $totalCol];
+        $columnNames = ['numMovesPerChallenge', 'knobTotalAmts'];
+        $columnOutliers = [[216], []];
+        $bestDunn = 0;
+        $bestColumn1 = null;
+        $bestColumn2 = null;
+        $bestClusters = [];
+        $clusterLevel = 0;
+
+        for ($i = 0; $i < count($columns); $i++) {
+            for ($j = $i + 1; $j < count($columns); $j++) {
+                for ($k = 4; $k < 5; $k++) {
+                    $space = new KMeans\Space(2);
+                    $xs = array_column($columns[$i], $clusterLevel);
+                    $ys = array_column($columns[$j], $clusterLevel);
+                    $min_x = null;
+                    $max_x = null;
+                    foreach ($xs as $x) {
+                        if (is_numeric($x) && !in_array($x, $columnOutliers[$i])) {
+                            if (is_null($min_x) || $x < $min_x) {
+                                $min_x = $x;
+                            }
+                            if (is_null($max_x) || $x > $max_x) {
+                                $max_x = $x;
+                            }
+                        }
+                    }
+                    $min_y = null;
+                    $max_y = null;
+                    foreach ($ys as $y) {
+                        if (is_numeric($y) && !in_array($y, $columnOutliers[$j])) {
+                            if (is_null($min_y) || $y < $min_y) {
+                                $min_y = $y;
+                            }
+                            if (is_null($max_y) || $y > $max_y) {
+                                $max_y = $y;
+                            }
+                        }
+                    }
+                    foreach ($xs as $xi => $x) {
+                        $y = $ys[$xi];
+                        if (is_numeric($x) && !in_array($x, $columnOutliers[$i]) && is_numeric($y) && !in_array($y, $columnOutliers[$j])) {
+                            $space->addPoint([($x - $min_x) / ($max_x - $min_x), ($y - $min_y) / ($max_y - $min_y)]);
+                        }
+                    }
+                    $clusters = $space->solve($k);
+
+                    $minInterDist = null;
+                    $maxIntraDist = null;
+                    for ($ci = 0; $ci < count($clusters); $ci++) {
+                        for ($cj = $ci + 1; $cj < count($clusters); $cj++) {
+                            // use distance between centers for simplicity
+                            $interDist = sqrt
+                                ( (($clusters[$ci][0] - $clusters[$cj][0]) ** 2)
+                                + (($clusters[$ci][1] - $clusters[$cj][1]) ** 2)
+                                );
+                            if (is_null($minInterDist) || $interDist < $minInterDist) {
+                                $minInterDist = $interDist;
+                            }
+                        }
+                    }
+                    for ($ci = 0; $ci < count($clusters); $ci++) {
+                        $cluster = $clusters[$ci];
+                        $intraDist = null;
+                        // fudge intracluster distance by finding max distance from center to a point
+                        foreach ($cluster as $point) {
+                            $pointDist = sqrt
+                                ( (($point[0] - $cluster[0]) ** 2)
+                                + (($point[1] - $cluster[1]) ** 2)
+                                );
+                            if (is_null($intraDist) || $pointDist > $intraDist) {
+                                $intraDist = $pointDist;
+                            }
+                        }
+                        if (is_null($maxIntraDist) || $intraDist > $maxIntraDist) {
+                            $maxIntraDist = $intraDist;
+                        }
+                    }
+
+                    $thisDunn = $minInterDist / $maxIntraDist;
+                    if ($thisDunn > $bestDunn) {
+                        $bestDunn = $thisDunn;
+                        $bestColumn1 = $columnNames[$i] . ' (' . $min_x . ' to ' . $max_x . ')';
+                        $bestColumn2 = $columnNames[$j] . ' (' . $min_y . ' to ' . $max_y . ')';
+                        $bestClusters = $clusters;
+                    }
+                }
+            }
+        }
+
+        $clusterPoints = [];
+        foreach ($bestClusters as $cluster) {
+            $points = [];
+            foreach ($cluster->getIterator() as $point) {
+                $points[] = [$point[0], $point[1]];
+            }
+            $clusterPoints[] = $points;
+        }
     }
 
     // Linear regression stuff
