@@ -1,6 +1,11 @@
 $(document).ready((event) => {
     //$('.js-example-basic-single').select2() //initialize select boxes
     //$('#sessionSelectAll').select2({ disabled: true })
+    new ClipboardJS('#copyBtn', {
+        text: (trigger) => {
+            return $('#sessionSelect').val()
+        }
+    })
     let graphLeft = $('#graphLeft')[0]
     let graphRight = $('#graphRight')[0]
     let goalsGraph1 = $('#goalsGraph1')[0]
@@ -42,7 +47,19 @@ $(document).ready((event) => {
         if ($('#gameSelect').val() !== 'empty') {
             $('#filterModal').modal('hide')
             on()
-            getAllData(false)
+            if ($('#sessionInput').val() !== '') {
+                if ($(`#sessionSelect option[value="${$('#sessionInput').val()}"]`).length === 0) {
+                    let newOpt = document.createElement('option')
+                    newOpt.value = sessions[i]
+                    newOpt.text = i + ' | ' + sessions[i] + ' | ' + times[i]
+                    $('#sessionSelect').append(newOpt)
+                }
+                $('#sessionSelect').val($('#sessionInput').val())
+                getSingleData(true, false)
+                getSingleData(false, true)
+            } else {
+                getAllData(false)
+            }
         } else {
             $('#formError').show()
             $('#filterModal').modal('hide')
@@ -52,6 +69,25 @@ $(document).ready((event) => {
 
     $(document).on('hide.bs.modal', '#filterModal', (event) => {
         $('#formError').hide()
+    })
+
+    $(document).on('input', '#sessionInput', (event) => {
+        if ($('#sessionInput').val() !== '') {
+            // Disable the other filters to avoid confusion
+            $('#minMoves').prop('disabled', true)
+            $('#minQuestions').prop('disabled', true)
+            $('#minLevels').prop('disabled', true)
+            $('#startDate').prop('disabled', true)
+            $('#endDate').prop('disabled', true)
+            $('#maxRows').prop('disabled', true)
+        } else {
+            $('#minMoves').prop('disabled', false)
+            $('#minQuestions').prop('disabled', false)
+            $('#minLevels').prop('disabled', false)
+            $('#startDate').prop('disabled', false)
+            $('#endDate').prop('disabled', false)
+            $('#maxRows').prop('disabled', false)
+        }
     })
 
     $(document).on('change', '#levelSelect', (event) => {

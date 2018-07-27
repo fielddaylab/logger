@@ -36,6 +36,9 @@
                                         <label for="minLevels">Minimum levels completed</label>
                                         <input name="minLevels" required type="number" min="0" class="form-control" id="minLevels" value="0">
                                         <br>
+                                        <label for="sessionInput">Manual session lookup</label>
+                                        <input name="sessionInput" required type="text" class="form-control" id="sessionInput" value="">
+                                        <br>
                                     </div>
                                 </div>
                                 <div class="col-xs-6">
@@ -107,11 +110,10 @@
             <span class="tab-pane fade in" id="single">
                 <div class="row">
                     <div id="sessionSelectParent" class="col-xs-4" style="margin-top:10px">
-                        <div style="display:inline-block">
-                                <label for="sessionSelect" style="font-weight:initial">Session</label>
-                                <br>
-                                <select id="sessionSelect" class="js-example-basic-single session-select"></select>
-                        </div>
+                        Session
+                        <br>
+                        <select id="sessionSelect" class="js-example-basic-single session-select"></select>
+                        <button class="btn btn-default" id="copyBtn" style="margin-left:10px;">Copy ID</button>
                     </div>
                     <div class="col-xs-4" style="margin-top:10px">
                         Level
@@ -400,6 +402,7 @@
     <script src='https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js'></script>
     <script src='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js'></script>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script>
     <script src='main.js'></script>
 </body>
 </html>
