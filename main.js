@@ -433,7 +433,6 @@ $(document).ready((event) => {
             height: 200,
             xaxis: {
                 autotick: false,
-                tick0: 0,
                 dtick: 1,
                 title: 'Number of questions answered',
                 titlefont: {
