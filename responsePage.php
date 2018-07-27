@@ -630,8 +630,8 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel, $maxRows) {
         $avgKnobTotalsAll = average($totalKnobTotalsPerLevelAll);
         $avgKnobAvgsAll = average($totalKnobAvgsPerLevelAll);
 
-        $columns = [];
-        $columnNames = [];
+        $columns = [$typeCol, $avgCol];
+        $columnNames = ['moveTypeChangesPerLevel', 'knobAvgs'];
         $bestDunn = 0;
         $bestColumn1 = null;
         $bestColumn2 = null;
@@ -640,14 +640,38 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel, $maxRows) {
 
         for ($i = 0; $i < count($columns); $i++) {
             for ($j = $i + 1; $j < count($columns); $j++) {
-                for ($k = 2; $k < 5; $k++) {
+                for ($k = 4; $k < 5; $k++) {
                     $space = new KMeans\Space(2);
                     $xs = array_column($columns[$i], $clusterLevel);
                     $ys = array_column($columns[$j], $clusterLevel);
+                    $min_x = null;
+                    $max_x = null;
+                    foreach ($xs as $x) {
+                        if (is_numeric($x)) {
+                            if (is_null($min_x) || $x < $min_x) {
+                                $min_x = $x;
+                            }
+                            if (is_null($max_x) || $x > $max_x) {
+                                $max_x = $x;
+                            }
+                        }
+                    }
+                    $min_y = null;
+                    $max_y = null;
+                    foreach ($ys as $y) {
+                        if (is_numeric($y)) {
+                            if (is_null($min_y) || $y < $min_y) {
+                                $min_y = $y;
+                            }
+                            if (is_null($max_y) || $y > $max_y) {
+                                $max_y = $y;
+                            }
+                        }
+                    }
                     foreach ($xs as $xi => $x) {
                         $y = $ys[$xi];
                         if (is_numeric($x) && is_numeric($y)) {
-                            $space->addPoint([$x, $y]);
+                            $space->addPoint([($x - $min_x) / ($max_x - $min_x), ($y - $min_y) / ($max_y - $min_y)]);
                         }
                     }
                     $clusters = $space->solve($k);
@@ -687,8 +711,8 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel, $maxRows) {
                     $thisDunn = $minInterDist / $maxIntraDist;
                     if ($thisDunn > $bestDunn) {
                         $bestDunn = $thisDunn;
-                        $bestColumn1 = $columnNames[$i];
-                        $bestColumn2 = $columnNames[$j];
+                        $bestColumn1 = $columnNames[$i] . ' (' . $min_x . ' to ' . $max_x . ')';
+                        $bestColumn2 = $columnNames[$j] . ' (' . $min_y . ' to ' . $max_y . ')';
                         $bestClusters = $clusters;
                     }
                 }
