@@ -11,6 +11,8 @@ require_once "KMeans/Space.php";
 require_once "KMeans/Point.php";
 require_once "KMeans/Cluster.php";
 
+require_once "PCA/pca.php";
+
 ini_set('memory_limit','1024M');
 ini_set('max_execution_time', 300);
 
@@ -848,57 +850,68 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
 
     // Cluster stuff
     if (!isset($reqSessionID)) {
-        // $moveCol 'numMovesPerChallenge' [216]
-        // $avgCol 'knobAvgs' []
-        // $levelCol 'levelTimes' [999999]
-        // $typeCol 'moveTypeChangesPerLevel' []
-        // $stdCol 'knobStdDevs' []
-        // $totalCol 'knobTotalAmts' []
+        $clusterLevel = 4;
+        $columns = [
+            [array_column($moveCol, $clusterLevel), 'numMovesPerChallenge', [216]],
+            [array_column($avgCol, $clusterLevel), 'knobAvgs', []],
+            [array_column($levelCol, $clusterLevel), 'levelTimes', [999999]],
+            [array_column($typeCol, $clusterLevel), 'moveTypeChangesPerLevel', []],
+            [array_column($stdCol, $clusterLevel), 'knobStdDevs', []],
+            [array_column($totalCol, $clusterLevel), 'knobTotalAmts', []],
+        ];
 
-        $columns = [$moveCol, $totalCol];
-        $columnNames = ['numMovesPerChallenge', 'knobTotalAmts'];
-        $columnOutliers = [[216], []];
+        $pcaData = [[], [], [], [], [], []];
+        for ($i = 0; $i < count($columns[0][0]); $i++) {
+            $good = true;
+            for ($j = 0; $j < count($columns); $j++) {
+                $val = $columns[$j][0][$i];
+                if (!is_numeric($val) || in_array($val, $columns[$j][2])) {
+                    $good = false;
+                    break;
+                }
+            }
+            if ($good) {
+                for ($j = 0; $j < count($columns); $j++) {
+                    $pcaData[$j][] = $columns[$j][0][$i];
+                }
+            }
+        }
+        // scale to 0..1
+        for ($i = 0; $i < count($pcaData); $i++) {
+            $min_val = null;
+            $max_val = null;
+            for ($j = 0; $j < count($pcaData[$i]); $j++) {
+                $val = $pcaData[$i][$j];
+                if (is_null($min_val) || $val < $min_val) $min_val = $val;
+                if (is_null($max_val) || $val > $max_val) $max_val = $val;
+            }
+            $range = $max_val - $min_val;
+            for ($j = 0; $j < count($pcaData[$i]); $j++) {
+                $pcaData[$i][$j] = ($pcaData[$i][$j] - $min_val) / $range;
+            }
+        }
+
+        $pca = new PCA\PCA($pcaData);
+        $pca->changeDimension(2);
+        $pca->applayingPca();
+        $columns = $pca->getNewData();
+        $columnNames = ['pca1', 'pca2'];
+
         $bestDunn = 0;
         $bestColumn1 = null;
         $bestColumn2 = null;
         $bestClusters = [];
         $clusterLevel = 0;
 
-        for ($i = 0; $i < count($columns); $i++) {
-            for ($j = $i + 1; $j < count($columns); $j++) {
-                for ($k = 4; $k < 5; $k++) {
+        for ($i = 0; $i < 2; $i++) {
+            for ($j = $i + 1; $j < 2; $j++) {
+                for ($k = 2; $k < 5; $k++) {
                     $space = new KMeans\Space(2);
-                    $xs = array_column($columns[$i], $clusterLevel);
-                    $ys = array_column($columns[$j], $clusterLevel);
-                    $min_x = null;
-                    $max_x = null;
-                    foreach ($xs as $x) {
-                        if (is_numeric($x) && !in_array($x, $columnOutliers[$i])) {
-                            if (is_null($min_x) || $x < $min_x) {
-                                $min_x = $x;
-                            }
-                            if (is_null($max_x) || $x > $max_x) {
-                                $max_x = $x;
-                            }
-                        }
-                    }
-                    $min_y = null;
-                    $max_y = null;
-                    foreach ($ys as $y) {
-                        if (is_numeric($y) && !in_array($y, $columnOutliers[$j])) {
-                            if (is_null($min_y) || $y < $min_y) {
-                                $min_y = $y;
-                            }
-                            if (is_null($max_y) || $y > $max_y) {
-                                $max_y = $y;
-                            }
-                        }
-                    }
+                    $xs = $columns[$i];
+                    $ys = $columns[$j];
                     foreach ($xs as $xi => $x) {
                         $y = $ys[$xi];
-                        if (is_numeric($x) && !in_array($x, $columnOutliers[$i]) && is_numeric($y) && !in_array($y, $columnOutliers[$j])) {
-                            $space->addPoint([($x - $min_x) / ($max_x - $min_x), ($y - $min_y) / ($max_y - $min_y)]);
-                        }
+                        $space->addPoint([$x, $y]);
                     }
                     $clusters = $space->solve($k);
 
@@ -937,8 +950,8 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
                     $thisDunn = $minInterDist / $maxIntraDist;
                     if ($thisDunn > $bestDunn) {
                         $bestDunn = $thisDunn;
-                        $bestColumn1 = $columnNames[$i] . ' (' . $min_x . ' to ' . $max_x . ')';
-                        $bestColumn2 = $columnNames[$j] . ' (' . $min_y . ' to ' . $max_y . ')';
+                        $bestColumn1 = $columnNames[$i];
+                        $bestColumn2 = $columnNames[$j];
                         $bestClusters = $clusters;
                     }
                 }
