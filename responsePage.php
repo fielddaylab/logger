@@ -29,16 +29,25 @@ function average($arr) {
 
 if (isset($_GET['gameID'])) {
     $returned;
-    if (isset($_GET['sessionID'])) {
-        if (isset($_GET['level'])) {
-            $returned = json_encode(getAndParseData($_GET['gameID'], $db, $_GET['sessionID'], $_GET['level']));
-        } else {
-            $returned = json_encode(getAndParseData($_GET['gameID'], $db, $_GET['sessionID'], null));
-        }
+    if (isset($_GET['row'])) {
+        $returned = json_encode(getGraphInfo($_GET['row'], $_GET['col']));
     } else {
-        $returned = json_encode(getAndParseData($_GET['gameID'], $db, null, null));
+        if (isset($_GET['sessionID'])) {
+            if (isset($_GET['level'])) {
+                $returned = json_encode(getAndParseData($_GET['gameID'], $db, $_GET['sessionID'], $_GET['level']));
+            } else {
+                $returned = json_encode(getAndParseData($_GET['gameID'], $db, $_GET['sessionID'], null));
+            }
+        } else {
+            $returned = json_encode(getAndParseData($_GET['gameID'], $db, null, null));
+        }
     }
+    
     echo $returned;//substr($returned, 0, 1000);
+}
+
+function getGraphInfo($row, $col) {
+    return array(1, 2, 3, 4, 5);
 }
 
 function getTotalNumSessions($gameID, $db) {
@@ -1025,10 +1034,10 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
                     if (!is_nan($pvalues[0])) {
                         $linRegCoefficients['q'.$i.$j] = $pvalues;
                     } else {
-                        $linRegCoefficients['q'.$i.$j] = 'No data';
+                        $linRegCoefficients['q'.$i.$j] = '-';
                     }
                 } else {
-                    $linRegCoefficients['q'.$i.$j] = 'No data';
+                    $linRegCoefficients['q'.$i.$j] = '-';
                 }                  
             }
         }

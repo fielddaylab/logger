@@ -247,7 +247,8 @@ $(document).ready((event) => {
                 drawWavesHistograms(dataHistogram)
                 $('#tableAllBody tr').each((i, ival) => {
                     $(ival).find('td').each((j, jval) => {
-                        let column
+                        $(jval).css('vertical-align', 'middle')
+                        let column, row
                         switch (j) {
                             case 0:
                                 column = 'gameComplete'; break
@@ -288,18 +289,30 @@ $(document).ready((event) => {
                             case 18:
                                 column = 'q33'; break
                         }
+                        switch (i) {
+                            case 0:
+                                row = 'moves'; break;
+                            case 1:
+                                row = 'typeChanges'; break;
+                            case 2:
+                                row = 'totalTime'; break;
+                            case 3:
+                                row = 'maxMin'; break;
+                        }
                         if (i < 4) {
-                            let innerText = $('<span>')
+                            let innerText = $('<div>')
                             if (typeof data.linRegCoefficients[column][i] === 'number') {
                                 innerText.html(' ' + Math.min(Math.max(data.linRegCoefficients[column][i], 0), 1).toFixed(4) + ' ')
                                 if (data.linRegCoefficients[column][i] < 0.05) {
-                                    $(innerText).css('background-color', 'green')
-                                    $(innerText).css('color', 'white')
+                                    $(innerText).css('background-color', '#82e072')
                                 }
+                                $(jval).html(innerText)
+                                $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&row=${row}&col=${column}" target="_blank"></a>`)
                             } else {
                                 innerText.html(data.linRegCoefficients[column])
+                                $(jval).html(innerText)
                             }
-                            $(jval).html(innerText)
+                            $(innerText).css({'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif'})
                         }
                         // Color the correct answer for each question
                         switch (column) {
@@ -316,7 +329,7 @@ $(document).ready((event) => {
                 off()
                 hideError()
             }
-        }, 'json').error((jqXHR, textStatus, errorThrown) => {
+        }, 'json').fail((jqXHR, textStatus, errorThrown) => {
             off()
             console.log('Error triggered by getAllData')
             showError(errorThrown)
@@ -411,7 +424,7 @@ $(document).ready((event) => {
 
             off()
             hideError()
-        }, 'json').error((jqXHR, textStatus, errorThrown) => {
+        }, 'json').fail((jqXHR, textStatus, errorThrown) => {
             off()
             console.log(reqParams)
             console.log('Error triggered by getSingleData')
