@@ -246,7 +246,6 @@ $(document).ready((event) => {
                 }
                 drawWavesHistograms(dataHistogram)
                 // Store the computation values for retrieval when the link is clicked
-                console.log(data.regressionVars)
                 localStorage.setItem('regressionVars', JSON.stringify(data.regressionVars))
                 $('#tableAllBody tr').each((i, ival) => {
                     $(ival).find('td').each((j, jval) => {
