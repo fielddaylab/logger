@@ -538,6 +538,7 @@ $(document).ready((event) => {
             return {
                 x: cluster.map((ary) => ary[0]),
                 y: cluster.map((ary) => ary[1]),
+                text: cluster.map((ary) => ary[2]),
                 mode: 'markers',
                 type: 'scatter',
             };
