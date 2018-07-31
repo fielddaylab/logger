@@ -245,10 +245,13 @@ $(document).ready((event) => {
                     off()
                 }
                 drawWavesHistograms(dataHistogram)
+                // Store the computation values for retrieval when the link is clicked
+                console.log(data.regressionVars)
+                localStorage.setItem('regressionVars', JSON.stringify(data.regressionVars))
                 $('#tableAllBody tr').each((i, ival) => {
                     $(ival).find('td').each((j, jval) => {
                         $(jval).css('vertical-align', 'middle')
-                        let column, row
+                        let column
                         switch (j) {
                             case 0:
                                 column = 'gameComplete'; break
@@ -289,16 +292,6 @@ $(document).ready((event) => {
                             case 18:
                                 column = 'q33'; break
                         }
-                        switch (i) {
-                            case 0:
-                                row = 'moves'; break;
-                            case 1:
-                                row = 'typeChanges'; break;
-                            case 2:
-                                row = 'totalTime'; break;
-                            case 3:
-                                row = 'maxMin'; break;
-                        }
                         if (i < 4) {
                             let innerText = $('<div>')
                             if (typeof data.linRegCoefficients[column][i] === 'number') {
@@ -307,7 +300,7 @@ $(document).ready((event) => {
                                     $(innerText).css('background-color', '#82e072')
                                 }
                                 $(jval).html(innerText)
-                                $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&row=${row}&col=${column}" target="_blank"></a>`)
+                                $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&row=${i}&col=${j}" target="_blank"></a>`)
                             } else {
                                 innerText.html(data.linRegCoefficients[column])
                                 $(jval).html(innerText)

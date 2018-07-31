@@ -29,25 +29,17 @@ function average($arr) {
 
 if (isset($_GET['gameID'])) {
     $returned;
-    if (isset($_GET['row'])) {
-        $returned = json_encode(getGraphInfo($_GET['row'], $_GET['col']));
-    } else {
-        if (isset($_GET['sessionID'])) {
-            if (isset($_GET['level'])) {
-                $returned = json_encode(getAndParseData($_GET['gameID'], $db, $_GET['sessionID'], $_GET['level']));
-            } else {
-                $returned = json_encode(getAndParseData($_GET['gameID'], $db, $_GET['sessionID'], null));
-            }
+    if (isset($_GET['sessionID'])) {
+        if (isset($_GET['level'])) {
+            $returned = json_encode(getAndParseData($_GET['gameID'], $db, $_GET['sessionID'], $_GET['level']));
         } else {
-            $returned = json_encode(getAndParseData($_GET['gameID'], $db, null, null));
+            $returned = json_encode(getAndParseData($_GET['gameID'], $db, $_GET['sessionID'], null));
         }
+    } else {
+        $returned = json_encode(getAndParseData($_GET['gameID'], $db, null, null));
     }
     
     echo $returned;//substr($returned, 0, 1000);
-}
-
-function getGraphInfo($row, $col) {
-    return array(1, 2, 3, 4, 5);
 }
 
 function getTotalNumSessions($gameID, $db) {
@@ -965,6 +957,7 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
 
     // Linear regression stuff
     $linRegCoefficients = array();
+    $regressionVars = array();
     if (!isset($reqSessionID)) {
         $predictors = array();
         $predictedGameComplete = array();
@@ -989,18 +982,21 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
         $regression1->setY($predictedGameComplete);
         $regression1->compute();
         $linRegCoefficients['gameComplete'] = $regression1->getCoefficients();
+        $regressionVars []= array($predictors, $predictedGameComplete);
 
         $regression2 = new \mnshankar\LinearRegression\Regression();
         $regression2->setX($predictors);
         $regression2->setY($predictedLevel10);
         $regression2->compute();
         $linRegCoefficients['level10'] = $regression2->getCoefficients();
+        $regressionVars []= array($predictors, $predictedLevel10);
 
         $regression3 = new \mnshankar\LinearRegression\Regression();
         $regression3->setX($predictors);
         $regression3->setY($predictedLevel20);
         $regression3->compute();
         $linRegCoefficients['level20'] = $regression3->getCoefficients();
+        $regressionVars []= array($predictors, $predictedLevel20);
 
         $predictorsQ = array();
         $predictedQ = array();
@@ -1025,6 +1021,7 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
         }
         for ($i = 0; $i < 4; $i++) {
             for ($j = 0; $j < 4; $j++) {
+                $regressionVars []= array($predictorsQ[$i], $predictedQ[$i][$j]);
                 if (isset($predictorsQ[$i]) && count($predictorsQ[$i]) > 0) {
                     $regression = new \mnshankar\LinearRegression\Regression();
                     $regression->setX($predictorsQ[$i]);
@@ -1048,7 +1045,7 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
     'sessionsAndTimes'=>$sessionsAndTimes, 'basicInfoSingle'=>$basicInfoSingle, 'graphDataSingle'=>$graphDataSingle, 
     'questionsSingle'=>$questionsSingle, 'levels'=>$levels, 'numSessions'=>$numSessions, 'questionsTotal'=>$questionsTotal,
     'linRegCoefficients'=>$linRegCoefficients, 'clusters'=>array('col1'=>$bestColumn1, 'col2'=>$bestColumn2, 'clusters'=>$clusterPoints, 'dunn'=>$bestDunn),
-    'totalNumSessions'=>$totalNumSessions);
+    'totalNumSessions'=>$totalNumSessions, 'regressionVars'=>$regressionVars);
 
     // Return ALL the above information at once in a big array
     return $output;
