@@ -193,166 +193,124 @@
                 <br><br>
                 <div class="row" style="margin-left:0px;margin-right:0px;">
                     <div class="col-xs-12">
-                        <table id="tableAll" class="table table-striped table-bordered table-hover" style="display:block;">
-                            <thead>
-                                <tr>
-                                    <th scope="col"></th>
-                                    <th scope="col">Game complete</th>
-                                    <th scope="col">Level 10 complete</th>
-                                    <th scope="col">Level 20 complete</th>
-                                    <th scope="col">Q1/A</th>
-                                    <th scope="col">Q1/B</th>
-                                    <th scope="col">Q1/C</th>
-                                    <th scope="col">Q1/D</th>
-                                    <th scope="col">Q2/A</th>
-                                    <th scope="col">Q2/B</th>
-                                    <th scope="col">Q2/C</th>
-                                    <th scope="col">Q2/D</th>
-                                    <th scope="col">Q3/A</th>
-                                    <th scope="col">Q3/B</th>
-                                    <th scope="col">Q3/C</th>
-                                    <th scope="col">Q3/D</th>
-                                    <th scope="col">Q4/A</th>
-                                    <th scope="col">Q4/B</th>
-                                    <th scope="col">Q4/C</th>
-                                    <th scope="col">Q4/D</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tableAllBody">
-                                <tr>
-                                    <th scope="row"># moves</th>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                </tr>
-                                <tr>
-                                    <th scope="row"># type changes</th>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                </tr>
-                                <tr>
-                                    <th scope="row">Total time</th>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                </tr>
-                                <tr>
-                                    <th scope="row">Knob max-min (avg)</th>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                </tr>
-                                <tr>
-                                    <th scope="row">Slope of goal 1</th>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                </tr>
-                                <tr>
-                                    <th scope="row">Slope of goal 2</th>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                </tr>
-                            </tbody>
-                        </table>
+                        <div style="max-height:300px;overflow-y:auto;overflow-x:hidden;">
+                            <table id="tableAll" class="table table-striped table-bordered table-hover">
+                                <thead>
+                                    <tr>
+                                        <th scope="col"></th>
+                                        <th scope="col">Game complete</th>
+                                        <th scope="col">Level 10 complete</th>
+                                        <th scope="col">Level 20 complete</th>
+                                        <th scope="col">Q1/A</th>
+                                        <th scope="col">Q1/B</th>
+                                        <th scope="col">Q1/C</th>
+                                        <th scope="col">Q1/D</th>
+                                        <th scope="col">Q2/A</th>
+                                        <th scope="col">Q2/B</th>
+                                        <th scope="col">Q2/C</th>
+                                        <th scope="col">Q2/D</th>
+                                        <th scope="col">Q3/A</th>
+                                        <th scope="col">Q3/B</th>
+                                        <th scope="col">Q3/C</th>
+                                        <th scope="col">Q3/D</th>
+                                        <th scope="col">Q4/A</th>
+                                        <th scope="col">Q4/B</th>
+                                        <th scope="col">Q4/C</th>
+                                        <th scope="col">Q4/D</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tableAllBody">
+                                    <tr>
+                                        <th scope="row"># moves</th>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row"># type changes</th>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">Total time</th>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row" style="font:12px Open Sans; font-weight:700;">Avg knob max-min</th>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
                 <br><br>

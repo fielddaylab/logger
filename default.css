@@ -72,3 +72,17 @@ select, .select2 {
 td {
     font: 12px "Open Sans", sans-serif;
 }
+
+th {
+    position: sticky;
+    top: 0;
+    background: white;
+}
+
+thead tr th {
+    z-index: 2;
+    outline: 1px solid #ddd;                
+    border:none; 
+    outline-offset: -1px;
+}
+  

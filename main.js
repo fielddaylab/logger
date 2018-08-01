@@ -247,6 +247,32 @@ $(document).ready((event) => {
                 drawWavesHistograms(dataHistogram)
                 // Store the computation values for retrieval when the link is clicked
                 localStorage.setItem('regressionVars', JSON.stringify(data.regressionVars))
+                for (let i = 0; i < data.levels.length; i++) {
+                    $('#tableAllBody').append(
+                        $(`<tr>
+                        <th scope="row" style="font:11px Open Sans; font-weight:700">% good moves lvl. ${i}</th>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                    </tr>`)
+                    )
+                } 
                 $('#tableAllBody tr').each((i, ival) => {
                     $(ival).find('td').each((j, jval) => {
                         $(jval).css('vertical-align', 'middle')
