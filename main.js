@@ -250,7 +250,7 @@ $(document).ready((event) => {
                 for (let i = 0; i < data.levels.length; i++) {
                     $('#tableAllBody').append(
                         $(`<tr>
-                        <th scope="row">% good moves lvl. ${i}</th>
+                        <th scope="row">% good moves lvl ${i}</th>
                         <td></td>
                         <td></td>
                         <td></td>

@@ -197,7 +197,7 @@
                             <table id="tableAll" class="table table-striped table-bordered table-hover">
                                 <thead>
                                     <tr>
-                                        <th scope="col"></th>
+                                        <th scope="col" style="font-size:20px"><b>Correlation Table</b></th>
                                         <th scope="col">Game complete</th>
                                         <th scope="col">Level 10 complete</th>
                                         <th scope="col">Level 20 complete</th>
@@ -331,7 +331,7 @@
                                         <td></td>
                                     </tr>
                                     <tr>
-                                        <th scope="row"># correct questions</th>
+                                        <th scope="row">% correct questions</th>
                                         <td></td>
                                         <td></td>
                                         <td></td>
@@ -354,6 +354,13 @@
                                     </tr>
                                 </tbody>
                             </table>
+                        </div>
+                        <hr>
+                        <div style="font-size: 12px; margin-top:-15px;">
+                            Only sessions which have data for the specified row header are used. E.g. 
+                            % correct questions only includes sessions which answered at least one question.
+                            <br>
+                            Empty fields indicate insufficient data to calculate regressions for these cells.
                         </div>
                     </div>
                 </div>
