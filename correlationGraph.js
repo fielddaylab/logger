@@ -17,9 +17,13 @@ $(document).ready(() => {
         case '1':
             xTitle = '# move type changes'; break
         case '2':
-            xTitle = 'Total time'; break
+            xTitle = '# levels completed'; break
         case '3':
+            xTitle = 'Total time'; break
+        case '4':
             xTitle = 'Knob max-min (average)'; break
+        case '5':
+            xTitle = '# correct questions'; break
     }
     switch (col) {
         case '0':
@@ -61,6 +65,7 @@ $(document).ready(() => {
         case '18':
             yTitle = 'Question 4 Answer D'; break
     }
+    console.log(xTitle)
 
     let trace = {
         x: xVals,

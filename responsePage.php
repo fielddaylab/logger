@@ -33,15 +33,20 @@ if (isset($_GET['gameID'])) {
     $returned;
     if (isset($_GET['sessionID'])) {
         if (isset($_GET['level'])) {
-            $returned = json_encode(getAndParseData($_GET['gameID'], $db, $_GET['sessionID'], $_GET['level']));
+            $returned = getAndParseData($_GET['gameID'], $db, $_GET['sessionID'], $_GET['level']);
         } else {
-            $returned = json_encode(getAndParseData($_GET['gameID'], $db, $_GET['sessionID'], null));
+            $returned = getAndParseData($_GET['gameID'], $db, $_GET['sessionID'], null);
         }
     } else {
-        $returned = json_encode(getAndParseData($_GET['gameID'], $db, null, null));
+        $returned = getAndParseData($_GET['gameID'], $db, null, null);
     }
     
-    echo $returned;//substr($returned, 0, 1000);
+    $output = json_encode($returned);
+    if ($output) {
+        echo $output;
+    } else {
+        die(json_last_error_msg());
+    }
 }
 
 function getTotalNumSessions($gameID, $db) {
@@ -615,20 +620,24 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
             foreach ($filteredNumMoves as $j=>$value) {
                 $numMoves[$j] = count($numMovesPerChallenge[$j]);
             }
-            $allData[$sessionID] = array('levelTimes'=>$levelTimes, 'avgTime'=>$avgTime, 'totalTime'=>$totalTime, 'numMovesPerChallenge'=>$numMoves, 'totalMoves'=>$totalMoves, 'avgMoves'=>$avgMoves, 'moveTypeChangesPerLevel'=>$moveTypeChangesPerLevel, 'moveTypeChangesTotal'=>$moveTypeChangesTotal, 'moveTypeChangesAvg'=>$moveTypeChangesAvg, 'knobStdDevs'=>$avgKnobStdDevs, 'knobNumStdDevs'=>$knobNumStdDevs, 'knobAvgs'=>$knobAvgs, 'knobAmtsTotalAvg'=>$knobAmtsTotal, 'knobAmtsAvgAvg'=>$knobAmtsAvg,
-            'knobTotalAmts'=>$knobAmts, 'knobSumTotal'=>$knobSumTotal, 'knobTotalAvg'=>$knobSumAvg, 'numMovesPerChallengeArray'=>$numMovesPerChallenge, 'dataObj'=>$dataObj);
+            $allData[$sessionID] = array('levelTimes'=>$levelTimes, 'avgTime'=>$avgTime, 'totalTime'=>$totalTime, 'numMovesPerChallenge'=>$numMoves, 'totalMoves'=>$totalMoves,
+            'avgMoves'=>$avgMoves, 'moveTypeChangesPerLevel'=>$moveTypeChangesPerLevel, 'moveTypeChangesTotal'=>$moveTypeChangesTotal, 'moveTypeChangesAvg'=>$moveTypeChangesAvg,
+            'knobStdDevs'=>$avgKnobStdDevs, 'knobNumStdDevs'=>$knobNumStdDevs, 'knobAvgs'=>$knobAvgs, 'knobAmtsTotalAvg'=>$knobAmtsTotal, 'knobAmtsAvgAvg'=>$knobAmtsAvg,
+            'knobTotalAmts'=>$knobAmts, 'knobSumTotal'=>$knobSumTotal, 'knobTotalAvg'=>$knobSumAvg, 'numMovesPerChallengeArray'=>$numMovesPerChallenge, 'dataObj'=>$dataObj, 
+            'numLevels'=>count($levelTimes));
         }
     
         // loop through all the sessions we got above and add their variables to totals
-        $levelCol = array_column($allData, 'levelTimes');
+        $timeCol = array_column($allData, 'levelTimes');
         $moveCol = array_column($allData, 'numMovesPerChallenge');
+        $levelsCol = array_column($allData, 'numLevels');
         $typeCol = array_column($allData, 'moveTypeChangesPerLevel');
         $stdCol = array_column($allData, 'knobStdDevs');
         $totalCol = array_column($allData, 'knobTotalAmts');
         $avgCol = array_column($allData, 'knobAvgs');
 
         for ($i = 0; $i < $numLevels; $i++) {
-            $totalTimesPerLevelAll[$i] = average(array_column($levelCol, $i));
+            $totalTimesPerLevelAll[$i] = average(array_column($timeCol, $i));
             $totalMovesPerLevelArray[$i] = average(array_column($moveCol, $i));
             $totalMoveTypeChangesPerLevelAll[$i] = average(array_column($typeCol, $i));
             $totalStdDevsPerLevelAll[$i] = average(array_column($stdCol, $i));
@@ -854,7 +863,7 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
         $sourceColumns = [
             [array_column($moveCol, $clusterLevel), 'numMovesPerChallenge', [216]],
             [array_column($avgCol, $clusterLevel), 'knobAvgs', []],
-            [array_column($levelCol, $clusterLevel), 'levelTimes', [999999]],
+            [array_column($timeCol, $clusterLevel), 'levelTimes', [999999]],
             [array_column($typeCol, $clusterLevel), 'moveTypeChangesPerLevel', []],
             [array_column($stdCol, $clusterLevel), 'knobStdDevs', []],
             [array_column($totalCol, $clusterLevel), 'knobTotalAmts', []],
@@ -925,8 +934,8 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
                 for ($cj = $ci + 1; $cj < count($clusters); $cj++) {
                     // use distance between centers for simplicity
                     $interDist = sqrt
-                        ( (($clusters[$ci][0] - $clusters[$cj][0]) ** 2)
-                        + (($clusters[$ci][1] - $clusters[$cj][1]) ** 2)
+                        ( (pow(($clusters[$ci][0] - $clusters[$cj][0]), 2))
+                        + (pow(($clusters[$ci][1] - $clusters[$cj][1]),  2))
                         );
                     if (is_null($minInterDist) || $interDist < $minInterDist) {
                         $minInterDist = $interDist;
@@ -939,8 +948,8 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
                 // fudge intracluster distance by finding max distance from center to a point
                 foreach ($cluster as $point) {
                     $pointDist = sqrt
-                        ( (($point[0] - $cluster[0]) ** 2)
-                        + (($point[1] - $cluster[1]) ** 2)
+                        ( (pow(($point[0] - $cluster[0]), 2))
+                        + (pow(($point[1] - $cluster[1]), 2))
                         );
                     if (is_null($intraDist) || $pointDist > $intraDist) {
                         $intraDist = $pointDist;
@@ -978,9 +987,9 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
         $predictedLevel10 = array();
         $predictedLevel20 = array();
 
-        $numSessionsTemp = count($sessionIDs);
-        for ($i = 0; $i < $numSessionsTemp; $i++) {
-            $predictors []= array($numMovesAll[$i], array_sum($typeCol[$i]), array_sum($levelCol[$i]), array_sum($avgCol[$i]));
+        foreach ($sessionIDs as $i=>$val) {
+            if (!isset($questionsAll['numsCorrect'][$i])) return $i;
+            $predictors []= array($numMovesAll[$i], array_sum($typeCol[$i]), $levelsCol[$i], array_sum($timeCol[$i]), array_sum($avgCol[$i]), $questionsAll['numsCorrect'][$i]);
 
             $gameComplete = ($numLevelsAll[$i] >= 30) ? 1 : 0;
             $level10Complete = ($numLevelsAll[$i] >= 9) ? 1 : 0;
@@ -1019,9 +1028,9 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
                 if (isset($val[$j])) {
                     $numMoves = $numMovesAll[$i];
                     $numTypeChanges = array_sum($typeCol[$i]);
-                    $time = array_sum($levelCol[$i]);
+                    $time = array_sum($timeCol[$i]);
                     $minMax = array_sum($avgCol[$i]);
-                    $predictorsQ[$j] []= array($numMovesAll[$i], array_sum($typeCol[$i]), array_sum($levelCol[$i]), array_sum($avgCol[$i]));
+                    $predictorsQ[$j] []= array($numMovesAll[$i], array_sum($typeCol[$i]), $levelsCol[$i], array_sum($timeCol[$i]), array_sum($avgCol[$i]), $questionsAll['numsCorrect'][$i]);
                     $q1a = ($val[$j] === 0) ? 1 : 0;
                     $q1b = ($val[$j] === 1) ? 1 : 0;
                     $q1c = ($val[$j] === 2) ? 1 : 0;

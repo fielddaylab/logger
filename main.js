@@ -250,7 +250,7 @@ $(document).ready((event) => {
                 for (let i = 0; i < data.levels.length; i++) {
                     $('#tableAllBody').append(
                         $(`<tr>
-                        <th scope="row" style="font:11px Open Sans; font-weight:700">% good moves lvl. ${i}</th>
+                        <th scope="row">% good moves lvl. ${i}</th>
                         <td></td>
                         <td></td>
                         <td></td>
@@ -317,7 +317,7 @@ $(document).ready((event) => {
                             case 18:
                                 column = 'q33'; break
                         }
-                        if (i < 4) {
+                        if (i < 6) {
                             let innerText = $('<div>')
                             if (typeof data.linRegCoefficients[column][i] === 'number') {
                                 innerText.html(' ' + Math.min(Math.max(data.linRegCoefficients[column][i], 0), 1).toFixed(4) + ' ')
