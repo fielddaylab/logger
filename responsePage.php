@@ -860,7 +860,8 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
     // Cluster stuff
     if (!isset($reqSessionID)) {
         $clusterLevel = 4;
-        $sourceColumns = [
+        $sourceColumns = [];
+        $allColumns = [
             [array_column($moveCol, $clusterLevel), 'numMovesPerChallenge', [216]],
             [array_column($avgCol, $clusterLevel), 'knobAvgs', []],
             [array_column($timeCol, $clusterLevel), 'levelTimes', [999999]],
@@ -868,8 +869,18 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
             [array_column($stdCol, $clusterLevel), 'knobStdDevs', []],
             [array_column($totalCol, $clusterLevel), 'knobTotalAmts', []],
         ];
+        $sourceColumns = [];
+        foreach ($allColumns as $col) {
+            if (isset($_GET[$col[1]])) {
+                $sourceColumns[] = $col;
+            }
+        }
+        if (count($sourceColumns) < 2) {
+            $sourceColumns = $allColumns;
+        }
 
-        $pcaData = [[], [], [], [], [], []];
+        $pcaData = [];
+        for ($i = 0; $i < count($sourceColumns); $i++) $pcaData[] = [];
         for ($i = 0; $i < count($sourceColumns[0][0]); $i++) {
             $good = true;
             for ($j = 0; $j < count($sourceColumns); $j++) {

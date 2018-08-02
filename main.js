@@ -111,7 +111,13 @@ $(document).ready((event) => {
             'minQuestions': $('#minQuestions').val(),
             'minLevels': $('#minLevels').val(),
             'startDate': $('#startDate').val(),
-            'endDate': $('#endDate').val()
+            'endDate': $('#endDate').val(),
+            'numMovesPerChallenge': $('#numMovesPerChallenge').prop('checked') ? true : undefined,
+            'knobAvgs': $('#knobAvgs').prop('checked') ? true : undefined,
+            'levelTimes': $('#levelTimes').prop('checked') ? true : undefined,
+            'moveTypeChangesPerLevel': $('#moveTypeChangesPerLevel').prop('checked') ? true : undefined,
+            'knobStdDevs': $('#knobStdDevs').prop('checked') ? true : undefined,
+            'knobTotalAmts': $('#knobTotalAmts').prop('checked') ? true : undefined,
         }
         $.get('responsePage.php', parameters, (data, status, jqXHR) => {
             allData = data
