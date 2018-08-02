@@ -177,7 +177,7 @@ $(document).ready((event) => {
                     .on('hide.bs.collapse', () => {$('#timesCollapseBtnAll').html('[+]')})
                     .on('show.bs.collapse', () => {$('#timesCollapseBtnAll').html('[−]')}))
                 let movesList = $('<ul></ul>').attr('id', 'movesAll').addClass('collapse').css({'font-size':'18px'})
-                $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Number of moves: <a href='#movesAll' data-toggle='collapse' id='movesCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(movesList)
+                $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Number of slider moves: <a href='#movesAll' data-toggle='collapse' id='movesCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(movesList)
                     .on('hide.bs.collapse', () => {$('#movesCollapseBtnAll').html('[+]')})
                     .on('show.bs.collapse', () => {$('#movesCollapseBtnAll').html('[−]')}))
                 let typesList = $('<ul></ul>').attr('id', 'typesAll').addClass('collapse').css({'font-size':'18px'})
@@ -329,6 +329,7 @@ $(document).ready((event) => {
                             } else {
                                 innerText.html(data.linRegCoefficients[column])
                                 $(jval).html(innerText)
+                                $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&row=${i}&col=${j}" target="_blank"></a>`)
                             }
                             $(innerText).css({'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif'})
                         }
@@ -367,13 +368,14 @@ $(document).ready((event) => {
             fastClear($('#basicFeatures'))
         $.get('responsePage.php', reqParams, (data, status, jqXHR) => {
             if ($('#gameSelect').val() === "WAVES" && shouldClearLists && !shouldSendLevel) {
+                fastClear($('#basicFeatures'))
                 $("#scoreDisplay").html(data.questionsSingle.numCorrect + " / " + data.questionsSingle.numQuestions)
                 let timesList = $('<ul></ul>').attr('id', 'times').addClass('collapse').css('font-size', '18px')
                 $('#basicFeatures').append($(`<span><li>Times: <a href='#times' data-toggle='collapse' id='timesCollapseBtn' class='collapseBtn'>[+]</a></li></span>`).append(timesList)
                     .on('hide.bs.collapse', () => {$('#timesCollapseBtn').html('[+]')})
                     .on('show.bs.collapse', () => {$('#timesCollapseBtn').html('[−]')}))
                 let movesList = $('<ul></ul>').attr('id', 'moves').addClass('collapse').css({'font-size':'18px'})
-                $('#basicFeatures').append($(`<span><li style='margin-top:5px'>Number of moves: <a href='#moves' data-toggle='collapse' id='movesCollapseBtn' class='collapseBtn'>[+]</a></li></span>`).append(movesList)
+                $('#basicFeatures').append($(`<span><li style='margin-top:5px'>Number of slider moves: <a href='#moves' data-toggle='collapse' id='movesCollapseBtn' class='collapseBtn'>[+]</a></li></span>`).append(movesList)
                     .on('hide.bs.collapse', () => {$('#movesCollapseBtn').html('[+]')})
                     .on('show.bs.collapse', () => {$('#movesCollapseBtn').html('[−]')}))
                 let typesList = $('<ul></ul>').attr('id', 'types').addClass('collapse').css({'font-size':'18px'})
@@ -484,7 +486,7 @@ $(document).ready((event) => {
         }
         Plotly.newPlot(histogramAll1, [trace], layout1)
 
-        $('#goalsDiv2All').html('Histogram 2: Total number of moves')
+        $('#goalsDiv2All').html('Histogram 2: Total Number of slider moves')
         $('#goalsDiv2All').css('display', 'block')
         $('#goalsGraph2All').css('display', 'block')
         let trace2 = {
@@ -503,7 +505,7 @@ $(document).ready((event) => {
             plot_bgcolor: '#F6F6F3',
             paper_bgcolor: '#F6F6F3',
             xaxis: {
-                title: 'Total number of moves',
+                title: 'Total Number of slider moves',
                 titlefont: {
                     family: 'Courier New, monospace',
                     size: 12,

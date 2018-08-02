@@ -23,7 +23,7 @@ $(document).ready(() => {
         case '4':
             xTitle = 'Knob max-min (average)'; break
         case '5':
-            xTitle = '# correct questions'; break
+            xTitle = '% correct questions'; break
     }
     switch (col) {
         case '0':

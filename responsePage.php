@@ -91,7 +91,7 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
                 (
                     SELECT session_id, event_custom
                     FROM log
-                    WHERE event_custom=1 OR event_custom=2
+                    WHERE event_custom=1
                     GROUP BY session_id
                     HAVING COUNT(*) >= ?
                 ) AS moves
@@ -244,7 +244,6 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
         foreach ($sessionAttributes[$reqSessionID] as $i=>$val) {
             if (isset($reqLevel) && $val['level'] == $reqLevel) {
                 if ($val['event_custom'] === 1 ||
-                    $val['event_custom'] === 2 ||
                     $val['event'] === 'SUCCEED'
                 ) {
                     if (!isset($graphEvents, $graphTimes, $graphEventData, $graphLevels)) {
@@ -334,34 +333,29 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
                         if (!isset($endIndices[$dataObj['levels'][$i]])) {
                             $endIndices[$dataObj['levels'][$i]] = $i;
                         }
-                    } else if ($dataObj['events'][$i] === 'CUSTOM' && ($dataJson['event_custom'] === 'SLIDER_MOVE_RELEASE' || $dataJson['event_custom'] === 'ARROW_MOVE_RELEASE')) {
+                    } else if ($dataObj['events'][$i] === 'CUSTOM' && ($dataJson['event_custom'] === 'SLIDER_MOVE_RELEASE')) {
                         if ($lastSlider !== $dataJson['slider']) {
                             if (!isset($moveTypeChangesPerLevel[$dataObj['levels'][$i]])) $moveTypeChangesPerLevel[$dataObj['levels'][$i]] = 0;
                             $moveTypeChangesPerLevel[$dataObj['levels'][$i]]++;
                         }
                         $lastSlider = $dataJson['slider'];
                         $numMovesPerChallenge[$dataObj['levels'][$i]] []= $i;
-                        if ($dataJson['event_custom'] === 'SLIDER_MOVE_RELEASE') { // arrows don't have std devs
-                            //if (!isset($knobNumStdDevs[$dataObj['levels'][$i]])) $knobNumStdDevs[$dataObj['levels'][$i]] = 0;
-                            $knobNumStdDevs[$dataObj['levels'][$i]]++;
-                            //if (!isset($knobStdDevs[$dataObj['levels'][$i]])) $knobStdDevs[$dataObj['levels'][$i]] = 0;
-                            $knobStdDevs[$dataObj['levels'][$i]] += $dataJson['stdev_val'];
-                            //if (!isset($knobAmts[$dataObj['levels'][$i]])) $knobAmts[$dataObj['levels'][$i]] = 0;
-                            $knobAmts[$dataObj['levels'][$i]] += ($dataJson['max_val']-$dataJson['min_val']);
-                        }
+                        //if (!isset($knobNumStdDevs[$dataObj['levels'][$i]])) $knobNumStdDevs[$dataObj['levels'][$i]] = 0;
+                        $knobNumStdDevs[$dataObj['levels'][$i]]++;
+                        //if (!isset($knobStdDevs[$dataObj['levels'][$i]])) $knobStdDevs[$dataObj['levels'][$i]] = 0;
+                        $knobStdDevs[$dataObj['levels'][$i]] += $dataJson['stdev_val'];
+                        //if (!isset($knobAmts[$dataObj['levels'][$i]])) $knobAmts[$dataObj['levels'][$i]] = 0;
+                        $knobAmts[$dataObj['levels'][$i]] += ($dataJson['max_val']-$dataJson['min_val']);
                     }
                 }
             }
             
             foreach ($endIndices as $i=>$value) {
-                if (isset($endIndices[$i])) {
-                    $levelTime = 99999;
-                    if (isset($dataObj['times'][$endIndices[$i]], $dataObj['times'][$startIndices[$i]])) {
-                        $levelStartTime = new DateTime($dataObj['times'][$startIndices[$i]]);
-                        $levelEndTime = new DateTime($dataObj['times'][$endIndices[$i]]);
-                        $levelTime = $levelEndTime->getTimestamp() - $levelStartTime->getTimestamp();
-                        $totalTime += $levelTime;
-                    }
+                if (isset($endIndices[$i], $dataObj['times'][$endIndices[$i]], $dataObj['times'][$startIndices[$i]])) {
+                    $levelStartTime = new DateTime($dataObj['times'][$startIndices[$i]]);
+                    $levelEndTime = new DateTime($dataObj['times'][$endIndices[$i]]);
+                    $levelTime = $levelEndTime->getTimestamp() - $levelStartTime->getTimestamp();
+                    $totalTime += $levelTime;
                     $levelTimes[$i] = $levelTime;
     
                     $totalMoves += count($numMovesPerChallenge[$i]);
@@ -560,34 +554,29 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
                             if (!isset($endIndices[$dataObj['levels'][$i]])) {
                                 $endIndices[$dataObj['levels'][$i]] = $i;
                             }
-                        } else if ($dataObj['events'][$i] === 'CUSTOM' && ($dataJson['event_custom'] === 'SLIDER_MOVE_RELEASE' || $dataJson['event_custom'] === 'ARROW_MOVE_RELEASE')) {
+                        } else if ($dataObj['events'][$i] === 'CUSTOM' && ($dataJson['event_custom'] === 'SLIDER_MOVE_RELEASE')) {
                             if ($lastSlider !== $dataJson['slider']) {
                                 if (!isset($moveTypeChangesPerLevel[$dataObj['levels'][$i]])) $moveTypeChangesPerLevel[$dataObj['levels'][$i]] = 0;
                                 $moveTypeChangesPerLevel[$dataObj['levels'][$i]]++;
                             }
                             $lastSlider = $dataJson['slider'];
                             $numMovesPerChallenge[$dataObj['levels'][$i]] []= $i;
-                            if ($dataJson['event_custom'] === 'SLIDER_MOVE_RELEASE') { // arrows don't have std devs
-                                //if (!isset($knobNumStdDevs[$dataObj['levels'][$i]])) $knobNumStdDevs[$dataObj['levels'][$i]] = 0;
-                                $knobNumStdDevs[$dataObj['levels'][$i]]++;
-                                //if (!isset($knobStdDevs[$dataObj['levels'][$i]])) $knobStdDevs[$dataObj['levels'][$i]] = 0;
-                                $knobStdDevs[$dataObj['levels'][$i]] += $dataJson['stdev_val'];
-                                //if (!isset($knobAmts[$dataObj['levels'][$i]])) $knobAmts[$dataObj['levels'][$i]] = 0;
-                                $knobAmts[$dataObj['levels'][$i]] += ($dataJson['max_val']-$dataJson['min_val']);
-                            }
+                            //if (!isset($knobNumStdDevs[$dataObj['levels'][$i]])) $knobNumStdDevs[$dataObj['levels'][$i]] = 0;
+                            $knobNumStdDevs[$dataObj['levels'][$i]]++;
+                            //if (!isset($knobStdDevs[$dataObj['levels'][$i]])) $knobStdDevs[$dataObj['levels'][$i]] = 0;
+                            $knobStdDevs[$dataObj['levels'][$i]] += $dataJson['stdev_val'];
+                            //if (!isset($knobAmts[$dataObj['levels'][$i]])) $knobAmts[$dataObj['levels'][$i]] = 0;
+                            $knobAmts[$dataObj['levels'][$i]] += ($dataJson['max_val']-$dataJson['min_val']);
                         }
                     }
                 }
                 
                 foreach ($endIndices as $i=>$value) {
-                    if (isset($endIndices[$i])) {
-                        $levelTime = 999999;
-                        if (isset($dataObj['times'][$endIndices[$i]], $dataObj['times'][$startIndices[$i]])) {
-                            $levelStartTime = new DateTime($dataObj['times'][$startIndices[$i]]);
-                            $levelEndTime = new DateTime($dataObj['times'][$endIndices[$i]]);
-                            $levelTime = $levelEndTime->getTimestamp() - $levelStartTime->getTimestamp();
-                            $totalTime += $levelTime;
-                        }
+                    if (isset($endIndices[$i], $dataObj['times'][$endIndices[$i]], $dataObj['times'][$startIndices[$i]])) {
+                        $levelStartTime = new DateTime($dataObj['times'][$startIndices[$i]]);
+                        $levelEndTime = new DateTime($dataObj['times'][$endIndices[$i]]);
+                        $levelTime = $levelEndTime->getTimestamp() - $levelStartTime->getTimestamp();
+                        $totalTime += $levelTime;
                         $levelTimes[$i] = $levelTime;
         
                         $totalMoves += count($numMovesPerChallenge[$i]);
@@ -713,7 +702,7 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
         foreach ($sessionIDs as $i=>$session) {
             $numMoves = 0;
             foreach ($sessionAttributes[$session] as $j=>$val) {
-                if ($val['event_custom'] === 1 || $val['event_custom'] === 2) {
+                if ($val['event_custom'] === 1) {
                     $numMoves++;
                 }
             }
@@ -733,8 +722,9 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
         }
     }
 
-    // Get goals data for a session
+    // Get goals data for a single session or all sessions
     $goalsSingle = array();
+    $percentGoodMovesAll = array();
     if (isset($reqSessionID, $reqLevel)) {
         $data = $basicInfoSingle;
         $dataObj = $data['dataObj'];
@@ -754,19 +744,11 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
     
         foreach ($numMovesPerChallenge as $i=>$val) {
             $dataJson = json_decode($dataObj['data'][$i], true);
-            if ($dataObj['events'][$i] === 'CUSTOM' && ($dataJson['event_custom'] === 'SLIDER_MOVE_RELEASE' || $dataJson['event_custom'] === 'ARROW_MOVE_RELEASE')) {
-                if ($dataJson['event_custom'] === 'SLIDER_MOVE_RELEASE') { // sliders have before and after closeness
-                    if ($dataJson['end_closeness'] < $dataJson['begin_closeness']) $moveGoodness1[$i] = 1;
-                    else if ($dataJson['end_closeness'] > $dataJson['begin_closeness']) $moveGoodness1[$i] = -1;
-    
-                    $lastCloseness1 = $dataJson['end_closeness'];
-                } else { // arrow
-                    if (!isset($lastCloseness1)) $lastCloseness1 = $dataJson['closeness'];
-                    if ($dataJson['closeness'] < $lastCloseness1) $moveGoodness1[$i] = -1;
-                    else if ($dataJson['closeness'] > $lastCloseness1) $moveGoodness1[$i] = 1;
-    
-                    $lastCloseness1 = $dataJson['closeness'];
-                }
+            if ($dataObj['events'][$i] === 'CUSTOM' && ($dataJson['event_custom'] === 'SLIDER_MOVE_RELEASE')) {
+                if ($dataJson['end_closeness'] < $dataJson['begin_closeness']) $moveGoodness1[$i] = 1;
+                else if ($dataJson['end_closeness'] > $dataJson['begin_closeness']) $moveGoodness1[$i] = -1;
+
+                $lastCloseness1 = $dataJson['end_closeness'];
                 if ($lastCloseness1 < 99999)
                     $absDistanceToGoal1[$i] = round($lastCloseness1, 2);
             }
@@ -816,7 +798,7 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
     
         foreach ($numMovesPerChallenge as $i=>$val) {
             $dataJson = json_decode($dataObj['data'][$i], true);
-            if ($dataObj['events'][$i] === 'CUSTOM' && ($dataJson['event_custom'] === 'SLIDER_MOVE_RELEASE' || $dataJson['event_custom'] === 'ARROW_MOVE_RELEASE')) {
+            if ($dataObj['events'][$i] === 'CUSTOM' && ($dataJson['event_custom'] === 'SLIDER_MOVE_RELEASE')) {
                 if ($dataJson['slider'] ===  'AMPLITUDE') {
                     $thisCloseness[$dataJson['slider']][$dataJson['wave']] = $graph_max_amplitude-$dataJson['end_val'];
                 } else if ($dataJson['slider'] === 'OFFSET') {
@@ -824,18 +806,10 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
                 } else if ($dataJson['slider'] === 'WAVELENGTH') {
                     $thisCloseness[$dataJson['slider']][$dataJson['wave']] = $graph_max_wavelength-$dataJson['end_val'];
                 }
-    
-                if ($dataJson['event_custom'] === 'SLIDER_MOVE_RELEASE') { // sliders have before and after closeness
-                    if ($thisCloseness[$dataJson['slider']][$dataJson['wave']] < $lastCloseness[$dataJson['slider']][$dataJson['wave']]) $moveGoodness2[$i] = 1;
-                    else if ($thisCloseness[$dataJson['slider']][$dataJson['wave']] > $lastCloseness[$dataJson['slider']][$dataJson['wave']]) $moveGoodness2[$i] = -1;
-    
-                    $lastCloseness[$dataJson['slider']][$dataJson['wave']] = $thisCloseness[$dataJson['slider']][$dataJson['wave']];
-                } else { // arrow
-                    if ($thisCloseness[$dataJson['slider']][$dataJson['wave']] < $lastCloseness[$dataJson['slider']][$dataJson['wave']]) $moveGoodness2[$i] = 1;
-                    else if ($thisCloseness[$dataJson['slider']][$dataJson['wave']] > $lastCloseness[$dataJson['slider']][$dataJson['wave']]) $moveGoodness2[$i] = -1;
-    
-                    $lastCloseness[$dataJson['slider']][$dataJson['wave']] = $thisCloseness[$dataJson['slider']][$dataJson['wave']];
-                }
+                if ($thisCloseness[$dataJson['slider']][$dataJson['wave']] < $lastCloseness[$dataJson['slider']][$dataJson['wave']]) $moveGoodness2[$i] = 1;
+                else if ($thisCloseness[$dataJson['slider']][$dataJson['wave']] > $lastCloseness[$dataJson['slider']][$dataJson['wave']]) $moveGoodness2[$i] = -1;
+
+                $lastCloseness[$dataJson['slider']][$dataJson['wave']] = $thisCloseness[$dataJson['slider']][$dataJson['wave']];
                 if ($thisCloseness[$dataJson['slider']][$dataJson['wave']] < 99999)
                     $absDistanceToGoal2[$i] = round($thisCloseness[$dataJson['slider']][$dataJson['wave']], 2);
             }
@@ -855,6 +829,52 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
         
         $goalsSingle = array('moveNumbers'=>$moveNumbers, 'distanceToGoal1'=>$distanceToGoal1, 'distanceToGoal2'=>$distanceToGoal2,
             'absDistanceToGoal1'=>$absDistanceToGoal1, 'absDistanceToGoal2'=>$absDistanceToGoal2, 'goalSlope1'=>$goalSlope1, 'goalSlope2'=>$goalSlope2, 'dataObj'=>$dataObj);
+    } else {
+        foreach ($sessionIDs as $index=>$session) {
+            $data = $allData[$sessionID];
+            $dataObj = $data['dataObj'];
+            $sessionLevels = array_keys($data['numMovesPerChallengeArray']);
+            foreach ($sessionLevels as $j=>$level) {
+                $numMovesPerChallenge = $data['numMovesPerChallengeArray'][$level];
+                $numMoves = $data['numMovesPerChallenge'][$level];
+            
+                $distanceToGoal1;
+                $moveGoodness1;
+                $absDistanceToGoal1;
+                if (isset($numMovesPerChallenge)) {
+                    $absDistanceToGoal1 = array_fill(0, count($numMovesPerChallenge), 0);
+                    $distanceToGoal1 = array_fill(0, count($numMovesPerChallenge), 0); // this one is just -1/0/1
+                    $moveGoodness1 = array_fill(0, count($numMovesPerChallenge), 0); // an array of 0s
+                }
+                $moveNumbers = array();
+                $cumulativeDistance1 = 0;
+                $lastCloseness1;
+            
+                foreach ($numMovesPerChallenge as $i=>$val) {
+                    $dataJson = json_decode($dataObj['data'][$i], true);
+                    if ($dataObj['events'][$i] === 'CUSTOM' && ($dataJson['event_custom'] === 'SLIDER_MOVE_RELEASE')) {
+                        if ($dataJson['end_closeness'] < $dataJson['begin_closeness']) $moveGoodness1[$i] = 1;
+                        else if ($dataJson['end_closeness'] > $dataJson['begin_closeness']) $moveGoodness1[$i] = -1;
+        
+                        $lastCloseness1 = $dataJson['end_closeness'];
+                        if ($lastCloseness1 < 99999)
+                            $absDistanceToGoal1[$i] = round($lastCloseness1, 2);
+                    }
+                    $moveNumbers[$i] = $i;
+                    $cumulativeDistance1 += $moveGoodness1[$i];
+                    $distanceToGoal1[$i] = $cumulativeDistance1;
+                }
+
+                // Find % good moves by filtering moveGoodness array for 1s, aka good moves
+                $numGoodMoves = count(array_filter($moveGoodness1, function($val) { return $val === 1; }));
+                if ($numMoves !== 0) {
+                    $percentGoodMoves = $numGoodMoves / $numMoves;
+                } else {
+                    $percentGoodMoves = 0;
+                }
+                $percentGoodMovesAll[$level][$index] = $percentGoodMoves;
+            }
+        }
     }
 
     // Cluster stuff
@@ -988,37 +1008,44 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
         $predictedLevel20 = array();
 
         foreach ($sessionIDs as $i=>$val) {
-            if (!isset($questionsAll['numsCorrect'][$i])) return $i;
-            $predictors []= array($numMovesAll[$i], array_sum($typeCol[$i]), $levelsCol[$i], array_sum($timeCol[$i]), array_sum($avgCol[$i]), $questionsAll['numsCorrect'][$i]);
+            $percentQuestionsCorrect = ($questionsAll['numsQuestions'][$i] === 0) ? 0 : $questionsAll['numsCorrect'][$i] / $questionsAll['numsQuestions'][$i];
+            $predictor = array($numMovesAll[$i], array_sum($typeCol[$i]), $levelsCol[$i], array_sum($timeCol[$i]), array_sum($avgCol[$i]), $percentQuestionsCorrect);
+            $predictors []= $predictor;
 
-            $gameComplete = ($numLevelsAll[$i] >= 30) ? 1 : 0;
+            $gameComplete = ($numLevelsAll[$i] >= 28) ? 1 : 0;
             $level10Complete = ($numLevelsAll[$i] >= 9) ? 1 : 0;
-            $level20Complete = ($numLevelsAll[$i] >= 20) ? 1 : 0;
+            $level20Complete = ($numLevelsAll[$i] >= 15) ? 1 : 0;
 
             $predictedGameComplete []= array($gameComplete);
             $predictedLevel10 []= array($level10Complete);
             $predictedLevel20 []= array($level20Complete);
         }
-
+        
         $regression1 = new \mnshankar\LinearRegression\Regression();
         $regression1->setX($predictors);
         $regression1->setY($predictedGameComplete);
         $regression1->compute();
-        $linRegCoefficients['gameComplete'] = $regression1->getCoefficients();
+        $r1isFinite = true;
+        foreach ($regression1->getPValues() as $p) { if (!is_finite($p)) { $r1isFinite = false; break; }}
+        $linRegCoefficients['gameComplete'] = ($r1isFinite) ? $regression1->getPValues() : 'No data';
         $regressionVars []= array($predictors, $predictedGameComplete);
 
         $regression2 = new \mnshankar\LinearRegression\Regression();
         $regression2->setX($predictors);
         $regression2->setY($predictedLevel10);
         $regression2->compute();
-        $linRegCoefficients['level10'] = $regression2->getCoefficients();
+        $r2isFinite = true;
+        foreach ($regression2->getPValues() as $p) { if (!is_finite($p)) { $r2isFinite = false; break; }}
+        $linRegCoefficients['level10'] = ($r2isFinite) ? $regression2->getPValues() : 'No data';
         $regressionVars []= array($predictors, $predictedLevel10);
 
         $regression3 = new \mnshankar\LinearRegression\Regression();
         $regression3->setX($predictors);
         $regression3->setY($predictedLevel20);
         $regression3->compute();
-        $linRegCoefficients['level20'] = $regression3->getCoefficients();
+        $r3isFinite = true;
+        foreach ($regression3->getPValues() as $p) { if (!is_finite($p)) { $r3isFinite = false; break; }}
+        $linRegCoefficients['level20'] = ($r3isFinite) ? $regression3->getPValues() : 'No data';
         $regressionVars []= array($predictors, $predictedLevel20);
 
         $predictorsQ = array();
@@ -1030,7 +1057,8 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
                     $numTypeChanges = array_sum($typeCol[$i]);
                     $time = array_sum($timeCol[$i]);
                     $minMax = array_sum($avgCol[$i]);
-                    $predictorsQ[$j] []= array($numMovesAll[$i], array_sum($typeCol[$i]), $levelsCol[$i], array_sum($timeCol[$i]), array_sum($avgCol[$i]), $questionsAll['numsCorrect'][$i]);
+                    $percentQuestionsCorrect = ($questionsAll['numsQuestions'][$i] === 0) ? 0 : $questionsAll['numsCorrect'][$i] / $questionsAll['numsQuestions'][$i];
+                    $predictorsQ[$j] []= array($numMovesAll[$i], array_sum($typeCol[$i]), $levelsCol[$i], array_sum($timeCol[$i]), array_sum($avgCol[$i]), $percentQuestionsCorrect);
                     $q1a = ($val[$j] === 0) ? 1 : 0;
                     $q1b = ($val[$j] === 1) ? 1 : 0;
                     $q1c = ($val[$j] === 2) ? 1 : 0;
@@ -1045,19 +1073,19 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
         for ($i = 0; $i < 4; $i++) {
             for ($j = 0; $j < 4; $j++) {
                 $regressionVars []= array($predictorsQ[$i], $predictedQ[$i][$j]);
-                if (isset($predictorsQ[$i]) && count($predictorsQ[$i]) > 0) {
+                if (isset($predictorsQ[$i])) {
                     $regression = new \mnshankar\LinearRegression\Regression();
                     $regression->setX($predictorsQ[$i]);
                     $regression->setY($predictedQ[$i][$j]);
                     $regression->compute();
-                    $pvalues = array_values($regression->getPValues());
+                    $pvalues = ($regression->getPValues());
                     if (!is_nan($pvalues[0])) {
                         $linRegCoefficients['q'.$i.$j] = $pvalues;
                     } else {
-                        $linRegCoefficients['q'.$i.$j] = '-';
+                        $linRegCoefficients['q'.$i.$j] = 'No data';
                     }
                 } else {
-                    $linRegCoefficients['q'.$i.$j] = '-';
+                    $linRegCoefficients['q'.$i.$j] = 'No data';
                 }                  
             }
         }
