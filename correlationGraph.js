@@ -11,7 +11,7 @@ $(document).ready(() => {
     let coefficients = equationVars['coefficients']
     let stdErrs = equationVars['stdErrs']
 
-    let xVals = arrayColumn(regressionVars[col][0], row)
+    let xVals = arrayColumn(regressionVars[col][0], parseInt(row, 10)+1)
     let yVals = arrayColumn(regressionVars[col][1], 0)
 
     let xTitle, yTitle
