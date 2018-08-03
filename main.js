@@ -281,11 +281,6 @@ $(document).ready((event) => {
                     </tr>`)
                     )
                 }
-                let inputTexts = []
-                $('#tableAllBody tr').each((i, ival) => {
-                    inputTexts[i] = $(ival).text()
-                })
-                localStorage.setItem('inputTexts', JSON.stringify(inputTexts))
                 $('#tableAllBody tr').each((i, ival) => {
                     $(ival).find('td').each((j, jval) => {
                         $(jval).css('vertical-align', 'middle')

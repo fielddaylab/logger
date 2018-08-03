@@ -114,11 +114,11 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
             (
                 SELECT session_id FROM
                 (
-                    SELECT session_id, event
+                    SELECT level, session_id, event
                     FROM log
                     WHERE event='COMPLETE'
                     GROUP BY session_id
-                    HAVING COUNT(*) >= ?
+                    HAVING COUNT(DISTINCT level) >= ?
                 ) AS levels
             ) ";
             $params []= $minLevels;
@@ -728,7 +728,7 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
                     $levelsCompleted[$val['level']] = true;
                 }
             }
-            $numLevelsAll []= count($levelsCompleted);
+            $numLevelsAll[] = count($levelsCompleted);
         }
     }
 
