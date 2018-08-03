@@ -11,7 +11,10 @@ $(document).ready(() => {
     let intercepts = equationVars['intercepts']
     let coefficients = equationVars['coefficients']
     let stdErrs = equationVars['stdErrs']
-    console.log(inputTexts)
+    let rSqrs = equationVars['rSqrs']
+
+    if (typeof rSqrs[col] === 'number') $('#rSqrDiv').text('R-squared: ' + rSqrs[col].toFixed(3))
+    else $('#rSqrDiv').text('R-squared: ' + rSqrs[col])
 
     let xVals = [], yVals = []
     if (regressionVars[col][0])
@@ -87,6 +90,8 @@ $(document).ready(() => {
                 `</span>)<span id="xTooltip${i}" href=# data-toggle="tooltip" data-placement="bottom" title="Measured input of ${inputTexts[i]}">X` + (i+1) + '</span>'
             }
         }
+    } else {
+        equation = 'One or more coefficients are NaN'
     }
     $('#equationDiv').html(equation)
     $('[data-toggle="tooltip"').tooltip()

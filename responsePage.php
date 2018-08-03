@@ -1018,6 +1018,7 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
     $intercepts = array();
     $coefficients = array();
     $stdErrs = array();
+    $rSqrs = array();
     if (!isset($reqSessionID)) {
         $predictors = array();
         $predictedGameComplete = array();
@@ -1051,6 +1052,7 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
         $intercepts []= array_shift($coefficients1);
         $coefficients []= $coefficients1;
         $stdErrs []= $regression1->getStdErrors();
+        $rSqrs []= is_finite($regression1->getRSquare()) ? $regression1->getRSquare() : 'NaN';
 
         $regression2 = new \mnshankar\LinearRegression\Regression();
         $regression2->setX($predictors);
@@ -1064,6 +1066,7 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
         $intercepts []= array_shift($coefficients2);
         $coefficients []= $coefficients2;
         $stdErrs []= $regression2->getStdErrors();
+        $rSqrs []= is_finite($regression2->getRSquare()) ? $regression2->getRSquare() : 'NaN';
 
         $regression3 = new \mnshankar\LinearRegression\Regression();
         $regression3->setX($predictors);
@@ -1077,6 +1080,7 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
         $intercepts []= array_shift($coefficients3);
         $coefficients []= $coefficients3;
         $stdErrs []= $regression3->getStdErrors();
+        $rSqrs []= is_finite($regression3->getRSquare()) ? $regression3->getRSquare() : 'NaN';
 
         $predictorsQ = array();
         $predictedQ = array();
@@ -1119,7 +1123,8 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
                     $coefficients []= $coefficientsq;
                     $rIsFinite = true;
                     foreach ($regression->getStdErrors() as $p) { if (!is_finite($p)) { $rIsFinite = false; break; }}
-                    $stdErrs []= ($rIsFinite) ? $regression->getStdErrors() : 0;
+                    $stdErrs []= ($rIsFinite) ? $regression->getStdErrors() : 'NaN';
+                    $rSqrs []= (is_finite($regression->getRSquare())) ? $regression->getRSquare() : 'NaN';
                 } else {
                     $linRegCoefficients['q'.$i.$j] = 'No data';
                 }                  
@@ -1132,7 +1137,7 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
     'sessionsAndTimes'=>$sessionsAndTimes, 'basicInfoSingle'=>$basicInfoSingle, 'graphDataSingle'=>$graphDataSingle, 
     'questionsSingle'=>$questionsSingle, 'levels'=>$levels, 'numSessions'=>$numSessions, 'questionsTotal'=>$questionsTotal,
     'linRegCoefficients'=>$linRegCoefficients, 'clusters'=>array('col1'=>$bestColumn1, 'col2'=>$bestColumn2, 'clusters'=>$clusterPoints, 'dunn'=>$bestDunn, 'sourceColumns'=>$usedColumns, 'eigenvectors'=>$eigenvectors),
-    'totalNumSessions'=>$totalNumSessions, 'regressionVars'=>$regressionVars, 'equationVars'=>array('intercepts'=>$intercepts, 'coefficients'=>$coefficients, 'stdErrs'=>$stdErrs));
+    'totalNumSessions'=>$totalNumSessions, 'regressionVars'=>$regressionVars, 'equationVars'=>array('intercepts'=>$intercepts, 'coefficients'=>$coefficients, 'stdErrs'=>$stdErrs, 'rSqrs'=>$rSqrs));
 
     // Return ALL the above information at once in a big array
     return $output;
