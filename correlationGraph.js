@@ -7,9 +7,11 @@ $(document).ready(() => {
     let col = getParameterByName('col')
     let regressionVars = JSON.parse(localStorage.getItem('regressionVars'))
     let equationVars = JSON.parse(localStorage.getItem('equationVars'))
+    let inputTexts = JSON.parse(localStorage.getItem('inputTexts'))
     let intercepts = equationVars['intercepts']
     let coefficients = equationVars['coefficients']
     let stdErrs = equationVars['stdErrs']
+    console.log(inputTexts)
 
     let xVals = [], yVals = []
     if (regressionVars[col][0])
@@ -74,16 +76,20 @@ $(document).ready(() => {
     }
     let equation = ''
     if (intercepts[col] && coefficients[col] && stdErrs[col]) {
-        equation = 'Y\' = (' + intercepts[col].toFixed(2) + '<span style="font-size:14px">±' + stdErrs[col][0].toFixed(2) + '</span>)'
+        equation = `<span id="yTooltip" href=# data-toggle="tooltip" data-placement="bottom" title="Predicted output of ${yTitle.toLowerCase()}">Y\'</span> = (` + 
+            intercepts[col].toFixed(2) + '<span style="font-size:14px">±' + stdErrs[col][0].toFixed(2) + '</span>)'
         for (let i = 0; i < coefficients[col].length; i++) {
             if (i == row) {
-                equation += ' + (' + coefficients[col][i].toFixed(2) + '<span style="font-size:14px">±' + stdErrs[col][i].toFixed(2) + '</span>)<b>X' + (i+1) + '</b>'
+                equation += ' + (' + coefficients[col][i].toFixed(2) + '<span style="font-size:14px">±' + stdErrs[col][i].toFixed(2) + 
+                    `</span>)<b><span id="xTooltip${i}" href=# data-toggle="tooltip" data-placement="bottom" title="Measured input of ${inputTexts[i]} (this graph)">X` + (i+1) + '</span></b>'
             } else {
-                equation += ' + (' + coefficients[col][i].toFixed(2) + '<span style="font-size:14px">±' + stdErrs[col][i].toFixed(2) + '</span>)X' + (i+1)
+                equation += ' + (' + coefficients[col][i].toFixed(2) + '<span style="font-size:14px">±' + stdErrs[col][i].toFixed(2) + 
+                `</span>)<span id="xTooltip${i}" href=# data-toggle="tooltip" data-placement="bottom" title="Measured input of ${inputTexts[i]}">X` + (i+1) + '</span>'
             }
         }
     }
     $('#equationDiv').html(equation)
+    $('[data-toggle="tooltip"').tooltip()
 
     let trace = {
         x: xVals,

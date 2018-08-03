@@ -280,7 +280,12 @@ $(document).ready((event) => {
                         <td></td>
                     </tr>`)
                     )
-                } 
+                }
+                let inputTexts = []
+                $('#tableAllBody tr').each((i, ival) => {
+                    inputTexts[i] = $(ival).text()
+                })
+                localStorage.setItem('inputTexts', JSON.stringify(inputTexts))
                 $('#tableAllBody tr').each((i, ival) => {
                     $(ival).find('td').each((j, jval) => {
                         $(jval).css('vertical-align', 'middle')
@@ -325,6 +330,7 @@ $(document).ready((event) => {
                             case 18:
                                 column = 'q33'; break
                         }
+                        
                         if (i < 6) {
                             let innerText = $('<div>')
                             if (typeof data.linRegCoefficients[column][i+1] === 'number') {
