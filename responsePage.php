@@ -1008,6 +1008,8 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
             }
             $clusterPoints[] = $points;
         }
+        $usedColumns = array_column($sourceColumns, 1);
+        $eigenvectors = $pca->getEigenvectors();
     }
 
     // Linear regression stuff
@@ -1130,7 +1132,7 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
     $output = array('goalsSingle'=>$goalsSingle, 'numLevelsAll'=>$numLevelsAll, 'numMovesAll'=>$numMovesAll, 'questionsAll'=>$questionsAll, 'basicInfoAll'=>$basicInfoAll,
     'sessionsAndTimes'=>$sessionsAndTimes, 'basicInfoSingle'=>$basicInfoSingle, 'graphDataSingle'=>$graphDataSingle, 
     'questionsSingle'=>$questionsSingle, 'levels'=>$levels, 'numSessions'=>$numSessions, 'questionsTotal'=>$questionsTotal,
-    'linRegCoefficients'=>$linRegCoefficients, 'clusters'=>array('col1'=>$bestColumn1, 'col2'=>$bestColumn2, 'clusters'=>$clusterPoints, 'dunn'=>$bestDunn),
+    'linRegCoefficients'=>$linRegCoefficients, 'clusters'=>array('col1'=>$bestColumn1, 'col2'=>$bestColumn2, 'clusters'=>$clusterPoints, 'dunn'=>$bestDunn, 'sourceColumns'=>$usedColumns, 'eigenvectors'=>$eigenvectors),
     'totalNumSessions'=>$totalNumSessions, 'regressionVars'=>$regressionVars, 'equationVars'=>array('intercepts'=>$intercepts, 'coefficients'=>$coefficients, 'stdErrs'=>$stdErrs));
 
     // Return ALL the above information at once in a big array
