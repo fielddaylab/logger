@@ -11,8 +11,11 @@ $(document).ready(() => {
     let coefficients = equationVars['coefficients']
     let stdErrs = equationVars['stdErrs']
 
-    let xVals = arrayColumn(regressionVars[col][0], parseInt(row, 10)+1)
-    let yVals = arrayColumn(regressionVars[col][1], 0)
+    let xVals = [], yVals = []
+    if (regressionVars[col][0])
+        xVals = arrayColumn(regressionVars[col][0], parseInt(row, 10)+1)
+    if (regressionVars[col][1])
+        yVals = arrayColumn(regressionVars[col][1], 0)
 
     let xTitle, yTitle
     switch (row) {
@@ -69,13 +72,15 @@ $(document).ready(() => {
         case '18':
             yTitle = 'Question 4 Answer D'; break
     }
-
-    let equation = 'Y\' = (' + intercepts[col].toFixed(2) + '<span style="font-size:14px">±' + stdErrs[col][0].toFixed(2) + '</span>)'
-    for (let i = 0; i < coefficients[col].length; i++) {
-        if (i == row) {
-            equation += ' + (' + coefficients[col][i].toFixed(2) + '<span style="font-size:14px">±' + stdErrs[col][i].toFixed(2) + '</span>)<b>X' + (i+1) + '</b>'
-        } else {
-            equation += ' + (' + coefficients[col][i].toFixed(2) + '<span style="font-size:14px">±' + stdErrs[col][i].toFixed(2) + '</span>)X' + (i+1)
+    let equation = ''
+    if (intercepts[col] && coefficients[col] && stdErrs[col]) {
+        equation = 'Y\' = (' + intercepts[col].toFixed(2) + '<span style="font-size:14px">±' + stdErrs[col][0].toFixed(2) + '</span>)'
+        for (let i = 0; i < coefficients[col].length; i++) {
+            if (i == row) {
+                equation += ' + (' + coefficients[col][i].toFixed(2) + '<span style="font-size:14px">±' + stdErrs[col][i].toFixed(2) + '</span>)<b>X' + (i+1) + '</b>'
+            } else {
+                equation += ' + (' + coefficients[col][i].toFixed(2) + '<span style="font-size:14px">±' + stdErrs[col][i].toFixed(2) + '</span>)X' + (i+1)
+            }
         }
     }
     $('#equationDiv').html(equation)
