@@ -740,17 +740,12 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
         }
         $moveNumbers = array();
         $cumulativeDistance1 = 0;
-        $lastCloseness1;
     
         foreach ($numMovesPerChallenge as $i=>$val) {
             $dataJson = json_decode($dataObj['data'][$i], true);
             if ($dataObj['events'][$i] === 'CUSTOM' && ($dataJson['event_custom'] === 'SLIDER_MOVE_RELEASE')) {
                 if ($dataJson['end_closeness'] < $dataJson['begin_closeness']) $moveGoodness1[$i] = 1;
                 else if ($dataJson['end_closeness'] > $dataJson['begin_closeness']) $moveGoodness1[$i] = -1;
-
-                $lastCloseness1 = $dataJson['end_closeness'];
-                if ($lastCloseness1 < 99999)
-                    $absDistanceToGoal1[$i] = round($lastCloseness1, 2);
             }
             $moveNumbers[$i] = $i;
             $cumulativeDistance1 += $moveGoodness1[$i];
@@ -831,13 +826,13 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
             'absDistanceToGoal1'=>$absDistanceToGoal1, 'absDistanceToGoal2'=>$absDistanceToGoal2, 'goalSlope1'=>$goalSlope1, 'goalSlope2'=>$goalSlope2, 'dataObj'=>$dataObj);
     } else {
         foreach ($sessionIDs as $index=>$session) {
-            $data = $allData[$sessionID];
+            $data = $allData[$session];
             $dataObj = $data['dataObj'];
-            $sessionLevels = array_keys($data['numMovesPerChallengeArray']);
+            $sessionLevels = array_keys($data['numMovesPerChallenge']);
             foreach ($sessionLevels as $j=>$level) {
                 $numMovesPerChallenge = $data['numMovesPerChallengeArray'][$level];
                 $numMoves = $data['numMovesPerChallenge'][$level];
-            
+
                 $distanceToGoal1;
                 $moveGoodness1;
                 $absDistanceToGoal1;
@@ -848,17 +843,12 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
                 }
                 $moveNumbers = array();
                 $cumulativeDistance1 = 0;
-                $lastCloseness1;
             
                 foreach ($numMovesPerChallenge as $i=>$val) {
                     $dataJson = json_decode($dataObj['data'][$i], true);
                     if ($dataObj['events'][$i] === 'CUSTOM' && ($dataJson['event_custom'] === 'SLIDER_MOVE_RELEASE')) {
                         if ($dataJson['end_closeness'] < $dataJson['begin_closeness']) $moveGoodness1[$i] = 1;
                         else if ($dataJson['end_closeness'] > $dataJson['begin_closeness']) $moveGoodness1[$i] = -1;
-        
-                        $lastCloseness1 = $dataJson['end_closeness'];
-                        if ($lastCloseness1 < 99999)
-                            $absDistanceToGoal1[$i] = round($lastCloseness1, 2);
                     }
                     $moveNumbers[$i] = $i;
                     $cumulativeDistance1 += $moveGoodness1[$i];
@@ -1012,6 +1002,9 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
     // Linear regression stuff
     $linRegCoefficients = array();
     $regressionVars = array();
+    $intercepts = array();
+    $coefficients = array();
+    $stdErrs = array();
     if (!isset($reqSessionID)) {
         $predictors = array();
         $predictedGameComplete = array();
@@ -1020,7 +1013,8 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
 
         foreach ($sessionIDs as $i=>$val) {
             $percentQuestionsCorrect = ($questionsAll['numsQuestions'][$i] === 0) ? 0 : $questionsAll['numsCorrect'][$i] / $questionsAll['numsQuestions'][$i];
-            $predictor = array($numMovesAll[$i], array_sum($typeCol[$i]), $levelsCol[$i], array_sum($timeCol[$i]), array_sum($avgCol[$i]), $percentQuestionsCorrect);
+            // 1 is for the intercept
+            $predictor = array(1, $numMovesAll[$i], array_sum($typeCol[$i]), $levelsCol[$i], array_sum($timeCol[$i]), array_sum($avgCol[$i]), $percentQuestionsCorrect);
             $predictors []= $predictor;
 
             $gameComplete = ($numLevelsAll[$i] >= 28) ? 1 : 0;
@@ -1040,6 +1034,10 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
         foreach ($regression1->getPValues() as $p) { if (!is_finite($p)) { $r1isFinite = false; break; }}
         $linRegCoefficients['gameComplete'] = ($r1isFinite) ? $regression1->getPValues() : 'No data';
         $regressionVars []= array($predictors, $predictedGameComplete);
+        $coefficients1 = $regression1->getCoefficients();
+        $intercepts []= array_shift($coefficients1);
+        $coefficients []= $coefficients1;
+        $stdErrs []= $regression1->getStdErrors();
 
         $regression2 = new \mnshankar\LinearRegression\Regression();
         $regression2->setX($predictors);
@@ -1049,6 +1047,9 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
         foreach ($regression2->getPValues() as $p) { if (!is_finite($p)) { $r2isFinite = false; break; }}
         $linRegCoefficients['level10'] = ($r2isFinite) ? $regression2->getPValues() : 'No data';
         $regressionVars []= array($predictors, $predictedLevel10);
+        $coefficients2 = $regression2->getCoefficients();
+        $intercepts []= array_shift($coefficients2);
+        $coefficients []= $coefficients2;
 
         $regression3 = new \mnshankar\LinearRegression\Regression();
         $regression3->setX($predictors);
@@ -1058,6 +1059,9 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
         foreach ($regression3->getPValues() as $p) { if (!is_finite($p)) { $r3isFinite = false; break; }}
         $linRegCoefficients['level20'] = ($r3isFinite) ? $regression3->getPValues() : 'No data';
         $regressionVars []= array($predictors, $predictedLevel20);
+        $coefficients3 = $regression3->getCoefficients();
+        $intercepts []= array_shift($coefficients3);
+        $coefficients []= $coefficients3;
 
         $predictorsQ = array();
         $predictedQ = array();
@@ -1069,7 +1073,7 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
                     $time = array_sum($timeCol[$i]);
                     $minMax = array_sum($avgCol[$i]);
                     $percentQuestionsCorrect = ($questionsAll['numsQuestions'][$i] === 0) ? 0 : $questionsAll['numsCorrect'][$i] / $questionsAll['numsQuestions'][$i];
-                    $predictorsQ[$j] []= array($numMovesAll[$i], array_sum($typeCol[$i]), $levelsCol[$i], array_sum($timeCol[$i]), array_sum($avgCol[$i]), $percentQuestionsCorrect);
+                    $predictorsQ[$j] []= array(1, $numMovesAll[$i], array_sum($typeCol[$i]), $levelsCol[$i], array_sum($timeCol[$i]), array_sum($avgCol[$i]), $percentQuestionsCorrect);
                     $q1a = ($val[$j] === 0) ? 1 : 0;
                     $q1b = ($val[$j] === 1) ? 1 : 0;
                     $q1c = ($val[$j] === 2) ? 1 : 0;
@@ -1095,6 +1099,9 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
                     } else {
                         $linRegCoefficients['q'.$i.$j] = 'No data';
                     }
+                    $coefficientsq = $regression->getCoefficients();
+                    $intercepts []= array_shift($coefficientsq);
+                    $coefficients []= $coefficientsq;
                 } else {
                     $linRegCoefficients['q'.$i.$j] = 'No data';
                 }                  
@@ -1107,7 +1114,7 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
     'sessionsAndTimes'=>$sessionsAndTimes, 'basicInfoSingle'=>$basicInfoSingle, 'graphDataSingle'=>$graphDataSingle, 
     'questionsSingle'=>$questionsSingle, 'levels'=>$levels, 'numSessions'=>$numSessions, 'questionsTotal'=>$questionsTotal,
     'linRegCoefficients'=>$linRegCoefficients, 'clusters'=>array('col1'=>$bestColumn1, 'col2'=>$bestColumn2, 'clusters'=>$clusterPoints, 'dunn'=>$bestDunn),
-    'totalNumSessions'=>$totalNumSessions, 'regressionVars'=>$regressionVars);
+    'totalNumSessions'=>$totalNumSessions, 'regressionVars'=>$regressionVars, 'equationVars'=>array('intercepts'=>$intercepts, 'coefficients'=>$coefficients, 'stdErrs'=>$stdErrs));
 
     // Return ALL the above information at once in a big array
     return $output;
