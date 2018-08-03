@@ -1117,12 +1117,11 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
                     $coefficientsq = $regression->getCoefficients();
                     $intercepts []= array_shift($coefficientsq);
                     $coefficients []= $coefficientsq;
-                    $stdErrs []= $regression->getStdErrors();
+                    $rIsFinite = true;
+                    foreach ($regression->getStdErrors() as $p) { if (!is_finite($p)) { $rIsFinite = false; break; }}
+                    $stdErrs []= ($rIsFinite) ? $regression->getStdErrors() : 0;
                 } else {
                     $linRegCoefficients['q'.$i.$j] = 'No data';
-                    $intercepts []= array_shift($coefficientsq);
-                    $coefficients []= $coefficientsq;
-                    $stdErrs []= $regression->getStdErrors();
                 }                  
             }
         }
