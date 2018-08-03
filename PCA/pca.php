@@ -265,6 +265,11 @@ class PCA
         return $this->newA;
     }
 
+    public function getEigenvectors()
+    {
+        return $this->Z_;
+    }
+
     /**
      * Return similarity
      * @return float
