@@ -115,6 +115,7 @@ $(document).ready((event) => {
             'numMovesPerChallenge': $('#numMovesPerChallenge').prop('checked') ? true : undefined,
             'knobAvgs': $('#knobAvgs').prop('checked') ? true : undefined,
             'levelTimes': $('#levelTimes').prop('checked') ? true : undefined,
+            'percentGoodMovesAll': $('#percentGoodMovesAll').prop('checked') ? true : undefined,
             'moveTypeChangesPerLevel': $('#moveTypeChangesPerLevel').prop('checked') ? true : undefined,
             'knobStdDevs': $('#knobStdDevs').prop('checked') ? true : undefined,
             'knobTotalAmts': $('#knobTotalAmts').prop('checked') ? true : undefined,
