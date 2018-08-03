@@ -68,6 +68,16 @@ function getTotalNumSessions($gameID, $db) {
     return $numSessions;
 }
 
+function array_column_fixed($input, $column_key) {
+    $output = [];
+    foreach ($input as $k => $v) {
+        if (isset($v[$column_key])) {
+            $output[$k] = $v[$column_key];
+        }
+    }
+    return $output;
+}
+
 function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
     if (!isset($reqSessionID)) {
         $minMoves = $_GET['minMoves'];
@@ -872,12 +882,13 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
         $clusterLevel = 4;
         $sourceColumns = [];
         $allColumns = [
-            [array_column($moveCol, $clusterLevel), 'numMovesPerChallenge', [216]],
-            [array_column($avgCol, $clusterLevel), 'knobAvgs', []],
-            [array_column($timeCol, $clusterLevel), 'levelTimes', [999999]],
-            [array_column($typeCol, $clusterLevel), 'moveTypeChangesPerLevel', []],
-            [array_column($stdCol, $clusterLevel), 'knobStdDevs', []],
-            [array_column($totalCol, $clusterLevel), 'knobTotalAmts', []],
+            [array_column_fixed($moveCol, $clusterLevel), 'numMovesPerChallenge', [216]],
+            [array_column_fixed($avgCol, $clusterLevel), 'knobAvgs', []],
+            [array_column_fixed($timeCol, $clusterLevel), 'levelTimes', [999999]],
+            [array_column_fixed($typeCol, $clusterLevel), 'moveTypeChangesPerLevel', []],
+            [array_column_fixed($stdCol, $clusterLevel), 'knobStdDevs', []],
+            [array_column_fixed($totalCol, $clusterLevel), 'knobTotalAmts', []],
+            [$percentGoodMovesAll[$clusterLevel], 'percentGoodMovesAll', []],
         ];
         $sourceColumns = [];
         foreach ($allColumns as $col) {
@@ -891,7 +902,7 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
 
         $pcaData = [];
         for ($i = 0; $i < count($sourceColumns); $i++) $pcaData[] = [];
-        for ($i = 0; $i < count($sourceColumns[0][0]); $i++) {
+        foreach (array_keys($sourceColumns[0][0]) as $i) {
             $good = true;
             for ($j = 0; $j < count($sourceColumns); $j++) {
                 $val = $sourceColumns[$j][0][$i];
