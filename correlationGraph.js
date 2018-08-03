@@ -6,14 +6,18 @@ $(document).ready(() => {
     let row = getParameterByName('row')
     let col = getParameterByName('col')
     let regressionVars = JSON.parse(localStorage.getItem('regressionVars'))
+    let equationVars = JSON.parse(localStorage.getItem('equationVars'))
+    let intercepts = equationVars['intercepts']
+    let coefficients = equationVars['coefficients']
+    let stdErrs = equationVars['stdErrs']
 
-    let xVals = arrayColumn(regressionVars[col][0], row)
+    let xVals = arrayColumn(regressionVars[col][0], parseInt(row, 10)+1)
     let yVals = arrayColumn(regressionVars[col][1], 0)
 
     let xTitle, yTitle
     switch (row) {
         case '0':
-            xTitle = '# moves'; break
+            xTitle = '# slider moves'; break
         case '1':
             xTitle = '# move type changes'; break
         case '2':
@@ -27,11 +31,11 @@ $(document).ready(() => {
     }
     switch (col) {
         case '0':
-            yTitle = 'Completion of game'; break
+            yTitle = 'Completion of challenge 5'; break
         case '1':
-            yTitle = 'Completion of level 10'; break
+            yTitle = 'Completion of challenge 1'; break
         case '2':
-            yTitle = 'Completion of level 20'; break
+            yTitle = 'Completion of challenge 3'; break
         case '3':
             yTitle = 'Question 1 Answer A'; break
         case '4':
@@ -65,7 +69,16 @@ $(document).ready(() => {
         case '18':
             yTitle = 'Question 4 Answer D'; break
     }
-    console.log(xTitle)
+
+    let equation = 'Y\' = (' + intercepts[col].toFixed(2) + '<span style="font-size:14px">±' + stdErrs[col][0].toFixed(2) + '</span>)'
+    for (let i = 0; i < coefficients[col].length; i++) {
+        if (i == row) {
+            equation += ' + (' + coefficients[col][i].toFixed(2) + '<span style="font-size:14px">±' + stdErrs[col][i].toFixed(2) + '</span>)<b>X' + (i+1) + '</b>'
+        } else {
+            equation += ' + (' + coefficients[col][i].toFixed(2) + '<span style="font-size:14px">±' + stdErrs[col][i].toFixed(2) + '</span>)X' + (i+1)
+        }
+    }
+    $('#equationDiv').html(equation)
 
     let trace = {
         x: xVals,

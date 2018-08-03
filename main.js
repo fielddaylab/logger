@@ -254,6 +254,7 @@ $(document).ready((event) => {
                 drawWavesHistograms(dataHistogram)
                 // Store the computation values for retrieval when the link is clicked
                 localStorage.setItem('regressionVars', JSON.stringify(data.regressionVars))
+                localStorage.setItem('equationVars', JSON.stringify(data.equationVars))
                 for (let i = 0; i < data.levels.length; i++) {
                     $('#tableAllBody').append(
                         $(`<tr>
@@ -326,9 +327,9 @@ $(document).ready((event) => {
                         }
                         if (i < 6) {
                             let innerText = $('<div>')
-                            if (typeof data.linRegCoefficients[column][i] === 'number') {
-                                innerText.html(' ' + Math.min(Math.max(data.linRegCoefficients[column][i], 0), 1).toFixed(4) + ' ')
-                                if (data.linRegCoefficients[column][i] < 0.05) {
+                            if (typeof data.linRegCoefficients[column][i+1] === 'number') {
+                                innerText.html(' ' + Math.min(Math.max(data.linRegCoefficients[column][i+1], 0), 1).toFixed(4) + ' ')
+                                if (data.linRegCoefficients[column][i+1] < 0.05) {
                                     $(innerText).css('background-color', '#82e072')
                                 }
                                 $(jval).html(innerText)

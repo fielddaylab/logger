@@ -1061,6 +1061,7 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
         $coefficients2 = $regression2->getCoefficients();
         $intercepts []= array_shift($coefficients2);
         $coefficients []= $coefficients2;
+        $stdErrs []= $regression2->getStdErrors();
 
         $regression3 = new \mnshankar\LinearRegression\Regression();
         $regression3->setX($predictors);
@@ -1073,6 +1074,7 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
         $coefficients3 = $regression3->getCoefficients();
         $intercepts []= array_shift($coefficients3);
         $coefficients []= $coefficients3;
+        $stdErrs []= $regression3->getStdErrors();
 
         $predictorsQ = array();
         $predictedQ = array();
@@ -1113,8 +1115,12 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
                     $coefficientsq = $regression->getCoefficients();
                     $intercepts []= array_shift($coefficientsq);
                     $coefficients []= $coefficientsq;
+                    $stdErrs []= $regression->getStdErrors();
                 } else {
                     $linRegCoefficients['q'.$i.$j] = 'No data';
+                    $intercepts []= array_shift($coefficientsq);
+                    $coefficients []= $coefficientsq;
+                    $stdErrs []= $regression->getStdErrors();
                 }                  
             }
         }
