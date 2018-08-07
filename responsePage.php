@@ -29,6 +29,20 @@ function average($arr) {
     return ($length > 0) ? $total / $length : -1;
 }
 
+function replaceNans($arr) {
+    $newArr = $arr;
+    foreach ($newArr as $i=>$val) {
+        if (is_array($val)) {
+            $newArr[$i] = replaceNaNs($newArr[$i]);
+        } else if (is_nan($val)) {
+            $newArr[$i] = 'NaN';
+        } else if (is_infinite($val)) {
+            $newArr[$i] = 'Inf';
+        }
+    }
+    return $newArr;
+}
+
 if (isset($_GET['gameID'])) {
     $returned;
     if (isset($_GET['sessionID'])) {
@@ -40,12 +54,13 @@ if (isset($_GET['gameID'])) {
     } else {
         $returned = getAndParseData($_GET['gameID'], $db, null, null);
     }
-    
+    //echo print_r($returned);
     $output = json_encode($returned);
     if ($output) {
         echo $output;
     } else {
-        die(json_last_error_msg());
+        http_response_code(500);
+        die('{ "error": "'.json_last_error_msg().'"}');
     }
 }
 
@@ -1046,13 +1061,13 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
         $regression1->compute();
         $r1isFinite = true;
         foreach ($regression1->getPValues() as $p) { if (!is_finite($p)) { $r1isFinite = false; break; }}
-        $linRegCoefficients['gameComplete'] = ($r1isFinite) ? $regression1->getPValues() : 'No data';
+        $linRegCoefficients['gameComplete'] = $regression1->getPValues();
         $regressionVars []= array($predictors, $predictedGameComplete);
         $coefficients1 = $regression1->getCoefficients();
         $intercepts []= array_shift($coefficients1);
         $coefficients []= $coefficients1;
         $stdErrs []= $regression1->getStdErrors();
-        $rSqrs []= is_finite($regression1->getRSquare()) ? $regression1->getRSquare() : 'NaN';
+        $rSqrs []= $regression1->getRSquare();
 
         $regression2 = new \mnshankar\LinearRegression\Regression();
         $regression2->setX($predictors);
@@ -1060,13 +1075,13 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
         $regression2->compute();
         $r2isFinite = true;
         foreach ($regression2->getPValues() as $p) { if (!is_finite($p)) { $r2isFinite = false; break; }}
-        $linRegCoefficients['level10'] = ($r2isFinite) ? $regression2->getPValues() : 'No data';
+        $linRegCoefficients['level10'] = $regression2->getPValues();
         $regressionVars []= array($predictors, $predictedLevel10);
         $coefficients2 = $regression2->getCoefficients();
         $intercepts []= array_shift($coefficients2);
         $coefficients []= $coefficients2;
         $stdErrs []= $regression2->getStdErrors();
-        $rSqrs []= is_finite($regression2->getRSquare()) ? $regression2->getRSquare() : 'NaN';
+        $rSqrs []= $regression2->getRSquare();
 
         $regression3 = new \mnshankar\LinearRegression\Regression();
         $regression3->setX($predictors);
@@ -1074,13 +1089,13 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
         $regression3->compute();
         $r3isFinite = true;
         foreach ($regression3->getPValues() as $p) { if (!is_finite($p)) { $r3isFinite = false; break; }}
-        $linRegCoefficients['level20'] = ($r3isFinite) ? $regression3->getPValues() : 'No data';
+        $linRegCoefficients['level20'] = $regression3->getPValues();
         $regressionVars []= array($predictors, $predictedLevel20);
         $coefficients3 = $regression3->getCoefficients();
         $intercepts []= array_shift($coefficients3);
         $coefficients []= $coefficients3;
         $stdErrs []= $regression3->getStdErrors();
-        $rSqrs []= is_finite($regression3->getRSquare()) ? $regression3->getRSquare() : 'NaN';
+        $rSqrs []= $regression3->getRSquare();
 
         $predictorsQ = array();
         $predictedQ = array();
@@ -1106,28 +1121,22 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
         }
         for ($i = 0; $i < 4; $i++) {
             for ($j = 0; $j < 4; $j++) {
-                $regressionVars []= array($predictorsQ[$i], $predictedQ[$i][$j]);
-                if (isset($predictorsQ[$i])) {
+                if (isset($predictorsQ[$i], $predictedQ[$i][$j])) {
+                    $regressionVars []= array($predictorsQ[$i], $predictedQ[$i][$j]);
+
                     $regression = new \mnshankar\LinearRegression\Regression();
                     $regression->setX($predictorsQ[$i]);
                     $regression->setY($predictedQ[$i][$j]);
                     $regression->compute();
                     $pvalues = ($regression->getPValues());
-                    if (!is_nan($pvalues[0])) {
-                        $linRegCoefficients['q'.$i.$j] = $pvalues;
-                    } else {
-                        $linRegCoefficients['q'.$i.$j] = 'No data';
-                    }
+                    $linRegCoefficients['q'.$i.$j] = $pvalues;
                     $coefficientsq = $regression->getCoefficients();
                     $intercepts []= array_shift($coefficientsq);
                     $coefficients []= $coefficientsq;
-                    $rIsFinite = true;
-                    foreach ($regression->getStdErrors() as $p) { if (!is_finite($p)) { $rIsFinite = false; break; }}
-                    $stdErrs []= ($rIsFinite) ? $regression->getStdErrors() : 'NaN';
-                    $rSqrs []= (is_finite($regression->getRSquare())) ? $regression->getRSquare() : 'NaN';
-                } else {
-                    $linRegCoefficients['q'.$i.$j] = 'No data';
-                }                  
+                    $stdErrs []= $regression->getStdErrors();
+                    $rSqrs []= $regression->getRSquare();  
+                }
+            
             }
         }
     }
@@ -1138,9 +1147,9 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
     'questionsSingle'=>$questionsSingle, 'levels'=>$levels, 'numSessions'=>$numSessions, 'questionsTotal'=>$questionsTotal,
     'linRegCoefficients'=>$linRegCoefficients, 'clusters'=>array('col1'=>$bestColumn1, 'col2'=>$bestColumn2, 'clusters'=>$clusterPoints, 'dunn'=>$bestDunn, 'sourceColumns'=>$usedColumns, 'eigenvectors'=>$eigenvectors),
     'totalNumSessions'=>$totalNumSessions, 'regressionVars'=>$regressionVars, 'equationVars'=>array('intercepts'=>$intercepts, 'coefficients'=>$coefficients, 'stdErrs'=>$stdErrs, 'rSqrs'=>$rSqrs));
-
+    
     // Return ALL the above information at once in a big array
-    return $output;
+    return replaceNans($output);
 }
 
 $db->close();

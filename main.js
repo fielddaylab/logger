@@ -330,18 +330,24 @@ $(document).ready((event) => {
                         
                         if (i < 6) {
                             let innerText = $('<div>')
-                            if (typeof data.linRegCoefficients[column][i+1] === 'number') {
-                                innerText.html(' ' + Math.min(Math.max(data.linRegCoefficients[column][i+1], 0), 1).toFixed(4) + ' ')
-                                if (data.linRegCoefficients[column][i+1] <= alpha) {
-                                    $(innerText).css('background-color', '#82e072')
+                            if (data.linRegCoefficients[column]) {
+                                if (typeof data.linRegCoefficients[column][i+1] === 'number') {
+                                    innerText.html(' ' + Math.min(Math.max(data.linRegCoefficients[column][i+1], 0), 1).toFixed(4) + ' ')
+                                    if (data.linRegCoefficients[column][i+1] <= alpha) {
+                                        $(innerText).css('background-color', '#82e072')
+                                    }
+                                    $(jval).html(innerText)
+                                    $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&row=${i}&col=${j}" target="_blank"></a>`)
+                                } else {
+                                    innerText.html(data.linRegCoefficients[column][i+1])
+                                    $(jval).html(innerText)
+                                    $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&row=${i}&col=${j}" target="_blank"></a>`)
                                 }
-                                $(jval).html(innerText)
-                                $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&row=${i}&col=${j}" target="_blank"></a>`)
                             } else {
-                                innerText.html(data.linRegCoefficients[column])
+                                innerText.html('No data')
                                 $(jval).html(innerText)
-                                $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&row=${i}&col=${j}" target="_blank"></a>`)
                             }
+
                             $(innerText).css({'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif'})
                         }
                         // Color the correct answer for each question
