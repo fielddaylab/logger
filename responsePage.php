@@ -934,82 +934,86 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
             }
         }
 
-        $pca = new PCA\PCA($pcaDataScaled);
-        $pca->changeDimension(2);
-        $pca->applayingPca();
-        $columns = $pca->getNewData();
+        if (count($pcaDataScaled[0]) > 1) {
 
-        $bestDunn = 0;
-        $bestColumn1 = 'pca1';
-        $bestColumn2 = 'pca2';
-        $bestSpace = null;
-        $bestClusters = [];
-        $clusterLevel = 0;
+            $pca = new PCA\PCA($pcaDataScaled);
+            $pca->changeDimension(2);
+            $pca->applayingPca();
+            $columns = $pca->getNewData();
 
-        for ($k = 2; $k < 5; $k++) {
-            $space = new KMeans\Space(2);
-            $xs = $columns[0];
-            $ys = $columns[1];
-            foreach ($xs as $xi => $x) {
-                $y = $ys[$xi];
-                $label = '';
-                foreach (array_column($pcaData, $xi) as $colIndex => $val) {
-                    $label .= $sourceColumns[$colIndex][1] . ': ' . $val . "<br>";
+            $bestDunn = 0;
+            $bestColumn1 = 'pca1';
+            $bestColumn2 = 'pca2';
+            $bestSpace = null;
+            $bestClusters = [];
+            $clusterLevel = 0;
+
+            for ($k = 2; $k < 5; $k++) {
+                $space = new KMeans\Space(2);
+                $xs = $columns[0];
+                $ys = $columns[1];
+                foreach ($xs as $xi => $x) {
+                    $y = $ys[$xi];
+                    $label = '';
+                    foreach (array_column($pcaData, $xi) as $colIndex => $val) {
+                        $label .= $sourceColumns[$colIndex][1] . ': ' . $val . "<br>";
+                    }
+                    $space->addPoint([$x, $y], $label);
                 }
-                $space->addPoint([$x, $y], $label);
-            }
-            $clusters = $space->solve($k);
+                $clusters = $space->solve($k);
 
-            $minInterDist = null;
-            $maxIntraDist = null;
-            for ($ci = 0; $ci < count($clusters); $ci++) {
-                for ($cj = $ci + 1; $cj < count($clusters); $cj++) {
-                    // use distance between centers for simplicity
-                    $interDist = sqrt
-                        ( (pow(($clusters[$ci][0] - $clusters[$cj][0]), 2))
-                        + (pow(($clusters[$ci][1] - $clusters[$cj][1]),  2))
-                        );
-                    if (is_null($minInterDist) || $interDist < $minInterDist) {
-                        $minInterDist = $interDist;
+                $minInterDist = null;
+                $maxIntraDist = null;
+                for ($ci = 0; $ci < count($clusters); $ci++) {
+                    for ($cj = $ci + 1; $cj < count($clusters); $cj++) {
+                        // use distance between centers for simplicity
+                        $interDist = sqrt
+                            ( (pow(($clusters[$ci][0] - $clusters[$cj][0]), 2))
+                            + (pow(($clusters[$ci][1] - $clusters[$cj][1]),  2))
+                            );
+                        if (is_null($minInterDist) || $interDist < $minInterDist) {
+                            $minInterDist = $interDist;
+                        }
                     }
                 }
-            }
-            for ($ci = 0; $ci < count($clusters); $ci++) {
-                $cluster = $clusters[$ci];
-                $intraDist = null;
-                // fudge intracluster distance by finding max distance from center to a point
-                foreach ($cluster as $point) {
-                    $pointDist = sqrt
-                        ( (pow(($point[0] - $cluster[0]), 2))
-                        + (pow(($point[1] - $cluster[1]), 2))
-                        );
-                    if (is_null($intraDist) || $pointDist > $intraDist) {
-                        $intraDist = $pointDist;
+                for ($ci = 0; $ci < count($clusters); $ci++) {
+                    $cluster = $clusters[$ci];
+                    $intraDist = null;
+                    // fudge intracluster distance by finding max distance from center to a point
+                    foreach ($cluster as $point) {
+                        $pointDist = sqrt
+                            ( (pow(($point[0] - $cluster[0]), 2))
+                            + (pow(($point[1] - $cluster[1]), 2))
+                            );
+                        if (is_null($intraDist) || $pointDist > $intraDist) {
+                            $intraDist = $pointDist;
+                        }
+                    }
+                    if (is_null($maxIntraDist) || $intraDist > $maxIntraDist) {
+                        $maxIntraDist = $intraDist;
                     }
                 }
-                if (is_null($maxIntraDist) || $intraDist > $maxIntraDist) {
-                    $maxIntraDist = $intraDist;
+
+                $thisDunn = $minInterDist / $maxIntraDist;
+                if ($thisDunn > $bestDunn) {
+                    $bestDunn = $thisDunn;
+                    $bestSpace = $space;
+                    $bestClusters = $clusters;
                 }
             }
 
-            $thisDunn = $minInterDist / $maxIntraDist;
-            if ($thisDunn > $bestDunn) {
-                $bestDunn = $thisDunn;
-                $bestSpace = $space;
-                $bestClusters = $clusters;
+            $clusterPoints = [];
+            foreach ($bestClusters as $cluster) {
+                $points = [];
+                foreach ($cluster->getIterator() as $point) {
+                    $points[] = [$point[0], $point[1], $bestSpace[$point]];
+                }
+                $clusterPoints[] = $points;
             }
-        }
+            $usedColumns = array_column($sourceColumns, 1);
+            $eigenvectors = $pca->getEigenvectors();
 
-        $clusterPoints = [];
-        foreach ($bestClusters as $cluster) {
-            $points = [];
-            foreach ($cluster->getIterator() as $point) {
-                $points[] = [$point[0], $point[1], $bestSpace[$point]];
-            }
-            $clusterPoints[] = $points;
         }
-        $usedColumns = array_column($sourceColumns, 1);
-        $eigenvectors = $pca->getEigenvectors();
     }
 
     // Linear regression stuff
