@@ -94,6 +94,7 @@ $(document).ready(() => {
         equation = 'One or more coefficients are NaN'
     }
     $('#equationDiv').html(equation)
+    $('#infoDiv').html('Hover over any variable for an explanation of what it is.')
     $('[data-toggle="tooltip"').tooltip()
 
     let trace = {

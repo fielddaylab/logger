@@ -325,12 +325,14 @@ $(document).ready((event) => {
                             case 18:
                                 column = 'q33'; break
                         }
+                        let alpha = 0.05 / 6//$('#tableAllBody tr').length
+                        $('#alphaValueDiv').html(new Number(alpha.toPrecision(3)).toString())
                         
                         if (i < 6) {
                             let innerText = $('<div>')
                             if (typeof data.linRegCoefficients[column][i+1] === 'number') {
                                 innerText.html(' ' + Math.min(Math.max(data.linRegCoefficients[column][i+1], 0), 1).toFixed(4) + ' ')
-                                if (data.linRegCoefficients[column][i+1] < 0.05) {
+                                if (data.linRegCoefficients[column][i+1] <= alpha) {
                                     $(innerText).css('background-color', '#82e072')
                                 }
                                 $(jval).html(innerText)
