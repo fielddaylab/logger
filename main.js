@@ -579,7 +579,7 @@ $(document).ready((event) => {
         $('#goalsDiv4All').html('Cluster graph, dunn = ' + data.clusters.dunn)
         $('#goalsDiv4All').css('display', 'block')
         eigen = '<ul>';
-        data.clusters.eigenvectors.forEach((eigenCol, i) => {
+        (data.clusters.eigenvectors || []).forEach((eigenCol, i) => {
             eigen += '<li><p>PCA eigenvector ' + (i + 1) + '</p><ul>';
             eigenCol.forEach((val, j) => {
                 eigen += '<li>' + data.clusters.sourceColumns[j] + ': ' + val + '</li>';
@@ -590,7 +590,7 @@ $(document).ready((event) => {
         $('#goalsEigen4All').html(eigen);
         $('#goalsEigen4All').css('display', 'block')
         $('#goalsGraph4All').css('display', 'block')
-        let trace4 = data.clusters.clusters.map(function(cluster, i){
+        let trace4 = (data.clusters.clusters || []).map(function(cluster, i){
             return {
                 x: cluster.map((ary) => ary[0]),
                 y: cluster.map((ary) => ary[1]),
