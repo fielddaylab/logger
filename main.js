@@ -27,6 +27,12 @@ $(document).ready((event) => {
     $('#endDate').val(endyyyy+'-'+endmm+'-'+enddd)
 
     let totalSessions
+    let errorTracker = 0
+    window.onerror = () => {
+        errorTracker = 0
+        off()
+        $('#errorMessage').css('visibility', 'visible').html('A JavaScript error has occurred. See console for details.') 
+    }
     
     $(document).on('change', '#gameSelect', (event) => {
         // console.time('gameSelect')
@@ -37,6 +43,7 @@ $(document).ready((event) => {
     })
 
     $(document).on('change', '#sessionSelect', (event) => {
+        on()
         getSingleData(true, false)
         getSingleData(false, true)
     })
@@ -61,7 +68,7 @@ $(document).ready((event) => {
             }
         } else {
             $('#formError').show()
-            $('#filterModal').modal('hide')
+            //$('#filterModal').modal('hide')
             $('#formError').html('Please select a game before filtering sessions.')
         }
     })
@@ -79,6 +86,7 @@ $(document).ready((event) => {
             $('#startDate').prop('disabled', true)
             $('#endDate').prop('disabled', true)
             $('#maxRows').prop('disabled', true)
+            $('#maxLevels').prop('disabled', true)
         } else {
             $('#minMoves').prop('disabled', false)
             $('#minQuestions').prop('disabled', false)
@@ -86,6 +94,7 @@ $(document).ready((event) => {
             $('#startDate').prop('disabled', false)
             $('#endDate').prop('disabled', false)
             $('#maxRows').prop('disabled', false)
+            $('#maxLevels').prop('disabled', false)
         }
     })
 
@@ -110,6 +119,7 @@ $(document).ready((event) => {
             'minMoves': $('#minMoves').val(),
             'minQuestions': $('#minQuestions').val(),
             'minLevels': $('#minLevels').val(),
+            'maxLevels': $('#maxLevels').val(),
             'startDate': $('#startDate').val(),
             'endDate': $('#endDate').val(),
             'numMovesPerChallenge': $('#numMovesPerChallenge').prop('checked') ? true : undefined,
@@ -203,7 +213,8 @@ $(document).ready((event) => {
                 $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Knob max-min (total): <a href='#amtsTotalAll' data-toggle='collapse' id='amtsTotalCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(amtsTotalList)
                     .on('hide.bs.collapse', () => {$('#amtsTotalCollapseBtnAll').html('[+]')})
                     .on('show.bs.collapse', () => {$('#amtsTotalCollapseBtnAll').html('[−]')}))
-                for (let i = 0; i < data.basicInfoAll.times.length; i++) {
+
+                for (let i = Object.keys(data.basicInfoAll.times)[0]; i <= Object.keys(data.basicInfoAll.times)[Object.keys(data.basicInfoAll.times).length-1]; i++) {
                     // append times
                     $('#timesAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.times[i].toFixed(2)} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
 
@@ -255,10 +266,10 @@ $(document).ready((event) => {
                 // Store the computation values for retrieval when the link is clicked
                 localStorage.setItem('regressionVars', JSON.stringify(data.regressionVars))
                 localStorage.setItem('equationVars', JSON.stringify(data.equationVars))
-                for (let i = 0; i < data.levels.length; i++) {
+                for (let i = data.startLevel; i <= data.endLevel; i++) {
                     $('#tableAllBody').append(
                         $(`<tr>
-                        <th scope="row">% good moves lvl ${i}</th>
+                        <th scope="row">% good <br>moves lvl ${i}</th>
                         <td></td>
                         <td></td>
                         <td></td>
@@ -926,11 +937,17 @@ $(document).ready((event) => {
 
     function showError(error) {
         $('#errorMessage').css('visibility', 'visible')
+        $('#errorMessage').html('An internal server error has occurred. See console for details.')
         console.log(error)
     }
 
     function hideError() {
-        $('#errorMessage').css('visibility', 'hidden')
+        errorTracker++
+        if (errorTracker > 2) {
+            $('#errorMessage').css('visibility', 'hidden')
+            errorTracker = 0
+        }
+            
     }
 
     function showNoDataLeft() {

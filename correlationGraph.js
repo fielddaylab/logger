@@ -80,13 +80,13 @@ $(document).ready(() => {
     let equation = ''
     if (intercepts[col] && coefficients[col] && stdErrs[col]) {
         equation = `<span id="yTooltip" href=# data-toggle="tooltip" data-placement="bottom" title="Predicted output of ${yTitle.toLowerCase()}">Y\'</span> = (` + 
-            intercepts[col].toFixed(2) + '<span style="font-size:14px">±' + stdErrs[col][0].toFixed(2) + '</span>)'
+            new Number(intercepts[col]).toFixed(2) + '<span style="font-size:14px">±' + new Number(stdErrs[col][0]).toFixed(2) + '</span>)'
         for (let i = 0; i < coefficients[col].length; i++) {
             if (i == row) {
-                equation += ' + (' + coefficients[col][i].toFixed(2) + '<span style="font-size:14px">±' + stdErrs[col][i].toFixed(2) + 
+                equation += ' + (' + new Number(coefficients[col][i]).toFixed(2) + '<span style="font-size:14px">±' + new Number(stdErrs[col][i]).toFixed(2) + 
                     `</span>)<b><span id="xTooltip${i}" href=# data-toggle="tooltip" data-placement="bottom" title="Measured input of ${inputTexts[i]} (this graph)">X` + (i+1) + '</span></b>'
             } else {
-                equation += ' + (' + coefficients[col][i].toFixed(2) + '<span style="font-size:14px">±' + stdErrs[col][i].toFixed(2) + 
+                equation += ' + (' + new Number(coefficients[col][i]).toFixed(2) + '<span style="font-size:14px">±' + new Number(stdErrs[col][i]).toFixed(2) + 
                 `</span>)<span id="xTooltip${i}" href=# data-toggle="tooltip" data-placement="bottom" title="Measured input of ${inputTexts[i]}">X` + (i+1) + '</span>'
             }
         }

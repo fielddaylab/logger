@@ -26,17 +26,17 @@ function average($arr) {
     $filtered = array_filter($arr, function($val) { return !is_string($val) && isset($val); });
     $total = array_sum($filtered);
     $length = count($filtered);
-    return ($length > 0) ? $total / $length : -1;
+    return ($length > 0) ? $total / $length : 'NaN';
 }
 
 function replaceNans($arr) {
     $newArr = $arr;
     foreach ($newArr as $i=>$val) {
         if (is_array($val)) {
-            $newArr[$i] = replaceNaNs($newArr[$i]);
-        } else if (is_nan($val)) {
+            $newArr[$i] = replaceNans($newArr[$i]);
+        } else if (!is_string($val) && is_nan($val)) {
             $newArr[$i] = 'NaN';
-        } else if (is_infinite($val)) {
+        } else if (!is_string($val) && is_infinite($val)) {
             $newArr[$i] = 'Inf';
         }
     }
@@ -96,7 +96,8 @@ function array_column_fixed($input, $column_key) {
 function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
     if (!isset($reqSessionID)) {
         $minMoves = $_GET['minMoves'];
-        $minLevels = $_GET['minLevels'];
+        $startLevel = $_GET['minLevels'];
+        $endLevel = $_GET['maxLevels'];
         $minQuestions = $_GET['minQuestions'];
         $startDate = $_GET['startDate'];
         $endDate = $_GET['endDate'];
@@ -114,50 +115,60 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
             (
                 SELECT session_id FROM
                 (
-                    SELECT session_id, event_custom
-                    FROM log
-                    WHERE event_custom=1
-                    GROUP BY session_id
-                    HAVING COUNT(*) >= ?
+                    SELECT * FROM (
+                        SELECT session_id, event_custom
+                        FROM log
+                        WHERE event_custom=1
+                        GROUP BY session_id
+                        HAVING COUNT(*) >= ?
+                    LIMIT ?) temp
                 ) AS moves
             ) ";
             $params []= $minMoves;
-            $paramTypes .= 'i';
+            $params []= $maxRows;
+            $paramTypes .= 'ii';
         }
-        if ($minLevels > 0) {
-            $query .= "AND a.session_id IN
+
+        $distinctLevels = $endLevel - $startLevel + 1;
+        $query .= "AND a.session_id IN
+        (
+            SELECT session_id FROM
             (
-                SELECT session_id FROM
-                (
-                    SELECT level, session_id, event
+                SELECT * FROM (
+                    SELECT DISTINCT level, session_id, event
                     FROM log
-                    WHERE event='COMPLETE'
+                    WHERE event='COMPLETE' AND level BETWEEN ? AND ?
                     GROUP BY session_id
                     HAVING COUNT(DISTINCT level) >= ?
-                ) AS levels
-            ) ";
-            $params []= $minLevels;
-            $paramTypes .= 'i';
-        }
+                LIMIT ?) temp
+            ) AS levels
+        ) ";
+        $params []= $startLevel;
+        $params []= $endLevel;
+        $params []= $distinctLevels;
+        $params []= $maxRows;
+        $paramTypes .= 'iiii';
+
         if ($minQuestions > 0) {
             $query .= "AND a.session_id IN
             (
                 SELECT session_id FROM
                 (
-                    SELECT session_id, event_custom
-                    FROM log
-                    WHERE event_custom=3
-                    GROUP BY session_id
-                    HAVING COUNT(*) >= ?
+                    SELECT * FROM (
+                        SELECT session_id, event_custom
+                        FROM log
+                        WHERE event_custom=3
+                        GROUP BY session_id
+                        HAVING COUNT(*) >= ?
+                    LIMIT ?) temp
                 ) AS questions
             ) ";
             $params []= $minQuestions;
-            $paramTypes .= 'i';
+            $params []= $maxRows;
+            $paramTypes .= 'ii';
         }
 
-        $query .= "ORDER BY a.client_time LIMIT ?";
-        $params []= $maxRows;
-        $paramTypes .= 'i';
+        $query .= "ORDER BY a.client_time";
 
         $stmt = queryMultiParam($db, $query, $paramTypes, $params);
         if($stmt === NULL) {
@@ -208,7 +219,6 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
         }
         $stmt->close();
     }
-
     // Sort every id's sessions by date
     foreach ($sessionAttributes as $i=>$val) {
         uasort($sessionAttributes[$i], function($a, $b) {
@@ -226,7 +236,9 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
     $numSessions = count($uniqueSessions);
 
     $numEvents = count($allEvents);
-    $levels = array_unique(array_column($allEvents, 'level'));
+    $completeEvents = array_filter($allEvents, function($a) { return $a['event'] === 'COMPLETE'; });
+    $completeLevels = array_column($completeEvents, 'level');
+    $levels = array_filter(array_unique(array_column($allEvents, 'level')), function($a) use($completeLevels) { return in_array($a, $completeLevels); });
     sort($levels);
     $numLevels = count($levels);
 
@@ -650,7 +662,11 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
         $totalCol = array_column($allData, 'knobTotalAmts');
         $avgCol = array_column($allData, 'knobAvgs');
 
-        for ($i = 0; $i < $numLevels; $i++) {
+        $newArray = array();
+        $a = array_column($allEvents, 'level');
+        $b = array_column($allEvents, 'event');
+
+        for ($i = $levels[0]; $i <= $levels[count($levels)-1]; $i++) {
             $totalTimesPerLevelAll[$i] = average(array_column($timeCol, $i));
             $totalMovesPerLevelArray[$i] = average(array_column($moveCol, $i));
             $totalMoveTypeChangesPerLevelAll[$i] = average(array_column($typeCol, $i));
@@ -1063,8 +1079,6 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
         $regression1->setX($predictors);
         $regression1->setY($predictedGameComplete);
         $regression1->compute();
-        $r1isFinite = true;
-        foreach ($regression1->getPValues() as $p) { if (!is_finite($p)) { $r1isFinite = false; break; }}
         $linRegCoefficients['gameComplete'] = $regression1->getPValues();
         $regressionVars []= array($predictors, $predictedGameComplete);
         $coefficients1 = $regression1->getCoefficients();
@@ -1077,8 +1091,6 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
         $regression2->setX($predictors);
         $regression2->setY($predictedLevel10);
         $regression2->compute();
-        $r2isFinite = true;
-        foreach ($regression2->getPValues() as $p) { if (!is_finite($p)) { $r2isFinite = false; break; }}
         $linRegCoefficients['level10'] = $regression2->getPValues();
         $regressionVars []= array($predictors, $predictedLevel10);
         $coefficients2 = $regression2->getCoefficients();
@@ -1091,8 +1103,6 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
         $regression3->setX($predictors);
         $regression3->setY($predictedLevel20);
         $regression3->compute();
-        $r3isFinite = true;
-        foreach ($regression3->getPValues() as $p) { if (!is_finite($p)) { $r3isFinite = false; break; }}
         $linRegCoefficients['level20'] = $regression3->getPValues();
         $regressionVars []= array($predictors, $predictedLevel20);
         $coefficients3 = $regression3->getCoefficients();
@@ -1140,7 +1150,6 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
                     $stdErrs []= $regression->getStdErrors();
                     $rSqrs []= $regression->getRSquare();  
                 }
-            
             }
         }
     }
@@ -1149,8 +1158,9 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
     $output = array('goalsSingle'=>$goalsSingle, 'numLevelsAll'=>$numLevelsAll, 'numMovesAll'=>$numMovesAll, 'questionsAll'=>$questionsAll, 'basicInfoAll'=>$basicInfoAll,
     'sessionsAndTimes'=>$sessionsAndTimes, 'basicInfoSingle'=>$basicInfoSingle, 'graphDataSingle'=>$graphDataSingle, 
     'questionsSingle'=>$questionsSingle, 'levels'=>$levels, 'numSessions'=>$numSessions, 'questionsTotal'=>$questionsTotal,
-    'linRegCoefficients'=>$linRegCoefficients, 'clusters'=>array('col1'=>$bestColumn1, 'col2'=>$bestColumn2, 'clusters'=>$clusterPoints, 'dunn'=>$bestDunn, 'sourceColumns'=>$usedColumns, 'eigenvectors'=>$eigenvectors),
-    'totalNumSessions'=>$totalNumSessions, 'regressionVars'=>$regressionVars, 'equationVars'=>array('intercepts'=>$intercepts, 'coefficients'=>$coefficients, 'stdErrs'=>$stdErrs, 'rSqrs'=>$rSqrs));
+    'linRegCoefficients'=>$linRegCoefficients, 'clusters'=>array('col1'=>$bestColumn1, 'col2'=>$bestColumn2, 'clusters'=>$clusterPoints, 'dunn'=>$bestDunn, 
+    'sourceColumns'=>$usedColumns, 'eigenvectors'=>$eigenvectors), 'totalNumSessions'=>$totalNumSessions, 'regressionVars'=>$regressionVars, 
+    'equationVars'=>array('intercepts'=>$intercepts, 'coefficients'=>$coefficients, 'stdErrs'=>$stdErrs, 'rSqrs'=>$rSqrs), 'startLevel'=>$startLevel, 'endLevel'=>$endLevel);
     
     // Return ALL the above information at once in a big array
     return replaceNans($output);
