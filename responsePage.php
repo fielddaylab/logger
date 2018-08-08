@@ -912,15 +912,15 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
     if (!isset($reqSessionID)) {
         $sourceColumns = [];
         $allColumns = [];
-        for ($lvl = $startLevel; $lvl <= $endLevel; $lvl++) {
+        for ($lvl = intval($startLevel); $lvl <= intval($endLevel); $lvl++) {
             $allColumns = array_merge($allColumns, [
-                [array_column_fixed($moveCol, $lvl), $lvl . ' numMovesPerChallenge', [216]],
-                [array_column_fixed($avgCol, $lvl), $lvl . ' knobAvgs', []],
-                [array_column_fixed($timeCol, $lvl), $lvl . ' levelTimes', [999999]],
-                [array_column_fixed($typeCol, $lvl), $lvl . ' moveTypeChangesPerLevel', []],
-                [array_column_fixed($stdCol, $lvl), $lvl . ' knobStdDevs', []],
-                [array_column_fixed($totalCol, $lvl), $lvl . ' knobTotalAmts', []],
-                [$percentGoodMovesAll[$lvl], $lvl . ' percentGoodMovesAll', []],
+                [array_column_fixed($moveCol, $lvl), 'numMovesPerChallenge', [216], $lvl],
+                [array_column_fixed($avgCol, $lvl), 'knobAvgs', [], $lvl],
+                [array_column_fixed($timeCol, $lvl), 'levelTimes', [999999], $lvl],
+                [array_column_fixed($typeCol, $lvl), 'moveTypeChangesPerLevel', [], $lvl],
+                [array_column_fixed($stdCol, $lvl), 'knobStdDevs', [], $lvl],
+                [array_column_fixed($totalCol, $lvl), 'knobTotalAmts', [], $lvl],
+                [$percentGoodMovesAll[$lvl], 'percentGoodMovesAll', [], $lvl],
             ]);
         }
         $sourceColumns = [];
@@ -963,7 +963,13 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
             }
             $range = $max_val - $min_val;
             for ($j = 0; $j < count($pcaData[$i]); $j++) {
-                $pcaDataScaled[$i][] = ($pcaData[$i][$j] - $min_val) / $range;
+                if ($range > 0) {
+                    $pcaDataScaled[$i][] = ($pcaData[$i][$j] - $min_val) / $range;
+                } else {
+                    // this is a hack because when the whole column is the same
+                    // value it breaks PCA for some reason
+                    $pcaDataScaled[$i][] = 0.5 + $j * 0.00001;
+                }
             }
         }
 
@@ -1043,7 +1049,10 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
                 }
                 $clusterPoints[] = $points;
             }
-            $usedColumns = array_column($sourceColumns, 1);
+            $usedColumns = [];
+            foreach ($sourceColumns as $col) {
+                $usedColumns[] = $col[3] . ' ' . $col[1];
+            }
             $eigenvectors = $pca->getEigenvectors();
 
         }
