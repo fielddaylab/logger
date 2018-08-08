@@ -910,17 +910,19 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
 
     // Cluster stuff
     if (!isset($reqSessionID)) {
-        $clusterLevel = 4;
         $sourceColumns = [];
-        $allColumns = [
-            [array_column_fixed($moveCol, $clusterLevel), 'numMovesPerChallenge', [216]],
-            [array_column_fixed($avgCol, $clusterLevel), 'knobAvgs', []],
-            [array_column_fixed($timeCol, $clusterLevel), 'levelTimes', [999999]],
-            [array_column_fixed($typeCol, $clusterLevel), 'moveTypeChangesPerLevel', []],
-            [array_column_fixed($stdCol, $clusterLevel), 'knobStdDevs', []],
-            [array_column_fixed($totalCol, $clusterLevel), 'knobTotalAmts', []],
-            [$percentGoodMovesAll[$clusterLevel], 'percentGoodMovesAll', []],
-        ];
+        $allColumns = [];
+        for ($lvl = $startLevel; $lvl <= $endLevel; $lvl++) {
+            $allColumns = array_merge($allColumns, [
+                [array_column_fixed($moveCol, $lvl), $lvl . ' numMovesPerChallenge', [216]],
+                [array_column_fixed($avgCol, $lvl), $lvl . ' knobAvgs', []],
+                [array_column_fixed($timeCol, $lvl), $lvl . ' levelTimes', [999999]],
+                [array_column_fixed($typeCol, $lvl), $lvl . ' moveTypeChangesPerLevel', []],
+                [array_column_fixed($stdCol, $lvl), $lvl . ' knobStdDevs', []],
+                [array_column_fixed($totalCol, $lvl), $lvl . ' knobTotalAmts', []],
+                [$percentGoodMovesAll[$lvl], $lvl . ' percentGoodMovesAll', []],
+            ]);
+        }
         $sourceColumns = [];
         foreach ($allColumns as $col) {
             if (isset($_GET[$col[1]])) {
