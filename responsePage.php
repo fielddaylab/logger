@@ -985,7 +985,6 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
             $bestColumn2 = 'pca2';
             $bestSpace = null;
             $bestClusters = [];
-            $clusterLevel = 0;
 
             for ($k = 2; $k < 5; $k++) {
                 $space = new KMeans\Space(2);
@@ -993,9 +992,19 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
                 $ys = $columns[1];
                 foreach ($xs as $xi => $x) {
                     $y = $ys[$xi];
-                    $label = '';
+                    $labels = [];
                     foreach (array_column($pcaData, $xi) as $colIndex => $val) {
-                        $label .= $sourceColumns[$colIndex][1] . ': ' . $val . "<br>";
+                        $prop = $sourceColumns[$colIndex][1];
+                        $v = number_format($val, 3);
+                        if (isset($labels[$prop])) {
+                            $labels[$prop][] = $v;
+                        } else {
+                            $labels[$prop] = [$v];
+                        }
+                    }
+                    $label = '';
+                    foreach ($labels as $key => $vals) {
+                        $label .= $key . ': [' . implode(',', $vals) . ']<br>';
                     }
                     $space->addPoint([$x, $y], $label);
                 }
