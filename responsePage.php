@@ -4,8 +4,7 @@ header('Content-Type: application/json');
 
 // Establish the database connection
 include "database.php";
-include "Regression.php";
-include "Matrix.php";
+include "regression.phar";
 
 require_once "KMeans/Space.php";
 require_once "KMeans/Point.php";
@@ -13,8 +12,16 @@ require_once "KMeans/Cluster.php";
 
 require_once "PCA/pca.php";
 
-ini_set('memory_limit','1024M');
-ini_set('max_execution_time', 300);
+use MCordingley\Regression\Algorithm\GradientDescent\Batch;
+use MCordingley\Regression\Algorithm\GradientDescent\Schedule\Adam;
+use MCordingley\Regression\Algorithm\GradientDescent\Gradient\Logistic as LogisticGradient;
+use MCordingley\Regression\Algorithm\GradientDescent\StoppingCriteria\GradientNorm;
+use MCordingley\Regression\Observations;
+use MCordingley\Regression\Predictor\Logistic as LogisticPredictor;
+use MCordingley\LinearAlgebra\Matrix;
+
+ini_set('memory_limit','512M');
+ini_set('max_execution_time', 3000);
 
 $db = connectToDatabase(DBDeets::DB_NAME_DATA);
 if ($db->connect_error) {
@@ -27,6 +34,31 @@ function average($arr) {
     $total = array_sum($filtered);
     $length = count($filtered);
     return ($length > 0) ? $total / $length : 'NaN';
+}
+
+function normalize($X) {
+    $columns = array_map(null, ...$X);
+    $minX = array();
+    $maxX = array();
+    foreach($columns as $i=>$feature) {
+        $minX[$i] = min(...$feature);
+        $maxX[$i] = max(...$feature);
+    }
+    $normalX = array();
+    foreach ($X as $i=>$obs) {
+        foreach ($X[$i] as $j=>$feature) {
+            if ($j === 0) { 
+                $normalX[$i][$j] = $feature;
+                continue;
+            }
+            if ($maxX[$j] !== $minX[$j]) {
+                $normalX[$i][$j] = ($feature - $minX[$j]) / ($maxX[$j] - $minX[$j]);
+            } else {
+                $normalX[$i][$j] = 0;
+            }
+        }
+    }
+    return $normalX;
 }
 
 function replaceNans($arr) {
@@ -43,6 +75,109 @@ function replaceNans($arr) {
     return $newArr;
 }
 
+function covariance($coeff, $X) {
+    // covariance matrix S = (X^T*VX)^-1
+    $predictor = new LogisticPredictor($coeff);
+    $numSamples = count($X);
+
+    $Xrows = array();
+    for ($i = 0; $i < $numSamples; $i++) {
+        $Xrows[$i] = implode(' ', $X[$i]);
+    }
+    $groups = array_count_values($Xrows);
+
+    $rows = count($groups);
+    $V = array_fill(0, $rows, array_fill(0, $rows, 0)); // V initialized to rxr matrix of 0s
+
+    $groupXs = array();
+    // V is an r x r diagonal matrix whose elements are ni*pi*(1-pi)
+    for ($i = 0; $i < $rows; $i++) {
+        $groupKeys = array_keys($groups);
+        $groupX = array_map('floatval', explode(' ', $groupKeys[$i]));
+        $groupXs[$i] = $groupX;
+
+        $n = $groups[$groupKeys[$i]]; // number of occurrences of the group
+        $p = $predictor->predict($groupX);
+        $V[$i][$i] = $n * $p * (1 - $p);
+    }
+    $Xm = new Matrix($groupXs);
+    $Vm = new Matrix($V);
+    $XTm = $Xm->transpose();
+    $S = (($XTm->multiplyMatrix($Vm))->multiplyMatrix($Xm))->inverse();
+    return $S;
+}
+
+function stdErrs($S) {
+    $stdErrs = array();
+    $cols = count($S);
+    for ($i = 0; $i < $cols; $i++) {
+        $stdErrs[$i] = sqrt($S[$i][$i]);
+    }
+
+    return $stdErrs;
+}
+
+function waldSq($b, $seb) {
+    return pow(($b / $seb), 2);
+}
+
+function isSignificant($coeff, $stdErrs) {
+    // array of upper tail critical chi square values for n df at 0.95 alpha
+    $critValues = array(
+        null, // null value for 0 df
+        3.841,
+        5.991,
+        7.815,
+        9.488,
+        11.070,
+        12.592,
+        14.067,
+        15.507,
+        16.919,
+        18.307,
+        19.675,
+        21.026,
+        22.362,
+        23.685,
+        24.996,
+        26.296,
+        27.587,
+        28.869,
+        30.144,
+        31.410,
+        32.671,
+        33.924,
+        35.172,
+        36.415,
+        37.652,
+        38.885,
+        40.113,
+        41.337,
+        42.557,
+        43.773,
+        44.985,
+        46.194,
+        47.400,
+        48.602,
+        49.802,
+        50.998,
+        52.192,
+        53.384,
+        54.572,
+        55.758
+    );
+    $n = count($coeff);
+    $df = $n - 1;
+    $isSignificant = array();
+    $chiSqValues = array();
+    for ($i = 0; $i < $n; $i++) {
+        $chiSqValue = waldSq($coeff[$i], $stdErrs[$i]);
+        $chiSqValues[$i] = $chiSqValue;
+        $isSignificant[$i] = ($chiSqValue >= $critValues[$df]);
+    }
+    return array('isSignificant'=>$isSignificant, 'chiSqValues'=>$chiSqValues, 'critValue'=>$critValues[$df]);
+}
+
 if (isset($_GET['gameID'])) {
     $returned;
     if (isset($_GET['sessionID'])) {
@@ -55,7 +190,7 @@ if (isset($_GET['gameID'])) {
         $returned = getAndParseData($_GET['gameID'], $db, null, null);
     }
     //echo print_r($returned);
-    $output = json_encode($returned);
+    $output = json_encode(replaceNans($returned));
     if ($output) {
         echo $output;
     } else {
@@ -898,10 +1033,10 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
 
                 // Find % good moves by filtering moveGoodness array for 1s, aka good moves
                 $numGoodMoves = count(array_filter($moveGoodness1, function($val) { return $val === 1; }));
-                if ($numMoves !== 0) {
+                if ($numMoves > 1) {
                     $percentGoodMoves = $numGoodMoves / $numMoves;
                 } else {
-                    $percentGoodMoves = 0;
+                    $percentGoodMoves = 1; // if they only had 1 move or somehow beat the level with 0, give them 100% good moves
                 }
                 $percentGoodMovesAll[$level][$index] = $percentGoodMoves;
             }
@@ -1048,68 +1183,90 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
     }
 
     // Linear regression stuff
-    $linRegCoefficients = array();
     $regressionVars = array();
     $intercepts = array();
     $coefficients = array();
     $stdErrs = array();
-    $rSqrs = array();
+    $signifiances = array();
     if (!isset($reqSessionID)) {
         $predictors = array();
         $predictedGameComplete = array();
         $predictedLevel10 = array();
         $predictedLevel20 = array();
+        $algorithm = new Batch(new LogisticGradient, new Adam, new GradientNorm);
 
         foreach ($sessionIDs as $i=>$val) {
             $percentQuestionsCorrect = ($questionsAll['numsQuestions'][$i] === 0) ? 0 : $questionsAll['numsCorrect'][$i] / $questionsAll['numsQuestions'][$i];
             // 1 is for the intercept
             $predictor = array(1, $numMovesAll[$i], array_sum($typeCol[$i]), $levelsCol[$i], array_sum($timeCol[$i]), array_sum($avgCol[$i]), $percentQuestionsCorrect);
+            for ($j = $startLevel; $j <= $endLevel; $j++) {
+                $predictor []= $percentGoodMovesAll[$j][$i];
+            }
+
+            $gameComplete []= ($numLevelsAll[$i] >= 28) ? 1 : 0;
+            $level10Complete []= ($numLevelsAll[$i] >= 9) ? 1 : 0;
+            $level20Complete []= ($numLevelsAll[$i] >= 15) ? 1 : 0;
+
+            //$randomComplete []= ($numMovesAll[$i] > rand(20, 30)) ? 1 : 0;
+
             $predictors []= $predictor;
-
-            $gameComplete = ($numLevelsAll[$i] >= 28) ? 1 : 0;
-            $level10Complete = ($numLevelsAll[$i] >= 9) ? 1 : 0;
-            $level20Complete = ($numLevelsAll[$i] >= 15) ? 1 : 0;
-
-            $predictedGameComplete []= array($gameComplete);
-            $predictedLevel10 []= array($level10Complete);
-            $predictedLevel20 []= array($level20Complete);
         }
-        
-        $regression1 = new \mnshankar\LinearRegression\Regression();
-        $regression1->setX($predictors);
-        $regression1->setY($predictedGameComplete);
-        $regression1->compute();
-        $linRegCoefficients['gameComplete'] = $regression1->getPValues();
-        $regressionVars []= array($predictors, $predictedGameComplete);
-        $coefficients1 = $regression1->getCoefficients();
-        $intercepts []= array_shift($coefficients1);
-        $coefficients []= $coefficients1;
-        $stdErrs []= $regression1->getStdErrors();
-        $rSqrs []= $regression1->getRSquare();
 
-        $regression2 = new \mnshankar\LinearRegression\Regression();
-        $regression2->setX($predictors);
-        $regression2->setY($predictedLevel10);
-        $regression2->compute();
-        $linRegCoefficients['level10'] = $regression2->getPValues();
-        $regressionVars []= array($predictors, $predictedLevel10);
-        $coefficients2 = $regression2->getCoefficients();
-        $intercepts []= array_shift($coefficients2);
-        $coefficients []= $coefficients2;
-        $stdErrs []= $regression2->getStdErrors();
-        $rSqrs []= $regression2->getRSquare();
+        // Test data
+        /* $xGroups = [50, 150, 250, 350, 450, 550, 650, 750, 850, 950];
+            $xs = [21, 29, 87, 75, 85, 64, 53, 31, 10, 3];
+            $xd = [0, 1, 6, 11, 23, 38, 73, 81, 41, 28];
+            $predicted = array();
+            for ($i = 0; $i < count($xGroups); $i++) {
+                for ($j = 0; $j < $xs[$i]; $j++) {
+                    $predictors []= [1, $xGroups[$i]];
+                    $predicted []= 1;
+                }
+                for ($j = 0; $j < $xd[$i]; $j++) {
+                    $predictors []= [1, $xGroups[$i]];
+                    $predicted []= 0;
+                }
+            }
+            $normalPredictors = normalize($predictors);
 
-        $regression3 = new \mnshankar\LinearRegression\Regression();
-        $regression3->setX($predictors);
-        $regression3->setY($predictedLevel20);
-        $regression3->compute();
-        $linRegCoefficients['level20'] = $regression3->getPValues();
-        $regressionVars []= array($predictors, $predictedLevel20);
-        $coefficients3 = $regression3->getCoefficients();
-        $intercepts []= array_shift($coefficients3);
-        $coefficients []= $coefficients3;
-        $stdErrs []= $regression3->getStdErrors();
-        $rSqrs []= $regression3->getRSquare();
+            $obs = Observations::fromArray($normalPredictors, $predicted);
+            $coeff = $algorithm->regress($obs);
+            $cov = covariance($coeff, $obs->getFeatures())->toArray();
+            $stdErrs = stdErrs($cov);
+            $isSig = isSignificant($coeff, $stdErrs);
+            return array($coeff, $cov, $stdErrs, $isSig);
+        */
+        //$normalPredictors = normalize($predictors);
+
+        $observationsLvl10 = Observations::fromArray($predictors, $level10Complete);
+        $observationsLvl20 = Observations::fromArray($predictors, $level20Complete);
+        $observationsGame = Observations::fromArray($predictors, $gameComplete);
+
+        $coefficientsLvl10 = $algorithm->regress($observationsLvl10);
+        $coefficientsLvl20 = $algorithm->regress($observationsLvl20);
+        $coefficientsGame = $algorithm->regress($observationsGame);
+
+        $covarianceLvl10 = covariance($coefficientsLvl10, $observationsLvl10->getFeatures())->toArray();
+        $covarianceLvl20 = covariance($coefficientsLvl20, $observationsLvl20->getFeatures())->toArray();
+        $covarianceGame = covariance($coefficientsGame, $observationsGame->getFeatures())->toArray();
+
+        $stdErrsLvl10 = stdErrs($covarianceLvl10);
+        $stdErrsLvl20 = stdErrs($covarianceLvl20);
+        $stdErrsGame = stdErrs($covarianceGame);
+
+        $isSignificantLvl10 = isSignificant($coefficientsLvl10, $stdErrsLvl10);
+        $isSignificantLvl20 = isSignificant($coefficientsLvl20, $stdErrsLvl20);
+        $isSignificantGame = isSignificant($coefficientsGame, $stdErrsGame);
+
+        $coefficients = array($coefficientsGame, $coefficientsLvl10, $coefficientsLvl20);
+        $significances = array($isSignificantGame, $isSignificantLvl10, $isSignificantLvl20);
+        $stdErrs = array($stdErrsGame, $stdErrsLvl10, $stdErrsLvl20);
+
+        $regressionVars []= array($observationsGame->getFeatures(), $observationsGame->getOutcomes());
+        $regressionVars []= array($observationsLvl10->getFeatures(), $observationsLvl10->getOutcomes());
+        $regressionVars []= array($observationsLvl20->getFeatures(), $observationsLvl20->getOutcomes());
+        // $a = array_map(function($pred, $rand) { $b = $pred; $b []= $rand; return $b; }, $predictors, $randomComplete);
+        // return array('predictors'=>$a, 'coeff'=>$coefficientsLvl10, 'covar'=>$covarianceLvl10, 'stdErrs'=>$stdErrsLvl10, 'isSig'=>$isSignificantLvl10);
 
         $predictorsQ = array();
         $predictedQ = array();
@@ -1126,41 +1283,39 @@ function getAndParseData($gameID, $db, $reqSessionID, $reqLevel) {
                     $q1b = ($val[$j] === 1) ? 1 : 0;
                     $q1c = ($val[$j] === 2) ? 1 : 0;
                     $q1d = ($val[$j] === 3) ? 1 : 0;
-                    $predictedQ[$j][0] []= array($q1a);
-                    $predictedQ[$j][1] []= array($q1b);
-                    $predictedQ[$j][2] []= array($q1c);
-                    $predictedQ[$j][3] []= array($q1d);
+                    $predictedQ[$j][0] []= $q1a;
+                    $predictedQ[$j][1] []= $q1b;
+                    $predictedQ[$j][2] []= $q1c;
+                    $predictedQ[$j][3] []= $q1d;
                 }
             }
         }
         for ($i = 0; $i < 4; $i++) {
             for ($j = 0; $j < 4; $j++) {
                 if (isset($predictorsQ[$i], $predictedQ[$i][$j])) {
+                    $observationsQ = Observations::fromArray($predictorsQ[$i], $predictedQ[$i][$j]);
                     $regressionVars []= array($predictorsQ[$i], $predictedQ[$i][$j]);
 
-                    $regression = new \mnshankar\LinearRegression\Regression();
-                    $regression->setX($predictorsQ[$i]);
-                    $regression->setY($predictedQ[$i][$j]);
-                    $regression->compute();
-                    $pvalues = ($regression->getPValues());
-                    $linRegCoefficients['q'.$i.$j] = $pvalues;
-                    $coefficientsq = $regression->getCoefficients();
+                    $coefficientsq = $algorithm->regress($observationsQ);
+                    $covarianceQ = covariance($coefficientsq, $observationsQ->getFeatures())->toArray();
+
                     $intercepts []= array_shift($coefficientsq);
                     $coefficients []= $coefficientsq;
-                    $stdErrs []= $regression->getStdErrors();
-                    $rSqrs []= $regression->getRSquare();  
+                    $stdErrs []= stdErrs($covarianceQ);
                 }
             }
         }
+
+        return replaceNans(array('regressionVars'=>$regressionVars, 'significances'=>$significances, 'equationVars'=>array('intercepts'=>$intercepts, 'coefficients'=>$coefficients, 'stdErrs'=>$stdErrs)));
     }
     $totalNumSessions = getTotalNumSessions($_GET['gameID'], $db);
 
     $output = array('goalsSingle'=>$goalsSingle, 'numLevelsAll'=>$numLevelsAll, 'numMovesAll'=>$numMovesAll, 'questionsAll'=>$questionsAll, 'basicInfoAll'=>$basicInfoAll,
     'sessionsAndTimes'=>$sessionsAndTimes, 'basicInfoSingle'=>$basicInfoSingle, 'graphDataSingle'=>$graphDataSingle, 
     'questionsSingle'=>$questionsSingle, 'levels'=>$levels, 'numSessions'=>$numSessions, 'questionsTotal'=>$questionsTotal,
-    'linRegCoefficients'=>$linRegCoefficients, 'clusters'=>array('col1'=>$bestColumn1, 'col2'=>$bestColumn2, 'clusters'=>$clusterPoints, 'dunn'=>$bestDunn, 
-    'sourceColumns'=>$usedColumns, 'eigenvectors'=>$eigenvectors), 'totalNumSessions'=>$totalNumSessions, 'regressionVars'=>$regressionVars, 
-    'equationVars'=>array('intercepts'=>$intercepts, 'coefficients'=>$coefficients, 'stdErrs'=>$stdErrs, 'rSqrs'=>$rSqrs), 'startLevel'=>$startLevel, 'endLevel'=>$endLevel);
+    'clusters'=>array('col1'=>$bestColumn1, 'col2'=>$bestColumn2, 'clusters'=>$clusterPoints, 'dunn'=>$bestDunn, 
+    'sourceColumns'=>$usedColumns, 'eigenvectors'=>$eigenvectors), 'totalNumSessions'=>$totalNumSessions, 'regressionVars'=>$regressionVars, 'significances'=>$significances,
+    'equationVars'=>array('intercepts'=>$intercepts, 'coefficients'=>$coefficients, 'stdErrs'=>$stdErrs), 'startLevel'=>$startLevel, 'endLevel'=>$endLevel);
     
     // Return ALL the above information at once in a big array
     return replaceNans($output);

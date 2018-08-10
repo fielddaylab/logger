@@ -266,32 +266,6 @@ $(document).ready((event) => {
                 // Store the computation values for retrieval when the link is clicked
                 localStorage.setItem('regressionVars', JSON.stringify(data.regressionVars))
                 localStorage.setItem('equationVars', JSON.stringify(data.equationVars))
-                for (let i = data.startLevel; i <= data.endLevel; i++) {
-                    $('#tableAllBody').append(
-                        $(`<tr>
-                        <th scope="row">% good <br>moves lvl ${i}</th>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                    </tr>`)
-                    )
-                }
                 $('#tableAllBody tr').each((i, ival) => {
                     $(ival).find('td').each((j, jval) => {
                         $(jval).css('vertical-align', 'middle')
@@ -339,7 +313,7 @@ $(document).ready((event) => {
                         let alpha = 0.05 / 6//$('#tableAllBody tr').length
                         $('#alphaValueDiv').html(new Number(alpha.toPrecision(3)).toString())
                         
-                        if (i < 6) {
+                        //if (i < 6) {
                             let innerText = $('<div>')
                             if (data.linRegCoefficients[column]) {
                                 if (typeof data.linRegCoefficients[column][i+1] === 'number') {
@@ -360,7 +334,7 @@ $(document).ready((event) => {
                             }
 
                             $(innerText).css({'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif'})
-                        }
+                        //}
                         // Color the correct answer for each question
                         switch (column) {
                             case 'q00':
