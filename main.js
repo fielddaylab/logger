@@ -130,6 +130,93 @@ $(document).ready((event) => {
             'knobStdDevs': $('#knobStdDevs').prop('checked') ? true : undefined,
             'knobTotalAmts': $('#knobTotalAmts').prop('checked') ? true : undefined,
         }
+        let numCols = $('#tableAllBody').find('tr:first td').length
+        for (let i = 0; i < numCols; i++) {
+            let columnElements = $(`#tableAllBody tr td:nth-child(${i+2})`)
+            let column
+            switch (i) {
+                case 0:
+                    column = 'gameComplete'; break
+                case 1:
+                    column = 'level10'; break
+                case 2:
+                    column = 'level20'; break
+                case 3:
+                    column = 'q00'; break
+                case 4:
+                    column = 'q01'; break
+                case 5:
+                    column = 'q02'; break
+                case 6:
+                    column = 'q03'; break
+                case 7:
+                    column = 'q10'; break
+                case 8:
+                    column = 'q11'; break
+                case 9:
+                    column = 'q12'; break
+                case 10:
+                    column = 'q13'; break
+                case 11:
+                    column = 'q20'; break
+                case 12:
+                    column = 'q21'; break
+                case 13:
+                    column = 'q22'; break
+                case 14:
+                    column = 'q23'; break
+                case 15:
+                    column = 'q30'; break
+                case 16:
+                    column = 'q31'; break
+                case 17:
+                    column = 'q32'; break
+                case 18:
+                    column = 'q33'; break
+            }
+
+            parameters['column'] = column
+            let alpha = 0.05 / $('#tableAllBody tr').length
+            $('#alphaValueDiv').html(new Number(alpha.toPrecision(3)).toString())
+            if (i < 3)
+            $.get('responsePage.php', parameters, (data, status, jqXHR) => {
+                // Store the computation values for retrieval when the link is clicked
+                //localStorage.setItem('regressionVars', JSON.stringify(data.regressionVars))
+                //localStorage.setItem('equationVars', JSON.stringify(data.equationVars))
+                columnElements.each((j, jval) => {
+                    $(jval).css('vertical-align', 'middle')
+                    let innerText = $('<div>')
+                    let significance = data.significances['chiSqValues'][j]
+                    if (typeof significance === 'number') {
+                        innerText.html(significance.toFixed(5))
+                    } else {
+                        innerText.html(significance)
+                    }
+                    
+                    if (data.significances['isSignificant'][j]) {
+                        $(innerText).css('background-color', '#82e072')
+                    }
+                    $(jval).html(innerText)
+                    $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&row=${j}&col=${i}" target="_blank"></a>`)
+    
+                    $(innerText).css({'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif'})
+                })
+                off()
+            })
+            switch (column) {
+                case 'q00':
+                case 'q11':
+                case 'q20':
+                case 'q31':
+                    columnElements.each((j, jval) => {
+                        // Color the correct answer for each question
+                        $(jval).addClass('success')
+                    })
+                    break
+            }
+        }
+
+        delete parameters['column']
         $.get('responsePage.php', parameters, (data, status, jqXHR) => {
             allData = data
             $('#scoreDisplayAll').html(data.questionsTotal.totalNumCorrect + ' / ' + data.questionsTotal.totalNumQuestions + ' (' + 
@@ -263,89 +350,6 @@ $(document).ready((event) => {
                     off()
                 }
                 drawWavesHistograms(dataHistogram)
-                // Store the computation values for retrieval when the link is clicked
-                localStorage.setItem('regressionVars', JSON.stringify(data.regressionVars))
-                localStorage.setItem('equationVars', JSON.stringify(data.equationVars))
-                $('#tableAllBody tr').each((i, ival) => {
-                    $(ival).find('td').each((j, jval) => {
-                        $(jval).css('vertical-align', 'middle')
-                        let column
-                        switch (j) {
-                            case 0:
-                                column = 'gameComplete'; break
-                            case 1:
-                                column = 'level10'; break
-                            case 2:
-                                column = 'level20'; break
-                            case 3:
-                                column = 'q00'; break
-                            case 4:
-                                column = 'q01'; break
-                            case 5:
-                                column = 'q02'; break
-                            case 6:
-                                column = 'q03'; break
-                            case 7:
-                                column = 'q10'; break
-                            case 8:
-                                column = 'q11'; break
-                            case 9:
-                                column = 'q12'; break
-                            case 10:
-                                column = 'q13'; break
-                            case 11:
-                                column = 'q20'; break
-                            case 12:
-                                column = 'q21'; break
-                            case 13:
-                                column = 'q22'; break
-                            case 14:
-                                column = 'q23'; break
-                            case 15:
-                                column = 'q30'; break
-                            case 16:
-                                column = 'q31'; break
-                            case 17:
-                                column = 'q32'; break
-                            case 18:
-                                column = 'q33'; break
-                        }
-                        let alpha = 0.05 / 6//$('#tableAllBody tr').length
-                        $('#alphaValueDiv').html(new Number(alpha.toPrecision(3)).toString())
-                        
-                        //if (i < 6) {
-                            let innerText = $('<div>')
-                            if (data.linRegCoefficients[column]) {
-                                if (typeof data.linRegCoefficients[column][i+1] === 'number') {
-                                    innerText.html(' ' + Math.min(Math.max(data.linRegCoefficients[column][i+1], 0), 1).toFixed(4) + ' ')
-                                    if (data.linRegCoefficients[column][i+1] <= alpha) {
-                                        $(innerText).css('background-color', '#82e072')
-                                    }
-                                    $(jval).html(innerText)
-                                    $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&row=${i}&col=${j}" target="_blank"></a>`)
-                                } else {
-                                    innerText.html(data.linRegCoefficients[column][i+1])
-                                    $(jval).html(innerText)
-                                    $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&row=${i}&col=${j}" target="_blank"></a>`)
-                                }
-                            } else {
-                                innerText.html('No data')
-                                $(jval).html(innerText)
-                            }
-
-                            $(innerText).css({'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif'})
-                        //}
-                        // Color the correct answer for each question
-                        switch (column) {
-                            case 'q00':
-                            case 'q11':
-                            case 'q20':
-                            case 'q31':
-                                $(jval).addClass('success')
-                                break
-                        }
-                    })
-                })
             } else {
                 off()
                 hideError()
