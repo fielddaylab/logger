@@ -992,14 +992,14 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
 
                 $columnData = analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAttributes, null);
                 $totalNumSessions = getTotalNumSessions($gameID, $db);
-                $columnData []= $totalNumSessions;
+                $columnData['totalNumSessions'] = $totalNumSessions;
+                $columnData['numEvents'] = $numEvents;
+                $columnData['numSessions'] = $numSessions;
+                $columnData['numLevels'] = $numLevels;
                 break;
         }
 
-        $output = array_merge(array('numLevelsAll'=>$numLevelsAll, 'numMovesAll'=>$numMovesAll,
-        'sessionsAndTimes'=>$sessionsAndTimes, 'levels'=>$levels, 'numSessions'=>$numSessions, 'questionsTotal'=>$questionsTotal,
-        'clusters'=>array('col1'=>$bestColumn1, 'col2'=>$bestColumn2, 'clusters'=>$clusterPoints, 'dunn'=>$bestDunn, 
-        'sourceColumns'=>$usedColumns, 'eigenvectors'=>$eigenvectors)), $columnData);
+        $output = $columnData;
         
         // Return ALL the above information at once in a big array
         return replaceNans($output);
