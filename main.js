@@ -37,7 +37,6 @@ $(document).ready((event) => {
     $(document).on('change', '#gameSelect', (event) => {
         // console.time('gameSelect')
         event.preventDefault()
-        on()
         $('#gameIDForm').val($('#gameSelect').val())
         getAllData(true)
     })
@@ -131,6 +130,7 @@ $(document).ready((event) => {
             'knobTotalAmts': $('#knobTotalAmts').prop('checked') ? true : undefined,
         }
         let numCols = $('#tableAllBody').find('tr:first td').length
+
         for (let i = 0; i < numCols; i++) {
             let columnElements = $(`#tableAllBody tr td:nth-child(${i+2})`)
             let column
@@ -176,33 +176,8 @@ $(document).ready((event) => {
             }
 
             parameters['column'] = column
-            let alpha = 0.05 / $('#tableAllBody tr').length
-            $('#alphaValueDiv').html(new Number(alpha.toPrecision(3)).toString())
-            if (i < 3)
-            $.get('responsePage.php', parameters, (data, status, jqXHR) => {
-                // Store the computation values for retrieval when the link is clicked
-                //localStorage.setItem('regressionVars', JSON.stringify(data.regressionVars))
-                //localStorage.setItem('equationVars', JSON.stringify(data.equationVars))
-                columnElements.each((j, jval) => {
-                    $(jval).css('vertical-align', 'middle')
-                    let innerText = $('<div>')
-                    let significance = data.significances['chiSqValues'][j]
-                    if (typeof significance === 'number') {
-                        innerText.html(significance.toFixed(5))
-                    } else {
-                        innerText.html(significance)
-                    }
-                    
-                    if (data.significances['isSignificant'][j]) {
-                        $(innerText).css('background-color', '#82e072')
-                    }
-                    $(jval).html(innerText)
-                    $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&row=${j}&col=${i}" target="_blank"></a>`)
-    
-                    $(innerText).css({'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif'})
-                })
-                off()
-            })
+            let loadTimer, backgroundColors = [], borderBottoms = [], borderTops = []
+
             switch (column) {
                 case 'q00':
                 case 'q11':
@@ -214,6 +189,81 @@ $(document).ready((event) => {
                     })
                     break
             }
+
+            columnElements.each((index, value) => {
+                backgroundColors.push($(value).css('background-color'))
+                borderBottoms.push($(value).css('border-bottom'))
+                borderTops.push($(value).css('border-top'))
+                $(value).css({
+                    'background-color': 'rgba(0, 0, 0, 0.15)',
+                    'border-top': 'none',
+                    'border-bottom': 'none'
+                })
+                if (index === 2) {
+                    $(value).addClass('colLoadingText')
+                    let rand = Math.random()
+                    if (rand < 0.333) {
+                        $(value).text('.')
+                    } else if (rand < 0.666) {
+                        $(value).text('. .')
+                    } else {
+                        $(value).text('. . .')
+                    }
+                    $(value).css({
+                        'vertical-align': 'middle',
+                        'text-align': 'center',
+                        'font-size': '16px'
+                    })
+                    loadTimer = setInterval(() => {
+                        let currentText = $(value).html()
+                        let newText
+                        if (currentText !== '. . . .') {
+                            newText = currentText + ' .'
+                        } else {
+                            newText = '.'
+                        }
+                        $(value).html(newText)
+                    }, 400 + Math.random() * 200)
+                }
+            })
+
+            $.get('responsePage.php', parameters, (data, status, jqXHR) => {
+                clearInterval(loadTimer)
+                // Store the computation values for retrieval when the link is clicked
+                localStorage.setItem(`regressionVars${column}`, JSON.stringify(data.regressionVars))
+                localStorage.setItem(`equationVars${column}`, JSON.stringify(data.equationVars))
+                columnElements.each((j, jval) => {
+                    $(jval).css({
+                        'vertical-align': 'middle',
+                        'background-color': backgroundColors[j],
+                        'border-top': borderTops[j],
+                        'border-bottom': borderBottoms[j]
+                    })
+                    let innerText = $('<div>')
+                    let significance = 'No data'
+                    if (data.significances) {
+                        significance = data.significances['chiSqValues'][j]
+                    }
+                    if (typeof significance === 'number') {
+                        innerText.html(significance.toFixed(5))
+                    } else {
+                        innerText.html(significance)
+                    }
+                    
+                    if (data.significances && data.significances['isSignificant'][j]) {
+                        $(innerText).css('background-color', '#82e072')
+                    }
+                    $(jval).html(innerText)
+                    $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&row=${j}&col=${i}" target="_blank"></a>`)
+    
+                    $(innerText).css({'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif'})
+                })
+                off()
+            }, 'json').fail((jqXHR, textStatus, errorThrown) => {
+                off()
+                console.log('Error triggered by getAllData')
+                showError(errorThrown)
+            })
         }
 
         delete parameters['column']

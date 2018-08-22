@@ -437,20 +437,6 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
         $totalKnobTotalsPerLevelAll[$i] = average(array_column($totalCol, $i));
         $totalKnobAvgsPerLevelAll[$i] = average(array_column($avgCol, $i));
     }
-    // foreach ($allData as $index=>$dataObj) {
-    //     foreach ($dataObj['levelTimes'] as $i=>$levelTime) { $levelTimesPerLevelAll[$i] []= $levelTime; }
-    //     foreach ($levelTimesPerLevelAll as $i=>$array) { $totalTimesPerLevelAll[$i] = average($array); }
-    //     foreach ($dataObj['numMovesPerChallenge'] as $i=>$numMoves) { $numMovesPerLevelAll[$i] []= $numMoves; }
-    //     foreach ($numMovesPerLevelAll as $i=>$array) { $totalMovesPerLevelArray[$i] = average($array); }
-    //     foreach ($dataObj['moveTypeChangesPerLevel'] as $i=>$moveTypeChanges) { $moveTypeChangesPerLevelAll[$i] []= $moveTypeChanges; }
-    //     foreach ($moveTypeChangesPerLevelAll as $i=>$array) { $totalMoveTypeChangesPerLevelAll[$i] = average($array); }
-    //     foreach ($dataObj['knobStdDevs'] as $i=>$knobStdDevs) { $knobStdDevsPerLevelAll[$i] []= $knobStdDevs; }
-    //     foreach ($knobStdDevsPerLevelAll as $i=>$array) { $totalStdDevsPerLevelAll[$i] = average($array); }
-    //     foreach ($dataObj['knobTotalAmts'] as $i=>$knobTotalAmts) { $knobTotalAmtsPerLevelAll[$i] []= $knobTotalAmts; }
-    //     foreach ($knobTotalAmtsPerLevelAll as $i=>$array) { $totalKnobTotalsPerLevelAll[$i] = average($array); }
-    //     foreach ($dataObj['knobAvgs'] as $i=>$knobAvg) { $knobAvgsPerLevelAll[$i] []= $knobAvg; }
-    //     foreach ($knobAvgsPerLevelAll as $i=>$array) { $totalKnobAvgsPerLevelAll[$i] = average($array); }
-    // }
     $totalTimeAll = array_sum($totalTimesPerLevelAll);
     $totalMovesAll = array_sum($totalMovesPerLevelArray);
     $totalMoveTypeChangesAll = array_sum($totalMoveTypeChangesPerLevelAll);
@@ -566,7 +552,7 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
         }
     }
     if (!isset($column)) return array('numLevelsAll'=>$numLevelsAll, 'numMovesAll'=>$numMovesAll, 'questionsAll'=>$questionsAll, 'basicInfoAll'=>$basicInfoAll,
-    'sessionsAndTimes'=>$sessionsAndTimes, 'levels'=>$levels, 'numSessions'=>$numSessions, 'questionsTotal'=>$questionsTotal,
+    'sessionsAndTimes'=>$sessionsAndTimes, 'levels'=>$levels, 'numSessions'=>count($sessionsAndTimes['sessions']), 'questionsTotal'=>$questionsTotal,
     'clusters'=>array('col1'=>$bestColumn1, 'col2'=>$bestColumn2, 'clusters'=>$clusterPoints, 'dunn'=>$bestDunn, 
     'sourceColumns'=>$usedColumns, 'eigenvectors'=>$eigenvectors));
 
@@ -600,85 +586,33 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
 
                 $predictors []= $predictor;
             }
-        }
-
-        // Test data
-        /* $xGroups = [50, 150, 250, 350, 450, 550, 650, 750, 850, 950];
-            $xs = [21, 29, 87, 75, 85, 64, 53, 31, 10, 3];
-            $xd = [0, 1, 6, 11, 23, 38, 73, 81, 41, 28];
+        } else { // column is one of the questions
+            $predictors = array();
             $predicted = array();
-            for ($i = 0; $i < count($xGroups); $i++) {
-                for ($j = 0; $j < $xs[$i]; $j++) {
-                    $predictors []= [1, $xGroups[$i]];
-                    $predicted []= 1;
-                }
-                for ($j = 0; $j < $xd[$i]; $j++) {
-                    $predictors []= [1, $xGroups[$i]];
-                    $predicted []= 0;
-                }
-            }
-            $normalPredictors = normalize($predictors);
-
-            $obs = Observations::fromArray($normalPredictors, $predicted);
-            $coeff = $algorithm->regress($obs);
-            $cov = covariance($coeff, $obs->getFeatures())->toArray();
-            $stdErrs = stdErrs($cov);
-            $isSig = isSignificant($coeff, $stdErrs);
-            return array($coeff, $cov, $stdErrs, $isSig);
-        */
-        //$normalPredictors = normalize($predictors);
-
-        $observations = Observations::fromArray($predictors, $predicted);
-
-        $coefficients = $algorithm->regress($observations);
-
-        $covariance = covariance($coefficients, $observations->getFeatures())->toArray();
-
-        $stdErrs = stdErrs($covariance);
-
-        $significances = isSignificant($coefficients, $stdErrs);
-
-        $regressionVars []= array($observations->getFeatures(), $observations->getOutcomes());
-        // $a = array_map(function($pred, $rand) { $b = $pred; $b []= $rand; return $b; }, $predictors, $randomComplete);
-        // return array('predictors'=>$a, 'coeff'=>$coefficientsLvl10, 'covar'=>$covarianceLvl10, 'stdErrs'=>$stdErrsLvl10, 'isSig'=>$isSignificantLvl10);
-
-        /*$predictorsQ = array();
-        $predictedQ = array();
-        foreach ($questionAnswereds as $i=>$val) {
-            for ($j = 0; $j < 4; $j++) {
-                if (isset($val[$j])) {
+            $quesIndex = intval(substr($column, 1, 1));
+            $ansIndex = intval(substr($column, 2, 1));
+            foreach ($questionAnswereds as $i=>$val) {
+                if (isset($val[$quesIndex])) {
                     $numMoves = $numMovesAll[$i];
                     $numTypeChanges = array_sum($typeCol[$i]);
                     $time = array_sum($timeCol[$i]);
                     $minMax = array_sum($avgCol[$i]);
                     $percentQuestionsCorrect = ($questionsAll['numsQuestions'][$i] === 0) ? 0 : $questionsAll['numsCorrect'][$i] / $questionsAll['numsQuestions'][$i];
-                    $predictorsQ[$j] []= array(1, $numMovesAll[$i], array_sum($typeCol[$i]), $levelsCol[$i], array_sum($timeCol[$i]), array_sum($avgCol[$i]), $percentQuestionsCorrect);
-                    $q1a = ($val[$j] === 0) ? 1 : 0;
-                    $q1b = ($val[$j] === 1) ? 1 : 0;
-                    $q1c = ($val[$j] === 2) ? 1 : 0;
-                    $q1d = ($val[$j] === 3) ? 1 : 0;
-                    $predictedQ[$j][0] []= $q1a;
-                    $predictedQ[$j][1] []= $q1b;
-                    $predictedQ[$j][2] []= $q1c;
-                    $predictedQ[$j][3] []= $q1d;
+                    $predictors []= array(1, $numMovesAll[$i], array_sum($typeCol[$i]), $levelsCol[$i], array_sum($timeCol[$i]), array_sum($avgCol[$i]), $percentQuestionsCorrect);
+                    $predicted []= ($val[$quesIndex] === $ansIndex) ? 1 : 0;
                 }
-            }
+            }  
         }
-        for ($i = 0; $i < 4; $i++) {
-            for ($j = 0; $j < 4; $j++) {
-                if (isset($predictorsQ[$i], $predictedQ[$i][$j])) {
-                    $observationsQ = Observations::fromArray($predictorsQ[$i], $predictedQ[$i][$j]);
-                    $regressionVars []= array($predictorsQ[$i], $predictedQ[$i][$j]);
-
-                    $coefficientsq = $algorithm->regress($observationsQ);
-                    $covarianceQ = covariance($coefficientsq, $observationsQ->getFeatures())->toArray();
-
-                    $intercepts []= array_shift($coefficientsq);
-                    $coefficients []= $coefficientsq;
-                    $stdErrs []= stdErrs($covarianceQ);
-                }
-            }
-        }*/
+        if (!empty($predictors) && !empty($predicted)) {
+            $observations = Observations::fromArray($predictors, $predicted);
+            $coefficients = $algorithm->regress($observations);
+            $covariance = covariance($coefficients, $observations->getFeatures())->toArray();
+            $stdErrs = stdErrs($covariance);
+            $significances = isSignificant($coefficients, $stdErrs);
+            $regressionVars []= array($observations->getFeatures(), $observations->getOutcomes());
+        } else {
+            $observations = $coefficients = $covariance = $stdErrs = $significances = null;
+        }
 
         return array('regressionVars'=>$regressionVars, 'significances'=>$significances, 'equationVars'=>array('intercepts'=>$intercepts, 'coefficients'=>$coefficients, 'stdErrs'=>$stdErrs));
     }
@@ -1585,12 +1519,8 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
 
         $totalNumSessions = getTotalNumSessions($_GET['gameID'], $db);
 
-        $output = array('goalsSingle'=>$goalsSingle, 'numLevelsAll'=>$numLevelsAll, 'numMovesAll'=>$numMovesAll, 'questionsAll'=>$questionsAll, 'basicInfoAll'=>$basicInfoAll,
-        'sessionsAndTimes'=>$sessionsAndTimes, 'basicInfoSingle'=>$basicInfoSingle, 'graphDataSingle'=>$graphDataSingle, 
-        'questionsSingle'=>$questionsSingle, 'levels'=>$levels, 'numSessions'=>$numSessions, 'questionsTotal'=>$questionsTotal,
-        'clusters'=>array('col1'=>$bestColumn1, 'col2'=>$bestColumn2, 'clusters'=>$clusterPoints, 'dunn'=>$bestDunn, 
-        'sourceColumns'=>$usedColumns, 'eigenvectors'=>$eigenvectors), 'totalNumSessions'=>$totalNumSessions, 'regressionVars'=>$regressionVars, 'significances'=>$significances,
-        'equationVars'=>array('intercepts'=>$intercepts, 'coefficients'=>$coefficients, 'stdErrs'=>$stdErrs), 'startLevel'=>$startLevel, 'endLevel'=>$endLevel);
+        $output = array('goalsSingle'=>$goalsSingle, 'sessionsAndTimes'=>$sessionsAndTimes, 'basicInfoSingle'=>$basicInfoSingle, 'graphDataSingle'=>$graphDataSingle, 
+        'questionsSingle'=>$questionsSingle, 'levels'=>$levels, 'numSessions'=>$numSessions, 'questionsTotal'=>$questionsTotal);
         
         // Return ALL the above information at once in a big array
         return replaceNans($output);
