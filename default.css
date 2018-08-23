@@ -88,10 +88,25 @@ th {
     background: white;
 }
 
+#predictTableAll th {
+    position: sticky;
+    top: 40px;
+    background: white;
+}
+
 thead tr th {
     z-index: 2;
     outline: 1px solid #ddd;                
     border:none; 
     outline-offset: -1px;
+}
+
+.challenge-header {
+    top: 0 !important;
+    z-index: 4;
+    text-align: center;
+    background-color: white;
+    border-right-width: 4px !important;
+    border-left-width: 4px !important; 
 }
   
