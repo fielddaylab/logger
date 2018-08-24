@@ -26,6 +26,42 @@ $(document).ready((event) => {
     if (endmm < 10) { endmm = '0' + endmm }
     $('#endDate').val(endyyyy+'-'+endmm+'-'+enddd)
 
+    let lvls = [1, 3, 5, 7, 11, 13, 15, 19, 21, 23, 25, 27, 31, 33]
+    lvls.forEach((value, index, arr) => {
+        let newRow = $(`<tr class=rowLvl>`)
+        newRow.append(
+            `
+            <th scope="row">% good moves lvl ${value}</th>
+            <td style="border-right-width:4px;"></td>
+            <td style="border-left-width:4px; "></td>
+            <td></td>
+            <td></td>
+            <td scope="col" style="border-right-width:4px;"></td>
+            <td scope="col" style="border-left-width:4px; "></td>
+            <td></td>
+            <td style="border-right-width:4px;"></td>
+            <td style="border-left-width:4px; "></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td style="border-right-width:4px;"></td>
+            <td style="border-left-width:4px; "></td>
+            <td style="border-left-width:4px; "></td>
+            `
+        )
+        $('#predictTableBody').append(newRow)
+    })
+
+    $('.rowLvl').each((i, value) => {
+        $(value).children('td').each((j, jval) => {
+            if (j === 0) return true
+            if (i+2 > j) {
+                $(jval).css('background-color', 'rgb(235,235,228)')
+                $(jval).addClass('disabled-cell')
+            }
+        })
+    })
+
     let totalSessions
     let errorTracker = 0
     window.onerror = () => {
@@ -52,7 +88,7 @@ $(document).ready((event) => {
         event.preventDefault()
         if ($('#gameSelect').val() !== 'empty') {
             $('#filterModal').modal('hide')
-            on()
+            //on()
             if ($('#sessionInput').val() !== '') {
                 if ($(`#sessionSelect option[value="${$('#sessionInput').val()}"]`).length === 0) {
                     let newOpt = document.createElement('option')
@@ -86,6 +122,7 @@ $(document).ready((event) => {
             $('#endDate').prop('disabled', true)
             $('#maxRows').prop('disabled', true)
             $('#maxLevels').prop('disabled', true)
+            $('#maxLogReg').prop('disabled', true)
         } else {
             $('#minMoves').prop('disabled', false)
             $('#minQuestions').prop('disabled', false)
@@ -94,6 +131,7 @@ $(document).ready((event) => {
             $('#endDate').prop('disabled', false)
             $('#maxRows').prop('disabled', false)
             $('#maxLevels').prop('disabled', false)
+            $('#maxLogReg').prop('disabled', false)
         }
     })
 
@@ -130,148 +168,264 @@ $(document).ready((event) => {
             'knobTotalAmts': $('#knobTotalAmts').prop('checked') ? true : undefined,
         }
         let numCols = $('#tableAllBody').find('tr:first td').length
-
-        for (let i = 0; i < numCols; i++) {
-            let columnElements = $(`#tableAllBody tr td:nth-child(${i+2})`)
-            let column
-            switch (i) {
-                case 0:
-                    column = 'gameComplete'; break
-                case 1:
-                    column = 'level10'; break
-                case 2:
-                    column = 'level20'; break
-                case 3:
-                    column = 'q00'; break
-                case 4:
-                    column = 'q01'; break
-                case 5:
-                    column = 'q02'; break
-                case 6:
-                    column = 'q03'; break
-                case 7:
-                    column = 'q10'; break
-                case 8:
-                    column = 'q11'; break
-                case 9:
-                    column = 'q12'; break
-                case 10:
-                    column = 'q13'; break
-                case 11:
-                    column = 'q20'; break
-                case 12:
-                    column = 'q21'; break
-                case 13:
-                    column = 'q22'; break
-                case 14:
-                    column = 'q23'; break
-                case 15:
-                    column = 'q30'; break
-                case 16:
-                    column = 'q31'; break
-                case 17:
-                    column = 'q32'; break
-                case 18:
-                    column = 'q33'; break
-            }
-
-            parameters['column'] = column
-            let loadTimer, backgroundColors = [], borderBottoms = [], borderTops = []
-
-            switch (column) {
-                case 'q00':
-                case 'q11':
-                case 'q20':
-                case 'q31':
-                    columnElements.each((j, jval) => {
-                        // Color the correct answer for each question
-                        $(jval).addClass('success')
-                    })
-                    break
-            }
-
-            columnElements.each((index, value) => {
-                backgroundColors.push($(value).css('background-color'))
-                borderBottoms.push($(value).css('border-bottom'))
-                borderTops.push($(value).css('border-top'))
-                $(value).css({
-                    'background-color': 'rgba(0, 0, 0, 0.15)',
-                    'border-top': 'none',
-                    'border-bottom': 'none'
-                })
-                if (index === 2) {
-                    $(value).addClass('colLoadingText')
-                    let rand = Math.random()
-                    if (rand < 0.333) {
-                        $(value).text('.')
-                    } else if (rand < 0.666) {
-                        $(value).text('. .')
-                    } else {
-                        $(value).text('. . .')
-                    }
-                    $(value).css({
-                        'vertical-align': 'middle',
-                        'text-align': 'center',
-                        'font-size': '16px'
-                    })
-                    loadTimer = setInterval(() => {
-                        let currentText = $(value).html()
-                        let newText
-                        if (currentText !== '. . . .') {
-                            newText = currentText + ' .'
-                        } else {
-                            newText = '.'
-                        }
-                        $(value).html(newText)
-                    }, 400 + Math.random() * 200)
+        if (false) {
+            for (let i = 0; i < numCols; i++) {
+                let columnElements = $(`#tableAllBody tr td:nth-child(${i+2})`)
+                let column
+                switch (i) {
+                    case 0:
+                        column = 'gameComplete'; break
+                    case 1:
+                        column = 'level10'; break
+                    case 2:
+                        column = 'level20'; break
+                    case 3:
+                        column = 'q00'; break
+                    case 4:
+                        column = 'q01'; break
+                    case 5:
+                        column = 'q02'; break
+                    case 6:
+                        column = 'q03'; break
+                    case 7:
+                        column = 'q10'; break
+                    case 8:
+                        column = 'q11'; break
+                    case 9:
+                        column = 'q12'; break
+                    case 10:
+                        column = 'q13'; break
+                    case 11:
+                        column = 'q20'; break
+                    case 12:
+                        column = 'q21'; break
+                    case 13:
+                        column = 'q22'; break
+                    case 14:
+                        column = 'q23'; break
+                    case 15:
+                        column = 'q30'; break
+                    case 16:
+                        column = 'q31'; break
+                    case 17:
+                        column = 'q32'; break
+                    case 18:
+                        column = 'q33'; break
                 }
-            })
 
-            $.get('responsePage.php', parameters, (data, status, jqXHR) => {
-                clearInterval(loadTimer)
-                // Store the computation values for retrieval when the link is clicked
-                localStorage.setItem(`regressionVars${column}`, JSON.stringify(data.regressionVars))
-                localStorage.setItem(`equationVars${column}`, JSON.stringify(data.equationVars))
-                columnElements.each((j, jval) => {
-                    $(jval).css({
-                        'vertical-align': 'middle',
-                        'background-color': backgroundColors[j],
-                        'border-top': borderTops[j],
-                        'border-bottom': borderBottoms[j]
+                parameters['column'] = column
+                let loadTimer, backgroundColors = [], borderBottoms = [], borderTops = []
+
+                switch (column) {
+                    case 'q00':
+                    case 'q11':
+                    case 'q20':
+                    case 'q31':
+                        columnElements.each((j, jval) => {
+                            // Color the correct answer for each question
+                            $(jval).addClass('success')
+                        })
+                        break
+                }
+
+                columnElements.each((index, value) => {
+                    backgroundColors.push($(value).css('background-color'))
+                    borderBottoms.push($(value).css('border-bottom'))
+                    borderTops.push($(value).css('border-top'))
+                    $(value).css({
+                        'background-color': 'rgba(0, 0, 0, 0.15)',
+                        'border-top': 'none',
+                        'border-bottom': 'none'
                     })
-                    let innerText = $('<div>')
-                    let significance = 'No data'
-                    if (data.significances) {
-                        significance = data.significances['chiSqValues'][j]
+                    if (index === 2) {
+                        $(value).addClass('colLoadingText')
+                        let rand = Math.random()
+                        if (rand < 0.333) {
+                            $(value).text('.')
+                        } else if (rand < 0.666) {
+                            $(value).text('. .')
+                        } else {
+                            $(value).text('. . .')
+                        }
+                        $(value).css({
+                            'vertical-align': 'middle',
+                            'text-align': 'center',
+                            'font-size': '16px'
+                        })
+                        loadTimer = setInterval(() => {
+                            let currentText = $(value).html()
+                            let newText
+                            if (currentText !== '. . . .') {
+                                newText = currentText + ' .'
+                            } else {
+                                newText = '.'
+                            }
+                            $(value).html(newText)
+                        }, 400 + Math.random() * 200)
                     }
-                    if (typeof significance === 'number') {
-                        innerText.html(significance.toFixed(5))
-                    } else {
-                        innerText.html(significance)
-                    }
-                    
-                    if (data.significances && data.significances['isSignificant'][j]) {
-                        $(innerText).css('background-color', '#82e072')
-                    }
-                    $(jval).html(innerText)
-                    $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&row=${j}&col=${i}" target="_blank"></a>`)
-    
-                    $(innerText).css({'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif'})
                 })
-                off()
-            }, 'json').fail((jqXHR, textStatus, errorThrown) => {
-                off()
-                console.log('Error triggered by getAllData')
-                showError(errorThrown)
-            })
+
+                $.get('responsePage.php', parameters, (data, status, jqXHR) => {
+                    clearInterval(loadTimer)
+                    // Store the computation values for retrieval when the link is clicked
+                    localStorage.setItem(`regressionVars${column}`, JSON.stringify(data.regressionVars))
+                    localStorage.setItem(`equationVars${column}`, JSON.stringify(data.equationVars))
+                    columnElements.each((j, jval) => {
+                        $(jval).css({
+                            'vertical-align': 'middle',
+                            'background-color': backgroundColors[j],
+                            'border-top': borderTops[j],
+                            'border-bottom': borderBottoms[j]
+                        })
+                        let innerText = $('<div>')
+                        let significance = 'No data'
+                        if (data.significances) {
+                            significance = data.significances['chiSqValues'][j]
+                        }
+                        if (typeof significance === 'number') {
+                            innerText.html(significance.toFixed(5))
+                        } else {
+                            innerText.html(significance)
+                        }
+                        
+                        if (data.significances && data.significances['isSignificant'][j]) {
+                            $(innerText).css('background-color', '#82e072')
+                        }
+                        $(jval).html(innerText)
+                        $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&row=${j}&col=${i}" target="_blank"></a>`)
+        
+                        $(innerText).css({'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif'})
+                    })
+                    off()
+                }, 'json').fail((jqXHR, textStatus, errorThrown) => {
+                    off()
+                    console.log('Error triggered by getAllData')
+                    showError(errorThrown)
+                })
+            }
         }
 
         delete parameters['column']
+
+        numCols = $('#predictTableBody').find('tr:first td').length
+        if (true) {
+            for (let i = 0; i < numCols; i++) {
+                let columnElements = $(`#predictTableBody tr td:nth-child(${i+2})`).not('.disabled-cell')
+                let column
+                switch (i) {
+                    case 0:
+                        column = 'numLevels'; break
+                    case 1:
+                        column = 'lvl1'; break
+                    case 2:
+                        column = 'lvl3'; break
+                    case 3:
+                        column = 'lvl5'; break
+                    case 4:
+                        column = 'lvl7'; break
+                    case 5:
+                        column = 'lvl11'; break
+                    case 6:
+                        column = 'lvl13'; break
+                    case 7:
+                        column = 'lvl15'; break
+                    case 8:
+                        column = 'lvl19'; break
+                    case 9:
+                        column = 'lvl21'; break
+                    case 10:
+                        column = 'lvl23'; break
+                    case 11:
+                        column = 'lvl25'; break
+                    case 12:
+                        column = 'lvl27'; break
+                    case 13:
+                        column = 'lvl31'; break
+                    case 14:
+                        column = 'lvl33'; break
+                }
+
+                parameters['predictColumn'] = column
+                parameters['predictTable'] = true
+                let loadTimer, backgroundColors = [], borderBottoms = [], borderTops = []
+
+                columnElements.each((index, value) => {
+                    backgroundColors.push($(value).css('background-color'))
+                    borderBottoms.push($(value).css('border-bottom'))
+                    borderTops.push($(value).css('border-top'))
+                    $(value).css({
+                        'background-color': 'rgba(0, 0, 0, 0.15)',
+                        'border-top': 'none',
+                        'border-bottom': 'none'
+                    })
+                    if (index === 2) {
+                        $(value).addClass('colLoadingText')
+                        let rand = Math.random()
+                        if (rand < 0.333) {
+                            $(value).text('.')
+                        } else if (rand < 0.666) {
+                            $(value).text('. .')
+                        } else {
+                            $(value).text('. . .')
+                        }
+                        $(value).css({
+                            'vertical-align': 'middle',
+                            'text-align': 'center',
+                            'font-size': '16px'
+                        })
+                        loadTimer = setInterval(() => {
+                            let currentText = $(value).html()
+                            let newText
+                            if (currentText !== '. . . .') {
+                                newText = currentText + ' .'
+                            } else {
+                                newText = '.'
+                            }
+                            $(value).html(newText)
+                        }, 400 + Math.random() * 200)
+                    }
+                })
+
+                $.get('responsePage.php', parameters, (data, status, jqXHR) => {
+                    clearInterval(loadTimer)
+                    columnElements.each((j, jval) => {
+                        $(jval).css({
+                            'vertical-align': 'middle',
+                            'background-color': backgroundColors[j],
+                            'border-top': borderTops[j],
+                            'border-bottom': borderBottoms[j]
+                        })
+                        let innerText = $('<div>')
+                        let significance = 'No data'
+                        if (data.significances) {
+                            significance = data.significances['chiSqValues'][j]
+                        }
+                        if (typeof significance === 'number') {
+                            innerText.html(significance.toFixed(5))
+                        } else {
+                            innerText.html(significance)
+                        }
+                        
+                        if (data.significances && data.significances['isSignificant'][j]) {
+                            $(innerText).css('background-color', '#82e072')
+                        }
+                        $(jval).html(innerText)
+        
+                        $(innerText).css({'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif'})
+                    })
+                    off()
+                }, 'json').fail((jqXHR, textStatus, errorThrown) => {
+                    off()
+                    console.log('Error triggered by getAllData')
+                    showError(errorThrown)
+                })
+            }
+        }
+        delete parameters['columns']
         $.get('responsePage.php', parameters, (data, status, jqXHR) => {
-            allData = data
             $('#scoreDisplayAll').html(data.questionsTotal.totalNumCorrect + ' / ' + data.questionsTotal.totalNumQuestions + ' (' + 
                 (100 * data.questionsTotal.totalNumCorrect / data.questionsTotal.totalNumQuestions).toFixed(1) + '%)')
-            if (data.levels !== null) { 
+            if (data.levels !== null) {
                 let numSessionsToDisplay = data.numSessions
                 totalSessions = data.totalNumSessions
                 $('#sessions').text('Showing ' + numSessionsToDisplay + ' of ' + totalSessions + ' available sessions')
@@ -352,6 +506,7 @@ $(document).ready((event) => {
                     .on('show.bs.collapse', () => {$('#amtsTotalCollapseBtnAll').html('[−]')}))
 
                 for (let i = Object.keys(data.basicInfoAll.times)[0]; i <= Object.keys(data.basicInfoAll.times)[Object.keys(data.basicInfoAll.times).length-1]; i++) {
+                    if (data.basicInfoAll.times[i] === 'NaN') continue;
                     // append times
                     $('#timesAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.times[i].toFixed(2)} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
 
@@ -399,6 +554,15 @@ $(document).ready((event) => {
                     showNoDataHistograms()
                     off()
                 }
+                $('#percentCompleteRow').children('td').each((index, value) => {
+                    if (index > 0) {
+                        if (typeof data.lvlsPercentComplete[index-1] === 'number') {
+                            $(value).html(data.lvlsPercentComplete[index-1].toPrecision(4) + ' %')
+                        } else {
+                            $(value).html(data.lvlsPercentComplete[index-1] + ' %')
+                        }
+                    }
+                })
                 drawWavesHistograms(dataHistogram)
             } else {
                 off()
