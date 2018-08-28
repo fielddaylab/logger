@@ -20,7 +20,7 @@ use MCordingley\Regression\Observations;
 use MCordingley\Regression\Predictor\Logistic as LogisticPredictor;
 use MCordingley\LinearAlgebra\Matrix;
 
-ini_set('memory_limit','512M');
+ini_set('memory_limit','1024M');
 ini_set('max_execution_time', 3000);
 
 $db = connectToDatabase(DBDeets::DB_NAME_DATA);
@@ -436,7 +436,7 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
     $a = array_column($allEvents, 'level');
     $b = array_column($allEvents, 'event');
 
-    for ($i = $levels[0]; $i <= $levels[count($levels)-1]; $i++) {
+    for ($i = $levels[0]; $i <= end($levels); $i++) {
         $totalTimesPerLevelAll[$i] = average(array_column($timeCol, $i));
         $totalMovesPerLevelArray[$i] = average(array_column($moveCol, $i));
         $totalMoveTypeChangesPerLevelAll[$i] = average(array_column($typeCol, $i));
@@ -650,10 +650,10 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
             $percentQuestionsCorrect = ($questionsAll['numsQuestions'][$i] === 0) ? 0 : $questionsAll['numsCorrect'][$i] / $questionsAll['numsQuestions'][$i];
             // 1 is for the intercept
             $predictor = array(1, $numMovesAll[$i], array_sum($typeCol[$i]), $levelsCol[$i], array_sum($timeCol[$i]), array_sum($avgCol[$i]), $percentQuestionsCorrect);
-            $colLvl = substr($column, 3);
-            foreach ($levelsForTable as $i=>$lvl) {
-                if ($colLvl >= $lvl) break;
-                $predictor []= $percentGoodMovesAll[$j][$i];
+            $colLvl = intval(substr($column, 3));
+            foreach ($levelsForTable as $j=>$lvl) {
+                if ($lvl >= $colLvl) break;
+                $predictor []= $percentGoodMovesAll[$lvl][$i];
             }
             $predicted []= (isset($levelsCompleteAll[$val][$colLvl]) && $levelsCompleteAll[$val][$colLvl]) ? 1 : 0;
 
@@ -1625,8 +1625,12 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             ) sessionsUpToLvl
             ON a.session_id = sessionsUpToLvl.session_id";
 
-        array_push($params, $gameID, $minMoves, $maxRows);
-        $paramTypes .= 'sii';
+        array_push($params, $gameID, $minMoves);
+        $paramTypes .= 'si';
+        if ($colLvl === 1) {
+            array_push($params, $maxRows);
+            $paramTypes .= 'i';
+        }
             
         foreach ($levelsForTable as $i=>$lvl) {
             if ($lvl >= $colLvl) break;
@@ -1699,8 +1703,6 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             ORDER BY client_time";
         array_push($params, $startDate, $endDate);
         $paramTypes .= 'ss';
-
-        return array($params, $paramTypes);
 
         $stmt = queryMultiParam($db, $query, $paramTypes, $params);
         if($stmt === NULL) {

@@ -32,7 +32,6 @@ $(document).ready((event) => {
         newRow.append(
             `
             <th scope="row">% good moves lvl ${value}</th>
-            <td style="border-right-width:4px;"></td>
             <td style="border-left-width:4px; "></td>
             <td></td>
             <td></td>
@@ -54,8 +53,7 @@ $(document).ready((event) => {
 
     $('.rowLvl').each((i, value) => {
         $(value).children('td').each((j, jval) => {
-            if (j === 0) return true
-            if (i+2 > j) {
+            if (i+1 > j) {
                 $(jval).css('background-color', 'rgb(235,235,228)')
                 $(jval).addClass('disabled-cell')
             }
@@ -170,7 +168,7 @@ $(document).ready((event) => {
         let numCols = $('#tableAllBody').find('tr:first td').length
         if (false) {
             for (let i = 0; i < numCols; i++) {
-                let columnElements = $(`#tableAllBody tr td:nth-child(${i+2})`)
+                let columnElements = $(`#tableAllBody tr td:nth-child(${i+1})`)
                 let column
                 switch (i) {
                     case 0:
@@ -314,34 +312,32 @@ $(document).ready((event) => {
                 let column
                 switch (i) {
                     case 0:
-                        column = 'numLevels'; break
-                    case 1:
                         column = 'lvl1'; break
-                    case 2:
+                    case 1:
                         column = 'lvl3'; break
-                    case 3:
+                    case 2:
                         column = 'lvl5'; break
-                    case 4:
+                    case 3:
                         column = 'lvl7'; break
-                    case 5:
+                    case 4:
                         column = 'lvl11'; break
-                    case 6:
+                    case 5:
                         column = 'lvl13'; break
-                    case 7:
+                    case 6:
                         column = 'lvl15'; break
-                    case 8:
+                    case 7:
                         column = 'lvl19'; break
-                    case 9:
+                    case 8:
                         column = 'lvl21'; break
-                    case 10:
+                    case 9:
                         column = 'lvl23'; break
-                    case 11:
+                    case 10:
                         column = 'lvl25'; break
-                    case 12:
+                    case 11:
                         column = 'lvl27'; break
-                    case 13:
+                    case 12:
                         column = 'lvl31'; break
-                    case 14:
+                    case 13:
                         column = 'lvl33'; break
                 }
 
