@@ -1604,105 +1604,32 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                 a.app_id
             FROM
                 log a
-            INNER JOIN 
+            WHERE a.session_id IN
             (
-                SELECT * FROM
-                (
-                    SELECT session_id, event_custom, app_id
-                    FROM log
-                    WHERE event_custom=1 AND app_id=?
-                    GROUP BY session_id
-                    HAVING COUNT(*) >= ?";
-            if ($colLvl === 1) {
-                $query .= "
-                    LIMIT ?
-                )";
-            } else {
-                $query .= "
-                )";
-            }
-            $query .= " moves
-            ) sessionsUpToLvl
-            ON a.session_id = sessionsUpToLvl.session_id";
-
-        array_push($params, $gameID, $minMoves);
-        $paramTypes .= 'si';
-        if ($colLvl === 1) {
-            array_push($params, $maxRows);
-            $paramTypes .= 'i';
-        }
-            
+                SELECT session_id
+                FROM log
+                WHERE event_custom=1 AND app_id=?";
         foreach ($levelsForTable as $i=>$lvl) {
             if ($lvl >= $colLvl) break;
-            $isLastRow = !isset($levelsForTable[$i+1]) || (isset($levelsForTable[$i+1]) && $levelsForTable[$i+1] === $colLvl);
-            if ($isLastRow) {
-                $query .= "
-            INNER JOIN
-            (
-                SELECT 
-                    *
-                FROM
+            $query .= " AND session_id IN
                 (
-                    SELECT DISTINCT
-                        session_id,
-                        event,
-                        app_id
-                    FROM
-                        log
-                    WHERE
-                        event='COMPLETE' AND LEVEL=? AND app_id=?
-                    LIMIT ?
-                ) completed
-                UNION ALL 
-                (
-                    SELECT * FROM
-                    (
-                        SELECT DISTINCT
-                            session_id,
-                            event,
-                            app_id
-                        FROM
-                            log all1
-                        WHERE
-                            NOT EXISTS
-                            (
-                                SELECT * FROM 
-                                    log done
-                                WHERE
-                                    level=? AND event='COMPLETE' AND all1.session_id=done.session_id AND app_id=?
-                            ) AND app_id=?
-                        LIMIT ?
-                    ) notCompleted
-                )
-            ) final
-            ON a.session_id = final.session_id";
-                array_push($params, $lvl, $gameID, $maxRows, $lvl, $gameID, $gameID, $maxRows);
-                $paramTypes .= 'isiissi';
-            } else {
-                $query .= "
-            INNER JOIN
-            (
-                SELECT DISTINCT
-                    session_id,
-                    event,
-                    app_id
-                FROM
-                    log
-                WHERE
-                    event='COMPLETE' AND LEVEL=? AND app_id=?
-            ) ".$tableLetter."
-            ON ".$tableLetter++.".session_id = a.session_id
-                ";
-                array_push($params, $lvl, $gameID);
-                $paramTypes .= 'is';
-            }
+                    SELECT session_id FROM log 
+                    WHERE event='COMPLETE' AND app_id=? AND level=?";
+            array_push($params, $gameID, $lvl);
+            $paramTypes .= 'si';
         }
         $query .= "
-            WHERE a.client_time BETWEEN ? AND ?";
+            )
+            GROUP BY session_id
+            HAVING COUNT(*) >= ?
+            )";
         $query .= "
+            WHERE a.client_time BETWEEN ? AND ?
             ORDER BY client_time";
         array_push($params, $startDate, $endDate);
         $paramTypes .= 'ss';
+
+        echo $query; return;
 
         $stmt = queryMultiParam($db, $query, $paramTypes, $params);
         if($stmt === NULL) {
@@ -1751,6 +1678,8 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
         foreach ($sessionAttributes as $i=>$val) {
             $times[$i] = $val[0]['time'];
         }
+
+        return $numSessions;
 
         // Construct sessions and times array
         $sessionsAndTimes = array('sessions'=>$uniqueSessions, 'times'=>array_values($times));
