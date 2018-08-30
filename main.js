@@ -26,7 +26,7 @@ $(document).ready((event) => {
     if (endmm < 10) { endmm = '0' + endmm }
     $('#endDate').val(endyyyy+'-'+endmm+'-'+enddd)
 
-    let lvls = [1, 3, 5, 7, 11, 13, 15, 19, 21, 23, 25, 27, 31, 33]
+    let lvls = [1, 3, 5, 7, 11, 13, 15, 19, 21, 23, 25, 27, 31]
     lvls.forEach((value, index, arr) => {
         let newRow = $(`<tr class=rowLvl>`)
         newRow.append(
@@ -50,8 +50,38 @@ $(document).ready((event) => {
         )
         $('#predictTableBody').append(newRow)
     })
-
-    $('.rowLvl').each((i, value) => {
+    $('#predictTableBody .rowLvl').each((i, value) => {
+        $(value).children('td').each((j, jval) => {
+            if (i+1 > j) {
+                $(jval).css('background-color', 'rgb(235,235,228)')
+                $(jval).addClass('disabled-cell')
+            }
+        })
+    })
+    lvls.forEach((value, index, arr) => {
+        let newRow = $(`<tr class=rowLvl>`)
+        newRow.append(
+            `
+            <th scope="row">% good moves lvl ${value}</th>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            `
+        )
+        $('#numLevelsBody').append(newRow)
+    })
+    $('#numLevelsBody .rowLvl').each((i, value) => {
         $(value).children('td').each((j, jval) => {
             if (i+1 > j) {
                 $(jval).css('background-color', 'rgb(235,235,228)')
@@ -306,7 +336,7 @@ $(document).ready((event) => {
         delete parameters['column']
 
         numCols = $('#predictTableBody').find('tr:first td').length
-        if (true) {
+        if (false) {
             for (let i = 0; i < numCols; i++) {
                 let columnElements = $(`#predictTableBody tr td:nth-child(${i+2})`).not('.disabled-cell')
                 let column
@@ -418,6 +448,117 @@ $(document).ready((event) => {
             }
         }
         delete parameters['columns']
+        delete parameters['predictColumn']
+        delete parameters['predictTable']
+
+        numCols = $('#numLevelsBody').find('tr:first td').length
+        if (true) {
+            for (let i = 0; i < numCols; i++) {
+                let columnElements = $(`#numLevelsBody tr td:nth-child(${i+2})`).not('.disabled-cell')
+                let column
+                switch (i) {
+                    case 0:
+                        column = 'lvl1'; break
+                    case 1:
+                        column = 'lvl3'; break
+                    case 2:
+                        column = 'lvl5'; break
+                    case 3:
+                        column = 'lvl7'; break
+                    case 4:
+                        column = 'lvl11'; break
+                    case 5:
+                        column = 'lvl13'; break
+                    case 6:
+                        column = 'lvl15'; break
+                    case 7:
+                        column = 'lvl19'; break
+                    case 8:
+                        column = 'lvl21'; break
+                    case 9:
+                        column = 'lvl23'; break
+                    case 10:
+                        column = 'lvl25'; break
+                    case 11:
+                        column = 'lvl27'; break
+                    case 12:
+                        column = 'lvl31'; break
+                    case 13:
+                        column = 'lvl33'; break
+                }
+
+                parameters['numLevelsTable'] = true
+                parameters['numLevelsColumn'] = column
+                let loadTimer, backgroundColors = [], borderBottoms = [], borderTops = []
+
+                columnElements.each((index, value) => {
+                    backgroundColors.push($(value).css('background-color'))
+                    borderBottoms.push($(value).css('border-bottom'))
+                    borderTops.push($(value).css('border-top'))
+                    $(value).css({
+                        'background-color': 'rgba(0, 0, 0, 0.15)',
+                        'border-top': 'none',
+                        'border-bottom': 'none'
+                    })
+                    if (index === 2) {
+                        $(value).addClass('colLoadingText')
+                        let rand = Math.random()
+                        if (rand < 0.333) {
+                            $(value).text('.')
+                        } else if (rand < 0.666) {
+                            $(value).text('. .')
+                        } else {
+                            $(value).text('. . .')
+                        }
+                        $(value).css({
+                            'vertical-align': 'middle',
+                            'text-align': 'center',
+                            'font-size': '16px'
+                        })
+                        loadTimer = setInterval(() => {
+                            let currentText = $(value).html()
+                            let newText
+                            if (currentText !== '. . . .') {
+                                newText = currentText + ' .'
+                            } else {
+                                newText = '.'
+                            }
+                            $(value).html(newText)
+                        }, 400 + Math.random() * 200)
+                    }
+                })
+
+                $.get('responsePage.php', parameters, (data, status, jqXHR) => {
+                    clearInterval(loadTimer)
+                    columnElements.each((j, jval) => {
+                        $(jval).css({
+                            'vertical-align': 'middle',
+                            'background-color': backgroundColors[j],
+                            'border-top': borderTops[j],
+                            'border-bottom': borderBottoms[j]
+                        })
+                        let innerText = $('<div>')
+                        console.log(data)
+                        let significance = data.isSignificantModel
+                        innerText.html(significance)
+                        
+                        if (significance) {
+                            $(innerText).css('background-color', '#82e072')
+                        }
+                        $(jval).html(innerText)
+        
+                        $(innerText).css({'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif'})
+                    })
+                    off()
+                }, 'json').fail((jqXHR, textStatus, errorThrown) => {
+                    off()
+                    console.log('Error triggered by getAllData')
+                    showError(errorThrown)
+                })
+            }
+        }
+        delete parameters['columns']
+
         $.get('responsePage.php', parameters, (data, status, jqXHR) => {
             $('#scoreDisplayAll').html(data.questionsTotal.totalNumCorrect + ' / ' + data.questionsTotal.totalNumQuestions + ' (' + 
                 (100 * data.questionsTotal.totalNumCorrect / data.questionsTotal.totalNumQuestions).toFixed(1) + '%)')

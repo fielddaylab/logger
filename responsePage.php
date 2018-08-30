@@ -17,6 +17,9 @@ use MCordingley\Regression\Algorithm\GradientDescent\Schedule\Adam;
 use MCordingley\Regression\Algorithm\GradientDescent\Gradient\Logistic as LogisticGradient;
 use MCordingley\Regression\Algorithm\GradientDescent\StoppingCriteria\GradientNorm;
 use MCordingley\Regression\Observations;
+use MCordingley\Regression\Algorithm\LeastSquares;
+use MCordingley\Regression\Predictor\Linear as LinearPredictor;
+use MCordingley\Regression\StatisticsGatherer\Linear as LinearGatherer;
 use MCordingley\Regression\Predictor\Logistic as LogisticPredictor;
 use MCordingley\LinearAlgebra\Matrix;
 
@@ -37,6 +40,9 @@ function average($arr) {
 }
 
 function normalize($X) {
+    if (!is_array($X)) {
+        return $X;
+    }
     $columns = array_map(null, ...$X);
     $minX = array();
     $maxX = array();
@@ -587,7 +593,7 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
     $coefficients = array();
     $stdErrs = array();
     $signifiances = array();
-    if (!isset($reqSessionID) && !isset($_GET['predictTable'])) {
+    if (!isset($reqSessionID) && !isset($_GET['predictTable']) && !isset($_GET['numLevelsColumn'])) {
         $predictors = array();
         $predicted = array();
         $algorithm = new Batch(new LogisticGradient, new Adam, new GradientNorm);
@@ -639,11 +645,43 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
             $observations = $coefficients = $covariance = $stdErrs = $significances = null;
         }
 
-        return array('regressionVars'=>$regressionVars, 'significances'=>$significances, 'equationVars'=>array('intercepts'=>$intercepts, 'coefficients'=>$coefficients, 'stdErrs'=>$stdErrs));
+        return array('regressionVars'=>$regressionVars, 'significances'=>$significances, 'equationVars'=>array('coefficients'=>$coefficients, 'stdErrs'=>$stdErrs));
     } else if (isset($_GET['predictTable'])) {
         $predictors = array();
         $predicted = array();
         $algorithm = new Batch(new LogisticGradient, new Adam, new GradientNorm);
+        $levelsForTable = array(1, 3, 5, 7, 11, 13, 15, 19, 21, 23, 25, 27, 31, 33);
+
+        foreach ($sessionIDs as $i=>$val) {
+            $percentQuestionsCorrect = ($questionsAll['numsQuestions'][$i] === 0) ? 0 : $questionsAll['numsCorrect'][$i] / $questionsAll['numsQuestions'][$i];
+            // 1 is for the intercept
+            $predictor = array(1, $numMovesAll[$i], array_sum($typeCol[$i]), $levelsCol[$i], array_sum($timeCol[$i]), array_sum($avgCol[$i]), $percentQuestionsCorrect);
+            $colLvl = intval(substr($column, 3));
+            foreach ($levelsForTable as $j=>$lvl) {
+                if ($lvl >= $colLvl) break;
+                //$predictor []= $percentGoodMovesAll[$lvl][$i];
+            }
+            $predicted []= (isset($levelsCompleteAll[$val][$colLvl]) && $levelsCompleteAll[$val][$colLvl]) ? 1 : 0;
+
+            $predictors []= $predictor;
+        }
+
+        if (!empty($predictors) && !empty($predicted)) {
+            $observations = Observations::fromArray(normalize($predictors), $predicted);
+            $coefficients = $algorithm->regress($observations);
+            $covariance = covariance($coefficients, $observations->getFeatures())->toArray();
+            $stdErrs = stdErrs($covariance);
+            $significances = isSignificant($coefficients, $stdErrs);
+            $regressionVars []= array($observations->getFeatures(), $observations->getOutcomes());
+        } else {
+            $observations = $coefficients = $covariance = $stdErrs = $significances = null;
+        }
+
+        return array('regressionVars'=>$regressionVars, 'significances'=>$significances, 'equationVars'=>array('coefficients'=>$coefficients, 'stdErrs'=>$stdErrs));
+    } else {
+        $predictors = array();
+        $predicted = array();
+        $algorithm = new LeastSquares;
         $levelsForTable = array(1, 3, 5, 7, 11, 13, 15, 19, 21, 23, 25, 27, 31, 33);
 
         foreach ($sessionIDs as $i=>$val) {
@@ -661,22 +699,104 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
         }
 
         if (!empty($predictors) && !empty($predicted)) {
-            $observations = Observations::fromArray($predictors, $predicted);
+            $observations = Observations::fromArray(normalize($predictors), $predicted);
             $coefficients = $algorithm->regress($observations);
-            $covariance = covariance($coefficients, $observations->getFeatures())->toArray();
-            $stdErrs = stdErrs($covariance);
-            $significances = isSignificant($coefficients, $stdErrs);
+            $linearPredictor = new LinearPredictor($coefficients);
+            $gatherer = new LinearGatherer($observations, $coefficients, $linearPredictor);
+            $stdErrs = $gatherer->getStandardErrorCoefficients();
+
+            $dfm = $linearPredictor->getDegreesOfFreedomModel();
+            $dfe = $linearPredictor->getDegreesOfFreedomError();
+            // table of critical f values for dfm, dfe at a=0.05
+            $fTable = array(
+                array( // row 1
+                    161.4476, 199.5000, 215.7073, 224.5832, 230.1619, 233.9860, 236.7684, 238.8827, 240.5433, 241.8817, null, 243.9060, null, null, 245.9499, null, null, null, null, 248.0131
+                ),
+                array(
+                    18.5128, 19.0000, 19.1643, 19.2468, 19.2964, 19.3295, 19.3532, 19.3710, 19.3848, 19.3959, null, 19.4125, null, null, 19.4291, null, null, null, null, 19.4458
+                ),
+                array(
+                    10.1280, 9.5521, 9.2766, 9.1172, 9.0135, 8.9406, 8.8867, 8.8452, 8.8123, 8.7855, null, 8.7446, null, null, 8.7029, null, null, null, null, 8.6602
+                ),
+                array(
+                    7.7086, 6.9443, 6.5914, 6.3882, 6.2561, 6.1631, 6.0942, 6.0410, 5.9988, 5.9644, null, 5.9117, null, null, 5.8578, null, null, null, null, 5.8025
+                ),
+                array( // row 5
+                    6.6079, 5.7861, 5.4095, 5.1922, 5.0503, 4.9503, 4.8759, 4.8183, 4.7725, 4.7351, null, 4.6777, null, null, 4.6188, null, null, null, null, 4.5581
+                ),
+                array(
+                    5.9874, 5.1433, 4.7571, 4.5337, 4.3874, 4.2839, 4.2067, 4.1468, 4.0990, 4.0600, null, 3.9999, null, null, 3.9381, null, null, null, null, 3.8742
+                ),
+                array(
+                    5.5914, 4.7374, 4.3468, 4.1203, 3.9715, 3.8660, 3.7870, 3.7257, 3.6767, 3.6365, null, 3.5747, null, null, 3.5107, null, null, null, null, 3.4445
+                ),
+                array(
+                    5.3177, 4.4590, 4.0662, 3.8379, 3.6875, 3.5806, 3.5005, 3.4381, 3.3881, 3.3472, null, 3.2839, null, null, 3.2184, null, null, null, null, 3.1503
+                ),
+                array(
+                    5.1174, 4.2565, 3.8625, 3.6331, 3.4817, 3.3738, 3.2927, 3.2296, 3.1789, 3.1373, null, 3.0729, null, null, 3.0061, null, null, null, null, 2.9365
+                ),
+                array( // row 10
+                    4.9646, 4.1028, 3.7083, 3.4780, 3.3258, 3.2172, 3.1355, 3.0717, 3.0204, 2.9782, null, 2.9130, null, null, 2.8450, null, null, null, null, 2.7740
+                ),
+                array(
+                    4.8443, 3.9823, 3.5874, 3.3567, 3.2039, 3.0946, 3.0123, 2.9480, 2.8962, 2.8536, null, 2.7876, null, null, 2.7186, null, null, null, null, 2.6464
+                ),
+                array(
+                    4.7472, 3.8853, 3.4903, 3.2592, 3.1059, 2.9961, 2.9134, 2.8486, 2.7964, 2.7534, null, 2.6866, null, null, 2.6169, null, null, null, null, 2.5436
+                ),
+                array(
+                    4.6672, 3.8056, 3.4105, 3.1791, 3.0254, 2.9153, 2.8321, 2.7669, 2.7144, 2.6710, null, 2.6037, null, null, 2.5331, null, null, null, null, 2.4589
+                ),
+                array(
+                    4.6001, 3.7389, 3.3439, 3.1122, 2.9582, 2.8477, 2.7642, 2.6987, 2.6458, 2.6022, null, 2.5342, null, null, 2.4630, null, null, null, null, 2.3879
+                ),
+                array( // row 15
+                    4.5431, 3.6823, 3.2874, 3.0556, 2.9013, 2.7905, 2.7066, 2.6408, 2.5876, 2.5437, null, 2.4753, null, null, 2.4034, null, null, null, null, 2.3275
+                ),
+                array(
+                    4.4940, 3.6337, 3.2389, 3.0069, 2.8524, 2.7413, 2.6572, 2.5911, 2.5377, 2.4935, null, 2.4247, null, null, 2.3522, null, null, null, null, 2.2756
+                ),
+                array(
+                    4.4513, 3.5915, 3.1968, 2.9647, 2.8100, 2.6987, 2.6143, 2.5480, 2.4943, 2.4499, null, 2.3807, null, null, 2.3077, null, null, null, null, 2.2304
+                ),
+                array(
+                    4.4139, 3.5546, 3.1599, 2.9277, 2.7729, 2.6613, 2.5767, 2.5102, 2.4563, 2.4117, null, 2.3421, null, null, 2.2686, null, null, null, null, 2.1906
+                ),
+                array(
+                    4.3807, 3.5219, 3.1274, 2.8951, 2.7401, 2.6283, 2.5435, 2.4768, 2.4227, 2.3779, null, 2.3080, null, null, 2.2341, null, null, null, null, 2.1555
+                ),
+                array( // row 20
+                    4.3512, 3.4928, 3.0984, 2.8661, 2.7109, 2.5990, 2.5140, 2.4471, 2.3928, 2.3479, null, 2.2776, null, null, 2.2033, null, null, null, null, 2.1242
+                ),
+            );
+
+            $f = $linearPredictor->getFStatistic();
+
+            while (is_null($fTable[$dfe][$dfm])) {
+                $dfm++;
+                if (!is_null($fTable[$dfe][$dfm])) {
+                    break;
+                }
+            }
+            $critValue = $fTable[$dfe][$dfm];
+
+            $isSignificantModel = false;
+            if ($f >= $critValue) {
+                $isSignificantModel = true;
+            }
+
             $regressionVars []= array($observations->getFeatures(), $observations->getOutcomes());
         } else {
             $observations = $coefficients = $covariance = $stdErrs = $significances = null;
         }
 
-        return array('regressionVars'=>$regressionVars, 'significances'=>$significances, 'equationVars'=>array('intercepts'=>$intercepts, 'coefficients'=>$coefficients, 'stdErrs'=>$stdErrs));
+        return array('regressionVars'=>$regressionVars, 'isSignificantModel'=>$isSignificantModel, 'equationVars'=>array('coefficients'=>$coefficients, 'stdErrs'=>$stdErrs));
     }
 }
 
 function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
-    if (!isset($reqSessionID) && !isset($_GET['predictColumn'])) {
+    if (!isset($reqSessionID) && !isset($_GET['predictColumn']) && !isset($_GET['numLevelsColumn'])) {
         $minMoves = $_GET['minMoves'];
         $startLevel = $_GET['minLevels'];
         $endLevel = $_GET['maxLevels'];
@@ -1201,7 +1321,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             }
         }*/
 
-    } else if (!isset($_GET['predictColumn'])) {
+    } else if (!isset($_GET['predictColumn']) && !isset($_GET['numLevelsColumn'])) {
         $query =
         "SELECT session_id, level, event, event_custom, event_data_complex, client_time
         FROM log
@@ -1581,7 +1701,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
 
         // Return ALL the above information at once in a big array
         return replaceNans($output);
-    } else {
+    } else if (isset($_GET['predictColumn'])) {
         $predictColumn = $_GET['predictColumn'];
         $startDate = $_GET['startDate'];
         $endDate = $_GET['endDate'];
@@ -1594,7 +1714,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
         $params = array();
         $paramTypes = '';
         $query = 
-"            SELECT
+            "               SELECT
                 a.session_id,
                 a.level,
                 a.event,
@@ -1737,6 +1857,139 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
         $sessionsAndTimes = array('sessions'=>$uniqueSessions, 'times'=>array_values($times));
 
         $columnData = analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAttributes, $predictColumn);
+
+        $output = $columnData;
+
+        // Return ALL the above information at once in a big array
+        return replaceNans($output);
+    } else {
+        $numLevelsColumn = $_GET['numLevelsColumn'];
+        $minMoves = $_GET['minMoves'];
+        $startLevel = $_GET['minLevels'];
+        $endLevel = $_GET['maxLevels'];
+        $minQuestions = $_GET['minQuestions'];
+        $startDate = $_GET['startDate'];
+        $endDate = $_GET['endDate'];
+        $maxRows = $_GET['maxRows'];
+
+        $query = "SELECT a.session_id, a.level, a.event, a.event_custom, a.event_data_complex, a.client_time, a.app_id
+        FROM log as a
+        WHERE a.client_time>=? AND a.client_time<=? AND a.app_id=? ";
+        $params = array($startDate, $endDate, $gameID);
+        $paramTypes = 'sss';
+
+        if ($minMoves > 0) {
+            $query .= "AND a.session_id IN
+            (
+                SELECT session_id FROM
+                (
+                    SELECT * FROM (
+                        SELECT session_id, event_custom
+                        FROM log
+                        WHERE event_custom=1
+                        GROUP BY session_id
+                        HAVING COUNT(*) >= ?
+                    LIMIT ?) temp
+                ) AS moves
+            ) ";
+            $params []= $minMoves;
+            $params []= $maxRows;
+            $paramTypes .= 'ii';
+        }
+
+        $distinctLevels = $endLevel - $startLevel + 1;
+        $query .= "AND a.session_id IN
+        (
+            SELECT session_id FROM
+            (
+                SELECT * FROM (
+                    SELECT DISTINCT level, session_id, event
+                    FROM log
+                    WHERE event='COMPLETE' AND level BETWEEN ? AND ?
+                    GROUP BY session_id
+                    HAVING COUNT(DISTINCT level) >= ?
+                LIMIT ?) temp
+            ) AS levels
+        ) ";
+        $params []= $startLevel;
+        $params []= $endLevel;
+        $params []= $distinctLevels;
+        $params []= $maxRows;
+        $paramTypes .= 'iiii';
+
+        if ($minQuestions > 0) {
+            $query .= "AND a.session_id IN
+            (
+                SELECT session_id FROM
+                (
+                    SELECT * FROM (
+                        SELECT session_id, event_custom
+                        FROM log
+                        WHERE event_custom=3
+                        GROUP BY session_id
+                        HAVING COUNT(*) >= ?
+                    LIMIT ?) temp
+                ) AS questions
+            ) ";
+            $params []= $minQuestions;
+            $params []= $maxRows;
+            $paramTypes .= 'ii';
+        }
+
+        $query .= "ORDER BY a.client_time";
+
+        $stmt = queryMultiParam($db, $query, $paramTypes, $params);
+        if($stmt === NULL) {
+            http_response_code(500);
+            die('{ "errMessage": "Error running query." }');
+        }
+        if (!$stmt->bind_result($session_id, $level, $event, $event_custom, $event_data_complex, $client_time, $app_id)) {
+            http_response_code(500);
+            die('{ "errMessage": "Failed to bind to results." }');
+        }
+        $sessionAttributes = array(); // the master array of all sessions that will be built with attributes
+        $allEvents = array();
+        while($stmt->fetch()) {
+            $tuple = array('session_id'=>$session_id, 'level'=>$level, 'event'=>$event, 'event_custom'=>$event_custom,
+            'event_data_complex'=>$event_data_complex, 'time'=>$client_time);
+            // Group the variables into their sessionIDs in a big associative array
+            $sessionAttributes[$session_id][] = $tuple;
+            // Also make one big array of every event for easier extraction of unique attributes
+            $allEvents[] = $tuple;
+        }
+        $stmt->close();
+
+        foreach ($sessionAttributes as $i=>$val) {
+            uasort($sessionAttributes[$i], function($a, $b) {
+                return ($a['time'] <= $b['time']) ? -1 : 1;
+            });
+        }
+
+        // Sort session ids by date, the default from before
+        uasort($sessionAttributes, function($a, $b) {
+            return ($a[0]['time'] <= $b[0]['time']) ? -1 : 1;
+        });
+
+        $sessions = array_keys($sessionAttributes);
+        $uniqueSessions = array_unique($sessions);
+        $numSessions = count($uniqueSessions);
+
+        $numEvents = count($allEvents);
+        $completeEvents = array_filter($allEvents, function($a) { return $a['event'] === 'COMPLETE'; });
+        $completeLevels = array_column($completeEvents, 'level');
+        $levels = array_filter(array_unique(array_column($allEvents, 'level')), function($a) use($completeLevels) { return in_array($a, $completeLevels); });
+        sort($levels);
+        $numLevels = count($levels);
+
+        $times = array(); // Construct array of each session's first time
+        foreach ($sessionAttributes as $i=>$val) {
+            $times[$i] = $val[0]['time'];
+        }
+
+        // Construct sessions and times array
+        $sessionsAndTimes = array('sessions'=>$uniqueSessions, 'times'=>array_values($times));
+
+        $columnData = analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAttributes, $numLevelsColumn);
 
         $output = $columnData;
 
