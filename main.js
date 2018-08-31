@@ -202,42 +202,36 @@ $(document).ready((event) => {
                 let column
                 switch (i) {
                     case 0:
-                        column = 'gameComplete'; break
-                    case 1:
-                        column = 'level10'; break
-                    case 2:
-                        column = 'level20'; break
-                    case 3:
                         column = 'q00'; break
-                    case 4:
+                    case 1:
                         column = 'q01'; break
-                    case 5:
+                    case 2:
                         column = 'q02'; break
-                    case 6:
+                    case 3:
                         column = 'q03'; break
-                    case 7:
+                    case 4:
                         column = 'q10'; break
-                    case 8:
+                    case 5:
                         column = 'q11'; break
-                    case 9:
+                    case 6:
                         column = 'q12'; break
-                    case 10:
+                    case 7:
                         column = 'q13'; break
-                    case 11:
+                    case 8:
                         column = 'q20'; break
-                    case 12:
+                    case 9:
                         column = 'q21'; break
-                    case 13:
+                    case 10:
                         column = 'q22'; break
-                    case 14:
+                    case 11:
                         column = 'q23'; break
-                    case 15:
+                    case 12:
                         column = 'q30'; break
-                    case 16:
+                    case 13:
                         column = 'q31'; break
-                    case 17:
+                    case 14:
                         column = 'q32'; break
-                    case 18:
+                    case 15:
                         column = 'q33'; break
                 }
 
@@ -447,13 +441,13 @@ $(document).ready((event) => {
                 })
             }
         }
-        delete parameters['columns']
+        delete parameters['column']
         delete parameters['predictColumn']
         delete parameters['predictTable']
 
         numCols = $('#numLevelsBody').find('tr:first td').length
         if (true) {
-            for (let i = 0; i < numCols; i++) {
+            for (let i = 3; i < 4; i++) {
                 let columnElements = $(`#numLevelsBody tr td:nth-child(${i+2})`).not('.disabled-cell')
                 let column
                 switch (i) {
@@ -538,9 +532,8 @@ $(document).ready((event) => {
                             'border-bottom': borderBottoms[j]
                         })
                         let innerText = $('<div>')
-                        console.log(data)
                         let significance = data.isSignificantModel
-                        innerText.html(significance)
+                        innerText.html(data.equationVars.coefficients[j+1].toFixed(5))
                         
                         if (significance) {
                             $(innerText).css('background-color', '#82e072')
@@ -557,7 +550,9 @@ $(document).ready((event) => {
                 })
             }
         }
-        delete parameters['columns']
+        delete parameters['column']
+        delete parameters['numLevelsTable']
+        delete parameters['numLevelsColumn']
 
         $.get('responsePage.php', parameters, (data, status, jqXHR) => {
             $('#scoreDisplayAll').html(data.questionsTotal.totalNumCorrect + ' / ' + data.questionsTotal.totalNumQuestions + ' (' + 

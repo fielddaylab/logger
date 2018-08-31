@@ -598,42 +598,20 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
         $predicted = array();
         $algorithm = new Batch(new LogisticGradient, new Adam, new GradientNorm);
 
-        if ($column === 'level10' || $column === 'level20' || $column === 'gameComplete') {
-            foreach ($sessionIDs as $i=>$val) {
+        $quesIndex = intval(substr($column, 1, 1));
+        $ansIndex = intval(substr($column, 2, 1));
+        foreach ($questionAnswereds as $i=>$val) {
+            if (isset($val[$quesIndex])) {
+                $numMoves = $numMovesAll[$i];
+                $numTypeChanges = array_sum($typeCol[$i]);
+                $time = array_sum($timeCol[$i]);
+                $minMax = array_sum($avgCol[$i]);
                 $percentQuestionsCorrect = ($questionsAll['numsQuestions'][$i] === 0) ? 0 : $questionsAll['numsCorrect'][$i] / $questionsAll['numsQuestions'][$i];
-                // 1 is for the intercept
-                $predictor = array(1, $numMovesAll[$i], array_sum($typeCol[$i]), $levelsCol[$i], array_sum($timeCol[$i]), array_sum($avgCol[$i]), $percentQuestionsCorrect);
-                for ($j = $startLevel; $j <= $endLevel; $j++) {
-                    //$predictor []= $percentGoodMovesAll[$j][$i];
-                }
-
-                if ($column === 'level10') {
-                    $predicted []= ($numLevelsAll[$i] >= 9) ? 1 : 0;
-                } else if ($column === 'level20') {
-                    $predicted []= ($numLevelsAll[$i] >= 15) ? 1 : 0;
-                } else {
-                    $predicted []= ($numLevelsAll[$i] >= 28) ? 1 : 0;
-                }
-
-                $predictors []= $predictor;
-            }
-        } else { // column is one of the questions
-            $predictors = array();
-            $predicted = array();
-            $quesIndex = intval(substr($column, 1, 1));
-            $ansIndex = intval(substr($column, 2, 1));
-            foreach ($questionAnswereds as $i=>$val) {
-                if (isset($val[$quesIndex])) {
-                    $numMoves = $numMovesAll[$i];
-                    $numTypeChanges = array_sum($typeCol[$i]);
-                    $time = array_sum($timeCol[$i]);
-                    $minMax = array_sum($avgCol[$i]);
-                    $percentQuestionsCorrect = ($questionsAll['numsQuestions'][$i] === 0) ? 0 : $questionsAll['numsCorrect'][$i] / $questionsAll['numsQuestions'][$i];
-                    $predictors []= array(1, $numMovesAll[$i], array_sum($typeCol[$i]), $levelsCol[$i], array_sum($timeCol[$i]), array_sum($avgCol[$i]), $percentQuestionsCorrect);
-                    $predicted []= ($val[$quesIndex] === $ansIndex) ? 1 : 0;
-                }
+                $predictors []= array(1, $numMovesAll[$i], array_sum($typeCol[$i]), $levelsCol[$i], array_sum($timeCol[$i]), array_sum($avgCol[$i]), $percentQuestionsCorrect);
+                $predicted []= ($val[$quesIndex] === $ansIndex) ? 1 : 0;
             }
         }
+
         if (!empty($predictors) && !empty($predicted)) {
             $observations = Observations::fromArray($predictors, $predicted);
             $coefficients = $algorithm->regress($observations);
@@ -705,8 +683,8 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
             $gatherer = new LinearGatherer($observations, $coefficients, $linearPredictor);
             $stdErrs = $gatherer->getStandardErrorCoefficients();
 
-            $dfm = $linearPredictor->getDegreesOfFreedomModel();
-            $dfe = $linearPredictor->getDegreesOfFreedomError();
+            $dfm = $gatherer->getDegreesOfFreedomModel();
+            $dfe = $gatherer->getDegreesOfFreedomError();
             // table of critical f values for dfm, dfe at a=0.05
             $fTable = array(
                 array( // row 1
@@ -771,11 +749,11 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
                 ),
             );
 
-            $f = $linearPredictor->getFStatistic();
+            $f = $gatherer->getFStatistic();
 
-            while (is_null($fTable[$dfe][$dfm])) {
+            while (!isset($fTable[$dfe][$dfm])) {
                 $dfm++;
-                if (!is_null($fTable[$dfe][$dfm])) {
+                if (isset($fTable[$dfe][$dfm])) {
                     break;
                 }
             }
@@ -1870,73 +1848,103 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
         $minQuestions = $_GET['minQuestions'];
         $startDate = $_GET['startDate'];
         $endDate = $_GET['endDate'];
-        $maxRows = $_GET['maxRows'];
 
-        $query = "SELECT a.session_id, a.level, a.event, a.event_custom, a.event_data_complex, a.client_time, a.app_id
-        FROM log as a
-        WHERE a.client_time>=? AND a.client_time<=? AND a.app_id=? ";
-        $params = array($startDate, $endDate, $gameID);
-        $paramTypes = 'sss';
+        $levelsForTable = array(1, 3, 5, 7, 11, 13, 15, 19, 21, 23, 25, 27, 31, 33, 999);
+        $colLvl = intval(substr($numLevelsColumn, 3));
+        $lvlIndex = array_search($colLvl, $levelsForTable);
+        $maxRows = 20 + 6 + $lvlIndex; // n-p=20
 
-        if ($minMoves > 0) {
-            $query .= "AND a.session_id IN
+        $tableLetter = 'b';
+        $colLvl = $levelsForTable[$lvlIndex+1];
+        $params = array();
+        $paramTypes = '';
+        $query = 
+            "               SELECT
+                a.session_id,
+                a.level,
+                a.event,
+                a.event_custom,
+                a.event_data_complex,
+                a.client_time,
+                a.app_id
+            FROM
+                log a
+            WHERE a.client_time BETWEEN ? AND ? AND a.session_id IN
             (
-                SELECT session_id FROM
-                (
-                    SELECT * FROM (
-                        SELECT session_id, event_custom
-                        FROM log
-                        WHERE event_custom=1
-                        GROUP BY session_id
-                        HAVING COUNT(*) >= ?
-                    LIMIT ?) temp
-                ) AS moves
-            ) ";
-            $params []= $minMoves;
-            $params []= $maxRows;
-            $paramTypes .= 'ii';
+                SELECT session_id
+                FROM log
+                WHERE event_custom=1 AND app_id=? AND session_id IN";
+        array_push($params, $startDate, $endDate, $gameID);
+        $paramTypes .= 'sss';
+        foreach ($levelsForTable as $i=>$lvl) {
+            if ($lvl >= $colLvl) break;
+            $indent = str_repeat("    ", $i);
+            $isLastLevel = !isset($levelsForTable[$i+1]) || (isset($levelsForTable[$i+1]) && $levelsForTable[$i+1] === $colLvl);
+            $isSecondLastLevel = ($levelsForTable[$i+1] < $colLvl && isset($levelsForTable[$i+2]) && $levelsForTable[$i+2] >= $colLvl);
+
+            if ($colLvl === 3 || !$isLastLevel) {
+                if ($isSecondLastLevel || $colLvl === 3) {
+                    $query .= "
+                " . $indent . "(
+                    " . $indent . "SELECT * FROM ";
+                    $indent .= '    ';
+                }
+                $query .= $indent . "
+                " . $indent . "(" . "
+                    " . $indent . "SELECT session_id FROM log WHERE app_id=?";
+                array_push($params, $gameID);
+                $paramTypes .= 's';
+                if ($colLvl !== 3) {
+                    $query .= "
+                    " . $indent . "AND event='COMPLETE' AND level=?";
+                    array_push($params, $lvl);
+                    $paramTypes .= 'i';
+                }
+                if (!$isSecondLastLevel && $colLvl !== 3) $query .= " AND session_id IN";
+            }
+            if ($isLastLevel) {
+                $query .= " AND session_id NOT IN " . "
+                    " . $indent . "(" . "
+                        " . $indent . "SELECT DISTINCT session_id FROM log" . "
+                        " . $indent . "WHERE event='COMPLETE' AND app_id=? AND level=?";
+            }
+            if ($isLastLevel) {
+                $query .= "
+                " . $indent . "    )" . "
+                " . $indent . "    LIMIT ?" . "
+                " . $indent . ") b0
+                " . $indent . "UNION ALL
+                " . $indent . "(
+                    " . $indent . "SELECT * FROM" . "
+                    " . $indent . "(" . "
+                    " . $indent . "    SELECT session_id FROM log WHERE app_id=?" . "
+                    " . $indent . "    AND event='COMPLETE' AND level=? AND session_id IN " . "
+                    " . $indent . "    (" . "
+                    " . $indent . "        SELECT DISTINCT session_id FROM log" . "
+                    " . $indent . "        WHERE event='COMPLETE' AND app_id=? AND level=?" . "
+                    " . $indent . "    )" . "
+                    " . $indent . "    LIMIT ?" . "
+                    " . $indent . ") b1" . "
+                " . $indent . ")";
+            }
+            if ($isLastLevel) {
+                array_push($params, $gameID, $lvl, $maxRows, $gameID, $levelsForTable[$i-1], $gameID, $lvl, $maxRows);
+                $paramTypes .= 'siisisii';
+            }
         }
-
-        $distinctLevels = $endLevel - $startLevel + 1;
-        $query .= "AND a.session_id IN
-        (
-            SELECT session_id FROM
-            (
-                SELECT * FROM (
-                    SELECT DISTINCT level, session_id, event
-                    FROM log
-                    WHERE event='COMPLETE' AND level BETWEEN ? AND ?
-                    GROUP BY session_id
-                    HAVING COUNT(DISTINCT level) >= ?
-                LIMIT ?) temp
-            ) AS levels
-        ) ";
-        $params []= $startLevel;
-        $params []= $endLevel;
-        $params []= $distinctLevels;
-        $params []= $maxRows;
-        $paramTypes .= 'iiii';
-
-        if ($minQuestions > 0) {
-            $query .= "AND a.session_id IN
-            (
-                SELECT session_id FROM
-                (
-                    SELECT * FROM (
-                        SELECT session_id, event_custom
-                        FROM log
-                        WHERE event_custom=3
-                        GROUP BY session_id
-                        HAVING COUNT(*) >= ?
-                    LIMIT ?) temp
-                ) AS questions
-            ) ";
-            $params []= $minQuestions;
-            $params []= $maxRows;
-            $paramTypes .= 'ii';
+        foreach (array_reverse($levelsForTable, true) as $i=>$lvl) {
+            if ($colLvl > $lvl && ($i > 0 || $colLvl === 3)) {
+                $indent = str_repeat("    ", $i+3);
+                $query .= PHP_EOL . $indent . ")";
+            }
         }
-
-        $query .= "ORDER BY a.client_time";
+        $query .= "
+                GROUP BY session_id
+                HAVING COUNT(*) >= ?
+            )
+            ORDER BY a.client_time";
+        array_push($params, $minMoves);
+        $paramTypes .= 'i';
 
         $stmt = queryMultiParam($db, $query, $paramTypes, $params);
         if($stmt === NULL) {
@@ -1989,7 +1997,12 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
         // Construct sessions and times array
         $sessionsAndTimes = array('sessions'=>$uniqueSessions, 'times'=>array_values($times));
 
-        $columnData = analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAttributes, $numLevelsColumn);
+        if ($numSessions > $colLvl) {
+            $columnData = analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAttributes, $numLevelsColumn);
+        } else {
+            $columnData = null;
+        }
+        
 
         $output = $columnData;
 
