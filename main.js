@@ -178,7 +178,7 @@ $(document).ready((event) => {
     })
 
     function getAllData(isFirstTime = false) {
-        let parameters = {
+        let parametersBasic = {
             'gameID': $('#gameSelect').val(),
             'maxRows': $('#maxRows').val(),
             'minMoves': $('#minMoves').val(),
@@ -195,12 +195,14 @@ $(document).ready((event) => {
             'knobStdDevs': $('#knobStdDevs').prop('checked') ? true : undefined,
             'knobTotalAmts': $('#knobTotalAmts').prop('checked') ? true : undefined,
         }
+        let queue = new networkQueue()
+
         let numCols = $('#tableAllBody').find('tr:first td').length
-        if (false) {
+        if (true) {
             for (let i = 0; i < numCols; i++) {
-                let columnElements = $(`#tableAllBody tr td:nth-child(${i+1})`)
+                let columnElements = $(`#tableAllBody tr td:nth-child(${i+2})`)
                 let column
-                switch (i) {
+                switch (i+1) {
                     case 0:
                         column = 'q00'; break
                     case 1:
@@ -235,7 +237,17 @@ $(document).ready((event) => {
                         column = 'q33'; break
                 }
 
-                parameters['column'] = column
+                let parametersQues = {
+                    'gameID': $('#gameSelect').val(),
+                    'maxRows': $('#maxRows').val(),
+                    'minMoves': $('#minMoves').val(),
+                    'minQuestions': $('#minQuestions').val(),
+                    'minLevels': $('#minLevels').val(),
+                    'maxLevels': $('#maxLevels').val(),
+                    'startDate': $('#startDate').val(),
+                    'endDate': $('#endDate').val()
+                }
+                parametersQues['column'] = column
                 let loadTimer, backgroundColors = [], borderBottoms = [], borderTops = []
 
                 switch (column) {
@@ -287,7 +299,7 @@ $(document).ready((event) => {
                     }
                 })
 
-                $.get('responsePage.php', parameters, (data, status, jqXHR) => {
+                let callbackFunc = (data) => {
                     clearInterval(loadTimer)
                     // Store the computation values for retrieval when the link is clicked
                     localStorage.setItem(`regressionVars${column}`, JSON.stringify(data.regressionVars))
@@ -319,19 +331,29 @@ $(document).ready((event) => {
                         $(innerText).css({'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif'})
                     })
                     off()
-                }, 'json').fail((jqXHR, textStatus, errorThrown) => {
-                    off()
-                    console.log('Error triggered by getAllData')
-                    showError(errorThrown)
-                })
+                }
+
+                req = {
+                    parameters: parametersQues,
+                    callback: callbackFunc
+                }
+                queue.push(req)
             }
         }
 
-        delete parameters['column']
-
         numCols = $('#predictTableBody').find('tr:first td').length
-        if (false) {
+        if (true) {
             for (let i = 0; i < numCols; i++) {
+                let parametersChallenge = {
+                    'gameID': $('#gameSelect').val(),
+                    'maxRows': $('#maxRows').val(),
+                    'minMoves': $('#minMoves').val(),
+                    'minQuestions': $('#minQuestions').val(),
+                    'minLevels': $('#minLevels').val(),
+                    'maxLevels': $('#maxLevels').val(),
+                    'startDate': $('#startDate').val(),
+                    'endDate': $('#endDate').val()
+                }
                 let columnElements = $(`#predictTableBody tr td:nth-child(${i+2})`).not('.disabled-cell')
                 let column
                 switch (i) {
@@ -365,8 +387,8 @@ $(document).ready((event) => {
                         column = 'lvl33'; break
                 }
 
-                parameters['predictColumn'] = column
-                parameters['predictTable'] = true
+                parametersChallenge['predictTable'] = true
+                parametersChallenge['predictColumn'] = column
                 let loadTimer, backgroundColors = [], borderBottoms = [], borderTops = []
 
                 columnElements.each((index, value) => {
@@ -406,7 +428,7 @@ $(document).ready((event) => {
                     }
                 })
 
-                $.get('responsePage.php', parameters, (data, status, jqXHR) => {
+                let callbackFunc = (data) => {
                     clearInterval(loadTimer)
                     columnElements.each((j, jval) => {
                         $(jval).css({
@@ -420,11 +442,16 @@ $(document).ready((event) => {
                         if (data.significances) {
                             significance = data.significances['chiSqValues'][j]
                         }
-                        if (typeof significance === 'number') {
-                            innerText.html(significance.toFixed(5))
+                        if (significance) {
+                            if (typeof significance === 'number') {
+                                innerText.html(significance.toFixed(5))
+                            } else {
+                                innerText.html(significance)
+                            }
                         } else {
-                            innerText.html(significance)
+                            innerText.html('No data')
                         }
+
                         
                         if (data.significances && data.significances['isSignificant'][j]) {
                             $(innerText).css('background-color', '#82e072')
@@ -434,22 +461,22 @@ $(document).ready((event) => {
                         $(innerText).css({'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif'})
                     })
                     off()
-                }, 'json').fail((jqXHR, textStatus, errorThrown) => {
-                    off()
-                    console.log('Error triggered by getAllData')
-                    showError(errorThrown)
-                })
+                }
+
+                req = {
+                    parameters: parametersChallenge,
+                    callback: callbackFunc
+                }
+                queue.push(req)
             }
         }
-        delete parameters['column']
-        delete parameters['predictColumn']
-        delete parameters['predictTable']
 
         numCols = $('#numLevelsBody').find('tr:first td').length
         if (true) {
-            for (let i = 3; i < 4; i++) {
+            for (let i = 0; i < numCols; i++) {
                 let columnElements = $(`#numLevelsBody tr td:nth-child(${i+2})`).not('.disabled-cell')
                 let column
+
                 switch (i) {
                     case 0:
                         column = 'lvl1'; break
@@ -481,8 +508,19 @@ $(document).ready((event) => {
                         column = 'lvl33'; break
                 }
 
-                parameters['numLevelsTable'] = true
-                parameters['numLevelsColumn'] = column
+                let parametersLevels = {
+                    'gameID': $('#gameSelect').val(),
+                    'maxRows': $('#maxRows').val(),
+                    'minMoves': $('#minMoves').val(),
+                    'minQuestions': $('#minQuestions').val(),
+                    'minLevels': $('#minLevels').val(),
+                    'maxLevels': $('#maxLevels').val(),
+                    'startDate': $('#startDate').val(),
+                    'endDate': $('#endDate').val(),
+                    'numLevelsTable': true,
+                    'numLevelsColumn': column
+                }
+
                 let loadTimer, backgroundColors = [], borderBottoms = [], borderTops = []
 
                 columnElements.each((index, value) => {
@@ -521,8 +559,7 @@ $(document).ready((event) => {
                         }, 400 + Math.random() * 200)
                     }
                 })
-
-                $.get('responsePage.php', parameters, (data, status, jqXHR) => {
+                let callbackFunc = (data) => {
                     clearInterval(loadTimer)
                     columnElements.each((j, jval) => {
                         $(jval).css({
@@ -532,8 +569,16 @@ $(document).ready((event) => {
                             'border-bottom': borderBottoms[j]
                         })
                         let innerText = $('<div>')
-                        let significance = data.isSignificantModel
-                        innerText.html(data.equationVars.coefficients[j+1].toFixed(5))
+                        let significance = false
+                        if (data && data.equationVars) {
+                            significance = data.isSignificantModel
+                            if (typeof data.equationVars.coefficients[j] === 'number')
+                                innerText.html(data.equationVars.coefficients[j].toFixed(5))
+                            else
+                                innerText.html(data.equationVars.coefficients[j])
+                        } else {
+                            innerText.html('No data')
+                        }
                         
                         if (significance) {
                             $(innerText).css('background-color', '#82e072')
@@ -543,18 +588,17 @@ $(document).ready((event) => {
                         $(innerText).css({'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif'})
                     })
                     off()
-                }, 'json').fail((jqXHR, textStatus, errorThrown) => {
-                    off()
-                    console.log('Error triggered by getAllData')
-                    showError(errorThrown)
-                })
+                }
+                
+                req = {
+                    parameters: parametersLevels,
+                    callback: callbackFunc
+                }
+                queue.push(req)
             }
         }
-        delete parameters['column']
-        delete parameters['numLevelsTable']
-        delete parameters['numLevelsColumn']
 
-        $.get('responsePage.php', parameters, (data, status, jqXHR) => {
+        $.get('responsePage.php', parametersBasic, (data, status, jqXHR) => {
             $('#scoreDisplayAll').html(data.questionsTotal.totalNumCorrect + ' / ' + data.questionsTotal.totalNumQuestions + ' (' + 
                 (100 * data.questionsTotal.totalNumCorrect / data.questionsTotal.totalNumQuestions).toFixed(1) + '%)')
             if (data.levels !== null) {
@@ -687,12 +731,10 @@ $(document).ready((event) => {
                     off()
                 }
                 $('#percentCompleteRow').children('td').each((index, value) => {
-                    if (index > 0) {
-                        if (typeof data.lvlsPercentComplete[index-1] === 'number') {
-                            $(value).html(data.lvlsPercentComplete[index-1].toPrecision(4) + ' %')
-                        } else {
-                            $(value).html(data.lvlsPercentComplete[index-1] + ' %')
-                        }
+                    if (typeof data.lvlsPercentComplete[index] === 'number') {
+                        $(value).html(data.lvlsPercentComplete[index].toPrecision(4) + ' %')
+                    } else {
+                        $(value).html(data.lvlsPercentComplete[index] + ' %')
                     }
                 })
                 drawWavesHistograms(dataHistogram)
@@ -1363,6 +1405,32 @@ $(document).ready((event) => {
         let newSelectObj = selectObj.cloneNode(false)
         selectParentNode.replaceChild(newSelectObj, selectObj)
         return newSelectObj
+    }
+
+    let networkQueue = function(numSimultaneous = 2) {
+        let self = this
+        self.queue = []
+        self.numActiveCalls = 0
+        self.numSimultaneous = numSimultaneous
+        self.push = function(call) {
+            self.queue.push(call)
+            if (self.numActiveCalls < self.numSimultaneous) {
+                self.execute()
+            }
+        }
+        self.execute = function() {
+            if (self.queue.length <= 0) return
+            self.numActiveCalls++;
+            let call = self.queue.shift()
+            $.get('responsePage.php', call.parameters, (data, status, jqXHR) => { call.callback(data) },
+            'json').fail((jqXHR, textStatus, errorThrown) => {
+                off()
+                showError(errorThrown)
+            }).then(() => {
+                self.numActiveCalls--
+                self.execute()
+            })
+        }
     }
 
     setInterval(() => {

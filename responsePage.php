@@ -526,10 +526,14 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
         $levelsCompleteAll[$session] = $levelsCompleted;
     }
 
+    $percentGoodMovesAvgs = array();
     foreach ($sessionIDs as $index=>$session) {
         $data = $allData[$session];
         $dataObj = $data['dataObj'];
         $sessionLevels = array_keys($data['numMovesPerChallenge']);
+
+        $totalGoodMoves = 0;
+        $totalMoves = 0;
         foreach ($sessionLevels as $j=>$level) {
             $numMovesPerChallenge = $data['numMovesPerChallengeArray'][$level];
             $numMoves = $data['numMovesPerChallenge'][$level];
@@ -558,6 +562,8 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
 
             // Find % good moves by filtering moveGoodness array for 1s, aka good moves
             $numGoodMoves = count(array_filter($moveGoodness1, function($val) { return $val === 1; }));
+            $totalGoodMoves += $numGoodMoves;
+            $totalMoves += $numMoves;
             if ($numMoves > 1) {
                 $percentGoodMoves = $numGoodMoves / $numMoves;
             } else {
@@ -565,6 +571,7 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
             }
             $percentGoodMovesAll[$level][$index] = $percentGoodMoves;
         }
+        $percentGoodMovesAvgs[$index] = $totalGoodMoves / $totalMoves;
     }
     if (!isset($column)) {
         $lvlsPercentComplete = array();
@@ -607,13 +614,13 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
                 $time = array_sum($timeCol[$i]);
                 $minMax = array_sum($avgCol[$i]);
                 $percentQuestionsCorrect = ($questionsAll['numsQuestions'][$i] === 0) ? 0 : $questionsAll['numsCorrect'][$i] / $questionsAll['numsQuestions'][$i];
-                $predictors []= array(1, $numMovesAll[$i], array_sum($typeCol[$i]), $levelsCol[$i], array_sum($timeCol[$i]), array_sum($avgCol[$i]), $percentQuestionsCorrect);
+                $predictors []= array(1, $numMovesAll[$i], array_sum($typeCol[$i]), $levelsCol[$i], array_sum($timeCol[$i]), array_sum($avgCol[$i]), $percentQuestionsCorrect, $percentGoodMovesAvgs[$i]);
                 $predicted []= ($val[$quesIndex] === $ansIndex) ? 1 : 0;
             }
         }
 
         if (!empty($predictors) && !empty($predicted)) {
-            $observations = Observations::fromArray($predictors, $predicted);
+            $observations = Observations::fromArray(normalize($predictors), $predicted);
             $coefficients = $algorithm->regress($observations);
             $covariance = covariance($coefficients, $observations->getFeatures())->toArray();
             $stdErrs = stdErrs($covariance);
@@ -665,7 +672,7 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
         foreach ($sessionIDs as $i=>$val) {
             $percentQuestionsCorrect = ($questionsAll['numsQuestions'][$i] === 0) ? 0 : $questionsAll['numsCorrect'][$i] / $questionsAll['numsQuestions'][$i];
             // 1 is for the intercept
-            $predictor = array(1, $numMovesAll[$i], array_sum($typeCol[$i]), $levelsCol[$i], array_sum($timeCol[$i]), array_sum($avgCol[$i]), $percentQuestionsCorrect);
+            $predictor = array(1, $numMovesAll[$i], array_sum($typeCol[$i]), array_sum($timeCol[$i]), array_sum($avgCol[$i]), $percentQuestionsCorrect);
             $colLvl = intval(substr($column, 3));
             foreach ($levelsForTable as $j=>$lvl) {
                 if ($lvl >= $colLvl) break;
@@ -1843,19 +1850,20 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
     } else {
         $numLevelsColumn = $_GET['numLevelsColumn'];
         $minMoves = $_GET['minMoves'];
-        $startLevel = $_GET['minLevels'];
-        $endLevel = $_GET['maxLevels'];
         $minQuestions = $_GET['minQuestions'];
         $startDate = $_GET['startDate'];
         $endDate = $_GET['endDate'];
 
-        $levelsForTable = array(1, 3, 5, 7, 11, 13, 15, 19, 21, 23, 25, 27, 31, 33, 999);
+        $levelsForTable = array(1, 3, 5, 7, 11, 13, 15, 19, 21, 23, 25, 27, 31, 33);
         $colLvl = intval(substr($numLevelsColumn, 3));
         $lvlIndex = array_search($colLvl, $levelsForTable);
-        $maxRows = 20 + 6 + $lvlIndex; // n-p=20
+        $maxRows = 20 + 5 + $lvlIndex; // n-p=20
 
         $tableLetter = 'b';
-        $colLvl = $levelsForTable[$lvlIndex+1];
+        $colLvl = isset($levelsForTable[$lvlIndex+1]) ? $levelsForTable[$lvlIndex+1] : null;
+        if (!isset($colLvl)) {
+            return null;
+        }
         $params = array();
         $paramTypes = '';
         $query = 
