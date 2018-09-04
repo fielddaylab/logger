@@ -102,7 +102,7 @@ $(document).ready((event) => {
         // console.time('gameSelect')
         event.preventDefault()
         $('#gameIDForm').val($('#gameSelect').val())
-        //getAllData(true)
+        getAllData(true)
     })
 
     $(document).on('change', '#sessionSelect', (event) => {

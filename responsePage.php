@@ -1516,8 +1516,8 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
         $levelsForTable = array(1, 3, 5, 7, 11, 13, 15, 19, 21, 23, 25, 27, 31, 33);
         $colLvl = intval(substr($predictColumn, 3));
         $lvlIndex = array_search($colLvl, $levelsForTable);
+        $lvlsToUse = array_filter($levelsForTable, function ($a) use($colLvl) { return $a <= $colLvl; });
 
-        $tableLetter = 'b';
         $colLvl = isset($levelsForTable[$lvlIndex+1]) ? $levelsForTable[$lvlIndex+1] : null;
         $params = array();
         $paramTypes = '';
@@ -1539,73 +1539,17 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                 WHERE event_custom=1 AND app_id=? AND session_id IN";
         array_push($params, $startDate, $endDate, $gameID);
         $paramTypes .= 'sss';
-        foreach ($levelsForTable as $i=>$lvl) {
-            if ($lvl >= $colLvl) break;
-            $indent = str_repeat("    ", $i);
-            $isLastLevel = !isset($levelsForTable[$i+1]) || (isset($levelsForTable[$i+1]) && $levelsForTable[$i+1] === $colLvl);
-            $isSecondLastLevel = ($levelsForTable[$i+1] < $colLvl && isset($levelsForTable[$i+2]) && $levelsForTable[$i+2] >= $colLvl);
+        
+        $query .= "
+                (
+                    SELECT session_id FROM log WHERE app_id=?
+                    AND level IN (?)
+                    GROUP BY session_id
+                    HAVING COUNT(DISTINCT level) >= ?
+                )";
 
-            if ($colLvl === 3 || !$isLastLevel) {
-                if ($isSecondLastLevel || $colLvl === 3) {
-                    $query .= "
-                " . $indent . "(
-                    " . $indent . "SELECT * FROM ";
-                    $indent .= '    ';
-                }
-                $query .= $indent . "
-                " . $indent . "(" . "
-                    " . $indent . "SELECT session_id FROM log WHERE app_id=?";
-                array_push($params, $gameID);
-                $paramTypes .= 's';
-                if ($colLvl !== 3) {
-                    $query .= "
-                    " . $indent . "AND event='COMPLETE' AND level=?";
-                    array_push($params, $lvl);
-                    $paramTypes .= 'i';
-                }
-                if (!$isSecondLastLevel && $colLvl !== 3) $query .= " AND session_id IN";
-            }
-            if ($isLastLevel) {
-                $query .= " AND session_id NOT IN " . "
-                    " . $indent . "(" . "
-                        " . $indent . "SELECT DISTINCT session_id FROM log" . "
-                        " . $indent . "WHERE event='COMPLETE' AND app_id=? AND level=?";
-            }
-            if ($isLastLevel) {
-                $query .= "
-                " . $indent . "    )" . "
-                " . $indent . "    LIMIT ?" . "
-                " . $indent . ") b0
-                " . $indent . "UNION ALL
-                " . $indent . "(
-                    " . $indent . "SELECT * FROM" . "
-                    " . $indent . "(" . "
-                    " . $indent . "    SELECT session_id FROM log WHERE app_id=?" . "
-                    " . $indent . "    AND event='COMPLETE' AND level=? AND session_id IN " . "
-                    " . $indent . "    (" . "
-                    " . $indent . "        SELECT DISTINCT session_id FROM log" . "
-                    " . $indent . "        WHERE event='COMPLETE' AND app_id=? AND level=?" . "
-                    " . $indent . "    )" . "
-                    " . $indent . "    LIMIT ?" . "
-                    " . $indent . ") b1" . "
-                " . $indent . ")";
-            }
-            if ($isLastLevel) {
-                if (isset($levelsForTable[$i-1])) {
-                    array_push($params, $gameID, $lvl, $maxRows, $gameID, $levelsForTable[$i-1], $gameID, $lvl, $maxRows);
-                } else {
-                    array_push($params, $gameID, $lvl, $maxRows, $gameID, $levelsForTable[$i], $gameID, $lvl, $maxRows);
-                }
-                
-                $paramTypes .= 'siisisii';
-            }
-        }
-        foreach (array_reverse($levelsForTable, true) as $i=>$lvl) {
-            if ($colLvl > $lvl && ($i > 0 || $colLvl === 3)) {
-                $indent = str_repeat("    ", $i+3);
-                $query .= PHP_EOL . $indent . ")";
-            }
-        }
+        array_push($params, $gameID, implode("','", $lvlsToUse), count($lvlsToUse));
+        $paramTypes .= 'ssi';
         $query .= "
                 GROUP BY session_id
                 HAVING COUNT(*) >= ?
@@ -1614,7 +1558,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
         array_push($params, $minMoves);
         $paramTypes .= 'i';
 
-        echo $query; return;
+        //echo $query; return;
 
         $stmt = queryMultiParam($db, $query, $paramTypes, $params);
         if($stmt === NULL) {
@@ -1704,6 +1648,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
 
         $tableLetter = 'b';
         $colLvl = isset($levelsForTable[$lvlIndex+1]) ? $levelsForTable[$lvlIndex+1] : null;
+        $lvlsToUse = array_filter($levelsForTable, function ($a) use($colLvl) { return $a <= $colLvl; });
         if (!isset($colLvl)) {
             return null;
         }
@@ -1727,68 +1672,18 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                 WHERE event_custom=1 AND app_id=? AND session_id IN";
         array_push($params, $startDate, $endDate, $gameID);
         $paramTypes .= 'sss';
-        foreach ($levelsForTable as $i=>$lvl) {
-            if ($lvl >= $colLvl) break;
-            $indent = str_repeat("    ", $i);
-            $isLastLevel = !isset($levelsForTable[$i+1]) || (isset($levelsForTable[$i+1]) && $levelsForTable[$i+1] === $colLvl);
-            $isSecondLastLevel = ($levelsForTable[$i+1] < $colLvl && isset($levelsForTable[$i+2]) && $levelsForTable[$i+2] >= $colLvl);
 
-            if ($colLvl === 3 || !$isLastLevel) {
-                if ($isSecondLastLevel || $colLvl === 3) {
-                    $query .= "
-                " . $indent . "(
-                    " . $indent . "SELECT * FROM ";
-                    $indent .= '    ';
-                }
-                $query .= $indent . "
-                " . $indent . "(" . "
-                    " . $indent . "SELECT session_id FROM log WHERE app_id=?";
-                array_push($params, $gameID);
-                $paramTypes .= 's';
-                if ($colLvl !== 3) {
-                    $query .= "
-                    " . $indent . "AND event='COMPLETE' AND level=?";
-                    array_push($params, $lvl);
-                    $paramTypes .= 'i';
-                }
-                if (!$isSecondLastLevel && $colLvl !== 3) $query .= " AND session_id IN";
-            }
-            if ($isLastLevel) {
-                $query .= " AND session_id NOT IN " . "
-                    " . $indent . "(" . "
-                        " . $indent . "SELECT DISTINCT session_id FROM log" . "
-                        " . $indent . "WHERE event='COMPLETE' AND app_id=? AND level=?";
-            }
-            if ($isLastLevel) {
-                $query .= "
-                " . $indent . "    )" . "
-                " . $indent . "    LIMIT ?" . "
-                " . $indent . ") b0
-                " . $indent . "UNION ALL
-                " . $indent . "(
-                    " . $indent . "SELECT * FROM" . "
-                    " . $indent . "(" . "
-                    " . $indent . "    SELECT session_id FROM log WHERE app_id=?" . "
-                    " . $indent . "    AND event='COMPLETE' AND level=? AND session_id IN " . "
-                    " . $indent . "    (" . "
-                    " . $indent . "        SELECT DISTINCT session_id FROM log" . "
-                    " . $indent . "        WHERE event='COMPLETE' AND app_id=? AND level=?" . "
-                    " . $indent . "    )" . "
-                    " . $indent . "    LIMIT ?" . "
-                    " . $indent . ") b1" . "
-                " . $indent . ")";
-            }
-            if ($isLastLevel) {
-                array_push($params, $gameID, $lvl, $maxRows, $gameID, $levelsForTable[$i-1], $gameID, $lvl, $maxRows);
-                $paramTypes .= 'siisisii';
-            }
-        }
-        foreach (array_reverse($levelsForTable, true) as $i=>$lvl) {
-            if ($colLvl > $lvl && ($i > 0 || $colLvl === 3)) {
-                $indent = str_repeat("    ", $i+3);
-                $query .= PHP_EOL . $indent . ")";
-            }
-        }
+        $query .= "
+                (
+                    SELECT session_id FROM log WHERE app_id=?
+                    AND level IN (?)
+                    GROUP BY session_id
+                    HAVING COUNT(DISTINCT level) >= ?
+                )";
+
+        array_push($params, $gameID, implode("','", $lvlsToUse), count($lvlsToUse));
+        $paramTypes .= 'ssi';
+
         $query .= "
                 GROUP BY session_id
                 HAVING COUNT(*) >= ?
