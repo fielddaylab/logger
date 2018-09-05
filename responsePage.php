@@ -1724,7 +1724,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                         )";
 
             array_push($params, $gameID, $colLvl, $gameID, count($lvlsToUse));
-            $paramTypes .= 'isi';
+            $paramTypes .= 'sisi';
         } else {
             $query .= "
                         (
