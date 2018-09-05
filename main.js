@@ -198,7 +198,9 @@ $(document).ready((event) => {
         if (commaDelimited) {
             parametersBasic['commaDelimited'] = true
         }
-        let queue = new networkQueue()
+        let numSimultaneous = navigator.hardwareConcurrency
+        if (commaDelimited) numSimultaneous = 1
+        let queue = new networkQueue(numSimultaneous)
 
         let numCols = $('#tableAllBody').find('tr:first td').length
         if (true) {
@@ -244,7 +246,7 @@ $(document).ready((event) => {
                     'gameID': $('#gameSelect').val(),
                     'maxRows': $('#maxRows').val(),
                     'minMoves': $('#minMoves').val(),
-                    'minQuestions': $('#minQuestions').val(),
+                    'minQuestions': 1,
                     'minLevels': $('#minLevels').val(),
                     'maxLevels': $('#maxLevels').val(),
                     'startDate': $('#startDate').val(),
@@ -632,6 +634,7 @@ $(document).ready((event) => {
                         parameters: parametersLevels,
                         callback: callbackFunc
                     }
+                    queue.push(req)
                 }
             }
         }
@@ -787,7 +790,7 @@ $(document).ready((event) => {
             })
         }
 
-        return queue.getPromises()
+        return queue
     }
 
     function getSingleData(shouldClearLists, shouldSendLevel) {
@@ -1449,9 +1452,8 @@ $(document).ready((event) => {
     }
 
     $('#exportBtn').click(() => {
-        $.when(...getAllData(false, true)).done(() => {
-            $('#exportModal').modal()
-        })
+        let exportQueue = getAllData(false, true)
+        exportQueue.emptyFunc = function () { $('#exportModal').modal() }
     })
 
     let networkQueue = function(numSimultaneous = 2) {
@@ -1460,6 +1462,7 @@ $(document).ready((event) => {
         self.numActiveCalls = 0
         self.numSimultaneous = numSimultaneous
         self.promises = []
+        self.emptyFunc = undefined
         self.push = function(call) {
             self.queue.push(call)
             if (self.numActiveCalls < self.numSimultaneous) {
@@ -1467,7 +1470,10 @@ $(document).ready((event) => {
             }
         }
         self.execute = function() {
-            if (self.queue.length <= 0) return
+            if (self.queue.length <= 0) {
+                self.doWhenEmpty()
+                return
+            }
             self.numActiveCalls++
             let call = self.queue.shift()
             self.promises.push(
@@ -1481,8 +1487,8 @@ $(document).ready((event) => {
                 })
             )
         }
-        self.getPromises = function() {
-            return self.promises
+        self.doWhenEmpty = function() {
+            self.emptyFunc()
         }
     }
 
