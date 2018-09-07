@@ -177,7 +177,7 @@ $(document).ready((event) => {
         }
     })
 
-    function getAllData(isFirstTime = false, commaDelimited = false) {
+    function getAllData(isFirstTime = false) {
         let parametersBasic = {
             'gameID': $('#gameSelect').val(),
             'maxRows': $('#maxRows').val(),
@@ -195,11 +195,7 @@ $(document).ready((event) => {
             'knobStdDevs': $('#knobStdDevs').prop('checked') ? true : undefined,
             'knobTotalAmts': $('#knobTotalAmts').prop('checked') ? true : undefined,
         }
-        if (commaDelimited) {
-            parametersBasic['commaDelimited'] = true
-        }
         let numSimultaneous = navigator.hardwareConcurrency
-        if (commaDelimited) numSimultaneous = 1
         let queue = new networkQueue(numSimultaneous)
 
         let numCols = $('#tableAllBody').find('tr:first td').length
@@ -252,9 +248,6 @@ $(document).ready((event) => {
                     'startDate': $('#startDate').val(),
                     'endDate': $('#endDate').val()
                 }
-                if (commaDelimited) {
-                    parametersQues['commaDelimited'] = true
-                }
                 parametersQues['column'] = column
                 let loadTimer, backgroundColors = [], borderBottoms = [], borderTops = []
 
@@ -269,92 +262,77 @@ $(document).ready((event) => {
                         })
                         break
                 }
-
-                if (!commaDelimited) {
-                    columnElements.each((index, value) => {
-                        backgroundColors.push($(value).css('background-color'))
-                        borderBottoms.push($(value).css('border-bottom'))
-                        borderTops.push($(value).css('border-top'))
-                        $(value).css({
-                            'background-color': 'rgba(0, 0, 0, 0.15)',
-                            'border-top': 'none',
-                            'border-bottom': 'none'
-                        })
-                        if (index === 2) {
-                            $(value).addClass('colLoadingText')
-                            let rand = Math.random()
-                            if (rand < 0.333) {
-                                $(value).text('.')
-                            } else if (rand < 0.666) {
-                                $(value).text('. .')
-                            } else {
-                                $(value).text('. . .')
-                            }
-                            $(value).css({
-                                'vertical-align': 'middle',
-                                'text-align': 'center',
-                                'font-size': '16px'
-                            })
-                            loadTimer = setInterval(() => {
-                                let currentText = $(value).html()
-                                let newText
-                                if (currentText !== '. . . .') {
-                                    newText = currentText + ' .'
-                                } else {
-                                    newText = '.'
-                                }
-                                $(value).html(newText)
-                            }, 400 + Math.random() * 200)
-                        }
+                columnElements.each((index, value) => {
+                    backgroundColors.push($(value).css('background-color'))
+                    borderBottoms.push($(value).css('border-bottom'))
+                    borderTops.push($(value).css('border-top'))
+                    $(value).css({
+                        'background-color': 'rgba(0, 0, 0, 0.15)',
+                        'border-top': 'none',
+                        'border-bottom': 'none'
                     })
-    
-                    let callbackFunc = (data) => {
-                        clearInterval(loadTimer)
-                        // Store the computation values for retrieval when the link is clicked
-                        localStorage.setItem(`regressionVars${column}`, JSON.stringify(data.regressionVars))
-                        localStorage.setItem(`equationVars${column}`, JSON.stringify(data.equationVars))
-                        columnElements.each((j, jval) => {
-                            $(jval).css({
-                                'vertical-align': 'middle',
-                                'background-color': backgroundColors[j],
-                                'border-top': borderTops[j],
-                                'border-bottom': borderBottoms[j]
-                            })
-                            let innerText = $('<div>')
-                            let significance = 'No data'
-                            if (data.significances) {
-                                significance = data.significances['chiSqValues'][j]
-                            }
-                            if (typeof significance === 'number') {
-                                innerText.html(significance.toFixed(5))
+                    if (index === 2) {
+                        $(value).addClass('colLoadingText')
+                        let rand = Math.random()
+                        if (rand < 0.333) {
+                            $(value).text('.')
+                        } else if (rand < 0.666) {
+                            $(value).text('. .')
+                        } else {
+                            $(value).text('. . .')
+                        }
+                        $(value).css({
+                            'vertical-align': 'middle',
+                            'text-align': 'center',
+                            'font-size': '16px'
+                        })
+                        loadTimer = setInterval(() => {
+                            let currentText = $(value).html()
+                            let newText
+                            if (currentText !== '. . . .') {
+                                newText = currentText + ' .'
                             } else {
-                                innerText.html(significance)
+                                newText = '.'
                             }
-                            
-                            if (data.significances && data.significances['isSignificant'][j]) {
+                            $(value).html(newText)
+                        }, 400 + Math.random() * 200)
+                    }
+                })
+
+                let callbackFunc = (data) => {
+                    clearInterval(loadTimer)
+                    // Store the computation values for retrieval when the link is clicked
+                    // localStorage.setItem(`regressionVars${column}`, JSON.stringify(data.regressionVars))
+                    // localStorage.setItem(`equationVars${column}`, JSON.stringify(data.equationVars))
+                    columnElements.each((j, jval) => {
+                        $(jval).css({
+                            'vertical-align': 'middle',
+                            'background-color': backgroundColors[j],
+                            'border-top': borderTops[j],
+                            'border-bottom': borderBottoms[j]
+                        })
+                        let innerText = $('<div>')
+                        if (typeof data.pValues[j] === 'number') {
+                            innerText.html(data.pValues[j].toFixed(5))
+                            if (data.pValues[j] < 0.05) {
                                 $(innerText).css('background-color', '#82e072')
                             }
-                            $(jval).html(innerText)
-                            $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&row=${j}&col=${i}" target="_blank"></a>`)
-            
-                            $(innerText).css({'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif'})
-                        })
-                        off()
-                    }
-    
-                    req = {
-                        parameters: parametersQues,
-                        callback: callbackFunc
-                    }
-                    queue.push(req)
-                } else {
-                    let callbackFunc = () => {}
-                    req = {
-                        parameters: parametersQues,
-                        callback: callbackFunc
-                    }
-                    queue.push(req)
+                        } else {
+                            innerText.html('No data')
+                        }
+                        $(jval).html(innerText)
+                        $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&row=${j}&col=${i}" target="_blank"></a>`)
+        
+                        $(innerText).css({'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif'})
+                    })
+                    off()
                 }
+
+                req = {
+                    parameters: parametersQues,
+                    callback: callbackFunc
+                }
+                queue.push(req)
             }
         }
 
@@ -370,9 +348,6 @@ $(document).ready((event) => {
                     'maxLevels': $('#maxLevels').val(),
                     'startDate': $('#startDate').val(),
                     'endDate': $('#endDate').val()
-                }
-                if (commaDelimited) {
-                    parametersChallenge['commaDelimited'] = true
                 }
                 let columnElements = $(`#predictTableBody tr td:nth-child(${i+2})`).not('.disabled-cell')
                 let column
@@ -410,93 +385,77 @@ $(document).ready((event) => {
                 parametersChallenge['predictTable'] = true
                 parametersChallenge['predictColumn'] = column
                 let loadTimer, backgroundColors = [], borderBottoms = [], borderTops = []
-
-                if (!commaDelimited) {
-                    columnElements.each((index, value) => {
-                        backgroundColors.push($(value).css('background-color'))
-                        borderBottoms.push($(value).css('border-bottom'))
-                        borderTops.push($(value).css('border-top'))
-                        $(value).css({
-                            'background-color': 'rgba(0, 0, 0, 0.15)',
-                            'border-top': 'none',
-                            'border-bottom': 'none'
-                        })
-                        if (index === 2) {
-                            $(value).addClass('colLoadingText')
-                            let rand = Math.random()
-                            if (rand < 0.333) {
-                                $(value).text('.')
-                            } else if (rand < 0.666) {
-                                $(value).text('. .')
-                            } else {
-                                $(value).text('. . .')
-                            }
-                            $(value).css({
-                                'vertical-align': 'middle',
-                                'text-align': 'center',
-                                'font-size': '16px'
-                            })
-                            loadTimer = setInterval(() => {
-                                let currentText = $(value).html()
-                                let newText
-                                if (currentText !== '. . . .') {
-                                    newText = currentText + ' .'
-                                } else {
-                                    newText = '.'
-                                }
-                                $(value).html(newText)
-                            }, 400 + Math.random() * 200)
-                        }
+                columnElements.each((index, value) => {
+                    backgroundColors.push($(value).css('background-color'))
+                    borderBottoms.push($(value).css('border-bottom'))
+                    borderTops.push($(value).css('border-top'))
+                    $(value).css({
+                        'background-color': 'rgba(0, 0, 0, 0.15)',
+                        'border-top': 'none',
+                        'border-bottom': 'none'
                     })
-    
-                    let callbackFunc = (data) => {
-                        clearInterval(loadTimer)
-                        columnElements.each((j, jval) => {
-                            $(jval).css({
-                                'vertical-align': 'middle',
-                                'background-color': backgroundColors[j],
-                                'border-top': borderTops[j],
-                                'border-bottom': borderBottoms[j]
-                            })
-                            let innerText = $('<div>')
-                            let significance = 'No data'
-                            if (data.significances) {
-                                significance = data.significances['chiSqValues'][j]
+                    if (index === 2) {
+                        $(value).addClass('colLoadingText')
+                        let rand = Math.random()
+                        if (rand < 0.333) {
+                            $(value).text('.')
+                        } else if (rand < 0.666) {
+                            $(value).text('. .')
+                        } else {
+                            $(value).text('. . .')
+                        }
+                        $(value).css({
+                            'vertical-align': 'middle',
+                            'text-align': 'center',
+                            'font-size': '16px'
+                        })
+                        loadTimer = setInterval(() => {
+                            let currentText = $(value).html()
+                            let newText
+                            if (currentText !== '. . . .') {
+                                newText = currentText + ' .'
+                            } else {
+                                newText = '.'
                             }
-                            if (significance) {
-                                if (typeof significance === 'number') {
-                                    innerText.html(significance.toFixed(5))
-                                } else {
-                                    innerText.html(significance)
+                            $(value).html(newText)
+                        }, 400 + Math.random() * 200)
+                    }
+                })
+
+                let callbackFunc = (data) => {
+                    clearInterval(loadTimer)
+                    columnElements.each((j, jval) => {
+                        $(jval).css({
+                            'vertical-align': 'middle',
+                            'background-color': backgroundColors[j],
+                            'border-top': borderTops[j],
+                            'border-bottom': borderBottoms[j]
+                        })
+                        let innerText = $('<div>')
+                        if (data && data.pValues) {
+                            if (typeof data.pValues[j] === 'number') {
+                                innerText.html(data.pValues[j].toFixed(5))
+                                if (data.pValues[j] < 0.05) {
+                                    $(innerText).css('background-color', '#82e072')
                                 }
                             } else {
                                 innerText.html('No data')
                             }
-    
-                            
-                            if (data.significances && data.significances['isSignificant'][j]) {
-                                $(innerText).css('background-color', '#82e072')
-                            }
-                            $(jval).html(innerText)
-            
-                            $(innerText).css({'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif'})
-                        })
-                        off()
-                    }
-    
-                    req = {
-                        parameters: parametersChallenge,
-                        callback: callbackFunc
-                    }
-                    queue.push(req)
-                } else {
-                    let callbackFunc = () => {}
-                    req = {
-                        parameters: parametersChallenge,
-                        callback: callbackFunc
-                    }
-                    queue.push(req)
+                        } else {
+                            innerText.html('No data')
+                        }
+                        $(jval).html(innerText)
+        
+                        $(innerText).css({'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif'})
+                    })
+                    off()
                 }
+
+                req = {
+                    parameters: parametersChallenge,
+                    callback: callbackFunc
+                }
+                queue.push(req)
             }
         }
 
@@ -549,246 +508,232 @@ $(document).ready((event) => {
                     'numLevelsTable': true,
                     'numLevelsColumn': column
                 }
-                if (commaDelimited) {
-                    parametersLevels['commaDelimited'] = true
-                }
 
                 let loadTimer, backgroundColors = [], borderBottoms = [], borderTops = []
 
-                if (!commaDelimited) {
-                    columnElements.each((index, value) => {
-                        backgroundColors.push($(value).css('background-color'))
-                        borderBottoms.push($(value).css('border-bottom'))
-                        borderTops.push($(value).css('border-top'))
-                        $(value).css({
-                            'background-color': 'rgba(0, 0, 0, 0.15)',
-                            'border-top': 'none',
-                            'border-bottom': 'none'
-                        })
-                        if (index === 2) {
-                            $(value).addClass('colLoadingText')
-                            let rand = Math.random()
-                            if (rand < 0.333) {
-                                $(value).text('.')
-                            } else if (rand < 0.666) {
-                                $(value).text('. .')
-                            } else {
-                                $(value).text('. . .')
-                            }
-                            $(value).css({
-                                'vertical-align': 'middle',
-                                'text-align': 'center',
-                                'font-size': '16px'
-                            })
-                            loadTimer = setInterval(() => {
-                                let currentText = $(value).html()
-                                let newText
-                                if (currentText !== '. . . .') {
-                                    newText = currentText + ' .'
-                                } else {
-                                    newText = '.'
-                                }
-                                $(value).html(newText)
-                            }, 400 + Math.random() * 200)
-                        }
+                columnElements.each((index, value) => {
+                    backgroundColors.push($(value).css('background-color'))
+                    borderBottoms.push($(value).css('border-bottom'))
+                    borderTops.push($(value).css('border-top'))
+                    $(value).css({
+                        'background-color': 'rgba(0, 0, 0, 0.15)',
+                        'border-top': 'none',
+                        'border-bottom': 'none'
                     })
-                    let callbackFunc = (data) => {
-                        clearInterval(loadTimer)
-                        columnElements.each((j, jval) => {
-                            $(jval).css({
-                                'vertical-align': 'middle',
-                                'background-color': backgroundColors[j],
-                                'border-top': borderTops[j],
-                                'border-bottom': borderBottoms[j]
-                            })
-                            let innerText = $('<div>')
-                            let significance = false
-                            if (data && data.equationVars) {
-                                significance = data.isSignificantModel
-                                if (typeof data.equationVars.coefficients[j] === 'number')
-                                    innerText.html(data.equationVars.coefficients[j].toFixed(5))
-                                else
-                                    innerText.html(data.equationVars.coefficients[j])
+                    if (index === 2) {
+                        $(value).addClass('colLoadingText')
+                        let rand = Math.random()
+                        if (rand < 0.333) {
+                            $(value).text('.')
+                        } else if (rand < 0.666) {
+                            $(value).text('. .')
+                        } else {
+                            $(value).text('. . .')
+                        }
+                        $(value).css({
+                            'vertical-align': 'middle',
+                            'text-align': 'center',
+                            'font-size': '16px'
+                        })
+                        loadTimer = setInterval(() => {
+                            let currentText = $(value).html()
+                            let newText
+                            if (currentText !== '. . . .') {
+                                newText = currentText + ' .'
+                            } else {
+                                newText = '.'
+                            }
+                            $(value).html(newText)
+                        }, 400 + Math.random() * 200)
+                    }
+                })
+                let callbackFunc = (data) => {
+                    clearInterval(loadTimer)
+                    columnElements.each((j, jval) => {
+                        $(jval).css({
+                            'vertical-align': 'middle',
+                            'background-color': backgroundColors[j],
+                            'border-top': borderTops[j],
+                            'border-bottom': borderBottoms[j]
+                        })
+                        let innerText = $('<div>')
+                        if (data && data.pValues) {
+                            if (typeof data.pValues[j] === 'number') {
+                                innerText.html(data.pValues[j].toFixed(5))
+                                if (data.pValues[j] < 0.05) {
+                                    $(innerText).css('background-color', '#82e072')
+                                }
                             } else {
                                 innerText.html('No data')
                             }
-                            
-                            if (significance) {
-                                $(innerText).css('background-color', '#82e072')
-                            }
-                            $(jval).html(innerText)
-            
-                            $(innerText).css({'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif'})
-                        })
-                        off()
-                    }
+                        } else {
+                            innerText.html('No data')
+                        }
 
-                    req = {
-                        parameters: parametersLevels,
-                        callback: callbackFunc
-                    }
-                    queue.push(req)
-                } else {
-                    let callbackFunc = () => {}
-                    req = {
-                        parameters: parametersLevels,
-                        callback: callbackFunc
-                    }
-                    queue.push(req)
+                        $(jval).html(innerText)
+        
+                        $(innerText).css({'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif'})
+                    })
+                    off()
                 }
+
+                req = {
+                    parameters: parametersLevels,
+                    callback: callbackFunc
+                }
+                queue.push(req)
             }
         }
-        if (!commaDelimited) {
-            $.get('responsePage.php', parametersBasic, (data, status, jqXHR) => {
-                $('#scoreDisplayAll').html(data.questionsTotal.totalNumCorrect + ' / ' + data.questionsTotal.totalNumQuestions + ' (' + 
-                    (100 * data.questionsTotal.totalNumCorrect / data.questionsTotal.totalNumQuestions).toFixed(1) + '%)')
-                if (data.levels !== null) {
-                    let numSessionsToDisplay = data.numSessions
-                    totalSessions = data.totalNumSessions
-                    $('#sessions').text('Showing ' + numSessionsToDisplay + ' of ' + totalSessions + ' available sessions')
-    
+
+        $.get('responsePage.php', parametersBasic, (data, status, jqXHR) => {
+            $('#scoreDisplayAll').html(data.questionsTotal.totalNumCorrect + ' / ' + data.questionsTotal.totalNumQuestions + ' (' + 
+                (100 * data.questionsTotal.totalNumCorrect / data.questionsTotal.totalNumQuestions).toFixed(1) + '%)')
+            if (data.levels !== null) {
+                let numSessionsToDisplay = data.numSessions
+                totalSessions = data.totalNumSessions
+                $('#sessions').text('Showing ' + numSessionsToDisplay + ' of ' + totalSessions + ' available sessions')
+
+                let options = []
+                fastClear($('#sessionSelect'))
+
+                let sessions = data.sessionsAndTimes.sessions
+                let times = data.sessionsAndTimes.times
+
+                for (let i = 0; i < sessions.length; i++) {
+                    let newOpt = document.createElement('option')
+                    newOpt.value = sessions[i]
+                    newOpt.text = i + ' | ' + sessions[i] + ' | ' + times[i]
+                    options.push(newOpt)
+                }
+                $('#sessionSelect').append(options)
+                if ($('#sessionSelect option[value="18020410454796070"]').length > 0) {
+                    $('#sessionSelect').val('18020410454796070') // the most interesting session
+                } else {
+                    if ($('#sessionSelect option').length > 0) {
+                        $('#sessionSelect').val($('#sessionSelect option:first').val())
+                    } else {
+                        showNoDataGoals()
+                        showNoDataLeft()
+                        showNoDataRight()
+                        fastClear($('#basicFeatures'))
+                        $('#scoreDisplay').html('- / -')
+                    }
+                }
+                    
+                if (isFirstTime) {
+                    // Get basic info for the level
+                    getSingleData(true, false)
+
+                    // Get the levels and then information for a specific level (0)
+                    fastClear($('#levelSelect'))
+
                     let options = []
-                    fastClear($('#sessionSelect'))
-    
-                    let sessions = data.sessionsAndTimes.sessions
-                    let times = data.sessionsAndTimes.times
-    
-                    for (let i = 0; i < sessions.length; i++) {
+                    for (let i = 0; i < data.levels.length; i++) {
                         let newOpt = document.createElement('option')
-                        newOpt.value = sessions[i]
-                        newOpt.text = i + ' | ' + sessions[i] + ' | ' + times[i]
+                        newOpt.value = data.levels[i]
+                        newOpt.text = data.levels[i]
                         options.push(newOpt)
                     }
-                    $('#sessionSelect').append(options)
-                    if ($('#sessionSelect option[value="18020410454796070"]').length > 0) {
-                        $('#sessionSelect').val('18020410454796070') // the most interesting session
-                    } else {
-                        if ($('#sessionSelect option').length > 0) {
-                            $('#sessionSelect').val($('#sessionSelect option:first').val())
-                        } else {
-                            showNoDataGoals()
-                            showNoDataLeft()
-                            showNoDataRight()
-                            fastClear($('#basicFeatures'))
-                            $('#scoreDisplay').html('- / -')
-                        }
-                    }
-                        
-                    if (isFirstTime) {
-                        // Get basic info for the level
-                        getSingleData(true, false)
-    
-                        // Get the levels and then information for a specific level (0)
-                        fastClear($('#levelSelect'))
-    
-                        let options = []
-                        for (let i = 0; i < data.levels.length; i++) {
-                            let newOpt = document.createElement('option')
-                            newOpt.value = data.levels[i]
-                            newOpt.text = data.levels[i]
-                            options.push(newOpt)
-                        }
-                        $('#levelSelect').append(options)
-                        let opt = $('#levelSelect option').sort(function (a,b) { return a.value.toUpperCase().localeCompare(b.value.toUpperCase(), {}, {numeric:true}) })
-    
-                        $('#levelSelect').append(opt)
-                        $('#levelSelect').val($('#levelSelect option:first').val())
-                        getSingleData(false, true)
-                    }
-                    // All page basic info
-                    fastClear($('#basicFeaturesAll'))
-                    let timesList = $('<ul></ul>').attr('id', 'timesAll').addClass('collapse').css('font-size', '18px')
-                    $('#basicFeaturesAll').append($(`<span><li>Times: <a href='#timesAll' data-toggle='collapse' id='timesCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(timesList)
-                        .on('hide.bs.collapse', () => {$('#timesCollapseBtnAll').html('[+]')})
-                        .on('show.bs.collapse', () => {$('#timesCollapseBtnAll').html('[−]')}))
-                    let movesList = $('<ul></ul>').attr('id', 'movesAll').addClass('collapse').css({'font-size':'18px'})
-                    $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Number of slider moves: <a href='#movesAll' data-toggle='collapse' id='movesCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(movesList)
-                        .on('hide.bs.collapse', () => {$('#movesCollapseBtnAll').html('[+]')})
-                        .on('show.bs.collapse', () => {$('#movesCollapseBtnAll').html('[−]')}))
-                    let typesList = $('<ul></ul>').attr('id', 'typesAll').addClass('collapse').css({'font-size':'18px'})
-                    $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Move type changes: <a href='#typesAll' data-toggle='collapse' id='typesCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(typesList)
-                        .on('hide.bs.collapse', () => {$('#typesCollapseBtnAll').html('[+]')})
-                        .on('show.bs.collapse', () => {$('#typesCollapseBtnAll').html('[−]')}))
-                    let stdDevList = $('<ul></ul>').attr('id', 'stdDevsAll').addClass('collapse').css({'font-size':'18px'})
-                    $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Knob std devs (avg): <a href='#stdDevsAll' data-toggle='collapse' id='stdDevsCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(stdDevList)
-                        .on('hide.bs.collapse', () => {$('#stdDevsCollapseBtnAll').html('[+]')})
-                        .on('show.bs.collapse', () => {$('#stdDevsCollapseBtnAll').html('[−]')}))
-                    let amtsList = $('<ul></ul>').attr('id', 'amtsAll').addClass('collapse').css({'font-size':'18px'})
-                    $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Knob max-min (avg): <a href='#amtsAll' data-toggle='collapse' id='amtsCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(amtsList)
-                        .on('hide.bs.collapse', () => {$('#amtsCollapseBtnAll').html('[+]')})
-                        .on('show.bs.collapse', () => {$('#amtsCollapseBtnAll').html('[−]')}))
-                    let amtsTotalList = $('<ul></ul>').attr('id', 'amtsTotalAll').addClass('collapse').css({'font-size':'18px'})
-                    $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Knob max-min (total): <a href='#amtsTotalAll' data-toggle='collapse' id='amtsTotalCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(amtsTotalList)
-                        .on('hide.bs.collapse', () => {$('#amtsTotalCollapseBtnAll').html('[+]')})
-                        .on('show.bs.collapse', () => {$('#amtsTotalCollapseBtnAll').html('[−]')}))
-    
-                    for (let i = Object.keys(data.basicInfoAll.times)[0]; i <= Object.keys(data.basicInfoAll.times)[Object.keys(data.basicInfoAll.times).length-1]; i++) {
-                        if (data.basicInfoAll.times[i] === 'NaN') continue;
-                        // append times
-                        $('#timesAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.times[i].toFixed(2)} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-    
-                        // append moves
-                        $('#movesAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.numMoves[i].toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-                        
-                        // append types
-                        $('#typesAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.moveTypeChanges[i].toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-    
-                        // append std devs
-                        $('#stdDevsAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.knobStdDevs[i].toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-    
-                        // append knob amounts
-                        $('#amtsAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.avgMaxMin[i].toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-    
-                        // append knob total amounts
-                        $('#amtsTotalAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.totalMaxMin[i].toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-                    }
-    
-                    $('#timesAll').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
-                    $('#timesAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.totalTime.toFixed(2)} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-                    $('#timesAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.avgTime.toFixed(2)} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-    
-                    $('#movesAll').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
-                    $('#movesAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.totalMoves.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-                    $('#movesAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.avgMoves.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-    
-                    $('#typesAll').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
-                    $('#typesAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.totalMoveChanges.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-                    $('#typesAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.avgMoveChanges.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-    
-                    $('#amtsAll').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
-                    $('#amtsAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.totalKnobAvgs.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-                    $('#amtsAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.avgKnobAvgs.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-    
-                    $('#amtsTotalAll').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
-                    $('#amtsTotalAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.totalKnobTotals.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-                    $('#amtsTotalAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.avgKnobTotals.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-                    let dataHistogram = { 'numsQuestions': data.questionsAll.numsQuestions, 'numMoves': data.numMovesAll, 'numLevels': data.numLevelsAll, 'clusters': data.clusters }
-                    if ($('#sessionSelect option').length > 0) {
-                        getSingleData(true, false) 
-                    } else if ($('#sessionSelect option').length === 0) {
-                        $('#scoreDisplayAll').html('- / -')
-                        fastClear($('#basicFeaturesAll'))
-                        showNoDataHistograms()
-                        off()
-                    }
-                    $('#percentCompleteRow').children('td').each((index, value) => {
-                        if (typeof data.lvlsPercentComplete[index] === 'number') {
-                            $(value).html(data.lvlsPercentComplete[index].toPrecision(4) + ' %')
-                        } else {
-                            $(value).html(data.lvlsPercentComplete[index] + ' %')
-                        }
-                    })
-                    drawWavesHistograms(dataHistogram)
-                } else {
-                    off()
-                    hideError()
+                    $('#levelSelect').append(options)
+                    let opt = $('#levelSelect option').sort(function (a,b) { return a.value.toUpperCase().localeCompare(b.value.toUpperCase(), {}, {numeric:true}) })
+
+                    $('#levelSelect').append(opt)
+                    $('#levelSelect').val($('#levelSelect option:first').val())
+                    getSingleData(false, true)
                 }
-            }, 'json').fail((jqXHR, textStatus, errorThrown) => {
+                // All page basic info
+                fastClear($('#basicFeaturesAll'))
+                let timesList = $('<ul></ul>').attr('id', 'timesAll').addClass('collapse').css('font-size', '18px')
+                $('#basicFeaturesAll').append($(`<span><li>Times: <a href='#timesAll' data-toggle='collapse' id='timesCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(timesList)
+                    .on('hide.bs.collapse', () => {$('#timesCollapseBtnAll').html('[+]')})
+                    .on('show.bs.collapse', () => {$('#timesCollapseBtnAll').html('[−]')}))
+                let movesList = $('<ul></ul>').attr('id', 'movesAll').addClass('collapse').css({'font-size':'18px'})
+                $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Number of slider moves: <a href='#movesAll' data-toggle='collapse' id='movesCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(movesList)
+                    .on('hide.bs.collapse', () => {$('#movesCollapseBtnAll').html('[+]')})
+                    .on('show.bs.collapse', () => {$('#movesCollapseBtnAll').html('[−]')}))
+                let typesList = $('<ul></ul>').attr('id', 'typesAll').addClass('collapse').css({'font-size':'18px'})
+                $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Move type changes: <a href='#typesAll' data-toggle='collapse' id='typesCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(typesList)
+                    .on('hide.bs.collapse', () => {$('#typesCollapseBtnAll').html('[+]')})
+                    .on('show.bs.collapse', () => {$('#typesCollapseBtnAll').html('[−]')}))
+                let stdDevList = $('<ul></ul>').attr('id', 'stdDevsAll').addClass('collapse').css({'font-size':'18px'})
+                $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Knob std devs (avg): <a href='#stdDevsAll' data-toggle='collapse' id='stdDevsCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(stdDevList)
+                    .on('hide.bs.collapse', () => {$('#stdDevsCollapseBtnAll').html('[+]')})
+                    .on('show.bs.collapse', () => {$('#stdDevsCollapseBtnAll').html('[−]')}))
+                let amtsList = $('<ul></ul>').attr('id', 'amtsAll').addClass('collapse').css({'font-size':'18px'})
+                $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Knob max-min (avg): <a href='#amtsAll' data-toggle='collapse' id='amtsCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(amtsList)
+                    .on('hide.bs.collapse', () => {$('#amtsCollapseBtnAll').html('[+]')})
+                    .on('show.bs.collapse', () => {$('#amtsCollapseBtnAll').html('[−]')}))
+                let amtsTotalList = $('<ul></ul>').attr('id', 'amtsTotalAll').addClass('collapse').css({'font-size':'18px'})
+                $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Knob max-min (total): <a href='#amtsTotalAll' data-toggle='collapse' id='amtsTotalCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(amtsTotalList)
+                    .on('hide.bs.collapse', () => {$('#amtsTotalCollapseBtnAll').html('[+]')})
+                    .on('show.bs.collapse', () => {$('#amtsTotalCollapseBtnAll').html('[−]')}))
+
+                for (let i = Object.keys(data.basicInfoAll.times)[0]; i <= Object.keys(data.basicInfoAll.times)[Object.keys(data.basicInfoAll.times).length-1]; i++) {
+                    if (data.basicInfoAll.times[i] === 'NaN') continue;
+                    // append times
+                    $('#timesAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.times[i].toFixed(2)} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+
+                    // append moves
+                    $('#movesAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.numMoves[i].toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                    
+                    // append types
+                    $('#typesAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.moveTypeChanges[i].toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+
+                    // append std devs
+                    $('#stdDevsAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.knobStdDevs[i].toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+
+                    // append knob amounts
+                    $('#amtsAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.avgMaxMin[i].toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+
+                    // append knob total amounts
+                    $('#amtsTotalAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.totalMaxMin[i].toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                }
+
+                $('#timesAll').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
+                $('#timesAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.totalTime.toFixed(2)} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                $('#timesAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.avgTime.toFixed(2)} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+
+                $('#movesAll').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
+                $('#movesAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.totalMoves.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                $('#movesAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.avgMoves.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+
+                $('#typesAll').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
+                $('#typesAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.totalMoveChanges.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                $('#typesAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.avgMoveChanges.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+
+                $('#amtsAll').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
+                $('#amtsAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.totalKnobAvgs.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                $('#amtsAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.avgKnobAvgs.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+
+                $('#amtsTotalAll').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
+                $('#amtsTotalAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.totalKnobTotals.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                $('#amtsTotalAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.avgKnobTotals.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                let dataHistogram = { 'numsQuestions': data.questionsAll.numsQuestions, 'numMoves': data.numMovesAll, 'numLevels': data.numLevelsAll, 'clusters': data.clusters }
+                if ($('#sessionSelect option').length > 0) {
+                    getSingleData(true, false) 
+                } else if ($('#sessionSelect option').length === 0) {
+                    $('#scoreDisplayAll').html('- / -')
+                    fastClear($('#basicFeaturesAll'))
+                    showNoDataHistograms()
+                    off()
+                }
+                $('#percentCompleteRow').children('td').each((index, value) => {
+                    if (typeof data.lvlsPercentComplete[index] === 'number') {
+                        $(value).html(data.lvlsPercentComplete[index].toPrecision(4) + ' %')
+                    } else {
+                        $(value).html(data.lvlsPercentComplete[index] + ' %')
+                    }
+                })
+                drawWavesHistograms(dataHistogram)
+            } else {
                 off()
-                console.log('Error triggered by getAllData')
-                showError(errorThrown)
-            })
-        }
+                hideError()
+            }
+        }, 'json').fail((jqXHR, textStatus, errorThrown) => {
+            off()
+            console.log('Error triggered by getAllData')
+            showError(errorThrown)
+        })
 
         return queue
     }
@@ -1477,7 +1422,7 @@ $(document).ready((event) => {
             self.numActiveCalls++
             let call = self.queue.shift()
             self.promises.push(
-                $.get('responsePage.php', call.parameters, (data, status, jqXHR) => { call.callback(data); console.log(data) },
+                $.get('responsePage.php', call.parameters, (data, status, jqXHR) => { call.callback(data); },
                 'json').fail((jqXHR, textStatus, errorThrown) => {
                     off()
                     showError(errorThrown)
@@ -1488,7 +1433,9 @@ $(document).ready((event) => {
             )
         }
         self.doWhenEmpty = function() {
-            self.emptyFunc()
+            if (self.emptyFunc) {
+                self.emptyFunc()
+            }
         }
     }
 
