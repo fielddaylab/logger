@@ -231,8 +231,6 @@ function array_column_fixed($input, $column_key) {
 }
 
 function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAttributes, $column) {
-    $startLevel = $_GET['minLevels'];
-    $endLevel = $_GET['maxLevels'];
     $sessionIDs = $sessionsAndTimes['sessions'];
     $allData = array();
     // arrays of arrays (temp)
@@ -566,6 +564,7 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
             $percentGoodMovesAvgs[$index] = 1;
         }
     }
+
     if (!isset($column)) {
         $lvlsPercentComplete = array();
         $levelsForTable = array(1, 3, 5, 7, 11, 13, 15, 19, 21, 23, 25, 27, 31, 33);
@@ -613,7 +612,7 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
         foreach ($predictors as $i=>$predictor) {
             $predictors[$i] []= $predicted[$i];
         }
-        return $predictors;
+        return array('predictors'=>$predictors, 'predicted'=>$predicted);
 
     } else if (isset($_GET['predictTable'])) {
         $predictors = array();
@@ -667,8 +666,6 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
 function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
     if (!isset($reqSessionID) && !isset($_GET['predictColumn']) && !isset($_GET['numLevelsColumn'])) {
         $minMoves = $_GET['minMoves'];
-        $startLevel = $_GET['minLevels'];
-        $endLevel = $_GET['maxLevels'];
         $minQuestions = $_GET['minQuestions'];
         $startDate = $_GET['startDate'];
         $endDate = $_GET['endDate'];
@@ -770,22 +767,31 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
 
         // Construct sessions and times array
         $sessionsAndTimes = array('sessions'=>$uniqueSessions, 'times'=>array_values($times));
-
-        $predictArray = analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAttributes, $column);
-        $predictString = "#Generated " . date("Y-m-d H:i:s") . "\n" . $numLevelsColumn . ",";
+        $regression = analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAttributes, $column);
+        $predictArray = $regression['predictors'];
+        $predictedArray = $regression['predicted'];
+        if (!isset($column)) {
+            $predictArray['totalNumSessions'] = getTotalNumSessions($gameID, $db);
+            return $predictArray;
+        }
+        $predictString = "#Generated " . date("Y-m-d H:i:s") . "\n" . $column . ",";
         $headerString = "num_slider_moves,num_type_changes,num_levels,total_time,avg_knob_max_min,percent_qs_correct,avg_pgm";
         $predictString .= $headerString . ",result\n";
         foreach ($predictArray as $i=>$array) {
-            $predictString .= $numLevelsColumn . ',' . implode(',', $array) . "\n";
+            $predictString .= $column . ',' . implode(',', $array) . "\n";
         }
-        file_put_contents('questionsDataForR_'. $_GET['column'] .'.txt', $predictString);
+        if (!is_dir('questions')) {
+            mkdir('questions', 0777, true);
+        }
+        file_put_contents('questions/questionsDataForR_'. $_GET['column'] .'.txt', $predictString);
 
-        $rCommand = 'questionsData <- read.table("questionsDataForR_'. $_GET['column'] .'.txt", sep=",", header=TRUE)' . PHP_EOL .
+        $rCommand = 'questionsData <- read.table("questions/questionsDataForR_'. $_GET['column'] .'.txt", sep=",", header=TRUE)' . PHP_EOL .
             'fit <- glm(result~' . str_replace(',', '+', $headerString) .',data=questionsData,family=binomial(link="logit"))' . PHP_EOL .
             'summary(fit)';
-        file_put_contents('questionsScript_'. $_GET['column'] .'.R', $rCommand);
-        exec("/usr/local/bin/Rscript questionsScript_". $_GET['column'] .".R", $rResults);
+        file_put_contents('questions/questionsScript_'. $_GET['column'] .'.R', $rCommand);
+        exec("/usr/local/bin/Rscript questions/questionsScript_". $_GET['column'] .".R", $rResults);
 
+        //echo var_dump($rCommand); return;
         $coefficients = array();
         $stdErrs = array();
         $pValues = array();
@@ -796,14 +802,14 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                 break;
             }
         }
-        for ($i = $coefStart+1, $lastRow = 7+$coefStart; $i <= $lastRow; $i++) {
+        for ($i = $coefStart+1, $lastRow = 7+$coefStart+1; $i <= $lastRow; $i++) {
             $values = preg_split('/\ +/', $rResults[$i]);  // put "words" of this line into an array
             $coefficients[] = str_replace(['<', '>'], '', $values[1]) + 0; // + 0 is to force the scientific notation into a regular number
             $stdErrs[] = str_replace(['<', '>'], '', $values[2]) + 0;
             $pValues[] = str_replace(['<', '>'], '', $values[4]) + 0;
         }
 
-        return array('coefficients'=>$coefficients, 'stdErrs'=>$stdErrs, 'pValues'=>$pValues, 'regressionVars'=>$predictArray);
+        return array('coefficients'=>$coefficients, 'stdErrs'=>$stdErrs, 'pValues'=>$pValues, 'regressionVars'=>$predictArray, 'regressionOutputs'=>$predictedArray);
     } else if (!isset($_GET['predictColumn']) && !isset($_GET['numLevelsColumn'])) {
         $query =
         "SELECT session_id, level, event, event_custom, event_data_complex, client_time
@@ -1359,7 +1365,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
         $sessionsAndTimes = array('sessions'=>$uniqueSessions, 'times'=>array_values($times));
 
         $predictArray = analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAttributes, $predictColumn);
-        $predictString = "#Generated " . date("Y-m-d H:i:s") . "\n" . $numLevelsColumn . ",";
+        $predictString = "#Generated " . date("Y-m-d H:i:s") . "\n" . $predictColumn . ",";
         $headerString = "num_slider_moves,num_type_changes,num_levels,total_time,avg_knob_max_min,percent_qs_correct";
         $numPgms = 0;
         foreach ($levelsForTable as $i=>$level) {
@@ -1369,16 +1375,19 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
         }
         $predictString .= $headerString . ",result\n";
         foreach ($predictArray as $i=>$array) {
-            $predictString .= $numLevelsColumn . ',' . implode(',', $array) . "\n";
+            $predictString .= $predictColumn . ',' . implode(',', $array) . "\n";
         }
-        file_put_contents('challengesDataForR_'. $colLvl .'.txt', $predictString);
+        if (!is_dir('challenges')) {
+            mkdir('challenges', 0777, true);
+        }
+        file_put_contents('challenges/challengesDataForR_'. $colLvl .'.txt', $predictString);
 
-        $rCommand = 'challengesData <- read.table("challengesDataForR_'. $colLvl .'.txt", sep=",", header=TRUE)' . PHP_EOL .
+        $rCommand = 'challengesData <- read.table("challenges/challengesDataForR_'. $colLvl .'.txt", sep=",", header=TRUE)' . PHP_EOL .
             'fit <- glm(result~' . str_replace(',', '+', $headerString) .',data=challengesData,family=binomial(link="logit"))' . PHP_EOL .
             'summary(fit)';
-        file_put_contents('challengesScript_'. $colLvl .'.R', $rCommand);
-        exec("/usr/local/bin/Rscript challengesScript_" . $colLvl . ".R", $rResults);
-
+        file_put_contents('challenges/challengesScript_'. $colLvl .'.R', $rCommand);
+        exec("/usr/local/bin/Rscript challenges/challengesScript_" . $colLvl . ".R", $rResults);
+        //echo var_dump($rResults); return;
         $coefficients = array();
         $stdErrs = array();
         $pValues = array();
@@ -1390,7 +1399,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             }
         }
         if ($coefStart) {
-            for ($i = $coefStart+1, $lastRow = 7+$numPgms+$coefStart; $i <= $lastRow; $i++) {
+            for ($i = $coefStart+1, $lastRow = 7+$numPgms+$coefStart+1; $i <= $lastRow; $i++) {
                 $values = preg_split('/\ +/', $rResults[$i]);  // put "words" of this line into an array
                 $coefficients[] = str_replace(['<', '>'], '', $values[1]) + 0; // + 0 is to force the scientific notation into a regular number
                 $stdErrs[] = str_replace(['<', '>'], '', $values[2]) + 0;
@@ -1588,13 +1597,16 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
         foreach ($predictArray as $i=>$array) {
             $predictString .= $numLevelsColumn . ',' . implode(',', $array) . "\n";
         }
-        file_put_contents('numLevelDataForR_'. $colLvl .'.txt', $predictString);
+        if (!is_dir('numLevels')) {
+            mkdir('numLevels', 0777, true);
+        }
+        file_put_contents('numLevels/numLevelDataForR_'. $colLvl .'.txt', $predictString);
 
-        $rCommand = 'numLevelsData <- read.table("numLevelDataForR_'. $colLvl .'.txt", sep=",", header=TRUE)' . PHP_EOL .
+        $rCommand = 'numLevelsData <- read.table("numLevels/numLevelDataForR_'. $colLvl .'.txt", sep=",", header=TRUE)' . PHP_EOL .
             'fit <- lm(result~' . str_replace(',', '+', $headerString) .',data=numLevelsData)' . PHP_EOL .
             'summary(fit)';
-        file_put_contents('numLevelsScript_'. $colLvl .'.R', $rCommand);
-        exec("/usr/local/bin/Rscript numLevelsScript_$colLvl.R", $rResults);
+        file_put_contents('numLevels/numLevelsScript_'. $colLvl .'.R', $rCommand);
+        exec("/usr/local/bin/Rscript numLevels/numLevelsScript_$colLvl.R", $rResults);
         //echo var_dump($rResults); return;
         $coefficients = array();
         $stdErrs = array();
@@ -1607,7 +1619,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             }
         }
         if ($coefStart) {
-            for ($i = $coefStart+1, $lastRow = 6+$numPgms+$coefStart; $i <= $lastRow; $i++) {
+            for ($i = $coefStart+1, $lastRow = 6+$numPgms+$coefStart+1; $i <= $lastRow; $i++) {
                 $values = preg_split('/\ +/', $rResults[$i]);  // put "words" of this line into an array
                 $coefficients[] = is_numeric($x = str_replace(['<', '>'], '', $values[1])) ? $x+0 : null; // + 0 is to force the scientific notation into a regular number
                 $stdErrs[] = is_numeric($x = str_replace(['<', '>'], '', $values[2])) ? $x+0 : null;

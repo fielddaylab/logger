@@ -183,8 +183,6 @@ $(document).ready((event) => {
             'maxRows': $('#maxRows').val(),
             'minMoves': $('#minMoves').val(),
             'minQuestions': $('#minQuestions').val(),
-            'minLevels': $('#minLevels').val(),
-            'maxLevels': $('#maxLevels').val(),
             'startDate': $('#startDate').val(),
             'endDate': $('#endDate').val(),
             'numMovesPerChallenge': $('#numMovesPerChallenge').prop('checked') ? true : undefined,
@@ -197,6 +195,7 @@ $(document).ready((event) => {
         }
         let numSimultaneous = navigator.hardwareConcurrency
         let queue = new networkQueue(numSimultaneous)
+        queue.emptyFunc = function() { $('#exportModal').prop('disabled', false) }
 
         let numCols = $('#tableAllBody').find('tr:first td').length
         if (true) {
@@ -302,8 +301,12 @@ $(document).ready((event) => {
                 let callbackFunc = (data) => {
                     clearInterval(loadTimer)
                     // Store the computation values for retrieval when the link is clicked
-                    // localStorage.setItem(`regressionVars${column}`, JSON.stringify(data.regressionVars))
-                    // localStorage.setItem(`equationVars${column}`, JSON.stringify(data.equationVars))
+                    localStorage.setItem(`data_questions_${column}`, JSON.stringify(data))
+                    let rowNames = []
+                    $('#tableAllBody tr th').each((j, jval) => {
+                        rowNames.push($(jval).text())
+                    })
+                    localStorage.setItem(`row_names_questions`, JSON.stringify(rowNames))
                     columnElements.each((j, jval) => {
                         $(jval).css({
                             'vertical-align': 'middle',
@@ -321,7 +324,7 @@ $(document).ready((event) => {
                             innerText.html('No data')
                         }
                         $(jval).html(innerText)
-                        $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&row=${j}&col=${i}" target="_blank"></a>`)
+                        $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=questions&row=${rowNames[j]}&col=${column}&i=${i}&j=${j}" target="_blank"></a>`)
         
                         $(innerText).css({'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif'})
                     })
@@ -337,7 +340,7 @@ $(document).ready((event) => {
         }
 
         numCols = $('#predictTableBody').find('tr:first td').length
-        if (true) {
+        if (false) {
             for (let i = 0; i < numCols; i++) {
                 let parametersChallenge = {
                     'gameID': $('#gameSelect').val(),
@@ -424,6 +427,7 @@ $(document).ready((event) => {
 
                 let callbackFunc = (data) => {
                     clearInterval(loadTimer)
+                    localStorage.setItem(`data_challenges_${column}`, JSON.stringify(data))
                     columnElements.each((j, jval) => {
                         $(jval).css({
                             'vertical-align': 'middle',
@@ -445,6 +449,7 @@ $(document).ready((event) => {
                             innerText.html('No data')
                         }
                         $(jval).html(innerText)
+                        $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=challenges&row=${$(`#predictTableBody tr:nth-child(${i+2})`).children(`td:nth-child(0)`).text()}&col=${column}" target="_blank"></a>`)
         
                         $(innerText).css({'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif'})
                     })
@@ -460,8 +465,9 @@ $(document).ready((event) => {
         }
 
         numCols = $('#numLevelsBody').find('tr:first td').length
-        if (true) {
+        if (false) {
             for (let i = 0; i < numCols; i++) {
+                let colVars = $('#numLevelsBody').find('tr th')
                 let columnElements = $(`#numLevelsBody tr td:nth-child(${i+2})`).not('.disabled-cell')
                 let column
 
@@ -549,6 +555,7 @@ $(document).ready((event) => {
                 })
                 let callbackFunc = (data) => {
                     clearInterval(loadTimer)
+                    localStorage.setItem(`data_numLevels_${column}`, JSON.stringify(data))
                     columnElements.each((j, jval) => {
                         $(jval).css({
                             'vertical-align': 'middle',
@@ -571,6 +578,7 @@ $(document).ready((event) => {
                         }
 
                         $(jval).html(innerText)
+                        $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=numLevels&row=${$(`#numLevelsBody tr:nth-child(${i+2})`).children(`td:nth-child(0)`).text()}&col=${column}" target="_blank"></a>`)
         
                         $(innerText).css({'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif'})
                     })
@@ -1397,8 +1405,7 @@ $(document).ready((event) => {
     }
 
     $('#exportBtn').click(() => {
-        let exportQueue = getAllData(false, true)
-        exportQueue.emptyFunc = function () { $('#exportModal').modal() }
+        $('#exportModal').modal()
     })
 
     let networkQueue = function(numSimultaneous = 2) {
