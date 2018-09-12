@@ -63,20 +63,20 @@ $(document).ready((event) => {
         newRow.append(
             `
             <th scope="row">% good moves lvl ${value}</th>
+            <td style="border-right-width:4px;"></td>
+            <td style="border-left-width:4px; "></td>
+            <td></td>
+            <td></td>
+            <td scope="col" style="border-right-width:4px;"></td>
+            <td scope="col" style="border-left-width:4px; "></td>
+            <td></td>
+            <td style="border-right-width:4px;"></td>
+            <td style="border-left-width:4px; "></td>
             <td></td>
             <td></td>
             <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
+            <td style="border-right-width:4px;"></td>
+            <td style="border-left-width:4px; "></td>
             `
         )
         $('#numLevelsBody').append(newRow)
@@ -195,7 +195,7 @@ $(document).ready((event) => {
         }
         let numSimultaneous = navigator.hardwareConcurrency
         let queue = new networkQueue(numSimultaneous)
-        queue.emptyFunc = function() { $('#exportModal').prop('disabled', false) }
+        //queue.emptyFunc = function() { $('#exportModal').prop('disabled', false) }
 
         let numCols = $('#tableAllBody').find('tr:first td').length
         if (true) {
@@ -324,7 +324,7 @@ $(document).ready((event) => {
                             innerText.html('No data')
                         }
                         $(jval).html(innerText)
-                        $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=questions&row=${rowNames[j]}&col=${column}&i=${i}&j=${j}" target="_blank"></a>`)
+                        $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=questions&row=${rowNames[j].replace('%', 'percent')}&col=${column}&i=${i}&j=${j}" target="_blank"></a>`)
         
                         $(innerText).css({'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif'})
                     })
@@ -340,7 +340,7 @@ $(document).ready((event) => {
         }
 
         numCols = $('#predictTableBody').find('tr:first td').length
-        if (false) {
+        if (true) {
             for (let i = 0; i < numCols; i++) {
                 let parametersChallenge = {
                     'gameID': $('#gameSelect').val(),
@@ -428,6 +428,11 @@ $(document).ready((event) => {
                 let callbackFunc = (data) => {
                     clearInterval(loadTimer)
                     localStorage.setItem(`data_challenges_${column}`, JSON.stringify(data))
+                    let rowNames = []
+                    $('#predictTableBody tr th').each((j, jval) => {
+                        rowNames.push($(jval).text())
+                    })
+                    localStorage.setItem(`row_names_challenges`, JSON.stringify(rowNames))
                     columnElements.each((j, jval) => {
                         $(jval).css({
                             'vertical-align': 'middle',
@@ -449,7 +454,7 @@ $(document).ready((event) => {
                             innerText.html('No data')
                         }
                         $(jval).html(innerText)
-                        $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=challenges&row=${$(`#predictTableBody tr:nth-child(${i+2})`).children(`td:nth-child(0)`).text()}&col=${column}" target="_blank"></a>`)
+                        $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=challenges&row=${rowNames[j].replace('%', 'percent')}&col=${column}&i=${i}&j=${j}" target="_blank"></a>`)
         
                         $(innerText).css({'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif'})
                     })
@@ -465,7 +470,7 @@ $(document).ready((event) => {
         }
 
         numCols = $('#numLevelsBody').find('tr:first td').length
-        if (false) {
+        if (true) {
             for (let i = 0; i < numCols; i++) {
                 let colVars = $('#numLevelsBody').find('tr th')
                 let columnElements = $(`#numLevelsBody tr td:nth-child(${i+2})`).not('.disabled-cell')
@@ -556,6 +561,11 @@ $(document).ready((event) => {
                 let callbackFunc = (data) => {
                     clearInterval(loadTimer)
                     localStorage.setItem(`data_numLevels_${column}`, JSON.stringify(data))
+                    let rowNames = []
+                    $('#numLevelsBody tr th').each((j, jval) => {
+                        rowNames.push($(jval).text())
+                    })
+                    localStorage.setItem(`row_names_numLevels`, JSON.stringify(rowNames))
                     columnElements.each((j, jval) => {
                         $(jval).css({
                             'vertical-align': 'middle',
@@ -578,7 +588,7 @@ $(document).ready((event) => {
                         }
 
                         $(jval).html(innerText)
-                        $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=numLevels&row=${$(`#numLevelsBody tr:nth-child(${i+2})`).children(`td:nth-child(0)`).text()}&col=${column}" target="_blank"></a>`)
+                        $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=numLevels&row=${rowNames[j].replace('%', 'percent')}&col=${column}&i=${i}&j=${j}" target="_blank"></a>`)
         
                         $(innerText).css({'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif'})
                     })

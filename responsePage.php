@@ -583,7 +583,7 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
         return array('numLevelsAll'=>$numLevelsAll, 'numMovesAll'=>$numMovesAll, 'questionsAll'=>$questionsAll, 'basicInfoAll'=>$basicInfoAll,
             'sessionsAndTimes'=>$sessionsAndTimes, 'levels'=>$levels, 'numSessions'=>count($sessionsAndTimes['sessions']), 'questionsTotal'=>$questionsTotal,
             'lvlsPercentComplete'=>$lvlsPercentComplete ,'clusters'=>array('col1'=>$bestColumn1, 'col2'=>$bestColumn2, 'clusters'=>$clusterPoints, 'dunn'=>$bestDunn,
-            'sourceColumns'=>$usedColumns, 'eigenvectors'=>$eigenvectors));
+            'sourceColumns'=>$usedColumns, 'eigenvectors'=>$eigenvectors), 'predictors'=>null, 'predicted'=>null);
     }
 
     // Linear regression stuff
@@ -604,8 +604,7 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
                 $numTypeChanges = array_sum($typeCol[$i]);
                 $time = array_sum($timeCol[$i]);
                 $minMax = array_sum($avgCol[$i]);
-                $percentQuestionsCorrect = ($questionsAll['numsQuestions'][$i] === 0) ? 0 : $questionsAll['numsCorrect'][$i] / $questionsAll['numsQuestions'][$i];
-                $predictors []= array($numMoves, $numTypeChanges, $levelsCol[$i], $time, $minMax, $percentQuestionsCorrect, $percentGoodMovesAvgs[$i]);
+                $predictors []= array($numMoves, $numTypeChanges, $levelsCol[$i], $time, $minMax, $percentGoodMovesAvgs[$i]);
                 $predicted []= ($val[$quesIndex] === $ansIndex) ? 1 : 0;
             }
         }
@@ -622,7 +621,7 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
         foreach ($sessionIDs as $i=>$val) {
             $percentQuestionsCorrect = ($questionsAll['numsQuestions'][$i] === 0) ? 0 : $questionsAll['numsCorrect'][$i] / $questionsAll['numsQuestions'][$i];
             // 1 is for the intercept
-            $predictor = array($numMovesAll[$i], array_sum($typeCol[$i]), $levelsCol[$i], array_sum($timeCol[$i]), array_sum($avgCol[$i]), $percentQuestionsCorrect);
+            $predictor = array($numMovesAll[$i], array_sum($typeCol[$i]), array_sum($timeCol[$i]), array_sum($avgCol[$i]), $percentQuestionsCorrect);
             $colLvl = intval(substr($column, 3));
             foreach ($levelsForTable as $j=>$lvl) {
                 if ($lvl >= $colLvl) break;
@@ -635,9 +634,7 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
         foreach ($predictors as $i=>$predictor) {
             $predictors[$i] []= $predicted[$i];
         }
-        return $predictors;
-
-        return array('regressionVars'=>$regressionVars, 'significances'=>$significances, 'equationVars'=>array('coefficients'=>$coefficients, 'stdErrs'=>$stdErrs));
+        return array('predictors'=>$predictors, 'predicted'=>$predicted);
     } else {
         $predictors = array();
         $predicted = array();
@@ -659,7 +656,7 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
         foreach ($predictors as $i=>$predictor) {
             $predictors[$i] []= $predicted[$i];
         }
-        return $predictors;
+        return array('predictors'=>$predictors, 'predicted'=>$predicted);
     }
 }
 
@@ -771,11 +768,11 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
         $predictArray = $regression['predictors'];
         $predictedArray = $regression['predicted'];
         if (!isset($column)) {
-            $predictArray['totalNumSessions'] = getTotalNumSessions($gameID, $db);
-            return $predictArray;
+            $regression['totalNumSessions'] = getTotalNumSessions($gameID, $db);
+            return $regression;
         }
         $predictString = "#Generated " . date("Y-m-d H:i:s") . "\n" . $column . ",";
-        $headerString = "num_slider_moves,num_type_changes,num_levels,total_time,avg_knob_max_min,percent_qs_correct,avg_pgm";
+        $headerString = "num_slider_moves,num_type_changes,num_levels,total_time,avg_knob_max_min,avg_pgm";
         $predictString .= $headerString . ",result\n";
         foreach ($predictArray as $i=>$array) {
             $predictString .= $column . ',' . implode(',', $array) . "\n";
@@ -802,11 +799,13 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                 break;
             }
         }
-        for ($i = $coefStart+1, $lastRow = 7+$coefStart+1; $i <= $lastRow; $i++) {
-            $values = preg_split('/\ +/', $rResults[$i]);  // put "words" of this line into an array
-            $coefficients[] = str_replace(['<', '>'], '', $values[1]) + 0; // + 0 is to force the scientific notation into a regular number
-            $stdErrs[] = str_replace(['<', '>'], '', $values[2]) + 0;
-            $pValues[] = str_replace(['<', '>'], '', $values[4]) + 0;
+        if ($coefStart !== 0) {
+            for ($i = $coefStart+1, $lastRow = 7+$coefStart; $i <= $lastRow; $i++) {
+                $values = preg_split('/\ +/', $rResults[$i]);  // put "words" of this line into an array
+                $coefficients[] = is_numeric($x = str_replace(['<', '>'], '', $values[1])) ? $x+0 : null; // + 0 is to force the scientific notation into a regular number
+                $stdErrs[] = is_numeric($x = str_replace(['<', '>'], '', $values[2])) ? $x+0 : null;
+                $pValues[] = is_numeric($x = str_replace(['<', '>'], '', $values[4])) ? $x+0 : null;
+            }
         }
 
         return array('coefficients'=>$coefficients, 'stdErrs'=>$stdErrs, 'pValues'=>$pValues, 'regressionVars'=>$predictArray, 'regressionOutputs'=>$predictedArray);
@@ -1186,7 +1185,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
         $totalNumSessions = getTotalNumSessions($_GET['gameID'], $db);
 
         $output = array('goalsSingle'=>$goalsSingle, 'sessionsAndTimes'=>$sessionsAndTimes, 'basicInfoSingle'=>$basicInfoSingle, 'graphDataSingle'=>$graphDataSingle,
-        'questionsSingle'=>$questionsSingle, 'levels'=>$levels, 'numSessions'=>$numSessions, 'questionsTotal'=>$questionsTotal);
+        'questionsSingle'=>$questionsSingle, 'levels'=>$levels, 'numSessions'=>$numSessions);
 
         // Return ALL the above information at once in a big array
         return replaceNans($output);
@@ -1364,9 +1363,11 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
         // Construct sessions and times array
         $sessionsAndTimes = array('sessions'=>$uniqueSessions, 'times'=>array_values($times));
 
-        $predictArray = analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAttributes, $predictColumn);
+        $regression = analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAttributes, $predictColumn);
+        $predictArray = $regression['predictors'];
+        $predictedArray = $regression['predicted'];
         $predictString = "#Generated " . date("Y-m-d H:i:s") . "\n" . $predictColumn . ",";
-        $headerString = "num_slider_moves,num_type_changes,num_levels,total_time,avg_knob_max_min,percent_qs_correct";
+        $headerString = "num_slider_moves,num_type_changes,total_time,avg_knob_max_min,percent_qs_correct";
         $numPgms = 0;
         foreach ($levelsForTable as $i=>$level) {
             if ($level >= $realColLvl) break;
@@ -1398,16 +1399,17 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                 break;
             }
         }
-        if ($coefStart) {
-            for ($i = $coefStart+1, $lastRow = 7+$numPgms+$coefStart+1; $i <= $lastRow; $i++) {
+
+        if ($coefStart !== 0) {
+            for ($i = $coefStart+1, $lastRow = 6+$numPgms+$coefStart; $i <= $lastRow; $i++) {
                 $values = preg_split('/\ +/', $rResults[$i]);  // put "words" of this line into an array
-                $coefficients[] = str_replace(['<', '>'], '', $values[1]) + 0; // + 0 is to force the scientific notation into a regular number
-                $stdErrs[] = str_replace(['<', '>'], '', $values[2]) + 0;
-                $pValues[] = str_replace(['<', '>'], '', $values[4]) + 0;
+                $coefficients[] = is_numeric($x = str_replace(['<', '>'], '', $values[1])) ? $x+0 : null; // + 0 is to force the scientific notation into a regular number
+                $stdErrs[] = is_numeric($x = str_replace(['<', '>'], '', $values[2])) ? $x+0 : null;
+                $pValues[] = is_numeric($x = str_replace(['<', '>'], '', $values[4])) ? $x+0 : null;
             }
         }
 
-        return array('coefficients'=>$coefficients, 'stdErrs'=>$stdErrs, 'pValues'=>$pValues, 'regressionVars'=>$predictArray);
+        return array('coefficients'=>$coefficients, 'stdErrs'=>$stdErrs, 'pValues'=>$pValues, 'regressionVars'=>$predictArray, 'regressionOutputs'=>$predictedArray);
     } else if (isset($_GET['numLevelsColumn'])) {
         $numLevelsColumn = $_GET['numLevelsColumn'];
         $minMoves = $_GET['minMoves'];
@@ -1584,7 +1586,9 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
         // Construct sessions and times array
         $sessionsAndTimes = array('sessions'=>$uniqueSessions, 'times'=>array_values($times));
 
-        $predictArray = analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAttributes, $numLevelsColumn);
+        $regression = analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAttributes, $numLevelsColumn);
+        $predictArray = $regression['predictors'];
+        $predictedArray = $regression['predicted'];
         $predictString = "#Generated " . date("Y-m-d H:i:s") . "\n" . $numLevelsColumn . ",";
         $headerString = "num_slider_moves,num_type_changes,total_time,avg_knob_max_min,percent_qs_correct";
         $numPgms = 0;
@@ -1618,8 +1622,9 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                 break;
             }
         }
-        if ($coefStart) {
-            for ($i = $coefStart+1, $lastRow = 6+$numPgms+$coefStart+1; $i <= $lastRow; $i++) {
+
+        if ($coefStart !== 0) {
+            for ($i = $coefStart+1, $lastRow = 6+$numPgms+$coefStart; $i <= $lastRow; $i++) {
                 $values = preg_split('/\ +/', $rResults[$i]);  // put "words" of this line into an array
                 $coefficients[] = is_numeric($x = str_replace(['<', '>'], '', $values[1])) ? $x+0 : null; // + 0 is to force the scientific notation into a regular number
                 $stdErrs[] = is_numeric($x = str_replace(['<', '>'], '', $values[2])) ? $x+0 : null;
@@ -1627,7 +1632,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             }
         }
 
-        return array('coefficients'=>$coefficients, 'stdErrs'=>$stdErrs, 'pValues'=>$pValues, 'regressionVars'=>$predictArray);
+        return array('coefficients'=>$coefficients, 'stdErrs'=>$stdErrs, 'pValues'=>$pValues, 'regressionVars'=>$predictArray, 'regressionOutputs'=>$predictedArray);
     }
 }
 

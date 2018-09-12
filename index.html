@@ -61,11 +61,6 @@
                                         <label for="minQuestions">Minimum questions answered</label>
                                         <input name="minQuestions" required type="number" min="0" class="form-control" id="minQuestions" value="0">
                                         <br>
-                                        <label for="minLevels">Interval start level</label>
-                                        <input name="minLevels" required type="number" min="0" class="form-control" id="minLevels" value="1">
-                                        <br>
-                                        <label for="maxLevels">Interval end level</label>
-                                        <input name="maxLevels" required type="number" min="0" class="form-control" id="maxLevels" value="8">
                                     </div>
                                 </div>
                             </div>
@@ -76,9 +71,6 @@
                                     <div class="form-group">
                                         <label for="maxRows">Max sessions</label>
                                         <input name="maxRows" required type="number" min="1" value="100" class="form-control" id="maxRows">
-                                        <br>
-                                        <label for="maxLogReg"># logistic regressions</label>
-                                        <input name="maxLogReg" required type="number" min="1" value="200" class="form-control" id="maxLogReg">
                                     </div>
                                 </div>
                                 <div class="col-xs-6">
@@ -276,127 +268,153 @@
                             <table id="numLevelsTable" class="table table-striped table-bordered table-hover" style="table-layout:fixed">
                                 <thead>
                                     <tr>
-                                        <th style="top:0px;background-color:rgb(235,235,228);width:12%;"></th>
-                                        <th colspan="14" style="text-align:center;top:0px;">Number of levels completed</th>
+                                        <th scope="col" rowspan="2" style="width:180px;top:0;z-index:4;background-color:rgb(235,235,228)"></th>
+                                        <th scope="col" style="top:0;z-index:4;background-color:rgb(235,235,228)"></th>
+                                        <th class="challenge-header" scope="col" colspan="4">Challenge 1</th>
+                                        <th class="challenge-header" scope="col" colspan="3">Challenge 2</th>
+                                        <th class="challenge-header" scope="col" colspan="5">Challenge 3</th>
+                                        <th class="challenge-header" style="border-right-width:2px !important;" scope="col" colspan="1">Challenge 4</th>
+                                    </tr>
+                                    <tr>
+                                        <th style="border-right-width:4px;">No lvls</th>
+                                        <th style="border-left-width:4px; ">Up to 1</th>
+                                        <th>Up to 3</th>
+                                        <th>Up to 5</th>
+                                        <th style="border-right-width:4px;">Up to 7</th>
+                                        <th style="border-left-width:4px; ">Up to 11</th>
+                                        <th>Up to 13</th>
+                                        <th style="border-right-width:4px;">Up to 15</th>
+                                        <th style="border-left-width:4px; ">Up to 19</th>
+                                        <th>Up to 21</th>
+                                        <th>Up to 23</th>
+                                        <th>Up to 25</th>
+                                        <th style="border-left-width:4px; ">Up to 27</th>
+                                        <th style="border-left-width:4px; ">Up to 31</th>
                                     </tr>
                                 </thead>
                                 <tbody id="numLevelsBody">
-                                        <tr>
-                                            <th scope="row">Constant term</th>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                        </tr>
+                                    <tr>
+                                        <th scope="row">Constant term</th>
+                                        <td style="border-right-width:4px;"></td>
+                                        <td style="border-left-width:4px; "></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td scope="col" style="border-right-width:4px;"></td>
+                                        <td scope="col" style="border-left-width:4px; "></td>
+                                        <td></td>
+                                        <td style="border-right-width:4px;"></td>
+                                        <td style="border-left-width:4px; "></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td style="border-right-width:4px;"></td>
+                                        <td style="border-left-width:4px; "></td>
+                                    </tr>
                                     <tr>
                                         <th scope="row"># slider moves</th>
+                                        <td style="border-right-width:4px;"></td>
+                                        <td style="border-left-width:4px; "></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td scope="col" style="border-right-width:4px;"></td>
+                                        <td scope="col" style="border-left-width:4px; "></td>
+                                        <td></td>
+                                        <td style="border-right-width:4px;"></td>
+                                        <td style="border-left-width:4px; "></td>
                                         <td></td>
                                         <td></td>
                                         <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
+                                        <td style="border-right-width:4px;"></td>
+                                        <td style="border-left-width:4px; "></td>
                                     </tr>
                                     <tr>
                                         <th scope="row"># type changes</th>
+                                        <td style="border-right-width:4px;"></td>
+                                        <td style="border-left-width:4px; "></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td scope="col" style="border-right-width:4px;"></td>
+                                        <td scope="col" style="border-left-width:4px; "></td>
+                                        <td></td>
+                                        <td style="border-right-width:4px;"></td>
+                                        <td style="border-left-width:4px; "></td>
                                         <td></td>
                                         <td></td>
                                         <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
+                                        <td style="border-right-width:4px;"></td>
+                                        <td style="border-left-width:4px; "></td>
                                     </tr>
                                     <tr>
                                         <th scope="row">Total time</th>
+                                        <td style="border-right-width:4px;"></td>
+                                        <td style="border-left-width:4px; "></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td scope="col" style="border-right-width:4px;"></td>
+                                        <td scope="col" style="border-left-width:4px; "></td>
+                                        <td></td>
+                                        <td style="border-right-width:4px;"></td>
+                                        <td style="border-left-width:4px; "></td>
                                         <td></td>
                                         <td></td>
                                         <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
+                                        <td style="border-right-width:4px;"></td>
+                                        <td style="border-left-width:4px; "></td>
                                     </tr>
                                     <tr>
                                         <th scope="row">Avg knob max-min</th>
+                                        <td style="border-right-width:4px;"></td>
+                                        <td style="border-left-width:4px; "></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td scope="col" style="border-right-width:4px;"></td>
+                                        <td scope="col" style="border-left-width:4px; "></td>
+                                        <td></td>
+                                        <td style="border-right-width:4px;"></td>
+                                        <td style="border-left-width:4px; "></td>
                                         <td></td>
                                         <td></td>
                                         <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
+                                        <td style="border-right-width:4px;"></td>
+                                        <td style="border-left-width:4px; "></td>
                                     </tr>
                                     <tr>
                                         <th scope="row">% correct questions</th>
+                                        <td style="border-right-width:4px;"></td>
+                                        <td style="border-left-width:4px; "></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td scope="col" style="border-right-width:4px;"></td>
+                                        <td scope="col" style="border-left-width:4px; "></td>
+                                        <td></td>
+                                        <td style="border-right-width:4px;"></td>
+                                        <td style="border-left-width:4px; "></td>
                                         <td></td>
                                         <td></td>
                                         <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
+                                        <td style="border-right-width:4px;"></td>
+                                        <td style="border-left-width:4px; "></td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
                         <div style="font-size:14px; margin-bottom:6px; color:#777">
-                            Cells in this table are COEFFICIENTS for the linear regression equation.
+                            Columns in this table will use any sessions who have <i>at least</i> the specified levels (up to and including) completed.
                         </div>
                         <div style="font-size:14px; margin-bottom:6px; color:#777">
-                            Significance is determined by comparing the F-statistic to the critical F-value for the given degrees of freedom error (DFE) and degrees of freedom model (DFM).
+                            Click any p-value for the regression equation and input data of that column.
                         </div>
                         <div style="font-size:14px; margin-bottom:6px; color:#777">
-                            The entire model (column) is either significant or not.
+                            Cells in this table are p-values for the linear regression equation.
                         </div>
                         <div style="font-size:14px; margin-bottom:6px; color:#777">
-                            Significant values are highlighted in <span style="background-color: #82e072">green</span>.
+                            Significant values (at α = 0.05) are highlighted in <span style="background-color: #82e072">green</span>.
+                        </div>
+                        <div style="font-size:14px; margin-bottom:6px; color:#777">
+                            Values of "No data" indicate linear dependence among two or more input variables.
+                        </div>
+                        <div style="font-size:14px; margin-bottom:6px; color:#777">
+                            Values of 1 (or very close to 1) indicate inconclusiveness because only one value of output (true or false) has an adequate number of samples.
                         </div>
                     </div>
                 </div>
@@ -412,7 +430,7 @@
                                         <th class="challenge-header" scope="col" colspan="3">Challenge 2</th>
                                         <th class="challenge-header" scope="col" colspan="5">Challenge 3</th>
                                         <th class="challenge-header" scope="col" colspan="1">Challenge 4</th>
-                                        <th class="challenge-header" scope="col" colspan="1">Challenge 5</th>
+                                        <th class="challenge-header" style="border-right-width:2px !important;" scope="col" colspan="1">Challenge 5</th>
                                     </tr>
                                     <tr>
                                         <th scope="col" style="border-left-width:4px; ">Lvl 1</th>
@@ -501,23 +519,6 @@
                                         <td style="border-left-width:4px; "></td>
                                     </tr>
                                     <tr>
-                                        <th scope="row"># levels completed</th>
-                                        <td style="border-left-width:4px; "></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td scope="col" style="border-right-width:4px;"></td>
-                                        <td scope="col" style="border-left-width:4px; "></td>
-                                        <td></td>
-                                        <td style="border-right-width:4px;"></td>
-                                        <td style="border-left-width:4px; "></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td style="border-right-width:4px;"></td>
-                                        <td style="border-left-width:4px; "></td>
-                                        <td style="border-left-width:4px; "></td>
-                                    </tr>
-                                    <tr>
                                         <th scope="row">Total time</th>
                                         <td style="border-left-width:4px; "></td>
                                         <td></td>
@@ -572,13 +573,19 @@
                             </table>
                         </div>
                         <div style="font-size:14px; margin-bottom:6px; color:#777">
-                            Cells in this table are CHI-SQUARED VALUES for the logistic regression equation.
+                            Click any p-value for the regression equation and input data of that column.
                         </div>
                         <div style="font-size:14px; margin-bottom:6px; color:#777">
-                            Significance is determined by comparing a given value to the critical chi-squared value for the given degrees of freedom.
+                            Cells in this table are p-values for the logistic regression equation.
                         </div>
                         <div style="font-size:14px; margin-bottom:6px; color:#777">
-                            Significant values are highlighted in <span style="background-color: #82e072">green</span>.
+                            Significant values (at α = 0.05) are highlighted in <span style="background-color: #82e072">green</span>.
+                        </div>
+                        <div style="font-size:14px; margin-bottom:6px; color:#777">
+                            Values of "No data" indicate linear dependence among two or more input variables.
+                        </div>
+                        <div style="font-size:14px; margin-bottom:6px; color:#777">
+                            Values of 1 (or very close to 1) indicate inconclusiveness because only one value of output (true or false) has an adequate number of samples.
                         </div>
                     </div>
                 </div>
@@ -724,25 +731,6 @@
                                         <td></td>
                                     </tr>
                                     <tr>
-                                        <th scope="row">% correct questions</th>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                    </tr>
-                                    <tr>
                                         <th scope="row">Avg % good moves</th>
                                         <td></td>
                                         <td></td>
@@ -765,19 +753,22 @@
                             </table>
                         </div>
                         <div style="font-size:14px; margin-bottom:6px; color:#777">
-                            Click any chi-squared value to see the data for that row and column.<br>
+                            Click any p-value for the regression equation and input data of that column.<br>
                         </div>
                         <div style="font-size:14px; margin-bottom:6px; color:#777">
-                            Significance is determined by comparing each chi-squared value to the critical chi-squared value at α = 0.05.
+                            Cells in this table are p-values for the logistic regression equation.
                         </div>
                         <div style="font-size:14px; margin-bottom:6px; color:#777">
-                            Significant values are highlighted in <span style="background-color: #82e072">green</span>.
-                        </div>
-                        <div style="font-size:14px; margin-bottom:6px; color:#777">
-                            Each column tries to take a different 200 normally distributed (100 true, 100 false) sessions. "No data" indicates there are not enough of each.
+                            Significant values (at α = 0.05) are highlighted in <span style="background-color: #82e072">green</span>.
                         </div>
                         <div style="font-size:14px; margin-bottom:6px; color:#777">
                             Correct answers to each question have a <span style="background-color: #dff0d8">light green</span> cell background.
+                        </div>
+                        <div style="font-size:14px; margin-bottom:6px; color:#777">
+                            Values of "No data" indicate linear dependence among two or more input variables.
+                        </div>
+                        <div style="font-size:14px; margin-bottom:6px; color:#777">
+                            Values of 1 (or very close to 1) indicate inconclusiveness because only one value of output (true or false) has an adequate number of samples.
                         </div>
                     </div>
                 </div>

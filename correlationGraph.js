@@ -17,26 +17,26 @@ $(document).ready(() => {
 
     let xVals = [], yVals = []
     if (regressionVars)
-        xVals = arrayColumn(regressionVars, parseInt(rowNum, 10))
+        xVals = arrayColumn(regressionVars, parseInt(rowNum-1, 10))
     if (regressionOutputs)
         yVals = regressionOutputs
-    
-    console.log(data)
-
     let xTitle = row
     let yTitle = col
     let equation = ''
     if (coefficients && stdErrs) {
-        equation = `<span id="yTooltip" href=# data-toggle="tooltip" data-placement="bottom" title="Predicted output of ${yTitle.toLowerCase()}">Y\'</span> =`
+        equation = `<span id="yTooltip" href=# data-toggle="tooltip" data-placement="bottom" title="Predicted output of ${yTitle.toLowerCase()}">Y\'</span> = `
         for (let i = 0; i < coefficients.length; i++) {
             let xTerm = ''
-            if (i > 0) xTerm = 'X' + (i)
-            if (i == row) {
-                equation += ` + <b><span id="xTooltip${i}" href=# data-toggle="tooltip" data-placement="bottom" title="Measured input of ${inputTexts[i].toLowerCase()} (this graph)">(` + 
+            if (i > 0) {
+                xTerm = 'X' + (i)
+                equation += ' + '
+            }
+            if (i == rowNum) {
+                equation += `<b><span id="xTooltip${i}" href=# data-toggle="tooltip" data-placement="bottom" title="Measured input of ${inputTexts[i].toLowerCase()} (this graph)">(` + 
                 new Number(coefficients[i]).toFixed(2) + '<span style="font-size:14px">±' + new Number(stdErrs[i]).toFixed(2) + 
                 `</span>)` + xTerm + '</span></b>'
             } else {
-                equation += ` + <span id="xTooltip${i}" href=# data-toggle="tooltip" data-placement="bottom" title="Measured input of ${inputTexts[i].toLowerCase()}">(` + 
+                equation += `<span id="xTooltip${i}" href=# data-toggle="tooltip" data-placement="bottom" title="Measured input of ${inputTexts[i].toLowerCase()}">(` + 
                 new Number(coefficients[i]).toFixed(2) + '<span style="font-size:14px">±' + new Number(stdErrs[i]).toFixed(2) + 
                 `</span>)` + xTerm + '</span>'
             }
@@ -114,7 +114,7 @@ $(document).ready(() => {
 })
 
 function getParameterByName(name, url) {
-    if (!url) url = window.location.href;
+    if (!url) url = window.location.href.replace(/%20/g, ' ').replace('#', 'num');
     name = name.replace(/[\[\]]/g, '\\$&');
     var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
         results = regex.exec(url);
