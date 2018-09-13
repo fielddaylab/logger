@@ -28,34 +28,6 @@ function average($arr) {
     return ($length > 0) ? $total / $length : 'NaN';
 }
 
-function normalize($X) {
-    if (!is_array($X)) {
-        return $X;
-    }
-    $columns = array_map(null, ...$X);
-    $minX = array();
-    $maxX = array();
-    foreach($columns as $i=>$feature) {
-        $minX[$i] = min(...$feature);
-        $maxX[$i] = max(...$feature);
-    }
-    $normalX = array();
-    foreach ($X as $i=>$obs) {
-        foreach ($X[$i] as $j=>$feature) {
-            if ($j === 0) {
-                $normalX[$i][$j] = $feature;
-                continue;
-            }
-            if ($maxX[$j] !== $minX[$j]) {
-                $normalX[$i][$j] = ($feature - $minX[$j]) / ($maxX[$j] - $minX[$j]);
-            } else {
-                $normalX[$i][$j] = 0;
-            }
-        }
-    }
-    return $normalX;
-}
-
 function replaceNans($arr) {
     $newArr = $arr;
     if (is_array($arr)) {
@@ -72,107 +44,18 @@ function replaceNans($arr) {
     return $newArr;
 }
 
-function covariance($coeff, $X) {
-    // covariance matrix S = (X^T*VX)^-1
-    $predictor = new LogisticPredictor($coeff);
-    $numSamples = count($X);
-
-    $Xrows = array();
-    for ($i = 0; $i < $numSamples; $i++) {
-        $Xrows[$i] = implode(' ', $X[$i]);
+function predict($coefficients, $inputs, $isLinear = false) {
+    $linEq = 0;
+    foreach ($coefficients as $i=>$coeff) {
+        if ($i === 0) {
+            $linEq += $coeff;
+        } else {
+            $linEq += $coeff * $inputs[$i-1];
+        }
     }
-    $groups = array_count_values($Xrows);
-
-    $rows = count($groups);
-    $V = array_fill(0, $rows, array_fill(0, $rows, 0)); // V initialized to rxr matrix of 0s
-
-    $groupXs = array();
-    // V is an r x r diagonal matrix whose elements are ni*pi*(1-pi)
-    for ($i = 0; $i < $rows; $i++) {
-        $groupKeys = array_keys($groups);
-        $groupX = array_map('floatval', explode(' ', $groupKeys[$i]));
-        $groupXs[$i] = $groupX;
-
-        $n = $groups[$groupKeys[$i]]; // number of occurrences of the group
-        $p = $predictor->predict($groupX);
-        $V[$i][$i] = $n * $p * (1 - $p);
-    }
-    $Xm = new Matrix($groupXs);
-    $Vm = new Matrix($V);
-    $XTm = $Xm->transpose();
-    $S = (($XTm->multiplyMatrix($Vm))->multiplyMatrix($Xm))->inverse();
-    return $S;
-}
-
-function stdErrs($S) {
-    $stdErrs = array();
-    $cols = count($S);
-    for ($i = 0; $i < $cols; $i++) {
-        $stdErrs[$i] = sqrt($S[$i][$i]);
-    }
-
-    return $stdErrs;
-}
-
-function waldSq($b, $seb) {
-    return pow(($b / $seb), 2);
-}
-
-function isSignificant($coeff, $stdErrs) {
-    // array of upper tail critical chi square values for n df at 0.95 alpha
-    $critValues = array(
-        null, // null value for 0 df
-        3.841,
-        5.991,
-        7.815,
-        9.488,
-        11.070,
-        12.592,
-        14.067,
-        15.507,
-        16.919,
-        18.307,
-        19.675,
-        21.026,
-        22.362,
-        23.685,
-        24.996,
-        26.296,
-        27.587,
-        28.869,
-        30.144,
-        31.410,
-        32.671,
-        33.924,
-        35.172,
-        36.415,
-        37.652,
-        38.885,
-        40.113,
-        41.337,
-        42.557,
-        43.773,
-        44.985,
-        46.194,
-        47.400,
-        48.602,
-        49.802,
-        50.998,
-        52.192,
-        53.384,
-        54.572,
-        55.758
-    );
-    $n = count($coeff);
-    $df = $n - 1;
-    $isSignificant = array();
-    $chiSqValues = array();
-    for ($i = 0; $i < $n; $i++) {
-        $chiSqValue = waldSq($coeff[$i], $stdErrs[$i]);
-        $chiSqValues[$i] = $chiSqValue;
-        $isSignificant[$i] = ($chiSqValue >= $critValues[$df]);
-    }
-    return array('isSignificant'=>$isSignificant, 'chiSqValues'=>$chiSqValues, 'critValue'=>$critValues[$df]);
+    if ($isLinear) return $linEq;
+    $exp = exp($linEq);
+    return $exp / (1 + $exp);
 }
 
 if (isset($_GET['gameID'])) {
@@ -621,7 +504,7 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
         foreach ($sessionIDs as $i=>$val) {
             $percentQuestionsCorrect = ($questionsAll['numsQuestions'][$i] === 0) ? 0 : $questionsAll['numsCorrect'][$i] / $questionsAll['numsQuestions'][$i];
             // 1 is for the intercept
-            $predictor = array($numMovesAll[$i], array_sum($typeCol[$i]), array_sum($timeCol[$i]), array_sum($avgCol[$i]), $percentQuestionsCorrect);
+            $predictor = array($numMovesAll[$i], array_sum($typeCol[$i]), array_sum($timeCol[$i]), array_sum($avgCol[$i]));
             $colLvl = intval(substr($column, 3));
             foreach ($levelsForTable as $j=>$lvl) {
                 if ($lvl >= $colLvl) break;
@@ -643,7 +526,7 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
         foreach ($sessionIDs as $i=>$val) {
             $percentQuestionsCorrect = ($questionsAll['numsQuestions'][$i] === 0) ? 0 : $questionsAll['numsCorrect'][$i] / $questionsAll['numsQuestions'][$i];
             // 1 is for the intercept
-            $predictor = array($numMovesAll[$i], array_sum($typeCol[$i]), array_sum($timeCol[$i]), array_sum($avgCol[$i]), $percentQuestionsCorrect);
+            $predictor = array($numMovesAll[$i], array_sum($typeCol[$i]), array_sum($timeCol[$i]), array_sum($avgCol[$i]));
             $colLvl = intval(substr($column, 3));
             foreach ($levelsForTable as $j=>$lvl) {
                 if ($lvl >= $colLvl) break;
@@ -658,6 +541,10 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
         }
         return array('predictors'=>$predictors, 'predicted'=>$predicted);
     }
+}
+
+function random() {
+    return mt_rand(0, mt_getrandmax() - 1) / mt_getrandmax();
 }
 
 function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
@@ -771,44 +658,70 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             $regression['totalNumSessions'] = getTotalNumSessions($gameID, $db);
             return $regression;
         }
-        $predictString = "#Generated " . date("Y-m-d H:i:s") . "\n" . $column . ",";
-        $headerString = "num_slider_moves,num_type_changes,num_levels,total_time,avg_knob_max_min,avg_pgm";
-        $predictString .= $headerString . ",result\n";
-        foreach ($predictArray as $i=>$array) {
-            $predictString .= $column . ',' . implode(',', $array) . "\n";
-        }
-        if (!is_dir('questions')) {
-            mkdir('questions', 0777, true);
-        }
-        file_put_contents('questions/questionsDataForR_'. $_GET['column'] .'.txt', $predictString);
-
-        $rCommand = 'questionsData <- read.table("questions/questionsDataForR_'. $_GET['column'] .'.txt", sep=",", header=TRUE)' . PHP_EOL .
-            'fit <- glm(result~' . str_replace(',', '+', $headerString) .',data=questionsData,family=binomial(link="logit"))' . PHP_EOL .
-            'summary(fit)';
-        file_put_contents('questions/questionsScript_'. $_GET['column'] .'.R', $rCommand);
-        exec("/usr/local/bin/Rscript questions/questionsScript_". $_GET['column'] .".R", $rResults);
-
-        //echo var_dump($rCommand); return;
-        $coefficients = array();
-        $stdErrs = array();
-        $pValues = array();
-        $coefStart = 0;
-        foreach ($rResults as $key=>$string) {
-            if (stristr($string, 'Estimate')) {
-                $coefStart = $key;
-                break;
+        $totalNumPredictions = 0;
+        $totalNumRightPredictions = 0;
+        for ($trial = 0; $trial < 10; $trial++) {
+            $predictString = "#Generated " . date("Y-m-d H:i:s") . "\n" . $column . ",";
+            $headerString = "num_slider_moves,num_type_changes,num_levels,total_time,avg_knob_max_min,avg_pgm";
+            $predictString .= $headerString . ",result\n";
+            $predict10Percent = array(); // Use 10% to test the model
+            foreach ($predictArray as $i=>$array) {
+                if (random() < 0.9) {
+                    $predictString .= $column . ',' . implode(',', $array) . "\n";
+                } else {
+                    $predict10Percent[] = $i;
+                }
+            }
+            if (!is_dir('questions')) {
+                mkdir('questions', 0777, true);
+            }
+            file_put_contents('questions/questionsDataForR_'. $_GET['column'] .'.txt', $predictString);
+    
+            $rCommand = 'questionsData <- read.table("questions/questionsDataForR_'. $_GET['column'] .'.txt", sep=",", header=TRUE)' . PHP_EOL .
+                'fit <- glm(result~' . str_replace(',', '+', $headerString) .',data=questionsData,family=binomial(link="logit"))' . PHP_EOL .
+                'summary(fit)';
+            file_put_contents('questions/questionsScript_'. $_GET['column'] .'.R', $rCommand);
+            exec("/usr/local/bin/Rscript questions/questionsScript_". $_GET['column'] .".R", $rResults);
+    
+            //echo var_dump($rCommand); return;
+            $coefficients = array();
+            $stdErrs = array();
+            $pValues = array();
+            $coefStart = 0;
+            foreach ($rResults as $key=>$string) {
+                if (stristr($string, 'Estimate')) {
+                    $coefStart = $key;
+                    break;
+                }
+            }
+            if ($coefStart !== 0) {
+                for ($i = $coefStart+1, $lastRow = 7+$coefStart; $i <= $lastRow; $i++) {
+                    $values = preg_split('/\ +/', $rResults[$i]);  // put "words" of this line into an array
+                    $coefficients[] = is_numeric($x = str_replace(['<', '>'], '', $values[1])) ? $x+0 : null; // + 0 is to force the scientific notation into a regular number
+                    $stdErrs[] = is_numeric($x = str_replace(['<', '>'], '', $values[2])) ? $x+0 : null;
+                    $pValues[] = is_numeric($x = str_replace(['<', '>'], '', $values[4])) ? $x+0 : null;
+                }
+                $numRightPredictions = 0;
+                $numPredictions = count($predict10Percent);
+                $numVariables = count($predictArray[0]);
+                foreach ($predict10Percent as $i=>$index) {
+                    $inputs = array_slice($predictArray[$index], 0, -1);
+                    $actual = $predictArray[$index][$numVariables-1];
+                    $prediction = round(predict($coefficients, $inputs));
+                    if ($prediction == $actual) {
+                        $numRightPredictions++;
+                    }
+                }
+                $totalNumPredictions += $numPredictions;
+                $totalNumRightPredictions += $numRightPredictions;
+                //return array('numRightPredictions'=>$numRightPredictions, 'numPredictions'=>$numPredictions, 'percentCorrect'=>($numRightPredictions / $numPredictions));
             }
         }
-        if ($coefStart !== 0) {
-            for ($i = $coefStart+1, $lastRow = 7+$coefStart; $i <= $lastRow; $i++) {
-                $values = preg_split('/\ +/', $rResults[$i]);  // put "words" of this line into an array
-                $coefficients[] = is_numeric($x = str_replace(['<', '>'], '', $values[1])) ? $x+0 : null; // + 0 is to force the scientific notation into a regular number
-                $stdErrs[] = is_numeric($x = str_replace(['<', '>'], '', $values[2])) ? $x+0 : null;
-                $pValues[] = is_numeric($x = str_replace(['<', '>'], '', $values[4])) ? $x+0 : null;
-            }
-        }
+        //return array('totalNumRightPredictions'=>$totalNumRightPredictions, 'totalNumPredictions'=>$totalNumPredictions, 'percentCorrect'=>($totalNumRightPredictions / $totalNumPredictions));
+        $percentCorrect = ($totalNumPredictions === 0) ? null : $totalNumRightPredictions / $totalNumPredictions;
 
-        return array('coefficients'=>$coefficients, 'stdErrs'=>$stdErrs, 'pValues'=>$pValues, 'regressionVars'=>$predictArray, 'regressionOutputs'=>$predictedArray);
+        return array('coefficients'=>$coefficients, 'stdErrs'=>$stdErrs, 'pValues'=>$pValues, 'regressionVars'=>$predictArray, 
+            'regressionOutputs'=>$predictedArray, 'percentCorrect'=>$percentCorrect);
     } else if (!isset($_GET['predictColumn']) && !isset($_GET['numLevelsColumn'])) {
         $query =
         "SELECT session_id, level, event, event_custom, event_data_complex, client_time
@@ -1366,50 +1279,75 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
         $regression = analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAttributes, $predictColumn);
         $predictArray = $regression['predictors'];
         $predictedArray = $regression['predicted'];
-        $predictString = "#Generated " . date("Y-m-d H:i:s") . "\n" . $predictColumn . ",";
-        $headerString = "num_slider_moves,num_type_changes,total_time,avg_knob_max_min,percent_qs_correct";
-        $numPgms = 0;
-        foreach ($levelsForTable as $i=>$level) {
-            if ($level >= $realColLvl) break;
-            $headerString .= ',pgm_lvl' . $level;
-            $numPgms++;
-        }
-        $predictString .= $headerString . ",result\n";
-        foreach ($predictArray as $i=>$array) {
-            $predictString .= $predictColumn . ',' . implode(',', $array) . "\n";
-        }
-        if (!is_dir('challenges')) {
-            mkdir('challenges', 0777, true);
-        }
-        file_put_contents('challenges/challengesDataForR_'. $colLvl .'.txt', $predictString);
 
-        $rCommand = 'challengesData <- read.table("challenges/challengesDataForR_'. $colLvl .'.txt", sep=",", header=TRUE)' . PHP_EOL .
-            'fit <- glm(result~' . str_replace(',', '+', $headerString) .',data=challengesData,family=binomial(link="logit"))' . PHP_EOL .
-            'summary(fit)';
-        file_put_contents('challenges/challengesScript_'. $colLvl .'.R', $rCommand);
-        exec("/usr/local/bin/Rscript challenges/challengesScript_" . $colLvl . ".R", $rResults);
-        //echo var_dump($rResults); return;
-        $coefficients = array();
-        $stdErrs = array();
-        $pValues = array();
-        $coefStart = 0;
-        foreach ($rResults as $key=>$string) {
-            if (stristr($string, 'Estimate')) {
-                $coefStart = $key;
-                break;
+        $totalNumPredictions = 0;
+        $totalNumRightPredictions = 0;
+        for ($trial = 0; $trial < 10; $trial++) {
+            $predictString = "#Generated " . date("Y-m-d H:i:s") . "\n" . $predictColumn . ",";
+            $headerString = "num_slider_moves,num_type_changes,total_time,avg_knob_max_min";
+            $numPgms = 0;
+            $predict10Percent = array(); // Use 10% to test the model
+            foreach ($levelsForTable as $i=>$level) {
+                if ($level >= $realColLvl) break;
+                $headerString .= ',pgm_lvl' . $level;
+                $numPgms++;
+            }
+            $predictString .= $headerString . ",result\n";
+            foreach ($predictArray as $i=>$array) {
+                if (random() < 0.9) {
+                    $predictString .= $predictColumn . ',' . implode(',', $array) . "\n";
+                } else {
+                    $predict10Percent[] = $i;
+                }
+            }
+            if (!is_dir('challenges')) {
+                mkdir('challenges', 0777, true);
+            }
+            file_put_contents('challenges/challengesDataForR_'. $colLvl .'.txt', $predictString);
+
+            $rCommand = 'challengesData <- read.table("challenges/challengesDataForR_'. $colLvl .'.txt", sep=",", header=TRUE)' . PHP_EOL .
+                'fit <- glm(result~' . str_replace(',', '+', $headerString) .',data=challengesData,family=binomial(link="logit"))' . PHP_EOL .
+                'summary(fit)';
+            file_put_contents('challenges/challengesScript_'. $colLvl .'.R', $rCommand);
+            exec("/usr/local/bin/Rscript challenges/challengesScript_" . $colLvl . ".R", $rResults);
+            //echo var_dump($rResults); return;
+            $coefficients = array();
+            $stdErrs = array();
+            $pValues = array();
+            $coefStart = 0;
+            foreach ($rResults as $key=>$string) {
+                if (stristr($string, 'Estimate')) {
+                    $coefStart = $key;
+                    break;
+                }
+            }
+
+            if ($coefStart !== 0) {
+                for ($i = $coefStart+1, $lastRow = 5+$numPgms+$coefStart; $i <= $lastRow; $i++) {
+                    $values = preg_split('/\ +/', $rResults[$i]);  // put "words" of this line into an array
+                    $coefficients[] = is_numeric($x = str_replace(['<', '>'], '', $values[1])) ? $x+0 : null; // + 0 is to force the scientific notation into a regular number
+                    $stdErrs[] = is_numeric($x = str_replace(['<', '>'], '', $values[2])) ? $x+0 : null;
+                    $pValues[] = is_numeric($x = str_replace(['<', '>'], '', $values[4])) ? $x+0 : null;
+                }
+                $numRightPredictions = 0;
+                $numPredictions = count($predict10Percent);
+                $numVariables = count($predictArray[0]);
+                foreach ($predict10Percent as $i=>$index) {
+                    $inputs = array_slice($predictArray[$index], 0, -1);
+                    $actual = $predictArray[$index][$numVariables-1];
+                    $prediction = round(predict($coefficients, $inputs));
+                    if ($prediction == $actual) {
+                        $numRightPredictions++;
+                    }
+                }
+                $totalNumPredictions += $numPredictions;
+                $totalNumRightPredictions += $numRightPredictions;
             }
         }
+        $percentCorrect = ($totalNumPredictions === 0) ? null : $totalNumRightPredictions / $totalNumPredictions;
 
-        if ($coefStart !== 0) {
-            for ($i = $coefStart+1, $lastRow = 6+$numPgms+$coefStart; $i <= $lastRow; $i++) {
-                $values = preg_split('/\ +/', $rResults[$i]);  // put "words" of this line into an array
-                $coefficients[] = is_numeric($x = str_replace(['<', '>'], '', $values[1])) ? $x+0 : null; // + 0 is to force the scientific notation into a regular number
-                $stdErrs[] = is_numeric($x = str_replace(['<', '>'], '', $values[2])) ? $x+0 : null;
-                $pValues[] = is_numeric($x = str_replace(['<', '>'], '', $values[4])) ? $x+0 : null;
-            }
-        }
-
-        return array('coefficients'=>$coefficients, 'stdErrs'=>$stdErrs, 'pValues'=>$pValues, 'regressionVars'=>$predictArray, 'regressionOutputs'=>$predictedArray);
+        return array('coefficients'=>$coefficients, 'stdErrs'=>$stdErrs, 'pValues'=>$pValues, 'regressionVars'=>$predictArray, 
+            'regressionOutputs'=>$predictedArray, 'percentCorrect'=>$percentCorrect);
     } else if (isset($_GET['numLevelsColumn'])) {
         $numLevelsColumn = $_GET['numLevelsColumn'];
         $minMoves = $_GET['minMoves'];
@@ -1589,50 +1527,78 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
         $regression = analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAttributes, $numLevelsColumn);
         $predictArray = $regression['predictors'];
         $predictedArray = $regression['predicted'];
-        $predictString = "#Generated " . date("Y-m-d H:i:s") . "\n" . $numLevelsColumn . ",";
-        $headerString = "num_slider_moves,num_type_changes,total_time,avg_knob_max_min,percent_qs_correct";
-        $numPgms = 0;
-        foreach ($levelsForTable as $i=>$level) {
-            if ($level >= $realColLvl) break;
-            $headerString .= ',pgm_lvl' . $level;
-            $numPgms++;
-        }
-        $predictString .= $headerString . ",result\n";
-        foreach ($predictArray as $i=>$array) {
-            $predictString .= $numLevelsColumn . ',' . implode(',', $array) . "\n";
-        }
-        if (!is_dir('numLevels')) {
-            mkdir('numLevels', 0777, true);
-        }
-        file_put_contents('numLevels/numLevelDataForR_'. $colLvl .'.txt', $predictString);
 
-        $rCommand = 'numLevelsData <- read.table("numLevels/numLevelDataForR_'. $colLvl .'.txt", sep=",", header=TRUE)' . PHP_EOL .
-            'fit <- lm(result~' . str_replace(',', '+', $headerString) .',data=numLevelsData)' . PHP_EOL .
-            'summary(fit)';
-        file_put_contents('numLevels/numLevelsScript_'. $colLvl .'.R', $rCommand);
-        exec("/usr/local/bin/Rscript numLevels/numLevelsScript_$colLvl.R", $rResults);
-        //echo var_dump($rResults); return;
-        $coefficients = array();
-        $stdErrs = array();
-        $pValues = array();
-        $coefStart = 0;
-        foreach ($rResults as $key=>$string) {
-            if (stristr($string, 'Estimate')) {
-                $coefStart = $key;
-                break;
+        $totalAvgPercentError = array();
+        for ($trial = 0; $trial < 10; $trial++) {
+            $predictString = "#Generated " . date("Y-m-d H:i:s") . "\n" . $numLevelsColumn . ",";
+            $headerString = "num_slider_moves,num_type_changes,total_time,avg_knob_max_min";
+            $numPgms = 0;
+            foreach ($levelsForTable as $i=>$level) {
+                if ($level >= $realColLvl) break;
+                $headerString .= ',pgm_lvl' . $level;
+                $numPgms++;
+            }
+            $predictString .= $headerString . ",result\n";
+            $predict10Percent = array(); // Use 10% to test the model
+            foreach ($predictArray as $i=>$array) {
+                if (random() < 0.9) {
+                    $predictString .= $numLevelsColumn . ',' . implode(',', $array) . "\n";
+                } else {
+                    $predict10Percent[] = $i;
+                }
+            }
+            if (!is_dir('numLevels')) {
+                mkdir('numLevels', 0777, true);
+            }
+            file_put_contents('numLevels/numLevelDataForR_'. $colLvl .'.txt', $predictString);
+
+            $rCommand = 'numLevelsData <- read.table("numLevels/numLevelDataForR_'. $colLvl .'.txt", sep=",", header=TRUE)' . PHP_EOL .
+                'fit <- lm(result~' . str_replace(',', '+', $headerString) .',data=numLevelsData)' . PHP_EOL .
+                'summary(fit)';
+            file_put_contents('numLevels/numLevelsScript_'. $colLvl .'.R', $rCommand);
+            exec("/usr/local/bin/Rscript numLevels/numLevelsScript_$colLvl.R", $rResults);
+            //echo var_dump($rResults); return;
+            $coefficients = array();
+            $stdErrs = array();
+            $pValues = array();
+            $coefStart = 0;
+            foreach ($rResults as $key=>$string) {
+                if (stristr($string, 'Estimate')) {
+                    $coefStart = $key;
+                    break;
+                }
+            }
+
+            if ($coefStart !== 0) {
+                for ($i = $coefStart+1, $lastRow = 5+$numPgms+$coefStart; $i <= $lastRow; $i++) {
+                    $values = preg_split('/\ +/', $rResults[$i]);  // put "words" of this line into an array
+                    $coefficients[] = is_numeric($x = str_replace(['<', '>'], '', $values[1])) ? $x+0 : null; // + 0 is to force the scientific notation into a regular number
+                    $stdErrs[] = is_numeric($x = str_replace(['<', '>'], '', $values[2])) ? $x+0 : null;
+                    $pValues[] = is_numeric($x = str_replace(['<', '>'], '', $values[4])) ? $x+0 : null;
+                }
+                $numPredictions = count($predict10Percent);
+                $numVariables = count($predictArray[0]);
+                $totalPercentError = 0;
+                foreach ($predict10Percent as $i=>$index) {
+                    $inputs = array_slice($predictArray[$index], 0, -1);
+                    $actual = $predictArray[$index][$numVariables-1];
+                    $prediction = round(predict($coefficients, $inputs, true));
+                    $percentError = abs(($prediction-$actual) / $actual);
+                    $totalPercentError += $percentError;
+                }
+                $avgPercentError = ($numPredictions === 0) ? null : $totalPercentError / $numPredictions;
+                if (isset($avgPercentError)) $totalAvgPercentError[] = $avgPercentError;
             }
         }
-
-        if ($coefStart !== 0) {
-            for ($i = $coefStart+1, $lastRow = 6+$numPgms+$coefStart; $i <= $lastRow; $i++) {
-                $values = preg_split('/\ +/', $rResults[$i]);  // put "words" of this line into an array
-                $coefficients[] = is_numeric($x = str_replace(['<', '>'], '', $values[1])) ? $x+0 : null; // + 0 is to force the scientific notation into a regular number
-                $stdErrs[] = is_numeric($x = str_replace(['<', '>'], '', $values[2])) ? $x+0 : null;
-                $pValues[] = is_numeric($x = str_replace(['<', '>'], '', $values[4])) ? $x+0 : null;
-            }
+        $avgAvgPercentError = average($totalAvgPercentError);
+        if (is_numeric($avgAvgPercentError)) {
+            $percentCorrect = 1 - $avgAvgPercentError;
+        } else {
+            $percentCorrect = null;
         }
 
-        return array('coefficients'=>$coefficients, 'stdErrs'=>$stdErrs, 'pValues'=>$pValues, 'regressionVars'=>$predictArray, 'regressionOutputs'=>$predictedArray);
+        return array('coefficients'=>$coefficients, 'stdErrs'=>$stdErrs, 'pValues'=>$pValues, 'regressionVars'=>$predictArray, 
+            'regressionOutputs'=>$predictedArray, 'percentCorrect'=>$percentCorrect);
     }
 }
 

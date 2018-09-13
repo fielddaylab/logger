@@ -53,11 +53,32 @@ $(document).ready((event) => {
     $('#predictTableBody .rowLvl').each((i, value) => {
         $(value).children('td').each((j, jval) => {
             if (i+1 > j) {
-                $(jval).css('background-color', 'rgb(235,235,228)')
+                $(jval).css('background-color', 'rgb(221, 221, 221)')
                 $(jval).addClass('disabled-cell')
             }
         })
     })
+    $('#predictTableBody').append(
+        $(`
+            <tr style="border-top: 4px solid rgb(221, 221, 221);">
+                <th scope="row">Prediction accuracy</th>
+                <td style="border-right-width:4px;"></td>
+                <td style="border-left-width:4px; "></td>
+                <td></td>
+                <td></td>
+                <td scope="col" style="border-right-width:4px;"></td>
+                <td scope="col" style="border-left-width:4px; "></td>
+                <td></td>
+                <td style="border-right-width:4px;"></td>
+                <td style="border-left-width:4px; "></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td style="border-right-width:4px;"></td>
+                <td style="border-left-width:4px; "></td>
+            </tr>
+        `)
+    )
     lvls.forEach((value, index, arr) => {
         let newRow = $(`<tr class=rowLvl>`)
         newRow.append(
@@ -84,11 +105,32 @@ $(document).ready((event) => {
     $('#numLevelsBody .rowLvl').each((i, value) => {
         $(value).children('td').each((j, jval) => {
             if (i+1 > j) {
-                $(jval).css('background-color', 'rgb(235,235,228)')
+                $(jval).css('background-color', 'rgb(221, 221, 221)')
                 $(jval).addClass('disabled-cell')
             }
         })
     })
+    $('#numLevelsBody').append(
+        $(`
+            <tr style="border-top: 4px solid rgb(221, 221, 221);">
+                <th scope="row">Prediction accuracy</th>
+                <td style="border-right-width:4px;"></td>
+                <td style="border-left-width:4px; "></td>
+                <td></td>
+                <td></td>
+                <td scope="col" style="border-right-width:4px;"></td>
+                <td scope="col" style="border-left-width:4px; "></td>
+                <td></td>
+                <td style="border-right-width:4px;"></td>
+                <td style="border-left-width:4px; "></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td style="border-right-width:4px;"></td>
+                <td style="border-left-width:4px; "></td>
+            </tr>
+        `)
+    )
 
     let totalSessions
     let errorTracker = 0
@@ -315,16 +357,26 @@ $(document).ready((event) => {
                             'border-bottom': borderBottoms[j]
                         })
                         let innerText = $('<div>')
-                        if (typeof data.pValues[j] === 'number') {
-                            innerText.html(data.pValues[j].toFixed(5))
-                            if (data.pValues[j] < 0.05) {
-                                $(innerText).css('background-color', '#82e072')
+                        if (j < columnElements.length - 1) {
+                            if (typeof data.pValues[j] === 'number') {
+                                innerText.html(data.pValues[j].toFixed(5))
+                                if (data.pValues[j] < 0.05) {
+                                    $(innerText).css('background-color', '#82e072')
+                                }
+                            } else {
+                                innerText.html('No data')
                             }
+                            $(jval).html(innerText)
+                            $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=questions&row=${rowNames[j].replace('%', 'percent')}&col=${column}&i=${i}&j=${j}" target="_blank"></a>`)
                         } else {
-                            innerText.html('No data')
+                            if (typeof data.percentCorrect === 'number') {
+                                innerText.html(data.percentCorrect.toFixed(5))
+                            } else {
+                                innerText.html('No data')
+                            }
+                            $(jval).html(innerText)
                         }
-                        $(jval).html(innerText)
-                        $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=questions&row=${rowNames[j].replace('%', 'percent')}&col=${column}&i=${i}&j=${j}" target="_blank"></a>`)
+
         
                         $(innerText).css({'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif'})
                     })
@@ -441,21 +493,26 @@ $(document).ready((event) => {
                             'border-bottom': borderBottoms[j]
                         })
                         let innerText = $('<div>')
+                        innerText.html('No data')
                         if (data && data.pValues) {
-                            if (typeof data.pValues[j] === 'number') {
-                                innerText.html(data.pValues[j].toFixed(5))
-                                if (data.pValues[j] < 0.05) {
-                                    $(innerText).css('background-color', '#82e072')
+                            if (j < columnElements.length - 1) {
+                                if (typeof data.pValues[j] === 'number') {
+                                    innerText.html(data.pValues[j].toFixed(5))
+                                    if (data.pValues[j] < 0.05) {
+                                        $(innerText).css('background-color', '#82e072')
+                                    }
                                 }
+                                $(jval).html(innerText)
+                                $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=challenges&row=${rowNames[j].replace('%', 'percent')}&col=${column}&i=${i}&j=${j}" target="_blank"></a>`)
                             } else {
-                                innerText.html('No data')
+                                if (typeof data.percentCorrect === 'number') {
+                                    innerText.html(data.percentCorrect.toFixed(5))
+                                }
+                                $(jval).html(innerText)
                             }
                         } else {
-                            innerText.html('No data')
+                            $(jval).html(innerText)
                         }
-                        $(jval).html(innerText)
-                        $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=challenges&row=${rowNames[j].replace('%', 'percent')}&col=${column}&i=${i}&j=${j}" target="_blank"></a>`)
-        
                         $(innerText).css({'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif'})
                     })
                     off()
@@ -472,7 +529,6 @@ $(document).ready((event) => {
         numCols = $('#numLevelsBody').find('tr:first td').length
         if (true) {
             for (let i = 0; i < numCols; i++) {
-                let colVars = $('#numLevelsBody').find('tr th')
                 let columnElements = $(`#numLevelsBody tr td:nth-child(${i+2})`).not('.disabled-cell')
                 let column
 
@@ -574,21 +630,26 @@ $(document).ready((event) => {
                             'border-bottom': borderBottoms[j]
                         })
                         let innerText = $('<div>')
+                        innerText.html('No data')
                         if (data && data.pValues) {
-                            if (typeof data.pValues[j] === 'number') {
-                                innerText.html(data.pValues[j].toFixed(5))
-                                if (data.pValues[j] < 0.05) {
-                                    $(innerText).css('background-color', '#82e072')
+                            if (j < columnElements.length - 1) {
+                                if (typeof data.pValues[j] === 'number') {
+                                    innerText.html(data.pValues[j].toFixed(5))
+                                    if (data.pValues[j] < 0.05) {
+                                        $(innerText).css('background-color', '#82e072')
+                                    }
                                 }
+                                $(jval).html(innerText)
+                                $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=challenges&row=${rowNames[j].replace('%', 'percent')}&col=${column}&i=${i}&j=${j}" target="_blank"></a>`)
                             } else {
-                                innerText.html('No data')
+                                if (typeof data.percentCorrect === 'number') {
+                                    innerText.html(data.percentCorrect.toFixed(5))
+                                }
+                                $(jval).html(innerText)
                             }
                         } else {
-                            innerText.html('No data')
+                            $(jval).html(innerText)
                         }
-
-                        $(jval).html(innerText)
-                        $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=numLevels&row=${rowNames[j].replace('%', 'percent')}&col=${column}&i=${i}&j=${j}" target="_blank"></a>`)
         
                         $(innerText).css({'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif'})
                     })
