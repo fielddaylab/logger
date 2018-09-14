@@ -240,7 +240,7 @@ $(document).ready((event) => {
         //queue.emptyFunc = function() { $('#exportModal').prop('disabled', false) }
 
         let numCols = $('#tableAllBody').find('tr:first td').length
-        if (true) {
+        if (false) {
             for (let i = 0; i < numCols; i++) {
                 let columnElements = $(`#tableAllBody tr td:nth-child(${i+2})`)
                 let column
@@ -337,6 +337,8 @@ $(document).ready((event) => {
                             }
                             $(value).html(newText)
                         }, 400 + Math.random() * 200)
+                    } else {
+                        $(value).text('')
                     }
                 })
 
@@ -392,7 +394,7 @@ $(document).ready((event) => {
         }
 
         numCols = $('#predictTableBody').find('tr:first td').length
-        if (true) {
+        if (false) {
             for (let i = 0; i < numCols; i++) {
                 let parametersChallenge = {
                     'gameID': $('#gameSelect').val(),
@@ -474,6 +476,8 @@ $(document).ready((event) => {
                             }
                             $(value).html(newText)
                         }, 400 + Math.random() * 200)
+                    } else {
+                        $(value).text('')
                     }
                 })
 
@@ -527,7 +531,7 @@ $(document).ready((event) => {
         }
 
         numCols = $('#numLevelsBody').find('tr:first td').length
-        if (true) {
+        if (false) {
             for (let i = 0; i < numCols; i++) {
                 let columnElements = $(`#numLevelsBody tr td:nth-child(${i+2})`).not('.disabled-cell')
                 let column
@@ -612,6 +616,8 @@ $(document).ready((event) => {
                             }
                             $(value).html(newText)
                         }, 400 + Math.random() * 200)
+                    } else {
+                        $(value).text('')
                     }
                 })
                 let callbackFunc = (data) => {

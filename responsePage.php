@@ -463,6 +463,157 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
             }
             $lvlsPercentComplete[] = $numComplete / $numTotal * 100;
         }
+
+        // Cluster stuff
+        $sourceColumns = [];
+        $allColumns = [];
+        $startLevel = 0;
+        $endLevel = 8;
+        for ($lvl = intval($startLevel); $lvl <= intval($endLevel); $lvl++) {
+            $allColumns = array_merge($allColumns, [
+                [array_column_fixed($moveCol, $lvl), 'numMovesPerChallenge', [216], $lvl],
+                [array_column_fixed($avgCol, $lvl), 'knobAvgs', [], $lvl],
+                [array_column_fixed($timeCol, $lvl), 'levelTimes', [999999], $lvl],
+                [array_column_fixed($typeCol, $lvl), 'moveTypeChangesPerLevel', [], $lvl],
+                [array_column_fixed($stdCol, $lvl), 'knobStdDevs', [], $lvl],
+                [array_column_fixed($totalCol, $lvl), 'knobTotalAmts', [], $lvl],
+                [$percentGoodMovesAll[$lvl], 'percentGoodMovesAll', [], $lvl],
+            ]);
+        }
+        $sourceColumns = [];
+        foreach ($allColumns as $col) {
+            if (isset($_GET[$col[1]])) {
+                $sourceColumns[] = $col;
+            }
+        }
+        if (count($sourceColumns) < 2) {
+            $sourceColumns = $allColumns;
+        }
+        $pcaData = [];
+        for ($i = 0; $i < count($sourceColumns); $i++) $pcaData[] = [];
+        foreach (array_keys($sourceColumns[0][0]) as $i) {
+            $good = true;
+            for ($j = 0; $j < count($sourceColumns); $j++) {
+                $val = $sourceColumns[$j][0][$i];
+                if (!is_numeric($val) || in_array($val, $sourceColumns[$j][2])) {
+                    $good = false;
+                    break;
+                }
+            }
+            if ($good) {
+                for ($j = 0; $j < count($sourceColumns); $j++) {
+                    $pcaData[$j][] = $sourceColumns[$j][0][$i];
+                }
+            }
+        }
+        // scale to 0..1
+        $pcaDataScaled = [];
+        for ($i = 0; $i < count($pcaData); $i++) {
+            $pcaDataScaled[] = [];
+            $min_val = null;
+            $max_val = null;
+            for ($j = 0; $j < count($pcaData[$i]); $j++) {
+                $val = $pcaData[$i][$j];
+                if (is_null($min_val) || $val < $min_val) $min_val = $val;
+                if (is_null($max_val) || $val > $max_val) $max_val = $val;
+            }
+            $range = $max_val - $min_val;
+            for ($j = 0; $j < count($pcaData[$i]); $j++) {
+                if ($range > 0) {
+                    $pcaDataScaled[$i][] = ($pcaData[$i][$j] - $min_val) / $range;
+                } else {
+                    // this is a hack because when the whole column is the same
+                    // value it breaks PCA for some reason
+                    $pcaDataScaled[$i][] = 0.5 + $j * 0.00001;
+                }
+            }
+        }
+        if (count($pcaDataScaled[0]) > 1) {
+            $pca = new PCA\PCA($pcaDataScaled);
+            $pca->changeDimension(2);
+            $pca->applayingPca();
+            $columns = $pca->getNewData();
+            $bestDunn = 0;
+            $bestColumn1 = 'pca1';
+            $bestColumn2 = 'pca2';
+            $bestSpace = null;
+            $bestClusters = [];
+            for ($k = 2; $k < 5; $k++) {
+                $space = new KMeans\Space(2);
+                $xs = $columns[0];
+                $ys = $columns[1];
+                foreach ($xs as $xi => $x) {
+                    $y = $ys[$xi];
+                    $labels = [];
+                    foreach (array_column($pcaData, $xi) as $colIndex => $val) {
+                        $prop = $sourceColumns[$colIndex][1];
+                        $v = number_format($val, 3);
+                        if (isset($labels[$prop])) {
+                            $labels[$prop][] = $v;
+                        } else {
+                            $labels[$prop] = [$v];
+                        }
+                    }
+                    $label = '';
+                    foreach ($labels as $key => $vals) {
+                        $label .= $key . ': [' . implode(',', $vals) . ']<br>';
+                    }
+                    $space->addPoint([$x, $y], $label);
+                }
+                $clusters = $space->solve($k);
+                $minInterDist = null;
+                $maxIntraDist = null;
+                for ($ci = 0; $ci < count($clusters); $ci++) {
+                    for ($cj = $ci + 1; $cj < count($clusters); $cj++) {
+                        // use distance between centers for simplicity
+                        $interDist = sqrt
+                            ( (pow(($clusters[$ci][0] - $clusters[$cj][0]), 2))
+                            + (pow(($clusters[$ci][1] - $clusters[$cj][1]),  2))
+                            );
+                        if (is_null($minInterDist) || $interDist < $minInterDist) {
+                            $minInterDist = $interDist;
+                        }
+                    }
+                }
+                for ($ci = 0; $ci < count($clusters); $ci++) {
+                    $cluster = $clusters[$ci];
+                    $intraDist = null;
+                    // fudge intracluster distance by finding max distance from center to a point
+                    foreach ($cluster as $point) {
+                        $pointDist = sqrt
+                            ( (pow(($point[0] - $cluster[0]), 2))
+                            + (pow(($point[1] - $cluster[1]), 2))
+                            );
+                        if (is_null($intraDist) || $pointDist > $intraDist) {
+                            $intraDist = $pointDist;
+                        }
+                    }
+                    if (is_null($maxIntraDist) || $intraDist > $maxIntraDist) {
+                        $maxIntraDist = $intraDist;
+                    }
+                }
+                $thisDunn = $minInterDist / $maxIntraDist;
+                if ($thisDunn > $bestDunn) {
+                    $bestDunn = $thisDunn;
+                    $bestSpace = $space;
+                    $bestClusters = $clusters;
+                }
+            }
+            $clusterPoints = [];
+            foreach ($bestClusters as $cluster) {
+                $points = [];
+                foreach ($cluster->getIterator() as $point) {
+                    $points[] = [$point[0], $point[1], $bestSpace[$point]];
+                }
+                $clusterPoints[] = $points;
+            }
+            $usedColumns = [];
+            foreach ($sourceColumns as $col) {
+                $usedColumns[] = $col[3] . ' ' . $col[1];
+            }
+            $eigenvectors = $pca->getEigenvectors();
+        }
+
         return array('numLevelsAll'=>$numLevelsAll, 'numMovesAll'=>$numMovesAll, 'questionsAll'=>$questionsAll, 'basicInfoAll'=>$basicInfoAll,
             'sessionsAndTimes'=>$sessionsAndTimes, 'levels'=>$levels, 'numSessions'=>count($sessionsAndTimes['sessions']), 'questionsTotal'=>$questionsTotal,
             'lvlsPercentComplete'=>$lvlsPercentComplete ,'clusters'=>array('col1'=>$bestColumn1, 'col2'=>$bestColumn2, 'clusters'=>$clusterPoints, 'dunn'=>$bestDunn,
