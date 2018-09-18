@@ -6,3 +6,7 @@ log2\.log
 .DS_Store
 
 \.DS_Store
+
+*.txt
+
+*.R

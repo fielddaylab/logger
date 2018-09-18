@@ -14,6 +14,23 @@
      <div id="loadingOverlay" class="overlay" style="z-index:5">
         <div id="loadingText" class="text" style="width:300px;">Loading .</div>
     </div>
+    <div class="modal fade" id="exportModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title">Export data as file</h4>
+                </div>
+                <div class="modal-body">
+                    <a href="questionDataForR.txt">Download question table data</a>
+                    <br>
+                    <a href="challengeDataForR.txt">Download challenge table data</a>
+                    <br>
+                    <a href="numLevelDataForR.txt">Download number of levels table data</a>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="modal fade" id="filterModal">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -26,39 +43,45 @@
                         <form id="filterForm" role="form">
                             <div class="row">
                                 <div class="col-xs-6">
+                                    <h3 style="text-align:center">All table filters</h3>
                                     <div class="form-group">
                                         <label for="minMoves">Minimum moves</label>
                                         <input name="minMoves" required type="number" min="0" class="form-control" id="minMoves" value="0">
                                         <br>
-                                        <label for="minQuestions">Minimum questions answered</label>
-                                        <input name="minQuestions" required type="number" min="0" class="form-control" id="minQuestions" value="0">
-                                        <br>
-                                        <label for="minLevels">Interval start level</label>
-                                        <input name="minLevels" required type="number" min="0" class="form-control" id="minLevels" value="1">
-                                        <br>
-                                        <label for="maxLevels">Interval end level</label>
-                                        <input name="maxLevels" required type="number" min="0" class="form-control" id="maxLevels" value="8">
-                                        <br>
-                                    </div>
-                                </div>
-                                <div class="col-xs-6">
-                                    <div class="form-group">
                                         <label for="startDate">Filter start date</label>
                                         <input name="startDate" required type="date" class="form-control" id="startDate" value="2018-03-01">
                                         <br>
                                         <label for="endDate">Filter end date</label>
                                         <input name="endDate" required type="date" class="form-control" id="endDate">
-                                        <br>
-                                        <label for="maxRows">Max sessions</label>
-                                        <input name="maxRows" required type="number" min="1" value="100" class="form-control" id="maxRows">
-                                        <br>
-                                        <label for="sessionInput">Manual session lookup</label>
-                                        <input name="sessionInput" type="text" class="form-control" id="sessionInput" value="">
+                                    </div>
+                                </div>
+                                <div class="col-xs-6">
+                                    <h3 style="text-align:center">Question table filters</h3>
+                                    <div class="form-group">
+                                        <label for="minQuestions">Minimum questions answered</label>
+                                        <input name="minQuestions" required type="number" min="0" class="form-control" id="minQuestions" value="0">
                                         <br>
                                     </div>
                                 </div>
                             </div>
-                            <p>Cluster graph inputs</p>
+                            <hr>
+                            <div class="row">
+                                <h3 style="text-align:center">Other settings</h3>
+                                <div class="col-xs-6">                                  
+                                    <div class="form-group">
+                                        <label for="maxRows">Max sessions</label>
+                                        <input name="maxRows" required type="number" min="1" value="100" class="form-control" id="maxRows">
+                                    </div>
+                                </div>
+                                <div class="col-xs-6">
+                                    <div class="form-group">
+                                        <label for="sessionInput">Manual session lookup</label>
+                                        <input name="sessionInput" type="text" class="form-control" id="sessionInput" value="">
+                                    </div>
+                                </div>
+                            </div>
+                            <hr>
+                            <h3 style="text-align:center">Cluster graph inputs</h3>
                             <div class="row">
                                 <div class="col-xs-6">
                                     <div class="form-group">
@@ -231,23 +254,318 @@
                 <div class="row">
                     <div class="col-xs-4"></div>
                     <div class="col-xs-4"></div>
-                    <div class="col-xs-4" style="margin-top:10px">
+                    <div class="col-xs-2" style="margin-top:10px">
                         Test score:
                         <br>
                         <div id="scoreDisplayAll">- / - (-%)</div>
+                    </div>
+                    <div class="col-xs-2" style="margin-top:10px; text-align:right; padding-right:46px"><button class="btn btn-default" type="button" id="exportBtn" disabled>Export...</button></div>
+                </div>
+                <br><br>
+                <div class="row" style="margin-left:0px;margin-right:0px;">
+                    <div class="col-xs-12">
+                        <div>
+                            <table id="numLevelsTable" class="table table-striped table-bordered table-hover" style="table-layout:fixed">
+                                <thead>
+                                    <tr>
+                                        <th scope="col" rowspan="2" style="width:180px;top:0;z-index:4;background-color:rgb(221, 221, 221)"></th>
+                                        <th scope="col" style="top:0;z-index:4;background-color:rgb(221, 221, 221)"></th>
+                                        <th class="challenge-header" scope="col" colspan="4">Challenge 1</th>
+                                        <th class="challenge-header" scope="col" colspan="3">Challenge 2</th>
+                                        <th class="challenge-header" scope="col" colspan="5">Challenge 3</th>
+                                        <th class="challenge-header" style="border-right-width:2px !important;" scope="col" colspan="1">Challenge 4</th>
+                                    </tr>
+                                    <tr>
+                                        <th style="border-right-width:4px;">No lvls</th>
+                                        <th style="border-left-width:4px; ">Up to 1</th>
+                                        <th>Up to 3</th>
+                                        <th>Up to 5</th>
+                                        <th style="border-right-width:4px;">Up to 7</th>
+                                        <th style="border-left-width:4px; ">Up to 11</th>
+                                        <th>Up to 13</th>
+                                        <th style="border-right-width:4px;">Up to 15</th>
+                                        <th style="border-left-width:4px; ">Up to 19</th>
+                                        <th>Up to 21</th>
+                                        <th>Up to 23</th>
+                                        <th>Up to 25</th>
+                                        <th style="border-left-width:4px; ">Up to 27</th>
+                                        <th style="border-left-width:4px; ">Up to 31</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="numLevelsBody">
+                                    <tr>
+                                        <th scope="row">Constant term</th>
+                                        <td style="border-right-width:4px;"></td>
+                                        <td style="border-left-width:4px; "></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td scope="col" style="border-right-width:4px;"></td>
+                                        <td scope="col" style="border-left-width:4px; "></td>
+                                        <td></td>
+                                        <td style="border-right-width:4px;"></td>
+                                        <td style="border-left-width:4px; "></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td style="border-right-width:4px;"></td>
+                                        <td style="border-left-width:4px; "></td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row"># slider moves</th>
+                                        <td style="border-right-width:4px;"></td>
+                                        <td style="border-left-width:4px; "></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td scope="col" style="border-right-width:4px;"></td>
+                                        <td scope="col" style="border-left-width:4px; "></td>
+                                        <td></td>
+                                        <td style="border-right-width:4px;"></td>
+                                        <td style="border-left-width:4px; "></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td style="border-right-width:4px;"></td>
+                                        <td style="border-left-width:4px; "></td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row"># type changes</th>
+                                        <td style="border-right-width:4px;"></td>
+                                        <td style="border-left-width:4px; "></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td scope="col" style="border-right-width:4px;"></td>
+                                        <td scope="col" style="border-left-width:4px; "></td>
+                                        <td></td>
+                                        <td style="border-right-width:4px;"></td>
+                                        <td style="border-left-width:4px; "></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td style="border-right-width:4px;"></td>
+                                        <td style="border-left-width:4px; "></td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">Total time</th>
+                                        <td style="border-right-width:4px;"></td>
+                                        <td style="border-left-width:4px; "></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td scope="col" style="border-right-width:4px;"></td>
+                                        <td scope="col" style="border-left-width:4px; "></td>
+                                        <td></td>
+                                        <td style="border-right-width:4px;"></td>
+                                        <td style="border-left-width:4px; "></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td style="border-right-width:4px;"></td>
+                                        <td style="border-left-width:4px; "></td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">Avg knob max-min</th>
+                                        <td style="border-right-width:4px;"></td>
+                                        <td style="border-left-width:4px; "></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td scope="col" style="border-right-width:4px;"></td>
+                                        <td scope="col" style="border-left-width:4px; "></td>
+                                        <td></td>
+                                        <td style="border-right-width:4px;"></td>
+                                        <td style="border-left-width:4px; "></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td style="border-right-width:4px;"></td>
+                                        <td style="border-left-width:4px; "></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div style="font-size:14px; margin-bottom:6px; color:#777">
+                            Columns in this table will use any sessions who have <i>at least</i> the specified levels (up to and including) completed.
+                        </div>
+                        <div style="font-size:14px; margin-bottom:6px; color:#777">
+                            Click any p-value for the regression equation and input data of that column.
+                        </div>
+                        <div style="font-size:14px; margin-bottom:6px; color:#777">
+                            Cells in this table are p-values for the linear regression equation.
+                        </div>
+                        <div style="font-size:14px; margin-bottom:6px; color:#777">
+                            Significant values (at α = 0.05) are highlighted in <span style="background-color: #82e072">green</span>.
+                        </div>
+                        <div style="font-size:14px; margin-bottom:6px; color:#777">
+                            Values of "No data" indicate linear dependence among two or more input variables.
+                        </div>
+                        <div style="font-size:14px; margin-bottom:6px; color:#777">
+                            Values of 1 (or very close to 1) indicate inconclusiveness because only one value of output (true or false) has an adequate number of samples.
+                        </div>
+                        <div style="font-size:14px; margin-bottom:6px; color:#777">
+                            Prediction accuracy is calculated as 1-(avg(|(predicted-actual)/actual)|). That is, 1-(avg % error).
+                        </div>
                     </div>
                 </div>
                 <br><br>
                 <div class="row" style="margin-left:0px;margin-right:0px;">
                     <div class="col-xs-12">
-                        <div style="max-height:300px;overflow-y:auto;overflow-x:scroll;">
+                        <div>
+                            <table id="predictTableAll" class="table table-striped table-bordered table-hover">
+                                <thead>
+                                    <tr>
+                                        <th scope="col" rowspan="2" style="top:0;z-index:4;background-color:rgb(221, 221, 221)"></th>
+                                        <th class="challenge-header" scope="col" colspan="4">Challenge 1</th>
+                                        <th class="challenge-header" scope="col" colspan="3">Challenge 2</th>
+                                        <th class="challenge-header" scope="col" colspan="5">Challenge 3</th>
+                                        <th class="challenge-header" scope="col" colspan="1">Challenge 4</th>
+                                        <th class="challenge-header" style="border-right-width:2px !important;" scope="col" colspan="1">Challenge 5</th>
+                                    </tr>
+                                    <tr>
+                                        <th scope="col" style="border-left-width:4px; ">Lvl 1</th>
+                                        <th scope="col">Lvl 3</th>
+                                        <th scope="col">Lvl 5</th>
+                                        <th scope="col" style="border-right-width:4px;">Lvl 7</th>
+                                        <th scope="col" style="border-left-width:4px; ">Lvl 11</th>
+                                        <th scope="col">Lvl 13</th>
+                                        <th scope="col" style="border-right-width:4px;">Lvl 15</th>
+                                        <th scope="col" style="border-left-width:4px; ">Lvl 19</th>
+                                        <th scope="col">Lvl 21</th>
+                                        <th scope="col">Lvl 23</th>
+                                        <th scope="col">Lvl 25</th>
+                                        <th scope="col" style="border-right-width:4px;">Lvl 27</th>
+                                        <th scope="col" style="border-left-width:4px; ">Lvl 31</th>
+                                        <th scope="col" style="border-left-width:4px; ">Lvl 33</th>
+                                    </tr>
+                                    <tr id="percentCompleteRow">
+                                        <th scope="row" style="position:initial;text-align:right">% who completed</th>
+                                        <td style="text-align:center;border-left-width:4px; ">- %</td>
+                                        <td style="text-align:center;">- %</td>
+                                        <td style="text-align:center;">- %</td>
+                                        <td style="text-align:center;border-right-width:4px;">- %</td>
+                                        <td style="text-align:center;border-left-width:4px; ">- %</td>
+                                        <td style="text-align:center;">- %</td>
+                                        <td style="text-align:center;border-right-width:4px;">- %</td>
+                                        <td style="text-align:center;border-left-width:4px; ">- %</td>
+                                        <td style="text-align:center;">- %</td>
+                                        <td style="text-align:center;">- %</td>
+                                        <td style="text-align:center;">- %</td>
+                                        <td style="text-align:center;border-right-width:4px;">- %</td>
+                                        <td style="text-align:center;border-left-width:4px; ">- %</td>
+                                        <td style="text-align:center;border-left-width:4px; ">- %</td>
+                                    </tr>
+                                </thead>
+                                <tbody id="predictTableBody">
+                                    <tr>
+                                        <th scope="row">Constant term</th>
+                                        <td style="border-left-width:4px; "></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td scope="col" style="border-right-width:4px;"></td>
+                                        <td scope="col" style="border-left-width:4px; "></td>
+                                        <td></td>
+                                        <td style="border-right-width:4px;"></td>
+                                        <td style="border-left-width:4px; "></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td style="border-right-width:4px;"></td>
+                                        <td style="border-left-width:4px; "></td>
+                                        <td style="border-left-width:4px; "></td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row"># slider moves</th>
+                                        <td style="border-left-width:4px; "></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td scope="col" style="border-right-width:4px;"></td>
+                                        <td scope="col" style="border-left-width:4px; "></td>
+                                        <td></td>
+                                        <td style="border-right-width:4px;"></td>
+                                        <td style="border-left-width:4px; "></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td style="border-right-width:4px;"></td>
+                                        <td style="border-left-width:4px; "></td>
+                                        <td style="border-left-width:4px; "></td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row"># type changes</th>
+                                        <td style="border-left-width:4px; "></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td scope="col" style="border-right-width:4px;"></td>
+                                        <td scope="col" style="border-left-width:4px; "></td>
+                                        <td></td>
+                                        <td style="border-right-width:4px;"></td>
+                                        <td style="border-left-width:4px; "></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td style="border-right-width:4px;"></td>
+                                        <td style="border-left-width:4px; "></td>
+                                        <td style="border-left-width:4px; "></td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">Total time</th>
+                                        <td style="border-left-width:4px; "></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td scope="col" style="border-right-width:4px;"></td>
+                                        <td scope="col" style="border-left-width:4px; "></td>
+                                        <td></td>
+                                        <td style="border-right-width:4px;"></td>
+                                        <td style="border-left-width:4px; "></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td style="border-right-width:4px;"></td>
+                                        <td style="border-left-width:4px; "></td>
+                                        <td style="border-left-width:4px; "></td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">Avg knob max-min</th>
+                                        <td style="border-left-width:4px; "></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td scope="col" style="border-right-width:4px;"></td>
+                                        <td scope="col" style="border-left-width:4px; "></td>
+                                        <td></td>
+                                        <td style="border-right-width:4px;"></td>
+                                        <td style="border-left-width:4px; "></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td style="border-right-width:4px;"></td>
+                                        <td style="border-left-width:4px; "></td>
+                                        <td style="border-left-width:4px; "></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div style="font-size:14px; margin-bottom:6px; color:#777">
+                            Click any p-value for the regression equation and input data of that column.
+                        </div>
+                        <div style="font-size:14px; margin-bottom:6px; color:#777">
+                            Cells in this table are p-values for the logistic regression equation.
+                        </div>
+                        <div style="font-size:14px; margin-bottom:6px; color:#777">
+                            Significant values (at α = 0.05) are highlighted in <span style="background-color: #82e072">green</span>.
+                        </div>
+                        <div style="font-size:14px; margin-bottom:6px; color:#777">
+                            Values of "No data" indicate linear dependence among two or more input variables.
+                        </div>
+                        <div style="font-size:14px; margin-bottom:6px; color:#777">
+                            Values of 1 (or very close to 1) indicate inconclusiveness because only one value of output (true or false) has an adequate number of samples.
+                        </div>
+                    </div>
+                </div>
+                <br><br>
+                <div class="row" style="margin-left:0px;margin-right:0px;">
+                    <div class="col-xs-12">
+                        <div>
                             <table id="tableAll" class="table table-striped table-bordered table-hover">
                                 <thead>
                                     <tr>
-                                        <th scope="col" style="font-size:20px"><b>Regression p-values</b></th>
-                                        <th scope="col">Challenge 5 complete</th>
-                                        <th scope="col">Challenge 1 complete</th>
-                                        <th scope="col">Challenge 3 complete</th>
+                                        <th scope="col" style="top:0px;background-color:rgb(221, 221, 221);width:12%;"></th>
                                         <th scope="col">Q1/A</th>
                                         <th scope="col">Q1/B</th>
                                         <th scope="col">Q1/C</th>
@@ -268,10 +586,26 @@
                                 </thead>
                                 <tbody id="tableAllBody">
                                     <tr>
+                                        <th scope="row">Constant term</th>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
                                         <th scope="row"># slider moves</th>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
                                         <td></td>
                                         <td></td>
                                         <td></td>
@@ -307,15 +641,9 @@
                                         <td></td>
                                         <td></td>
                                         <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
                                     </tr>
                                     <tr>
                                         <th scope="row"># levels completed</th>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
                                         <td></td>
                                         <td></td>
                                         <td></td>
@@ -351,9 +679,6 @@
                                         <td></td>
                                         <td></td>
                                         <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
                                     </tr>
                                     <tr>
                                         <th scope="row">Avg knob max-min</th>
@@ -373,15 +698,28 @@
                                         <td></td>
                                         <td></td>
                                         <td></td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">Avg % good moves</th>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
                                         <td></td>
                                         <td></td>
                                         <td></td>
                                     </tr>
-                                    <tr>
-                                        <th scope="row">% correct questions</th>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
+                                    <tr style="border-top: 4px solid rgb(221, 221, 221);">
+                                        <th scope="row">Prediction accuracy</th>
                                         <td></td>
                                         <td></td>
                                         <td></td>
@@ -403,23 +741,29 @@
                             </table>
                         </div>
                         <div style="font-size:14px; margin-bottom:6px; color:#777">
-                            Click any p-value to see the data for that row and column.<br>
+                            Click any p-value for the regression equation and input data of that column.<br>
                         </div>
                         <div style="font-size:14px; margin-bottom:6px; color:#777">
-                            p-values with p ≤ α = <span id="alphaValueDiv">(0.05 / #rows)</span> are highlighted in <span style="background-color: #82e072">green</span>.
+                            Cells in this table are p-values for the logistic regression equation.
                         </div>
                         <div style="font-size:14px; margin-bottom:6px; color:#777">
-                            Cells with "no data" indicate that all sessions have the same value for that column.
+                            Significant values (at α = 0.05) are highlighted in <span style="background-color: #82e072">green</span>.
                         </div>
                         <div style="font-size:14px; margin-bottom:6px; color:#777">
                             Correct answers to each question have a <span style="background-color: #dff0d8">light green</span> cell background.
+                        </div>
+                        <div style="font-size:14px; margin-bottom:6px; color:#777">
+                            Values of "No data" indicate linear dependence among two or more input variables.
+                        </div>
+                        <div style="font-size:14px; margin-bottom:6px; color:#777">
+                            Values of 1 (or very close to 1) indicate inconclusiveness because only one value of output (true or false) has an adequate number of samples.
                         </div>
                     </div>
                 </div>
                 <br><br>
                 <div class="row" style="margin-left:0px;margin-right:0px">
                     <div class="col-xs-4">
-                        <div class="box" style="max-height:400px;overflow-y:auto;overflow-x:hidden;white-space:nowrap;background-color:#F6F6F3;">
+                        <div class="box" style="white-space:nowrap;background-color:#F6F6F3;">
                             <div style="margin-left:20px;margin-top:20px;margin-bottom:5px;font-size:20px;">Basic features:</div>
                             <ul id="basicFeaturesAll" style="margin-bottom:20px;">
                                 <li style="font-size:16px;">Select a game to see features</li>
@@ -428,27 +772,27 @@
                     </div>
 
                     <div class="col-xs-8">
-                        <div class="box" style="max-height:400px;overflow-y:auto;overflow-x:hidden;white-space:nowrap;background-color:#F6F6F3;">
+                        <div class="box" style="white-space:nowrap;background-color:#F6F6F3;">
                             <div id="goalsDiv1All" style="margin-left:20px;margin-top:20px;margin-bottom:20px;font-size:20px;">Select a game to see histograms</div>
-                            <div id="goalsGraph1All" style="height:200px">
+                            <div id="goalsGraph1All">
                                 <div id="noDataOverlayGoals1All" class="overlay" style="display:none">
                                     <div class="text" style="color:red; font-weight:bold;">NO DATA</div>
                                 </div>
                             </div>
                             <div id="goalsDiv2All" style="margin-left:20px;margin-top:20px;margin-bottom:20px;font-size:20px;display:none;"></div>
-                            <div id="goalsGraph2All" style="height:200px;">
+                            <div id="goalsGraph2All">
                                 <div id="noDataOverlayGoals2All" class="overlay" style="display:none">
                                     <div class="text" style="color:red; font-weight:bold;">NO DATA</div>
                                 </div>
                             </div>
                             <div id="goalsDiv3All" style="margin-left:20px;margin-top:20px;margin-bottom:20px;font-size:20px;display:none;"></div>
-                            <div id="goalsGraph3All" style="height:200px;">
+                            <div id="goalsGraph3All">
                                 <div id="noDataOverlayGoals3All" class="overlay" style="display:none">
                                     <div class="text" style="color:red; font-weight:bold;">NO DATA</div>
                                 </div>
                             </div>
                             <div id="goalsDiv4All" style="margin-left:20px;margin-top:20px;margin-bottom:20px;font-size:20px;display:none;"></div>
-                            <div id="goalsGraph4All" style="height:500px;">
+                            <div id="goalsGraph4All">
                                 <div id="noDataOverlayGoals4All" class="overlay" style="display:none">
                                     <div class="text" style="color:red; font-weight:bold;">NO DATA</div>
                                 </div>

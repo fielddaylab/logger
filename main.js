@@ -26,6 +26,112 @@ $(document).ready((event) => {
     if (endmm < 10) { endmm = '0' + endmm }
     $('#endDate').val(endyyyy+'-'+endmm+'-'+enddd)
 
+    let lvls = [1, 3, 5, 7, 11, 13, 15, 19, 21, 23, 25, 27, 31]
+    lvls.forEach((value, index, arr) => {
+        let newRow = $(`<tr class=rowLvl>`)
+        newRow.append(
+            `
+            <th scope="row">% good moves lvl ${value}</th>
+            <td style="border-left-width:4px; "></td>
+            <td></td>
+            <td></td>
+            <td scope="col" style="border-right-width:4px;"></td>
+            <td scope="col" style="border-left-width:4px; "></td>
+            <td></td>
+            <td style="border-right-width:4px;"></td>
+            <td style="border-left-width:4px; "></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td style="border-right-width:4px;"></td>
+            <td style="border-left-width:4px; "></td>
+            <td style="border-left-width:4px; "></td>
+            `
+        )
+        $('#predictTableBody').append(newRow)
+    })
+    $('#predictTableBody .rowLvl').each((i, value) => {
+        $(value).children('td').each((j, jval) => {
+            if (i+1 > j) {
+                $(jval).css('background-color', 'rgb(221, 221, 221)')
+                $(jval).addClass('disabled-cell')
+            }
+        })
+    })
+    $('#predictTableBody').append(
+        $(`
+            <tr style="border-top: 4px solid rgb(221, 221, 221);">
+                <th scope="row">Prediction accuracy</th>
+                <td style="border-right-width:4px;"></td>
+                <td style="border-left-width:4px; "></td>
+                <td></td>
+                <td></td>
+                <td scope="col" style="border-right-width:4px;"></td>
+                <td scope="col" style="border-left-width:4px; "></td>
+                <td></td>
+                <td style="border-right-width:4px;"></td>
+                <td style="border-left-width:4px; "></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td style="border-right-width:4px;"></td>
+                <td style="border-left-width:4px; "></td>
+            </tr>
+        `)
+    )
+    lvls.forEach((value, index, arr) => {
+        let newRow = $(`<tr class=rowLvl>`)
+        newRow.append(
+            `
+            <th scope="row">% good moves lvl ${value}</th>
+            <td style="border-right-width:4px;"></td>
+            <td style="border-left-width:4px; "></td>
+            <td></td>
+            <td></td>
+            <td scope="col" style="border-right-width:4px;"></td>
+            <td scope="col" style="border-left-width:4px; "></td>
+            <td></td>
+            <td style="border-right-width:4px;"></td>
+            <td style="border-left-width:4px; "></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td style="border-right-width:4px;"></td>
+            <td style="border-left-width:4px; "></td>
+            `
+        )
+        $('#numLevelsBody').append(newRow)
+    })
+    $('#numLevelsBody .rowLvl').each((i, value) => {
+        $(value).children('td').each((j, jval) => {
+            if (i+1 > j) {
+                $(jval).css('background-color', 'rgb(221, 221, 221)')
+                $(jval).addClass('disabled-cell')
+            }
+        })
+    })
+    $('#numLevelsBody').append(
+        $(`
+            <tr style="border-top: 4px solid rgb(221, 221, 221);">
+                <th scope="row">Prediction accuracy</th>
+                <td style="border-right-width:4px;"></td>
+                <td style="border-left-width:4px; "></td>
+                <td></td>
+                <td></td>
+                <td scope="col" style="border-right-width:4px;"></td>
+                <td scope="col" style="border-left-width:4px; "></td>
+                <td></td>
+                <td style="border-right-width:4px;"></td>
+                <td style="border-left-width:4px; "></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td style="border-right-width:4px;"></td>
+                <td style="border-left-width:4px; "></td>
+            </tr>
+        `)
+    )
+
     let totalSessions
     let errorTracker = 0
     window.onerror = () => {
@@ -37,7 +143,6 @@ $(document).ready((event) => {
     $(document).on('change', '#gameSelect', (event) => {
         // console.time('gameSelect')
         event.preventDefault()
-        on()
         $('#gameIDForm').val($('#gameSelect').val())
         getAllData(true)
     })
@@ -53,7 +158,7 @@ $(document).ready((event) => {
         event.preventDefault()
         if ($('#gameSelect').val() !== 'empty') {
             $('#filterModal').modal('hide')
-            on()
+            //on()
             if ($('#sessionInput').val() !== '') {
                 if ($(`#sessionSelect option[value="${$('#sessionInput').val()}"]`).length === 0) {
                     let newOpt = document.createElement('option')
@@ -87,6 +192,7 @@ $(document).ready((event) => {
             $('#endDate').prop('disabled', true)
             $('#maxRows').prop('disabled', true)
             $('#maxLevels').prop('disabled', true)
+            $('#maxLogReg').prop('disabled', true)
         } else {
             $('#minMoves').prop('disabled', false)
             $('#minQuestions').prop('disabled', false)
@@ -95,6 +201,7 @@ $(document).ready((event) => {
             $('#endDate').prop('disabled', false)
             $('#maxRows').prop('disabled', false)
             $('#maxLevels').prop('disabled', false)
+            $('#maxLogReg').prop('disabled', false)
         }
     })
 
@@ -113,13 +220,11 @@ $(document).ready((event) => {
     })
 
     function getAllData(isFirstTime = false) {
-        let parameters = {
+        let parametersBasic = {
             'gameID': $('#gameSelect').val(),
             'maxRows': $('#maxRows').val(),
             'minMoves': $('#minMoves').val(),
             'minQuestions': $('#minQuestions').val(),
-            'minLevels': $('#minLevels').val(),
-            'maxLevels': $('#maxLevels').val(),
             'startDate': $('#startDate').val(),
             'endDate': $('#endDate').val(),
             'numMovesPerChallenge': $('#numMovesPerChallenge').prop('checked') ? true : undefined,
@@ -130,11 +235,445 @@ $(document).ready((event) => {
             'knobStdDevs': $('#knobStdDevs').prop('checked') ? true : undefined,
             'knobTotalAmts': $('#knobTotalAmts').prop('checked') ? true : undefined,
         }
-        $.get('responsePage.php', parameters, (data, status, jqXHR) => {
-            allData = data
+        let numSimultaneous = navigator.hardwareConcurrency
+        let queue = new networkQueue(numSimultaneous)
+        //queue.emptyFunc = function() { $('#exportModal').prop('disabled', false) }
+
+        let numCols = $('#tableAllBody').find('tr:first td').length
+        if (false) {
+            for (let i = 0; i < numCols; i++) {
+                let columnElements = $(`#tableAllBody tr td:nth-child(${i+2})`)
+                let column
+                switch (i) {
+                    case 0:
+                        column = 'q00'; break
+                    case 1:
+                        column = 'q01'; break
+                    case 2:
+                        column = 'q02'; break
+                    case 3:
+                        column = 'q03'; break
+                    case 4:
+                        column = 'q10'; break
+                    case 5:
+                        column = 'q11'; break
+                    case 6:
+                        column = 'q12'; break
+                    case 7:
+                        column = 'q13'; break
+                    case 8:
+                        column = 'q20'; break
+                    case 9:
+                        column = 'q21'; break
+                    case 10:
+                        column = 'q22'; break
+                    case 11:
+                        column = 'q23'; break
+                    case 12:
+                        column = 'q30'; break
+                    case 13:
+                        column = 'q31'; break
+                    case 14:
+                        column = 'q32'; break
+                    case 15:
+                        column = 'q33'; break
+                }
+
+                let parametersQues = {
+                    'gameID': $('#gameSelect').val(),
+                    'maxRows': $('#maxRows').val(),
+                    'minMoves': $('#minMoves').val(),
+                    'minQuestions': 1,
+                    'minLevels': $('#minLevels').val(),
+                    'maxLevels': $('#maxLevels').val(),
+                    'startDate': $('#startDate').val(),
+                    'endDate': $('#endDate').val()
+                }
+                parametersQues['column'] = column
+                let loadTimer, backgroundColors = [], borderBottoms = [], borderTops = []
+
+                switch (column) {
+                    case 'q00':
+                    case 'q11':
+                    case 'q20':
+                    case 'q31':
+                        columnElements.each((j, jval) => {
+                            // Color the correct answer for each question
+                            $(jval).addClass('success')
+                        })
+                        break
+                }
+                columnElements.each((index, value) => {
+                    backgroundColors.push($(value).css('background-color'))
+                    borderBottoms.push($(value).css('border-bottom'))
+                    borderTops.push($(value).css('border-top'))
+                    $(value).css({
+                        'background-color': 'rgba(0, 0, 0, 0.15)',
+                        'border-top': 'none',
+                        'border-bottom': 'none'
+                    })
+                    if (index === 2) {
+                        $(value).addClass('colLoadingText')
+                        let rand = Math.random()
+                        if (rand < 0.333) {
+                            $(value).text('.')
+                        } else if (rand < 0.666) {
+                            $(value).text('. .')
+                        } else {
+                            $(value).text('. . .')
+                        }
+                        $(value).css({
+                            'vertical-align': 'middle',
+                            'text-align': 'center',
+                            'font-size': '16px'
+                        })
+                        loadTimer = setInterval(() => {
+                            let currentText = $(value).html()
+                            let newText
+                            if (currentText !== '. . . .') {
+                                newText = currentText + ' .'
+                            } else {
+                                newText = '.'
+                            }
+                            $(value).html(newText)
+                        }, 400 + Math.random() * 200)
+                    } else {
+                        $(value).text('')
+                    }
+                })
+
+                let callbackFunc = (data) => {
+                    clearInterval(loadTimer)
+                    // Store the computation values for retrieval when the link is clicked
+                    localStorage.setItem(`data_questions_${column}`, JSON.stringify(data))
+                    let rowNames = []
+                    $('#tableAllBody tr th').each((j, jval) => {
+                        rowNames.push($(jval).text())
+                    })
+                    localStorage.setItem(`row_names_questions`, JSON.stringify(rowNames))
+                    columnElements.each((j, jval) => {
+                        $(jval).css({
+                            'vertical-align': 'middle',
+                            'background-color': backgroundColors[j],
+                            'border-top': borderTops[j],
+                            'border-bottom': borderBottoms[j]
+                        })
+                        let innerText = $('<div>')
+                        if (j < columnElements.length - 1) {
+                            if (typeof data.pValues[j] === 'number') {
+                                innerText.html(data.pValues[j].toFixed(5))
+                                if (data.pValues[j] < 0.05) {
+                                    $(innerText).css('background-color', '#82e072')
+                                }
+                            } else {
+                                innerText.html('No data')
+                            }
+                            $(jval).html(innerText)
+                            $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=questions&row=${rowNames[j].replace('%', 'percent')}&col=${column}&i=${i}&j=${j}" target="_blank"></a>`)
+                        } else {
+                            if (typeof data.percentCorrect === 'number') {
+                                innerText.html(data.percentCorrect.toFixed(5))
+                            } else {
+                                innerText.html('No data')
+                            }
+                            $(jval).html(innerText)
+                        }
+
+        
+                        $(innerText).css({'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif'})
+                    })
+                    off()
+                }
+
+                req = {
+                    parameters: parametersQues,
+                    callback: callbackFunc
+                }
+                queue.push(req)
+            }
+        }
+
+        numCols = $('#predictTableBody').find('tr:first td').length
+        if (false) {
+            for (let i = 0; i < numCols; i++) {
+                let parametersChallenge = {
+                    'gameID': $('#gameSelect').val(),
+                    'maxRows': $('#maxRows').val(),
+                    'minMoves': $('#minMoves').val(),
+                    'minQuestions': $('#minQuestions').val(),
+                    'minLevels': $('#minLevels').val(),
+                    'maxLevels': $('#maxLevels').val(),
+                    'startDate': $('#startDate').val(),
+                    'endDate': $('#endDate').val()
+                }
+                let columnElements = $(`#predictTableBody tr td:nth-child(${i+2})`).not('.disabled-cell')
+                let column
+                switch (i) {
+                    case 0:
+                        column = 'lvl1'; break
+                    case 1:
+                        column = 'lvl3'; break
+                    case 2:
+                        column = 'lvl5'; break
+                    case 3:
+                        column = 'lvl7'; break
+                    case 4:
+                        column = 'lvl11'; break
+                    case 5:
+                        column = 'lvl13'; break
+                    case 6:
+                        column = 'lvl15'; break
+                    case 7:
+                        column = 'lvl19'; break
+                    case 8:
+                        column = 'lvl21'; break
+                    case 9:
+                        column = 'lvl23'; break
+                    case 10:
+                        column = 'lvl25'; break
+                    case 11:
+                        column = 'lvl27'; break
+                    case 12:
+                        column = 'lvl31'; break
+                    case 13:
+                        column = 'lvl33'; break
+                }
+
+                parametersChallenge['predictTable'] = true
+                parametersChallenge['predictColumn'] = column
+                let loadTimer, backgroundColors = [], borderBottoms = [], borderTops = []
+                columnElements.each((index, value) => {
+                    backgroundColors.push($(value).css('background-color'))
+                    borderBottoms.push($(value).css('border-bottom'))
+                    borderTops.push($(value).css('border-top'))
+                    $(value).css({
+                        'background-color': 'rgba(0, 0, 0, 0.15)',
+                        'border-top': 'none',
+                        'border-bottom': 'none'
+                    })
+                    if (index === 2) {
+                        $(value).addClass('colLoadingText')
+                        let rand = Math.random()
+                        if (rand < 0.333) {
+                            $(value).text('.')
+                        } else if (rand < 0.666) {
+                            $(value).text('. .')
+                        } else {
+                            $(value).text('. . .')
+                        }
+                        $(value).css({
+                            'vertical-align': 'middle',
+                            'text-align': 'center',
+                            'font-size': '16px'
+                        })
+                        loadTimer = setInterval(() => {
+                            let currentText = $(value).html()
+                            let newText
+                            if (currentText !== '. . . .') {
+                                newText = currentText + ' .'
+                            } else {
+                                newText = '.'
+                            }
+                            $(value).html(newText)
+                        }, 400 + Math.random() * 200)
+                    } else {
+                        $(value).text('')
+                    }
+                })
+
+                let callbackFunc = (data) => {
+                    clearInterval(loadTimer)
+                    localStorage.setItem(`data_challenges_${column}`, JSON.stringify(data))
+                    let rowNames = []
+                    $('#predictTableBody tr th').each((j, jval) => {
+                        rowNames.push($(jval).text())
+                    })
+                    localStorage.setItem(`row_names_challenges`, JSON.stringify(rowNames))
+                    columnElements.each((j, jval) => {
+                        $(jval).css({
+                            'vertical-align': 'middle',
+                            'background-color': backgroundColors[j],
+                            'border-top': borderTops[j],
+                            'border-bottom': borderBottoms[j]
+                        })
+                        let innerText = $('<div>')
+                        innerText.html('No data')
+                        if (data && data.pValues) {
+                            if (j < columnElements.length - 1) {
+                                if (typeof data.pValues[j] === 'number') {
+                                    innerText.html(data.pValues[j].toFixed(5))
+                                    if (data.pValues[j] < 0.05) {
+                                        $(innerText).css('background-color', '#82e072')
+                                    }
+                                }
+                                $(jval).html(innerText)
+                                $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=challenges&row=${rowNames[j].replace('%', 'percent')}&col=${column}&i=${i}&j=${j}" target="_blank"></a>`)
+                            } else {
+                                if (typeof data.percentCorrect === 'number') {
+                                    innerText.html(data.percentCorrect.toFixed(5))
+                                }
+                                $(jval).html(innerText)
+                            }
+                        } else {
+                            $(jval).html(innerText)
+                        }
+                        $(innerText).css({'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif'})
+                    })
+                    off()
+                }
+
+                req = {
+                    parameters: parametersChallenge,
+                    callback: callbackFunc
+                }
+                queue.push(req)
+            }
+        }
+
+        numCols = $('#numLevelsBody').find('tr:first td').length
+        if (false) {
+            for (let i = 0; i < numCols; i++) {
+                let columnElements = $(`#numLevelsBody tr td:nth-child(${i+2})`).not('.disabled-cell')
+                let column
+
+                switch (i) {
+                    case 0:
+                        column = 'lvl1'; break
+                    case 1:
+                        column = 'lvl3'; break
+                    case 2:
+                        column = 'lvl5'; break
+                    case 3:
+                        column = 'lvl7'; break
+                    case 4:
+                        column = 'lvl11'; break
+                    case 5:
+                        column = 'lvl13'; break
+                    case 6:
+                        column = 'lvl15'; break
+                    case 7:
+                        column = 'lvl19'; break
+                    case 8:
+                        column = 'lvl21'; break
+                    case 9:
+                        column = 'lvl23'; break
+                    case 10:
+                        column = 'lvl25'; break
+                    case 11:
+                        column = 'lvl27'; break
+                    case 12:
+                        column = 'lvl31'; break
+                    case 13:
+                        column = 'lvl33'; break
+                }
+
+                let parametersLevels = {
+                    'gameID': $('#gameSelect').val(),
+                    'maxRows': $('#maxRows').val(),
+                    'minMoves': $('#minMoves').val(),
+                    'minQuestions': $('#minQuestions').val(),
+                    'minLevels': $('#minLevels').val(),
+                    'maxLevels': $('#maxLevels').val(),
+                    'startDate': $('#startDate').val(),
+                    'endDate': $('#endDate').val(),
+                    'numLevelsTable': true,
+                    'numLevelsColumn': column
+                }
+
+                let loadTimer, backgroundColors = [], borderBottoms = [], borderTops = []
+
+                columnElements.each((index, value) => {
+                    backgroundColors.push($(value).css('background-color'))
+                    borderBottoms.push($(value).css('border-bottom'))
+                    borderTops.push($(value).css('border-top'))
+                    $(value).css({
+                        'background-color': 'rgba(0, 0, 0, 0.15)',
+                        'border-top': 'none',
+                        'border-bottom': 'none'
+                    })
+                    if (index === 2) {
+                        $(value).addClass('colLoadingText')
+                        let rand = Math.random()
+                        if (rand < 0.333) {
+                            $(value).text('.')
+                        } else if (rand < 0.666) {
+                            $(value).text('. .')
+                        } else {
+                            $(value).text('. . .')
+                        }
+                        $(value).css({
+                            'vertical-align': 'middle',
+                            'text-align': 'center',
+                            'font-size': '16px'
+                        })
+                        loadTimer = setInterval(() => {
+                            let currentText = $(value).html()
+                            let newText
+                            if (currentText !== '. . . .') {
+                                newText = currentText + ' .'
+                            } else {
+                                newText = '.'
+                            }
+                            $(value).html(newText)
+                        }, 400 + Math.random() * 200)
+                    } else {
+                        $(value).text('')
+                    }
+                })
+                let callbackFunc = (data) => {
+                    clearInterval(loadTimer)
+                    localStorage.setItem(`data_numLevels_${column}`, JSON.stringify(data))
+                    let rowNames = []
+                    $('#numLevelsBody tr th').each((j, jval) => {
+                        rowNames.push($(jval).text())
+                    })
+                    localStorage.setItem(`row_names_numLevels`, JSON.stringify(rowNames))
+                    columnElements.each((j, jval) => {
+                        $(jval).css({
+                            'vertical-align': 'middle',
+                            'background-color': backgroundColors[j],
+                            'border-top': borderTops[j],
+                            'border-bottom': borderBottoms[j]
+                        })
+                        let innerText = $('<div>')
+                        innerText.html('No data')
+                        if (data && data.pValues) {
+                            if (j < columnElements.length - 1) {
+                                if (typeof data.pValues[j] === 'number') {
+                                    innerText.html(data.pValues[j].toFixed(5))
+                                    if (data.pValues[j] < 0.05) {
+                                        $(innerText).css('background-color', '#82e072')
+                                    }
+                                }
+                                $(jval).html(innerText)
+                                $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=challenges&row=${rowNames[j].replace('%', 'percent')}&col=${column}&i=${i}&j=${j}" target="_blank"></a>`)
+                            } else {
+                                if (typeof data.percentCorrect === 'number') {
+                                    innerText.html(data.percentCorrect.toFixed(5))
+                                }
+                                $(jval).html(innerText)
+                            }
+                        } else {
+                            $(jval).html(innerText)
+                        }
+        
+                        $(innerText).css({'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif'})
+                    })
+                    off()
+                }
+
+                req = {
+                    parameters: parametersLevels,
+                    callback: callbackFunc
+                }
+                queue.push(req)
+            }
+        }
+
+        $.get('responsePage.php', parametersBasic, (data, status, jqXHR) => {
             $('#scoreDisplayAll').html(data.questionsTotal.totalNumCorrect + ' / ' + data.questionsTotal.totalNumQuestions + ' (' + 
                 (100 * data.questionsTotal.totalNumCorrect / data.questionsTotal.totalNumQuestions).toFixed(1) + '%)')
-            if (data.levels !== null) { 
+            if (data.levels !== null) {
                 let numSessionsToDisplay = data.numSessions
                 totalSessions = data.totalNumSessions
                 $('#sessions').text('Showing ' + numSessionsToDisplay + ' of ' + totalSessions + ' available sessions')
@@ -215,6 +754,7 @@ $(document).ready((event) => {
                     .on('show.bs.collapse', () => {$('#amtsTotalCollapseBtnAll').html('[−]')}))
 
                 for (let i = Object.keys(data.basicInfoAll.times)[0]; i <= Object.keys(data.basicInfoAll.times)[Object.keys(data.basicInfoAll.times).length-1]; i++) {
+                    if (data.basicInfoAll.times[i] === 'NaN') continue;
                     // append times
                     $('#timesAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.times[i].toFixed(2)} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
 
@@ -262,116 +802,14 @@ $(document).ready((event) => {
                     showNoDataHistograms()
                     off()
                 }
-                drawWavesHistograms(dataHistogram)
-                // Store the computation values for retrieval when the link is clicked
-                localStorage.setItem('regressionVars', JSON.stringify(data.regressionVars))
-                localStorage.setItem('equationVars', JSON.stringify(data.equationVars))
-                for (let i = data.startLevel; i <= data.endLevel; i++) {
-                    $('#tableAllBody').append(
-                        $(`<tr>
-                        <th scope="row">% good <br>moves lvl ${i}</th>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                    </tr>`)
-                    )
-                }
-                $('#tableAllBody tr').each((i, ival) => {
-                    $(ival).find('td').each((j, jval) => {
-                        $(jval).css('vertical-align', 'middle')
-                        let column
-                        switch (j) {
-                            case 0:
-                                column = 'gameComplete'; break
-                            case 1:
-                                column = 'level10'; break
-                            case 2:
-                                column = 'level20'; break
-                            case 3:
-                                column = 'q00'; break
-                            case 4:
-                                column = 'q01'; break
-                            case 5:
-                                column = 'q02'; break
-                            case 6:
-                                column = 'q03'; break
-                            case 7:
-                                column = 'q10'; break
-                            case 8:
-                                column = 'q11'; break
-                            case 9:
-                                column = 'q12'; break
-                            case 10:
-                                column = 'q13'; break
-                            case 11:
-                                column = 'q20'; break
-                            case 12:
-                                column = 'q21'; break
-                            case 13:
-                                column = 'q22'; break
-                            case 14:
-                                column = 'q23'; break
-                            case 15:
-                                column = 'q30'; break
-                            case 16:
-                                column = 'q31'; break
-                            case 17:
-                                column = 'q32'; break
-                            case 18:
-                                column = 'q33'; break
-                        }
-                        let alpha = 0.05 / 6//$('#tableAllBody tr').length
-                        $('#alphaValueDiv').html(new Number(alpha.toPrecision(3)).toString())
-                        
-                        if (i < 6) {
-                            let innerText = $('<div>')
-                            if (data.linRegCoefficients[column]) {
-                                if (typeof data.linRegCoefficients[column][i+1] === 'number') {
-                                    innerText.html(' ' + Math.min(Math.max(data.linRegCoefficients[column][i+1], 0), 1).toFixed(4) + ' ')
-                                    if (data.linRegCoefficients[column][i+1] <= alpha) {
-                                        $(innerText).css('background-color', '#82e072')
-                                    }
-                                    $(jval).html(innerText)
-                                    $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&row=${i}&col=${j}" target="_blank"></a>`)
-                                } else {
-                                    innerText.html(data.linRegCoefficients[column][i+1])
-                                    $(jval).html(innerText)
-                                    $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&row=${i}&col=${j}" target="_blank"></a>`)
-                                }
-                            } else {
-                                innerText.html('No data')
-                                $(jval).html(innerText)
-                            }
-
-                            $(innerText).css({'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif'})
-                        }
-                        // Color the correct answer for each question
-                        switch (column) {
-                            case 'q00':
-                            case 'q11':
-                            case 'q20':
-                            case 'q31':
-                                $(jval).addClass('success')
-                                break
-                        }
-                    })
+                $('#percentCompleteRow').children('td').each((index, value) => {
+                    if (typeof data.lvlsPercentComplete[index] === 'number') {
+                        $(value).html(data.lvlsPercentComplete[index].toPrecision(4) + ' %')
+                    } else {
+                        $(value).html(data.lvlsPercentComplete[index] + ' %')
+                    }
                 })
+                drawWavesHistograms(dataHistogram)
             } else {
                 off()
                 hideError()
@@ -381,6 +819,8 @@ $(document).ready((event) => {
             console.log('Error triggered by getAllData')
             showError(errorThrown)
         })
+
+        return queue
     }
 
     function getSingleData(shouldClearLists, shouldSendLevel) {
@@ -1039,6 +1479,48 @@ $(document).ready((event) => {
         let newSelectObj = selectObj.cloneNode(false)
         selectParentNode.replaceChild(newSelectObj, selectObj)
         return newSelectObj
+    }
+
+    $('#exportBtn').click(() => {
+        $('#exportModal').modal()
+    })
+
+    let networkQueue = function(numSimultaneous = 2) {
+        let self = this
+        self.queue = []
+        self.numActiveCalls = 0
+        self.numSimultaneous = numSimultaneous
+        self.promises = []
+        self.emptyFunc = undefined
+        self.push = function(call) {
+            self.queue.push(call)
+            if (self.numActiveCalls < self.numSimultaneous) {
+                self.execute()
+            }
+        }
+        self.execute = function() {
+            if (self.queue.length <= 0) {
+                self.doWhenEmpty()
+                return
+            }
+            self.numActiveCalls++
+            let call = self.queue.shift()
+            self.promises.push(
+                $.get('responsePage.php', call.parameters, (data, status, jqXHR) => { call.callback(data); },
+                'json').fail((jqXHR, textStatus, errorThrown) => {
+                    off()
+                    showError(errorThrown)
+                }).then(() => {
+                    self.numActiveCalls--
+                    self.execute()
+                })
+            )
+        }
+        self.doWhenEmpty = function() {
+            if (self.emptyFunc) {
+                self.emptyFunc()
+            }
+        }
     }
 
     setInterval(() => {

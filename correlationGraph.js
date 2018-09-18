@@ -4,90 +4,41 @@ $(document).ready(() => {
     
     let gameID = getParameterByName('gameID')
     let row = getParameterByName('row')
+    let colNum = getParameterByName('i')
     let col = getParameterByName('col')
-    let regressionVars = JSON.parse(localStorage.getItem('regressionVars'))
-    let equationVars = JSON.parse(localStorage.getItem('equationVars'))
-    let inputTexts = ['# slider moves', '# type changes', '# levels completed', 'total time', 'avg knob max-min', '% correct questions']
-    let intercepts = equationVars['intercepts']
-    let coefficients = equationVars['coefficients']
-    let stdErrs = equationVars['stdErrs']
-    let rSqrs = equationVars['rSqrs']
-
-    if (typeof rSqrs[col] === 'number') $('#rSqrDiv').text('R-squared: ' + rSqrs[col].toFixed(3))
-    else $('#rSqrDiv').text('R-squared: ' + rSqrs[col])
+    let rowNum = getParameterByName('j')
+    let table = getParameterByName('table')
+    let data = JSON.parse(localStorage.getItem(`data_${table}_${col}`))
+    let inputTexts = JSON.parse(localStorage.getItem(`row_names_${table}`))
+    let coefficients = data['coefficients']
+    let stdErrs = data['stdErrs']
+    let regressionVars = data['regressionVars']
+    let regressionOutputs = data['regressionOutputs']
 
     let xVals = [], yVals = []
-    if (regressionVars[col][0])
-        xVals = arrayColumn(regressionVars[col][0], parseInt(row, 10)+1)
-    if (regressionVars[col][1])
-        yVals = arrayColumn(regressionVars[col][1], 0)
-
-    let xTitle, yTitle
-    switch (row) {
-        case '0':
-            xTitle = '# slider moves'; break
-        case '1':
-            xTitle = '# move type changes'; break
-        case '2':
-            xTitle = '# levels completed'; break
-        case '3':
-            xTitle = 'Total time'; break
-        case '4':
-            xTitle = 'Knob max-min (average)'; break
-        case '5':
-            xTitle = '% correct questions'; break
-    }
-    switch (col) {
-        case '0':
-            yTitle = 'Completion of challenge 5'; break
-        case '1':
-            yTitle = 'Completion of challenge 1'; break
-        case '2':
-            yTitle = 'Completion of challenge 3'; break
-        case '3':
-            yTitle = 'Question 1 Answer A'; break
-        case '4':
-            yTitle = 'Question 1 Answer B'; break
-        case '5':
-            yTitle = 'Question 1 Answer C'; break
-        case '6':
-            yTitle = 'Question 1 Answer D'; break
-        case '7':
-            yTitle = 'Question 2 Answer A'; break
-        case '8':
-            yTitle = 'Question 2 Answer B'; break
-        case '9':
-            yTitle = 'Question 2 Answer C'; break
-        case '10':
-            yTitle = 'Question 2 Answer D'; break
-        case '11':
-            yTitle = 'Question 3 Answer A'; break
-        case '12':
-            yTitle = 'Question 3 Answer B'; break
-        case '13':
-            yTitle = 'Question 3 Answer C'; break
-        case '14':
-            yTitle = 'Question 3 Answer D'; break
-        case '15':
-            yTitle = 'Question 4 Answer A'; break
-        case '16':
-            yTitle = 'Question 4 Answer B'; break
-        case '17':
-            yTitle = 'Question 4 Answer C'; break
-        case '18':
-            yTitle = 'Question 4 Answer D'; break
-    }
+    if (regressionVars)
+        xVals = arrayColumn(regressionVars, parseInt(rowNum-1, 10))
+    if (regressionOutputs)
+        yVals = regressionOutputs
+    let xTitle = row
+    let yTitle = col
     let equation = ''
-    if (intercepts[col] && coefficients[col] && stdErrs[col]) {
-        equation = `<span id="yTooltip" href=# data-toggle="tooltip" data-placement="bottom" title="Predicted output of ${yTitle.toLowerCase()}">Y\'</span> = (` + 
-            new Number(intercepts[col]).toFixed(2) + '<span style="font-size:14px">±' + new Number(stdErrs[col][0]).toFixed(2) + '</span>)'
-        for (let i = 0; i < coefficients[col].length; i++) {
-            if (i == row) {
-                equation += ' + (' + new Number(coefficients[col][i]).toFixed(2) + '<span style="font-size:14px">±' + new Number(stdErrs[col][i]).toFixed(2) + 
-                    `</span>)<b><span id="xTooltip${i}" href=# data-toggle="tooltip" data-placement="bottom" title="Measured input of ${inputTexts[i]} (this graph)">X` + (i+1) + '</span></b>'
+    if (coefficients && stdErrs) {
+        equation = `<span id="yTooltip" href=# data-toggle="tooltip" data-placement="bottom" title="Predicted output of ${yTitle.toLowerCase()}">Y\'</span> = `
+        for (let i = 0; i < coefficients.length; i++) {
+            let xTerm = ''
+            if (i > 0) {
+                xTerm = 'X' + (i)
+                equation += ' + '
+            }
+            if (i == rowNum) {
+                equation += `<b><span id="xTooltip${i}" href=# data-toggle="tooltip" data-placement="bottom" title="Measured input of ${inputTexts[i].toLowerCase()} (this graph)">(` + 
+                new Number(coefficients[i]).toFixed(2) + '<span style="font-size:14px">±' + new Number(stdErrs[i]).toFixed(2) + 
+                `</span>)` + xTerm + '</span></b>'
             } else {
-                equation += ' + (' + new Number(coefficients[col][i]).toFixed(2) + '<span style="font-size:14px">±' + new Number(stdErrs[col][i]).toFixed(2) + 
-                `</span>)<span id="xTooltip${i}" href=# data-toggle="tooltip" data-placement="bottom" title="Measured input of ${inputTexts[i]}">X` + (i+1) + '</span>'
+                equation += `<span id="xTooltip${i}" href=# data-toggle="tooltip" data-placement="bottom" title="Measured input of ${inputTexts[i].toLowerCase()}">(` + 
+                new Number(coefficients[i]).toFixed(2) + '<span style="font-size:14px">±' + new Number(stdErrs[i]).toFixed(2) + 
+                `</span>)` + xTerm + '</span>'
             }
         }
     } else {
@@ -163,7 +114,7 @@ $(document).ready(() => {
 })
 
 function getParameterByName(name, url) {
-    if (!url) url = window.location.href;
+    if (!url) url = window.location.href.replace(/%20/g, ' ').replace('#', 'num');
     name = name.replace(/[\[\]]/g, '\\$&');
     var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
         results = regex.exec(url);
