@@ -11,4 +11,4 @@ log2\.log
 
 *.R
 
-tensorflow/lib/python2.7/site-packages/tensorflow/python/_pywrap_tensorflow_internal.so
+tensorflow
