@@ -11,7 +11,7 @@ require_once "KMeans/Cluster.php";
 
 require_once "PCA/pca.php";
 
-ini_set('memory_limit','1024M');
+ini_set('memory_limit','4096M');
 ini_set('max_execution_time', 3000);
 date_default_timezone_set('America/Chicago');
 
