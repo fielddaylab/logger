@@ -238,7 +238,7 @@ $(document).ready((event) => {
         //queue.emptyFunc = function() { $('#exportModal').prop('disabled', false) }
 
         let numCols = $('#tableAllBody').find('tr:first td').length
-        if (false) {
+        if (true) {
             for (let i = 0; i < numCols; i++) {
                 let columnElements = $(`#tableAllBody tr td:nth-child(${i+2})`)
                 let column
@@ -529,7 +529,7 @@ $(document).ready((event) => {
         }
 
         numCols = $('#numLevelsBody').find('tr:first td').length
-        if (false) {
+        if (true) {
             for (let i = 0; i < numCols; i++) {
                 let columnElements = $(`#numLevelsBody tr td:nth-child(${i+2})`).not('.disabled-cell')
                 let column
