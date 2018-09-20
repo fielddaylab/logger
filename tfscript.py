@@ -1,11 +1,12 @@
 # Python
-import tensorflow as tf
-from tensorflow import keras
 import os
 from os.path import dirname
-import numpy as np
-from numpy import loadtxt
 from pprint import pprint
+
+import numpy as np
+import tensorflow as tf
+from numpy import loadtxt
+from tensorflow import keras
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 filename = dirname(dir_path) + "/questions/questionsDataForR_q00.txt"

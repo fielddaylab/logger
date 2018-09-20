@@ -1454,13 +1454,13 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             if (!is_dir('challenges')) {
                 mkdir('challenges', 0777, true);
             }
-            file_put_contents('challenges/challengesDataForR_'. $colLvl .'.txt', $predictString);
+            file_put_contents('challenges/challengesDataForR_'. $realColLvl .'.txt', $predictString);
 
-            $rCommand = 'challengesData <- read.table("challenges/challengesDataForR_'. $colLvl .'.txt", sep=",", header=TRUE)' . PHP_EOL .
+            $rCommand = 'challengesData <- read.table("challenges/challengesDataForR_'. $realColLvl .'.txt", sep=",", header=TRUE)' . PHP_EOL .
                 'fit <- glm(result~' . str_replace(',', '+', $headerString) .',data=challengesData,family=binomial(link="logit"))' . PHP_EOL .
                 'summary(fit)';
-            file_put_contents('challenges/challengesScript_'. $colLvl .'.R', $rCommand);
-            exec("/usr/local/bin/Rscript challenges/challengesScript_" . $colLvl . ".R", $rResults);
+            file_put_contents('challenges/challengesScript_'. $realColLvl .'.R', $rCommand);
+            exec("/usr/local/bin/Rscript challenges/challengesScript_" . $realColLvl . ".R", $rResults);
             //echo var_dump($rResults); return;
             $coefficients = array();
             $stdErrs = array();
@@ -1701,13 +1701,13 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             if (!is_dir('numLevels')) {
                 mkdir('numLevels', 0777, true);
             }
-            file_put_contents('numLevels/numLevelDataForR_'. $colLvl .'.txt', $predictString);
+            file_put_contents('numLevels/numLevelDataForR_'. $realColLvl .'.txt', $predictString);
 
-            $rCommand = 'numLevelsData <- read.table("numLevels/numLevelDataForR_'. $colLvl .'.txt", sep=",", header=TRUE)' . PHP_EOL .
+            $rCommand = 'numLevelsData <- read.table("numLevels/numLevelDataForR_'. $realColLvl .'.txt", sep=",", header=TRUE)' . PHP_EOL .
                 'fit <- lm(result~' . str_replace(',', '+', $headerString) .',data=numLevelsData)' . PHP_EOL .
                 'summary(fit)';
-            file_put_contents('numLevels/numLevelsScript_'. $colLvl .'.R', $rCommand);
-            exec("/usr/local/bin/Rscript numLevels/numLevelsScript_$colLvl.R", $rResults);
+            file_put_contents('numLevels/numLevelsScript_'. $realColLvl .'.R', $rCommand);
+            exec("/usr/local/bin/Rscript numLevels/numLevelsScript_$realColLvl.R", $rResults);
             //echo var_dump($rResults); return;
             $coefficients = array();
             $stdErrs = array();

@@ -84,7 +84,6 @@ $(document).ready((event) => {
         newRow.append(
             `
             <th scope="row">% good moves lvl ${value}</th>
-            <td style="border-right-width:4px;"></td>
             <td style="border-left-width:4px; "></td>
             <td></td>
             <td></td>
@@ -114,7 +113,6 @@ $(document).ready((event) => {
         $(`
             <tr style="border-top: 4px solid rgb(221, 221, 221);">
                 <th scope="row">Prediction accuracy</th>
-                <td style="border-right-width:4px;"></td>
                 <td style="border-left-width:4px; "></td>
                 <td></td>
                 <td></td>
@@ -240,7 +238,7 @@ $(document).ready((event) => {
         //queue.emptyFunc = function() { $('#exportModal').prop('disabled', false) }
 
         let numCols = $('#tableAllBody').find('tr:first td').length
-        if (true) {
+        if (false) {
             for (let i = 0; i < numCols; i++) {
                 let columnElements = $(`#tableAllBody tr td:nth-child(${i+2})`)
                 let column
@@ -531,7 +529,7 @@ $(document).ready((event) => {
         }
 
         numCols = $('#numLevelsBody').find('tr:first td').length
-        if (true) {
+        if (false) {
             for (let i = 0; i < numCols; i++) {
                 let columnElements = $(`#numLevelsBody tr td:nth-child(${i+2})`).not('.disabled-cell')
                 let column
@@ -563,8 +561,6 @@ $(document).ready((event) => {
                         column = 'lvl27'; break
                     case 12:
                         column = 'lvl31'; break
-                    case 13:
-                        column = 'lvl33'; break
                 }
 
                 let parametersLevels = {
