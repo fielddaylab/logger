@@ -816,20 +816,26 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             $headerString = "num_slider_moves,num_type_changes,num_levels,total_time,avg_knob_max_min,avg_pgm";
             $predictString .= $headerString . ",result\n";
             $predict10Percent = array(); // Use 10% to test the model
+            $predictString10Percent = '';
             foreach ($predictArray as $i=>$array) {
                 if (random() < 0.9) {
                     $predictString .= $column . ',' . implode(',', $array) . "\n";
                 } else {
+                    $predictString10Percent .= $column . ',' . implode(',', $array) . "\n";
                     $predict10Percent[] = $i;
                 }
             }
             if (!is_dir('questions')) {
                 mkdir('questions', 0777, true);
             }
-            file_put_contents('questions/questionsDataForR_'. $_GET['column'] .'.txt', $predictString);
+            $dataFile = 'questions/questionsDataForR_'. $_GET['column'] .'.txt';
+            file_put_contents($dataFile, $predictString);
             exec("/usr/local/bin/Rscript questions/questionsScript.R " . $column . ' ' . str_replace(',', ' ', $headerString), $rResults);
+            // Write the other 10% of data to the file after R is done with it
+            file_put_contents($dataFile, $predictString10Percent, FILE_APPEND);
+            exec("source ./tensorflow/bin/activate && python tfscript.py $dataFile " . implode(' ', range(1, count(explode(',', $headerString))+1)), $tfOutput);
+            $percentCorrectTf = isset($tfOutput[count($tfOutput)-1]) ? $tfOutput[count($tfOutput)-1] : null;
 
-            //echo var_dump($rCommand); return;
             $coefficients = array();
             $stdErrs = array();
             $pValues = array();
@@ -864,10 +870,10 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             }
         }
         //return array('totalNumRightPredictions'=>$totalNumRightPredictions, 'totalNumPredictions'=>$totalNumPredictions, 'percentCorrect'=>($totalNumRightPredictions / $totalNumPredictions));
-        $percentCorrect = ($totalNumPredictions === 0) ? null : $totalNumRightPredictions / $totalNumPredictions;
+        $percentCorrectR = ($totalNumPredictions === 0) ? null : $totalNumRightPredictions / $totalNumPredictions;
 
         return array('coefficients'=>$coefficients, 'stdErrs'=>$stdErrs, 'pValues'=>$pValues, 'regressionVars'=>$predictArray, 
-            'regressionOutputs'=>$predictedArray, 'percentCorrect'=>$percentCorrect);
+            'regressionOutputs'=>$predictedArray, 'percentCorrectR'=>$percentCorrectR, 'percentCorrectTf'=>$percentCorrectTf);
     } else if (!isset($_GET['predictColumn']) && !isset($_GET['numLevelsColumn'])) {
         $query =
         "SELECT session_id, level, event, event_custom, event_data_complex, client_time
@@ -1433,6 +1439,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             $headerString = "num_slider_moves,num_type_changes,total_time,avg_knob_max_min";
             $numPgms = 0;
             $predict10Percent = array(); // Use 10% to test the model
+            $predictString10Percent = '';
             foreach ($levelsForTable as $i=>$level) {
                 if ($level >= $realColLvl) break;
                 $headerString .= ',pgm_lvl' . $level;
@@ -1443,15 +1450,20 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                 if (random() < 0.9) {
                     $predictString .= $predictColumn . ',' . implode(',', $array) . "\n";
                 } else {
+                    $predictString10Percent .= $predictColumn . ',' . implode(',', $array) . "\n";
                     $predict10Percent[] = $i;
                 }
             }
             if (!is_dir('challenges')) {
                 mkdir('challenges', 0777, true);
             }
-            file_put_contents('challenges/challengesDataForR_'. $realColLvl .'.txt', $predictString);
+            $dataFile = 'challenges/challengesDataForR_'. $realColLvl .'.txt';
+            file_put_contents($dataFile, $predictString);
             exec("/usr/local/bin/Rscript challenges/challengesScript.R " . $realColLvl . ' ' . str_replace(',', ' ', $headerString), $rResults);
-            //echo var_dump($rResults); return;
+            file_put_contents($dataFile, $predictString10Percent, FILE_APPEND);
+            exec("source ./tensorflow/bin/activate && python tfscript.py $dataFile " . implode(' ', range(1, count(explode(',', $headerString))+1)), $tfOutput);
+            $percentCorrectTf = isset($tfOutput[count($tfOutput)-1]) ? $tfOutput[count($tfOutput)-1] : null;
+
             $coefficients = array();
             $stdErrs = array();
             $pValues = array();
@@ -1485,10 +1497,10 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                 $totalNumRightPredictions += $numRightPredictions;
             }
         }
-        $percentCorrect = ($totalNumPredictions === 0) ? null : $totalNumRightPredictions / $totalNumPredictions;
+        $percentCorrectR = ($totalNumPredictions === 0) ? null : $totalNumRightPredictions / $totalNumPredictions;
 
         return array('coefficients'=>$coefficients, 'stdErrs'=>$stdErrs, 'pValues'=>$pValues, 'regressionVars'=>$predictArray, 
-            'regressionOutputs'=>$predictedArray, 'percentCorrect'=>$percentCorrect);
+            'regressionOutputs'=>$predictedArray, 'percentCorrectR'=>$percentCorrectR, 'percentCorrectTf'=>$percentCorrectTf);
     } else if (isset($_GET['numLevelsColumn'])) {
         $numLevelsColumn = $_GET['numLevelsColumn'];
         $minMoves = $_GET['minMoves'];
@@ -1681,18 +1693,24 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             }
             $predictString .= $headerString . ",result\n";
             $predict10Percent = array(); // Use 10% to test the model
+            $predictString10Percent = '';
             foreach ($predictArray as $i=>$array) {
                 if (random() < 0.9) {
                     $predictString .= $numLevelsColumn . ',' . implode(',', $array) . "\n";
                 } else {
+                    $predictString10Percent .= $numLevelsColumn . ',' . implode(',', $array) . "\n";
                     $predict10Percent[] = $i;
                 }
             }
             if (!is_dir('numLevels')) {
                 mkdir('numLevels', 0777, true);
             }
-            file_put_contents('numLevels/numLevelDataForR_'. $realColLvl .'.txt', $predictString);
+            $dataFile = 'numLevels/numLevelDataForR_'. $realColLvl .'.txt';
+            file_put_contents($dataFile, $predictString);
             exec("/usr/local/bin/Rscript numLevels/numLevelsScript.R " . $realColLvl . ' ' . str_replace(',', ' ', $headerString), $rResults);
+            file_put_contents($dataFile, $predictString10Percent, FILE_APPEND);
+            exec("source ./tensorflow/bin/activate && python tfscript.py $dataFile " . implode(' ', range(1, count(explode(',', $headerString))+1)), $tfOutput);
+            $mae = isset($tfOutput[count($tfOutput)-1]) ? $tfOutput[count($tfOutput)-1] : null;
             //echo var_dump($rResults); return;
             $coefficients = array();
             $stdErrs = array();
@@ -1728,13 +1746,13 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
         }
         $avgAvgPercentError = average($totalAvgPercentError);
         if (is_numeric($avgAvgPercentError)) {
-            $percentCorrect = 1 - $avgAvgPercentError;
+            $percentCorrectR = 1 - $avgAvgPercentError;
         } else {
-            $percentCorrect = null;
+            $percentCorrectR = null;
         }
 
         return array('coefficients'=>$coefficients, 'stdErrs'=>$stdErrs, 'pValues'=>$pValues, 'regressionVars'=>$predictArray, 
-            'regressionOutputs'=>$predictedArray, 'percentCorrect'=>$percentCorrect);
+            'regressionOutputs'=>$predictedArray, 'percentCorrectR'=>$percentCorrectR, 'mae'=>$mae);
     }
 }
 
