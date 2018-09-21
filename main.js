@@ -61,7 +61,7 @@ $(document).ready((event) => {
     $('#predictTableBody').append(
         $(`
         <tr style="border-top: 4px solid rgb(221, 221, 221);">
-            <th scope="row">Logistic regression accuracy</th>
+            <th scope="row">Log reg accuracy</th>
             <td style="border-left-width:4px; "></td>
             <td></td>
             <td></td>
@@ -129,7 +129,7 @@ $(document).ready((event) => {
     $('#numLevelsBody').append(
         $(`
             <tr style="border-top: 4px solid rgb(221, 221, 221);">
-                <th scope="row">Logistic regression accuracy</th>
+                <th scope="row">Log reg accuracy</th>
                 <td style="border-left-width:4px; "></td>
                 <td></td>
                 <td></td>
@@ -145,7 +145,7 @@ $(document).ready((event) => {
                 <td style="border-left-width:4px; "></td>
             </tr>
             <tr>
-                <th scope="row">DNN mean absolute error</th>
+                <th scope="row">DNN mean abs err</th>
                 <td style="border-left-width:4px; "></td>
                 <td></td>
                 <td></td>
