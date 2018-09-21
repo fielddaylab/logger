@@ -767,6 +767,347 @@
                     </div>
                 </div>
                 <br><br>
+                <div class="row" style="margin-left:0px;margin-right:0px;">
+                    <div class="col-xs-12">
+                        <div>
+                            <div style="font-size:22px; margin-bottom:4px;">
+                                <b>Question answer prediction accuracy by level range table</b>
+                            </div>
+                            <table id="questionPredictTable" class="table table-striped table-bordered table-hover">
+                                <thead>
+                                    <tr>
+                                        <th scope="col" style="top:0px;background-color:rgb(221, 221, 221);width:12%;"></th>
+                                        <th scope="col"><a target="_blank" href="questions/questionsDataForR_q00.txt">Q1/A</a></th>
+                                        <th scope="col"><a target="_blank" href="questions/questionsDataForR_q01.txt">Q1/B</a></th>
+                                        <th scope="col"><a target="_blank" href="questions/questionsDataForR_q02.txt">Q1/C</a></th>
+                                        <th scope="col"><a target="_blank" href="questions/questionsDataForR_q03.txt">Q1/D</a></th>
+                                        <th scope="col"><a target="_blank" href="questions/questionsDataForR_q10.txt">Q2/A</a></th>
+                                        <th scope="col"><a target="_blank" href="questions/questionsDataForR_q11.txt">Q2/B</a></th>
+                                        <th scope="col"><a target="_blank" href="questions/questionsDataForR_q12.txt">Q2/C</a></th>
+                                        <th scope="col"><a target="_blank" href="questions/questionsDataForR_q13.txt">Q2/D</a></th>
+                                        <th scope="col"><a target="_blank" href="questions/questionsDataForR_q20.txt">Q3/A</a></th>
+                                        <th scope="col"><a target="_blank" href="questions/questionsDataForR_q21.txt">Q3/B</a></th>
+                                        <th scope="col"><a target="_blank" href="questions/questionsDataForR_q22.txt">Q3/C</a></th>
+                                        <th scope="col"><a target="_blank" href="questions/questionsDataForR_q23.txt">Q3/D</a></th>
+                                        <th scope="col"><a target="_blank" href="questions/questionsDataForR_q30.txt">Q4/A</a></th>
+                                        <th scope="col"><a target="_blank" href="questions/questionsDataForR_q31.txt">Q4/B</a></th>
+                                        <th scope="col"><a target="_blank" href="questions/questionsDataForR_q32.txt">Q4/C</a></th>
+                                        <th scope="col"><a target="_blank" href="questions/questionsDataForR_q33.txt">Q4/D</a></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="questionPredictBody">
+                                    <tr>
+                                        <th rowspan=2>L1 only</th>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <th rowspan=2>L1-L2</th>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <th rowspan=2>L1-L3</th>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <th rowspan=2>L1-L4</th>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <th rowspan=2>L1-L5</th>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <th rowspan=2>L1-L6</th>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <th rowspan=2>L1-L7</th>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <th rowspan=2>L1-L8</th>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div style="font-size:14px; margin-bottom:6px; color:#777">
+                            The <b>first</b> sub-row of every row is the <b>logistic regression accuracy</b>.
+                        </div>
+                        <div style="font-size:14px; margin-bottom:6px; color:#777">
+                            The <b>second</b> sub-row of every row is the <b>deep neural net accuracy</b>.
+                        </div>
+                        <div style="font-size:14px; margin-bottom:6px; color:#777">
+                            Correct answers to each question have a <span style="background-color: #dff0d8">light green</span> cell
+                            background.
+                        </div>
+                    </div>
+                </div>
+                <br><br>
                 <div class="row" style="margin-left:0px;margin-right:0px">
                     <div class="col-xs-4">
                         <div class="box" style="white-space:nowrap;background-color:#F6F6F3;">

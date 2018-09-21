@@ -699,6 +699,7 @@ function random() {
 }
 
 function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
+    $percentTesting = 0.5;
     if (!isset($reqSessionID) && !isset($_GET['predictColumn']) && !isset($_GET['numLevelsColumn'])) {
         $minMoves = $_GET['minMoves'];
         $minQuestions = $_GET['minQuestions'];
@@ -818,7 +819,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             $predict10Percent = array(); // Use 10% to test the model
             $predictString10Percent = '';
             foreach ($predictArray as $i=>$array) {
-                if (random() < 0.9) {
+                if (random() < $percentTesting) {
                     $predictString .= $column . ',' . implode(',', $array) . "\n";
                 } else {
                     $predictString10Percent .= $column . ',' . implode(',', $array) . "\n";
@@ -1447,7 +1448,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             }
             $predictString .= $headerString . ",result\n";
             foreach ($predictArray as $i=>$array) {
-                if (random() < 0.9) {
+                if (random() < $percentTesting) {
                     $predictString .= $predictColumn . ',' . implode(',', $array) . "\n";
                 } else {
                     $predictString10Percent .= $predictColumn . ',' . implode(',', $array) . "\n";
@@ -1695,7 +1696,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             $predict10Percent = array(); // Use 10% to test the model
             $predictString10Percent = '';
             foreach ($predictArray as $i=>$array) {
-                if (random() < 0.9) {
+                if (random() < $percentTesting) {
                     $predictString .= $numLevelsColumn . ',' . implode(',', $array) . "\n";
                 } else {
                     $predictString10Percent .= $numLevelsColumn . ',' . implode(',', $array) . "\n";
