@@ -467,7 +467,7 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
         // Cluster stuff
         $sourceColumns = [];
         $allColumns = [];
-        $startLevel = 0;
+        $startLevel = 1;
         $endLevel = 8;
         for ($lvl = intval($startLevel); $lvl <= intval($endLevel); $lvl++) {
             $allColumns = array_merge($allColumns, [

@@ -60,40 +60,40 @@ $(document).ready((event) => {
     })
     $('#predictTableBody').append(
         $(`
-            <tr style="border-top: 4px solid rgb(221, 221, 221);">
-                <th scope="row">Prediction accuracy</th>
-                <td style="border-right-width:4px;"></td>
-                <td style="border-left-width:4px; "></td>
-                <td></td>
-                <td></td>
-                <td scope="col" style="border-right-width:4px;"></td>
-                <td scope="col" style="border-left-width:4px; "></td>
-                <td></td>
-                <td style="border-right-width:4px;"></td>
-                <td style="border-left-width:4px; "></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td style="border-right-width:4px;"></td>
-                <td style="border-left-width:4px; "></td>
-            </tr>
-            <tr>
-                <th scope="row">DNN accuracy</th>
-                <td style="border-right-width:4px;"></td>
-                <td style="border-left-width:4px; "></td>
-                <td></td>
-                <td></td>
-                <td scope="col" style="border-right-width:4px;"></td>
-                <td scope="col" style="border-left-width:4px; "></td>
-                <td></td>
-                <td style="border-right-width:4px;"></td>
-                <td style="border-left-width:4px; "></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td style="border-right-width:4px;"></td>
-                <td style="border-left-width:4px; "></td>
-            </tr>
+        <tr style="border-top: 4px solid rgb(221, 221, 221);">
+            <th scope="row">Logistic regression accuracy</th>
+            <td style="border-left-width:4px; "></td>
+            <td></td>
+            <td></td>
+            <td scope="col" style="border-right-width:4px;"></td>
+            <td scope="col" style="border-left-width:4px; "></td>
+            <td></td>
+            <td style="border-right-width:4px;"></td>
+            <td style="border-left-width:4px; "></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td style="border-right-width:4px;"></td>
+            <td style="border-left-width:4px; "></td>
+            <td style="border-left-width:4px; "></td>
+        </tr>
+        <tr>
+            <th scope="row">DNN accuracy</th>
+            <td style="border-left-width:4px; "></td>
+            <td></td>
+            <td></td>
+            <td scope="col" style="border-right-width:4px;"></td>
+            <td scope="col" style="border-left-width:4px; "></td>
+            <td></td>
+            <td style="border-right-width:4px;"></td>
+            <td style="border-left-width:4px; "></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td style="border-right-width:4px;"></td>
+            <td style="border-left-width:4px; "></td>
+            <td style="border-left-width:4px; "></td>
+        </tr>
         `)
     )
     lvls.forEach((value, index, arr) => {
@@ -129,7 +129,7 @@ $(document).ready((event) => {
     $('#numLevelsBody').append(
         $(`
             <tr style="border-top: 4px solid rgb(221, 221, 221);">
-                <th scope="row">Prediction accuracy</th>
+                <th scope="row">Logistic regression accuracy</th>
                 <td style="border-left-width:4px; "></td>
                 <td></td>
                 <td></td>
@@ -145,7 +145,7 @@ $(document).ready((event) => {
                 <td style="border-left-width:4px; "></td>
             </tr>
             <tr>
-                <th scope="row">DNN accuracy</th>
+                <th scope="row">DNN mean absolute error</th>
                 <td style="border-left-width:4px; "></td>
                 <td></td>
                 <td></td>
