@@ -69,6 +69,8 @@ if (isset($_GET['gameID'])) {
     } else {
         if (isset($_GET['column'])) {
             $returned = getAndParseData($_GET['column'], $_GET['gameID'], $db, null, null);
+        } else if (isset($_GET['questionPredictColumn'])) {
+            $returned = getAndParseData($_GET['questionPredictColumn'], $_GET['gameID'], $db, null, null);
         } else {
             $returned = getAndParseData(null, $_GET['gameID'], $db, null, null);
         }
@@ -113,7 +115,7 @@ function array_column_fixed($input, $column_key) {
     return $output;
 }
 
-function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAttributes, $column) {
+function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAttributes, $column, $maxLevel = 100) {
     $sessionIDs = $sessionsAndTimes['sessions'];
     $allData = array();
     // arrays of arrays (temp)
@@ -157,6 +159,7 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
     $avgKnobAvgsAll = 0;
 
     foreach ($levels as $i) {
+        if ($i > $maxLevel) break;
         $levelTimesPerLevelAll[$i] = array();
         $moveTypeChangesPerLevelAll[$i] = array();
         $numMovesPerLevelAll[$i] = array();
@@ -170,6 +173,7 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
         $infoLevels = array();
         $infoEvents = array();
         foreach ($sessionAttributes[$sessionID] as $i=>$val) {
+            if ($val['level'] > $maxLevel) break;
             $infoTimes []= $val['time'];
             $infoEventData []= $val['event_data_complex'];
             $infoLevels []= $val['level'];
@@ -801,81 +805,164 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             $times[$i] = $val[0]['time'];
         }
 
-        // Construct sessions and times array
-        $sessionsAndTimes = array('sessions'=>$uniqueSessions, 'times'=>array_values($times));
-        $regression = analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAttributes, $column);
-        $predictArray = $regression['predictors'];
-        $predictedArray = $regression['predicted'];
-        if (!isset($column)) {
+        if (!isset($column) && !isset($_GET['questionPredictColumn'])) {
+            $sessionsAndTimes = array('sessions'=>$uniqueSessions, 'times'=>array_values($times));
+            $regression = analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAttributes, $column);
             $regression['totalNumSessions'] = getTotalNumSessions($gameID, $db);
             return $regression;
         }
-        $totalNumPredictions = 0;
-        $totalNumRightPredictions = 0;
-        for ($trial = 0; $trial < 10; $trial++) {
-            $predictString = "#Generated " . date("Y-m-d H:i:s") . "\n" . $column . ",";
-            $headerString = "num_slider_moves,num_type_changes,num_levels,total_time,avg_knob_max_min,avg_pgm";
-            $predictString .= $headerString . ",result\n";
-            $predict10Percent = array(); // Use 10% to test the model
-            $predictString10Percent = '';
-            foreach ($predictArray as $i=>$array) {
-                if (random() < $percentTesting) {
-                    $predictString .= $column . ',' . implode(',', $array) . "\n";
-                } else {
-                    $predictString10Percent .= $column . ',' . implode(',', $array) . "\n";
-                    $predict10Percent[] = $i;
-                }
-            }
-            if (!is_dir('questions')) {
-                mkdir('questions', 0777, true);
-            }
-            $dataFile = 'questions/questionsDataForR_'. $_GET['column'] .'.txt';
-            file_put_contents($dataFile, $predictString);
-            exec("/usr/local/bin/Rscript questions/questionsScript.R " . $column . ' ' . str_replace(',', ' ', $headerString), $rResults);
-            // Write the other 10% of data to the file after R is done with it
-            file_put_contents($dataFile, $predictString10Percent, FILE_APPEND);
-            exec("source ./tensorflow/bin/activate && python tfscript.py $dataFile " . implode(' ', range(1, count(explode(',', $headerString))+1)), $tfOutput);
-            $percentCorrectTf = isset($tfOutput[count($tfOutput)-1]) ? $tfOutput[count($tfOutput)-1] : null;
 
-            $coefficients = array();
-            $stdErrs = array();
-            $pValues = array();
-            $coefStart = 0;
-            foreach ($rResults as $key=>$string) {
-                if (stristr($string, 'Estimate')) {
-                    $coefStart = $key;
-                    break;
-                }
-            }
-            if ($coefStart !== 0) {
-                for ($i = $coefStart+1, $lastRow = 7+$coefStart; $i <= $lastRow; $i++) {
-                    $values = preg_split('/\ +/', $rResults[$i]);  // put "words" of this line into an array
-                    $coefficients[] = is_numeric($x = str_replace(['<', '>'], '', $values[1])) ? $x+0 : null; // + 0 is to force the scientific notation into a regular number
-                    $stdErrs[] = is_numeric($x = str_replace(['<', '>'], '', $values[2])) ? $x+0 : null;
-                    $pValues[] = is_numeric($x = str_replace(['<', '>'], '', $values[4])) ? $x+0 : null;
-                }
-                $numRightPredictions = 0;
-                $numPredictions = count($predict10Percent);
-                $numVariables = count($predictArray[0]);
-                foreach ($predict10Percent as $i=>$index) {
-                    $inputs = array_slice($predictArray[$index], 0, -1);
-                    $actual = $predictArray[$index][$numVariables-1];
-                    $prediction = round(predict($coefficients, $inputs));
-                    if ($prediction == $actual) {
-                        $numRightPredictions++;
+        if (!isset($_GET['questionPredictColumn'])) {
+            // Construct sessions and times array
+            $sessionsAndTimes = array('sessions'=>$uniqueSessions, 'times'=>array_values($times));
+            $regression = analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAttributes, $column);
+            $predictArray = $regression['predictors'];
+            $predictedArray = $regression['predicted'];
+
+            $totalNumPredictions = 0;
+            $totalNumRightPredictions = 0;
+            for ($trial = 0; $trial < 10; $trial++) {
+                $predictString = "#Generated " . date("Y-m-d H:i:s") . "\n" . $column . ",";
+                $headerString = "num_slider_moves,num_type_changes,num_levels,total_time,avg_knob_max_min,avg_pgm";
+                $predictString .= $headerString . ",result\n";
+                $predict10Percent = array(); // Use 10% to test the model
+                $predictString10Percent = '';
+                foreach ($predictArray as $i=>$array) {
+                    if (random() < $percentTesting) {
+                        $predictString .= $column . ',' . implode(',', $array) . "\n";
+                    } else {
+                        $predictString10Percent .= $column . ',' . implode(',', $array) . "\n";
+                        $predict10Percent[] = $i;
                     }
                 }
-                $totalNumPredictions += $numPredictions;
-                $totalNumRightPredictions += $numRightPredictions;
-                //return array('numRightPredictions'=>$numRightPredictions, 'numPredictions'=>$numPredictions, 'percentCorrect'=>($numRightPredictions / $numPredictions));
-            }
-        }
-        //return array('totalNumRightPredictions'=>$totalNumRightPredictions, 'totalNumPredictions'=>$totalNumPredictions, 'percentCorrect'=>($totalNumRightPredictions / $totalNumPredictions));
-        $percentCorrectR = ($totalNumPredictions === 0) ? null : $totalNumRightPredictions / $totalNumPredictions;
+                if (!is_dir('questions')) {
+                    mkdir('questions', 0777, true);
+                }
+                $dataFile = 'questions/questionsDataForR_'. $_GET['column'] .'.txt';
+                file_put_contents($dataFile, $predictString);
+                exec("/usr/local/bin/Rscript questions/questionsScript.R " . $column . ' ' . str_replace(',', ' ', $headerString), $rResults);
+                // Write the other 10% of data to the file after R is done with it
+                file_put_contents($dataFile, $predictString10Percent, FILE_APPEND);
+                exec("source ./tensorflow/bin/activate && python tfscript.py $dataFile " . implode(' ', range(1, count(explode(',', $headerString))+1)), $tfOutput);
+                $percentCorrectTf = isset($tfOutput[count($tfOutput)-1]) ? $tfOutput[count($tfOutput)-1] : null;
 
-        return array('coefficients'=>$coefficients, 'stdErrs'=>$stdErrs, 'pValues'=>$pValues, 'regressionVars'=>$predictArray, 
-            'regressionOutputs'=>$predictedArray, 'percentCorrectR'=>$percentCorrectR, 'percentCorrectTf'=>$percentCorrectTf);
-    } else if (!isset($_GET['predictColumn']) && !isset($_GET['numLevelsColumn'])) {
+                $coefficients = array();
+                $stdErrs = array();
+                $pValues = array();
+                $coefStart = 0;
+                foreach ($rResults as $key=>$string) {
+                    if (stristr($string, 'Estimate')) {
+                        $coefStart = $key;
+                        break;
+                    }
+                }
+                if ($coefStart !== 0) {
+                    for ($i = $coefStart+1, $lastRow = 7+$coefStart; $i <= $lastRow; $i++) {
+                        $values = preg_split('/\ +/', $rResults[$i]);  // put "words" of this line into an array
+                        $coefficients[] = is_numeric($x = str_replace(['<', '>'], '', $values[1])) ? $x+0 : null; // + 0 is to force the scientific notation into a regular number
+                        $stdErrs[] = is_numeric($x = str_replace(['<', '>'], '', $values[2])) ? $x+0 : null;
+                        $pValues[] = is_numeric($x = str_replace(['<', '>'], '', $values[4])) ? $x+0 : null;
+                    }
+                    $numRightPredictions = 0;
+                    $numPredictions = count($predict10Percent);
+                    $numVariables = count($predictArray[0]);
+                    foreach ($predict10Percent as $i=>$index) {
+                        $inputs = array_slice($predictArray[$index], 0, -1);
+                        $actual = $predictArray[$index][$numVariables-1];
+                        $prediction = round(predict($coefficients, $inputs));
+                        if ($prediction == $actual) {
+                            $numRightPredictions++;
+                        }
+                    }
+                    $totalNumPredictions += $numPredictions;
+                    $totalNumRightPredictions += $numRightPredictions;
+                    //return array('numRightPredictions'=>$numRightPredictions, 'numPredictions'=>$numPredictions, 'percentCorrect'=>($numRightPredictions / $numPredictions));
+                }
+            }
+            //return array('totalNumRightPredictions'=>$totalNumRightPredictions, 'totalNumPredictions'=>$totalNumPredictions, 'percentCorrect'=>($totalNumRightPredictions / $totalNumPredictions));
+            $percentCorrectR = ($totalNumPredictions === 0) ? null : $totalNumRightPredictions / $totalNumPredictions;
+
+            return array('coefficients'=>$coefficients, 'stdErrs'=>$stdErrs, 'pValues'=>$pValues, 'regressionVars'=>$predictArray, 
+                'regressionOutputs'=>$predictedArray, 'percentCorrectR'=>$percentCorrectR, 'percentCorrectTf'=>$percentCorrectTf);
+        } else {
+            $questionPredictCol = $_GET['questionPredictColumn'];
+            $sessionsAndTimes = array('sessions'=>$uniqueSessions, 'times'=>array_values($times));
+            $returnArray = array();
+            for ($predLevel = 1; $predLevel < 9; $predLevel++) { // repeat calculations for each cell, adding a level of data each iteration
+                $regression = analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAttributes, $questionPredictCol, $predLevel);
+                $predictArray = $regression['predictors'];
+                $predictedArray = $regression['predicted'];
+
+                $totalNumPredictions = 0;
+                $totalNumRightPredictions = 0;
+                for ($trial = 0; $trial < 10; $trial++) {
+                    $predictString = "#Generated " . date("Y-m-d H:i:s") . "\n" . $column . ",";
+                    $headerString = "num_slider_moves,num_type_changes,num_levels,total_time,avg_knob_max_min,avg_pgm";
+                    $predictString .= $headerString . ",result\n";
+                    $predict10Percent = array(); // Use 10% to test the model
+                    $predictString10Percent = '';
+                    foreach ($predictArray as $i=>$array) {
+                        if (random() < $percentTesting) {
+                            $predictString .= $column . ',' . implode(',', $array) . "\n";
+                        } else {
+                            $predictString10Percent .= $column . ',' . implode(',', $array) . "\n";
+                            $predict10Percent[] = $i;
+                        }
+                    }
+                    if (!is_dir('questionsPredict')) {
+                        mkdir('questionsPredict', 0777, true);
+                    }
+                    $dataFile = 'questionsPredict/questionsPredictDataForR_'. $questionPredictCol . '_' . $predLevel .'.txt';
+                    file_put_contents($dataFile, $predictString);
+                    exec("/usr/local/bin/Rscript questionsPredict/questionsPredictScript.R " . $column . ' ' . $predLevel . ' ' . str_replace(',', ' ', $headerString), $rResults);
+                    // Write the other 10% of data to the file after R is done with it
+                    file_put_contents($dataFile, $predictString10Percent, FILE_APPEND);
+                    exec("source ./tensorflow/bin/activate && python tfscript.py $dataFile " . implode(' ', range(1, count(explode(',', $headerString))+1)), $tfOutput);
+                    $percentCorrectTf = isset($tfOutput[count($tfOutput)-1]) ? $tfOutput[count($tfOutput)-1] : null;
+
+                    $coefficients = array();
+                    $stdErrs = array();
+                    $pValues = array();
+                    $coefStart = 0;
+                    foreach ($rResults as $key=>$string) {
+                        if (stristr($string, 'Estimate')) {
+                            $coefStart = $key;
+                            break;
+                        }
+                    }
+                    if ($coefStart !== 0) {
+                        for ($i = $coefStart+1, $lastRow = 7+$coefStart; $i <= $lastRow; $i++) {
+                            $values = preg_split('/\ +/', $rResults[$i]);  // put "words" of this line into an array
+                            $coefficients[] = is_numeric($x = str_replace(['<', '>'], '', $values[1])) ? $x+0 : null; // + 0 is to force the scientific notation into a regular number
+                            $stdErrs[] = is_numeric($x = str_replace(['<', '>'], '', $values[2])) ? $x+0 : null;
+                            $pValues[] = is_numeric($x = str_replace(['<', '>'], '', $values[4])) ? $x+0 : null;
+                        }
+                        $numRightPredictions = 0;
+                        $numPredictions = count($predict10Percent);
+                        $numVariables = count($predictArray[0]);
+                        foreach ($predict10Percent as $i=>$index) {
+                            $inputs = array_slice($predictArray[$index], 0, -1);
+                            $actual = $predictArray[$index][$numVariables-1];
+                            $prediction = round(predict($coefficients, $inputs));
+                            if ($prediction == $actual) {
+                                $numRightPredictions++;
+                            }
+                        }
+                        $totalNumPredictions += $numPredictions;
+                        $totalNumRightPredictions += $numRightPredictions;
+                        //return array('numRightPredictions'=>$numRightPredictions, 'numPredictions'=>$numPredictions, 'percentCorrect'=>($numRightPredictions / $numPredictions));
+                    }
+                }
+                //return array('totalNumRightPredictions'=>$totalNumRightPredictions, 'totalNumPredictions'=>$totalNumPredictions, 'percentCorrect'=>($totalNumRightPredictions / $totalNumPredictions));
+                $percentCorrectR = ($totalNumPredictions === 0) ? null : $totalNumRightPredictions / $totalNumPredictions;
+
+                $returnArray[$predLevel] = array('coefficients'=>$coefficients, 'stdErrs'=>$stdErrs, 'pValues'=>$pValues, 'regressionVars'=>$predictArray, 
+                    'regressionOutputs'=>$predictedArray, 'percentCorrectR'=>$percentCorrectR, 'percentCorrectTf'=>$percentCorrectTf);
+            }
+            return $returnArray;
+        }
+        
+    } else if (!isset($_GET['predictColumn']) && !isset($_GET['numLevelsColumn']) && !isset($_GET['questionPredictColumn'])) {
         $query =
         "SELECT session_id, level, event, event_custom, event_data_complex, client_time
         FROM log
@@ -1255,7 +1342,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
 
         // Return ALL the above information at once in a big array
         return replaceNans($output);
-    } else if (isset($_GET['predictColumn'])) {
+    } else if (isset($_GET['predictColumn']) && !isset($_GET['questionPredictColumn'])) {
         $predictColumn = $_GET['predictColumn'];
         $startDate = $_GET['startDate'];
         $endDate = $_GET['endDate'];
@@ -1502,7 +1589,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
 
         return array('coefficients'=>$coefficients, 'stdErrs'=>$stdErrs, 'pValues'=>$pValues, 'regressionVars'=>$predictArray, 
             'regressionOutputs'=>$predictedArray, 'percentCorrectR'=>$percentCorrectR, 'percentCorrectTf'=>$percentCorrectTf);
-    } else if (isset($_GET['numLevelsColumn'])) {
+    } else if (isset($_GET['numLevelsColumn']) && !isset($_GET['questionPredictColumn'])) {
         $numLevelsColumn = $_GET['numLevelsColumn'];
         $minMoves = $_GET['minMoves'];
         $minQuestions = $_GET['minQuestions'];
@@ -1754,6 +1841,8 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
 
         return array('coefficients'=>$coefficients, 'stdErrs'=>$stdErrs, 'pValues'=>$pValues, 'regressionVars'=>$predictArray, 
             'regressionOutputs'=>$predictedArray, 'percentCorrectR'=>$percentCorrectR, 'mae'=>$mae);
+    } else {
+        return array('error'=>'Incorrect parameters provided.');
     }
 }
 

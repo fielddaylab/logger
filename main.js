@@ -271,7 +271,7 @@ $(document).ready((event) => {
         //queue.emptyFunc = function() { $('#exportModal').prop('disabled', false) }
 
         let numCols = $('#tableAllBody').find('tr:first td').length
-        if (true) {
+        if (false) {
             for (let i = 0; i < numCols; i++) {
                 let columnElements = $(`#tableAllBody tr td:nth-child(${i+2})`)
                 let column
@@ -435,7 +435,7 @@ $(document).ready((event) => {
         }
 
         numCols = $('#predictTableBody').find('tr:first td').length
-        if (true) {
+        if (false) {
             for (let i = 0; i < numCols; i++) {
                 let parametersChallenge = {
                     'gameID': $('#gameSelect').val(),
@@ -584,7 +584,7 @@ $(document).ready((event) => {
         }
 
         numCols = $('#numLevelsBody').find('tr:first td').length
-        if (true) {
+        if (false) {
             for (let i = 0; i < numCols; i++) {
                 let columnElements = $(`#numLevelsBody tr td:nth-child(${i+2})`).not('.disabled-cell')
                 let column
@@ -727,6 +727,158 @@ $(document).ready((event) => {
 
                 req = {
                     parameters: parametersLevels,
+                    callback: callbackFunc
+                }
+                queue.push(req)
+            }
+        }
+
+        numCols = $('#questionPredictTable').find('tr:first td').length
+        if (true) {
+            for (let i = 0; i < numCols; i++) {
+                let parametersQuesPredict = {
+                    'gameID': $('#gameSelect').val(),
+                    'maxRows': $('#maxRows').val(),
+                    'minMoves': $('#minMoves').val(),
+                    'minQuestions': $('#minQuestions').val(),
+                    'minLevels': $('#minLevels').val(),
+                    'maxLevels': $('#maxLevels').val(),
+                    'startDate': $('#startDate').val(),
+                    'endDate': $('#endDate').val()
+                }
+                let columnElements = $(`#questionPredictTable tr td:nth-child(${i + 2})`)
+                let column
+                switch (i) {
+                    case 0:
+                        column = 'q00'; break
+                    case 1:
+                        column = 'q01'; break
+                    case 2:
+                        column = 'q02'; break
+                    case 3:
+                        column = 'q03'; break
+                    case 4:
+                        column = 'q10'; break
+                    case 5:
+                        column = 'q11'; break
+                    case 6:
+                        column = 'q12'; break
+                    case 7:
+                        column = 'q13'; break
+                    case 8:
+                        column = 'q20'; break
+                    case 9:
+                        column = 'q21'; break
+                    case 10:
+                        column = 'q22'; break
+                    case 11:
+                        column = 'q23'; break
+                    case 12:
+                        column = 'q30'; break
+                    case 13:
+                        column = 'q31'; break
+                    case 14:
+                        column = 'q32'; break
+                    case 15:
+                        column = 'q33'; break
+                }
+
+                parametersQuesPredict['questionPredictTable'] = true
+                parametersQuesPredict['questionPredictColumn'] = column
+
+                switch (column) {
+                    case 'q00':
+                    case 'q11':
+                    case 'q20':
+                    case 'q31':
+                        columnElements.each((j, jval) => {
+                            // Color the correct answer for each question
+                            $(jval).addClass('success')
+                        })
+                        break
+                }
+                let loadTimer, backgroundColors = [], borderBottoms = [], borderTops = []
+                columnElements.each((index, value) => {
+                    backgroundColors.push($(value).css('background-color'))
+                    borderBottoms.push($(value).css('border-bottom'))
+                    borderTops.push($(value).css('border-top'))
+                    $(value).css({
+                        'background-color': 'rgba(0, 0, 0, 0.15)',
+                        'border-top': 'none',
+                        'border-bottom': 'none'
+                    })
+                    if (index === 4) {
+                        $(value).addClass('colLoadingText')
+                        let rand = Math.random()
+                        if (rand < 0.333) {
+                            $(value).text('.')
+                        } else if (rand < 0.666) {
+                            $(value).text('. .')
+                        } else {
+                            $(value).text('. . .')
+                        }
+                        $(value).css({
+                            'vertical-align': 'middle',
+                            'text-align': 'center',
+                            'font-size': '16px'
+                        })
+                        loadTimer = setInterval(() => {
+                            let currentText = $(value).html()
+                            let newText
+                            if (currentText !== '. . . .') {
+                                newText = currentText + ' .'
+                            } else {
+                                newText = '.'
+                            }
+                            $(value).html(newText)
+                        }, 400 + Math.random() * 200)
+                    } else {
+                        $(value).text('')
+                    }
+                })
+
+                let callbackFunc = (data) => {
+                    clearInterval(loadTimer)
+                    localStorage.setItem(`data_questions_${column}_predict`, JSON.stringify(data))
+                    let rowNames = []
+                    $('#questionPredictTable tr th').each((j, jval) => {
+                        rowNames.push($(jval).text())
+                    })
+                    localStorage.setItem(`row_names_q_predict`, JSON.stringify(rowNames))
+                    columnElements.each((j, jval) => {
+                        $(jval).css({
+                            'vertical-align': 'middle',
+                            'background-color': backgroundColors[j],
+                            'border-top': borderTops[j],
+                            'border-bottom': borderBottoms[j]
+                        })
+                        let innerText = $('<div>')
+                        innerText.html('No data')
+                        if (data) {
+                            if (j % 2 === 0) {
+                                let percentCorrectR = parseFloat(data[j+1].percentCorrectR)
+                                if (typeof percentCorrectR === 'number' && !isNaN(percentCorrectR)) {
+                                    innerText.html(percentCorrectR.toFixed(4))
+                                } else {
+                                    innerText.html('No data')
+                                }
+                            } else {
+                                let percentCorrectTf = parseFloat(data[j+1].percentCorrectTf)
+                                if (typeof percentCorrectTf === 'number' && !isNaN(percentCorrectTf)) {
+                                    innerText.html(percentCorrectTf.toFixed(4))
+                                } else {
+                                    innerText.html('No data')
+                                }
+                            }
+                            $(jval).html(innerText)
+                        }
+                        $(innerText).css({ 'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif' })
+                    })
+                    off()
+                }
+
+                req = {
+                    parameters: parametersChallenge,
                     callback: callbackFunc
                 }
                 queue.push(req)
