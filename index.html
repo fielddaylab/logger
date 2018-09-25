@@ -251,7 +251,7 @@
                     <div class="col-xs-12">
                         <div>
                             <div style="font-size:22px; margin-bottom:4px;">
-                                <b>Number of challenges p-value table</b>
+                                <b>Number of challenges</b>
                             </div>
                             <table id="numLevelsTable" class="table table-striped table-bordered table-hover" style="table-layout:fixed">
                                 <thead>
@@ -369,7 +369,7 @@
                             Click any p-value for the regression equation and input data of that column.
                         </div>
                         <div style="font-size:14px; margin-bottom:6px; color:#777">
-                            Cells in this table are p-values for the linear regression equation.
+                            The numbers in each cell are arranged (coefficient, p-value).
                         </div>
                         <div style="font-size:14px; margin-bottom:6px; color:#777">
                             Significant values (at α = 0.05) are highlighted in <span style="background-color: #82e072">green</span>.
@@ -390,7 +390,7 @@
                     <div class="col-xs-12">
                         <div>
                             <div style="font-size:22px; margin-bottom:4px;">
-                                <b>Individual level completion p-value table</b>
+                                <b>Individual level completion</b>
                             </div>
                             <table id="predictTableAll" class="table table-striped table-bordered table-hover">
                                 <thead>
@@ -529,7 +529,7 @@
                             Click any p-value for the regression equation and input data of that column.
                         </div>
                         <div style="font-size:14px; margin-bottom:6px; color:#777">
-                            Cells in this table are p-values for the logistic regression equation.
+                            The numbers in each cell are arranged (coefficient, p-value).
                         </div>
                         <div style="font-size:14px; margin-bottom:6px; color:#777">
                             Significant values (at α = 0.05) are highlighted in <span style="background-color: #82e072">green</span>.
@@ -547,7 +547,7 @@
                     <div class="col-xs-12">
                         <div>
                             <div style="font-size:22px; margin-bottom:4px;">
-                                <b>Question answers from challenge 1 p-value table</b>
+                                <b>Question answers from challenge 1</b>
                             </div>
                             <table id="tableAll" class="table table-striped table-bordered table-hover">
                                 <thead>
@@ -750,7 +750,7 @@
                             Click any p-value for the regression equation and input data of that column.<br>
                         </div>
                         <div style="font-size:14px; margin-bottom:6px; color:#777">
-                            Cells in this table are p-values for the logistic regression equation.
+                            The numbers in each cell are arranged (coefficient, p-value).
                         </div>
                         <div style="font-size:14px; margin-bottom:6px; color:#777">
                             Significant values (at α = 0.05) are highlighted in <span style="background-color: #82e072">green</span>.
@@ -771,7 +771,7 @@
                     <div class="col-xs-12">
                         <div>
                             <div style="font-size:22px; margin-bottom:4px;">
-                                <b>Question answer prediction accuracy by level range table</b>
+                                <b>Question answer prediction accuracy by level range</b>
                             </div>
                             <table id="questionPredictTable" class="table table-striped table-bordered table-hover">
                                 <thead>
@@ -1102,6 +1102,9 @@
                             The <b>second</b> sub-row of every row is the <b>deep neural net accuracy</b>.
                         </div>
                         <div style="font-size:14px; margin-bottom:6px; color:#777">
+                            The numbers in each cell are arranged (coefficient, p-value).
+                        </div>
+                        <div style="font-size:14px; margin-bottom:6px; color:#777">
                             Correct answers to each question have a <span style="background-color: #dff0d8">light green</span> cell
                             background.
                         </div>
@@ -1143,6 +1146,27 @@
                                 <div id="noDataOverlayGoals4All" class="overlay" style="display:none">
                                     <div class="text" style="color:red; font-weight:bold;">NO DATA</div>
                                 </div>
+                            </div>
+                            <div id="goalsDiv5All" style="margin-left:20px;margin-top:20px;margin-bottom:20px;font-size:20px;display:none;"></div>
+                            <div id="goalsGraph5All">
+                                <div id="noDataOverlayGoals5All" class="overlay" style="display:none">
+                                    <div class="text" style="color:red; font-weight:bold;">NO DATA</div>
+                                </div>
+                            </div>
+                            <div id="goalsDiv6All" style="margin-left:20px;margin-top:20px;margin-bottom:20px;font-size:20px;display:none;"></div>
+                            <div id="goalsGraph6All">
+                                <div id="noDataOverlayGoals6All" class="overlay" style="display:none">
+                                    <div class="text" style="color:red; font-weight:bold;">NO DATA</div>
+                                </div>
+                            </div>
+                            <div id="goalsDiv7All" style="margin-left:20px;margin-top:20px;margin-bottom:20px;font-size:20px;display:none;"></div>
+                            <div id="goalsGraph7All">
+                                <div id="noDataOverlayGoals7All" class="overlay" style="display:none">
+                                    <div class="text" style="color:red; font-weight:bold;">NO DATA</div>
+                                </div>
+                            </div>
+                            <div id="clusterDiv" style="margin-left:20px;margin-top:20px;margin-bottom:20px;font-size:20px;display:none;"></div>
+                            <div id="clusterGraph">
                             </div>
                             <div id="goalsEigen4All" style="margin-left:20px;margin-top:20px;margin-bottom:20px;font-size:20px;display:none;"></div>
                         </div>

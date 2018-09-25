@@ -16,7 +16,7 @@ $(document).ready((event) => {
     let histogramAll1 = $('#goalsGraph1All')[0]
     let histogramAll2 = $('#goalsGraph2All')[0]
     let histogramAll3 = $('#goalsGraph3All')[0]
-    let clusterGraph = $('#goalsGraph4All')[0]
+    let clusterGraph = $('#clusterGraph')[0]
 
     let endDate = new Date()
     let enddd = endDate.getDate()
@@ -391,8 +391,8 @@ $(document).ready((event) => {
                         })
                         let innerText = $('<div>')
                         if (j < columnElements.length - 2) {
-                            if (typeof data.pValues[j] === 'number' && !isNaN(data.pValues[j])) {
-                                innerText.html(data.pValues[j].toFixed(5))
+                            if (typeof data.pValues[j] === 'number' && !isNaN(data.pValues[j]) && typeof data.coefficients[j] === 'number' && !isNaN(data.coefficients[j])) {
+                                innerText.html(data.coefficients[j].toFixed(4) + ',<br>' + data.pValues[j].toFixed(4))
                                 if (data.pValues[j] < 0.05) {
                                     $(innerText).css('background-color', '#82e072')
                                 }
@@ -541,8 +541,8 @@ $(document).ready((event) => {
                         innerText.html('No data')
                         if (data && data.pValues) {
                             if (j < columnElements.length - 2) {
-                                if (typeof data.pValues[j] === 'number' && !isNaN(data.pValues[j])) {
-                                    innerText.html(data.pValues[j].toFixed(5))
+                                if (typeof data.pValues[j] === 'number' && !isNaN(data.pValues[j]) && typeof data.coefficients[j] === 'number' && !isNaN(data.coefficients[j])) {
+                                    innerText.html(data.coefficients[j].toFixed(4) + ',<br>' + data.pValues[j].toFixed(4))
                                     if (data.pValues[j] < 0.05) {
                                         $(innerText).css('background-color', '#82e072')
                                     }
@@ -690,8 +690,8 @@ $(document).ready((event) => {
                         innerText.html('No data')
                         if (data && data.pValues) {
                             if (j < columnElements.length - 2) {
-                                if (typeof data.pValues[j] === 'number' && !isNaN(data.pValues[j])) {
-                                    innerText.html(data.pValues[j].toFixed(5))
+                                if (typeof data.pValues[j] === 'number' && !isNaN(data.pValues[j]) && typeof data.coefficients[j] === 'number' && !isNaN(data.coefficients[j])) {
+                                    innerText.html(data.coefficients[j].toFixed(4) + ',<br>' + data.pValues[j].toFixed(4))
                                     if (data.pValues[j] < 0.05) {
                                         $(innerText).css('background-color', '#82e072')
                                     }
@@ -856,7 +856,8 @@ $(document).ready((event) => {
                 $('#amtsTotalAll').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
                 $('#amtsTotalAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.totalKnobTotals.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
                 $('#amtsTotalAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.avgKnobTotals.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-                let dataHistogram = { 'numsQuestions': data.questionsAll.numsQuestions, 'numMoves': data.numMovesAll, 'numLevels': data.numLevelsAll, 'clusters': data.clusters }
+                let dataHistogram = { 'questionAnswereds':data.questionAnswereds, 'numsQuestions': data.questionsAll.numsQuestions, 'numMoves': data.numMovesAll,
+                    'numLevels': data.numLevelsAll, 'clusters': data.clusters }
                 if ($('#sessionSelect option').length > 0) {
                     getSingleData(true, false) 
                 } else if ($('#sessionSelect option').length === 0) {
@@ -984,6 +985,23 @@ $(document).ready((event) => {
     }
 
     function drawWavesHistograms(data) {
+        let questions = []
+        for (let i = 0; i < 4; i++) {
+            questions[i] = arrayColumn(Object.values(data.questionAnswereds), i).map((val) => {
+                switch (val) {
+                    case 0:
+                        return 'A'
+                    case 1:
+                        return 'B'
+                    case 2:
+                        return 'C'
+                    case 3:
+                        return 'D'
+                    case undefined:
+                        return 'Did not answer'
+                }
+            }).sort()
+        }
         // console.time('drawWavesHistograms')
         $('#goalsDiv1All').html('Histogram 1: Questions answered')
         let trace = {
@@ -1090,8 +1108,43 @@ $(document).ready((event) => {
         Plotly.newPlot(histogramAll3, [trace3], layout3)
         // console.timeEnd('drawWavesHistograms')
 
-        $('#goalsDiv4All').html('Cluster graph, dunn = ' + data.clusters.dunn)
-        $('#goalsDiv4All').css('display', 'block')
+        for (let i = 0; i < 4; i++) {
+            $(`#goalsDiv${i + 4}All`).html(`Histogram ${i + 4}: Question ${i + 1} answers`)
+            $(`#goalsDiv${i + 4}All`).css(`display`, `block`)
+            $(`#goalsGraph${i + 4}All`).css(`display`, `block`)
+            let trace = {
+                x: questions[i],
+                type: 'histogram'
+            }
+            let layout = {
+                margin: { t: 35 },
+                height: 200,
+                plot_bgcolor: '#F6F6F3',
+                paper_bgcolor: '#F6F6F3',
+                xaxis: {
+                    title: 'Question answer',
+                    titlefont: {
+                        family: 'Courier New, monospace',
+                        size: 12,
+                        color: '#7f7f7f'
+                    }
+                },
+                yaxis: {
+                    title: 'Number of sessions',
+                    titlefont: {
+                        family: 'Courier New, monospace',
+                        size: 12,
+                        color: '#7f7f7f'
+                    }
+                },
+                showlegend: false
+            }
+
+            Plotly.newPlot($(`#goalsGraph${i+4}All`)[0], [trace], layout)
+        }
+
+        $('#clusterGraph').html('Cluster graph, dunn = ' + data.clusters.dunn)
+        $('#clusterGraph').css('display', 'block')
         eigen = '<ul>';
         (data.clusters.eigenvectors || []).forEach((eigenCol, i) => {
             eigen += '<li><p>PCA eigenvector ' + (i + 1) + '</p><ul>';
@@ -1103,8 +1156,8 @@ $(document).ready((event) => {
         eigen += '</ul>';
         $('#goalsEigen4All').html(eigen);
         $('#goalsEigen4All').css('display', 'block')
-        $('#goalsGraph4All').css('display', 'block')
-        let trace4 = (data.clusters.clusters || []).map(function(cluster, i){
+        $('#clusterGraph').css('display', 'block')
+        let trace5 = (data.clusters.clusters || []).map(function(cluster, i){
             return {
                 x: cluster.map((ary) => ary[0]),
                 y: cluster.map((ary) => ary[1]),
@@ -1113,7 +1166,7 @@ $(document).ready((event) => {
                 type: 'scatter',
             };
         });
-        let layout4 = {
+        let layout5 = {
             margin: { t: 35 },
             height: 500,
             plot_bgcolor: '#F6F6F3',
@@ -1137,7 +1190,7 @@ $(document).ready((event) => {
             showlegend: false
         }
 
-        Plotly.newPlot(clusterGraph, trace4, layout4)
+        Plotly.newPlot(clusterGraph, trace5, layout5)
         // console.timeEnd('drawWavesHistograms')
     }
 
@@ -1584,6 +1637,12 @@ $(document).ready((event) => {
                 self.emptyFunc()
             }
         }
+    }
+
+    function arrayColumn(array, columnName) {
+        return array.map(function (value, index) {
+            return value[columnName]
+        })
     }
 
     setInterval(() => {
