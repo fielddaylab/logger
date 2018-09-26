@@ -435,7 +435,7 @@ $(document).ready((event) => {
         }
 
         numCols = $('#predictTableBody').find('tr:first td').length
-        if (false) {
+        if (true) {
             for (let i = 0; i < numCols; i++) {
                 let parametersChallenge = {
                     'gameID': $('#gameSelect').val(),
@@ -584,7 +584,7 @@ $(document).ready((event) => {
         }
 
         numCols = $('#numLevelsBody').find('tr:first td').length
-        if (false) {
+        if (true) {
             for (let i = 0; i < numCols; i++) {
                 let columnElements = $(`#numLevelsBody tr td:nth-child(${i+2})`).not('.disabled-cell')
                 let column
@@ -870,6 +870,7 @@ $(document).ready((event) => {
                                     innerText.html('No data')
                                 }
                             }
+                            $(innerText).wrapInner(`<a target="_blank" href="questionsPredict/questionsPredictDataForR_${column}_${Math.floor(j/2)+1}.txt">`)
                             $(jval).html(innerText)
                         }
                         $(innerText).css({ 'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif' })

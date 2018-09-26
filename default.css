@@ -1,3 +1,7 @@
+:root {
+    --border-color: rgb(221, 221, 221);
+}
+
 body, div {
     margin:0px;
     padding:0px;
@@ -108,5 +112,23 @@ thead tr th {
     background-color: white;
     border-right-width: 4px !important;
     border-left-width: 4px !important; 
+}
+
+#questionPredictBody tr:nth-child(even) td {
+    border-bottom: 4px solid var(--border-color);
+}
+
+#questionPredictBody tr:first-child td {
+    border-top: 4px solid var(--border-color);
+}
+
+/*#questionPredictBody tr td {
+    border-right: 4px solid var(--border-color);
+}*/
+
+#questionPredictBody tr th {
+    border-bottom: 4px solid var(--border-color);
+    border-top: 4px solid var(--border-color);
+    /* border-right: 4px solid var(--border-color); */
 }
   
