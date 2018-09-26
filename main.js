@@ -271,7 +271,7 @@ $(document).ready((event) => {
         //queue.emptyFunc = function() { $('#exportModal').prop('disabled', false) }
 
         let numCols = $('#tableAllBody').find('tr:first td').length
-        if (false) {
+        if (true) {
             for (let i = 0; i < numCols; i++) {
                 let columnElements = $(`#tableAllBody tr td:nth-child(${i+2})`)
                 let column
@@ -733,7 +733,7 @@ $(document).ready((event) => {
             }
         }
 
-        numCols = $('#questionPredictTable').find('tr:first td').length
+        numCols = $('#questionPredictBody').find('tr:first td').length
         if (true) {
             for (let i = 0; i < numCols; i++) {
                 let parametersQuesPredict = {
@@ -746,7 +746,7 @@ $(document).ready((event) => {
                     'startDate': $('#startDate').val(),
                     'endDate': $('#endDate').val()
                 }
-                let columnElements = $(`#questionPredictTable tr td:nth-child(${i + 2})`)
+                let columnElements = $(`#questionPredictBody tr td:nth-of-type(${i + 1})`)
                 let column
                 switch (i) {
                     case 0:
@@ -841,7 +841,7 @@ $(document).ready((event) => {
                     clearInterval(loadTimer)
                     localStorage.setItem(`data_questions_${column}_predict`, JSON.stringify(data))
                     let rowNames = []
-                    $('#questionPredictTable tr th').each((j, jval) => {
+                    $('#questionPredictBody tr th').each((j, jval) => {
                         rowNames.push($(jval).text())
                     })
                     localStorage.setItem(`row_names_q_predict`, JSON.stringify(rowNames))
@@ -856,14 +856,14 @@ $(document).ready((event) => {
                         innerText.html('No data')
                         if (data) {
                             if (j % 2 === 0) {
-                                let percentCorrectR = parseFloat(data[j+1].percentCorrectR)
+                                let percentCorrectR = parseFloat(data[j/2+1].percentCorrectR)
                                 if (typeof percentCorrectR === 'number' && !isNaN(percentCorrectR)) {
                                     innerText.html(percentCorrectR.toFixed(4))
                                 } else {
                                     innerText.html('No data')
                                 }
                             } else {
-                                let percentCorrectTf = parseFloat(data[j+1].percentCorrectTf)
+                                let percentCorrectTf = parseFloat(data[(j-1)/2+1].percentCorrectTf)
                                 if (typeof percentCorrectTf === 'number' && !isNaN(percentCorrectTf)) {
                                     innerText.html(percentCorrectTf.toFixed(4))
                                 } else {
@@ -878,7 +878,7 @@ $(document).ready((event) => {
                 }
 
                 req = {
-                    parameters: parametersChallenge,
+                    parameters: parametersQuesPredict,
                     callback: callbackFunc
                 }
                 queue.push(req)
