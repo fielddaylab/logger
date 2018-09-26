@@ -26,6 +26,8 @@ $(document).ready((event) => {
     if (endmm < 10) { endmm = '0' + endmm }
     $('#endDate').val(endyyyy+'-'+endmm+'-'+enddd)
 
+    let queueExists = false
+
     let lvls = [1, 3, 5, 7, 11, 13, 15, 19, 21, 23, 25, 27, 31]
     lvls.forEach((value, index, arr) => {
         let newRow = $(`<tr class=rowLvl>`)
@@ -175,42 +177,46 @@ $(document).ready((event) => {
         // console.time('gameSelect')
         event.preventDefault()
         $('#gameIDForm').val($('#gameSelect').val())
-        getAllData(true)
+        //getAllData(true)
+    })
+
+    $(document).on('click', '#goButton', (event) => {
+        event.preventDefault()
+        if ($('#gameSelect').val() !== 'WAVES' || !($('#numLevelsTableCheckbox').is(':checked') || $('#levelCompletionCheckbox').is(':checked') ||
+            $('#questionsCheckbox').is(':checked') || $('#levelRangeQuestionCheckbox').is(':checked') || $('#otherFeaturesCheckbox').is(':checked'))) {
+            $('#invalidGame').fadeIn(100)
+        } else {
+            $('#invalidGame').hide()
+            if (!queueExists) {
+                queueExists = true
+                $('#doneDiv').show()
+                let workingTimer = setInterval(() => {
+                    let currentText = $('#doneDiv').html()
+                    let newText
+                    if (currentText !== 'Working . . . .') {
+                        newText = currentText + ' .'
+                    } else {
+                        newText = 'Working'
+                    }
+                    $('#doneDiv').html(newText).css('color', 'red')
+                }, 500)
+                let queue = getAllData(true)
+                queue.emptyFunc = () => {
+                    clearInterval(workingTimer)
+                    $('#doneDiv').html('Done.').css('color', 'green')
+                    setTimeout(() => {
+                        $('#doneDiv').fadeOut(3000, () => { $('#doneDiv').html('Loading ').css('color', 'red') })
+                    }, 3000)
+                    queueExists = false
+                }
+            }
+        }
     })
 
     $(document).on('change', '#sessionSelect', (event) => {
         on()
         getSingleData(true, false)
         getSingleData(false, true)
-    })
-
-    $(document).on('submit', '#filterForm', (event) => {
-        // console.time('filterForm')
-        event.preventDefault()
-        if ($('#gameSelect').val() !== 'empty') {
-            $('#filterModal').modal('hide')
-            //on()
-            if ($('#sessionInput').val() !== '') {
-                if ($(`#sessionSelect option[value="${$('#sessionInput').val()}"]`).length === 0) {
-                    let newOpt = document.createElement('option')
-                    newOpt.value = $('#sessionInput').val()
-                    $('#sessionSelect').append(newOpt)
-                }
-                $('#sessionSelect').val($('#sessionInput').val())
-                getSingleData(true, false)
-                getSingleData(false, true)
-            } else {
-                getAllData(false)
-            }
-        } else {
-            $('#formError').show()
-            //$('#filterModal').modal('hide')
-            $('#formError').html('Please select a game before filtering sessions.')
-        }
-    })
-
-    $(document).on('hide.bs.modal', '#filterModal', (event) => {
-        $('#formError').hide()
     })
 
     $(document).on('input', '#sessionInput', (event) => {
@@ -251,6 +257,11 @@ $(document).ready((event) => {
     })
 
     function getAllData(isFirstTime = false) {
+        let numLevelsTableChecked = $('#numLevelsTableCheckbox').is(':checked'),
+            levelCompletionTableChecked = $('#levelCompletionCheckbox').is(':checked'),
+            questionTableChecked = $('#questionsCheckbox').is(':checked'),
+            levelRangeQuestionChecked = $('#levelRangeQuestionCheckbox').is(':checked'),
+            otherFeaturesChecked = $('#otherFeaturesCheckbox').is(':checked')
         let parametersBasic = {
             'gameID': $('#gameSelect').val(),
             'maxRows': $('#maxRows').val(),
@@ -268,10 +279,9 @@ $(document).ready((event) => {
         }
         let numSimultaneous = navigator.hardwareConcurrency
         let queue = new networkQueue(numSimultaneous)
-        //queue.emptyFunc = function() { $('#exportModal').prop('disabled', false) }
 
         let numCols = $('#tableAllBody').find('tr:first td').length
-        if (true) {
+        if (questionTableChecked) {
             for (let i = 0; i < numCols; i++) {
                 let columnElements = $(`#tableAllBody tr td:nth-child(${i+2})`)
                 let column
@@ -435,7 +445,7 @@ $(document).ready((event) => {
         }
 
         numCols = $('#predictTableBody').find('tr:first td').length
-        if (true) {
+        if (levelCompletionTableChecked) {
             for (let i = 0; i < numCols; i++) {
                 let parametersChallenge = {
                     'gameID': $('#gameSelect').val(),
@@ -584,7 +594,7 @@ $(document).ready((event) => {
         }
 
         numCols = $('#numLevelsBody').find('tr:first td').length
-        if (true) {
+        if (numLevelsTableChecked) {
             for (let i = 0; i < numCols; i++) {
                 let columnElements = $(`#numLevelsBody tr td:nth-child(${i+2})`).not('.disabled-cell')
                 let column
@@ -734,7 +744,7 @@ $(document).ready((event) => {
         }
 
         numCols = $('#questionPredictBody').find('tr:first td').length
-        if (false) {
+        if (levelRangeQuestionChecked) {
             for (let i = 0; i < numCols; i++) {
                 let parametersQuesPredict = {
                     'gameID': $('#gameSelect').val(),
@@ -886,7 +896,7 @@ $(document).ready((event) => {
             }
         }
 
-        $.get('responsePage.php', parametersBasic, (data, status, jqXHR) => {
+        let mainCallback = (data) => {
             $('#scoreDisplayAll').html(data.questionsTotal.totalNumCorrect + ' / ' + data.questionsTotal.totalNumQuestions + ' (' + 
                 (100 * data.questionsTotal.totalNumCorrect / data.questionsTotal.totalNumQuestions).toFixed(1) + '%)')
             if (data.levels !== null) {
@@ -944,73 +954,79 @@ $(document).ready((event) => {
                 }
                 // All page basic info
                 fastClear($('#basicFeaturesAll'))
-                let timesList = $('<ul></ul>').attr('id', 'timesAll').addClass('collapse').css('font-size', '18px')
-                $('#basicFeaturesAll').append($(`<span><li>Times: <a href='#timesAll' data-toggle='collapse' id='timesCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(timesList)
-                    .on('hide.bs.collapse', () => {$('#timesCollapseBtnAll').html('[+]')})
-                    .on('show.bs.collapse', () => {$('#timesCollapseBtnAll').html('[−]')}))
-                let movesList = $('<ul></ul>').attr('id', 'movesAll').addClass('collapse').css({'font-size':'18px'})
-                $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Number of slider moves: <a href='#movesAll' data-toggle='collapse' id='movesCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(movesList)
-                    .on('hide.bs.collapse', () => {$('#movesCollapseBtnAll').html('[+]')})
-                    .on('show.bs.collapse', () => {$('#movesCollapseBtnAll').html('[−]')}))
-                let typesList = $('<ul></ul>').attr('id', 'typesAll').addClass('collapse').css({'font-size':'18px'})
-                $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Move type changes: <a href='#typesAll' data-toggle='collapse' id='typesCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(typesList)
-                    .on('hide.bs.collapse', () => {$('#typesCollapseBtnAll').html('[+]')})
-                    .on('show.bs.collapse', () => {$('#typesCollapseBtnAll').html('[−]')}))
-                let stdDevList = $('<ul></ul>').attr('id', 'stdDevsAll').addClass('collapse').css({'font-size':'18px'})
-                $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Knob std devs (avg): <a href='#stdDevsAll' data-toggle='collapse' id='stdDevsCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(stdDevList)
-                    .on('hide.bs.collapse', () => {$('#stdDevsCollapseBtnAll').html('[+]')})
-                    .on('show.bs.collapse', () => {$('#stdDevsCollapseBtnAll').html('[−]')}))
-                let amtsList = $('<ul></ul>').attr('id', 'amtsAll').addClass('collapse').css({'font-size':'18px'})
-                $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Knob max-min (avg): <a href='#amtsAll' data-toggle='collapse' id='amtsCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(amtsList)
-                    .on('hide.bs.collapse', () => {$('#amtsCollapseBtnAll').html('[+]')})
-                    .on('show.bs.collapse', () => {$('#amtsCollapseBtnAll').html('[−]')}))
-                let amtsTotalList = $('<ul></ul>').attr('id', 'amtsTotalAll').addClass('collapse').css({'font-size':'18px'})
-                $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Knob max-min (total): <a href='#amtsTotalAll' data-toggle='collapse' id='amtsTotalCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(amtsTotalList)
-                    .on('hide.bs.collapse', () => {$('#amtsTotalCollapseBtnAll').html('[+]')})
-                    .on('show.bs.collapse', () => {$('#amtsTotalCollapseBtnAll').html('[−]')}))
+                let dataHistogram
+                if (otherFeaturesChecked) {
+                    let timesList = $('<ul></ul>').attr('id', 'timesAll').addClass('collapse').css('font-size', '18px')
+                    $('#basicFeaturesAll').append($(`<span><li>Times: <a href='#timesAll' data-toggle='collapse' id='timesCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(timesList)
+                        .on('hide.bs.collapse', () => { $('#timesCollapseBtnAll').html('[+]') })
+                        .on('show.bs.collapse', () => { $('#timesCollapseBtnAll').html('[−]') }))
+                    let movesList = $('<ul></ul>').attr('id', 'movesAll').addClass('collapse').css({ 'font-size': '18px' })
+                    $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Number of slider moves: <a href='#movesAll' data-toggle='collapse' id='movesCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(movesList)
+                        .on('hide.bs.collapse', () => { $('#movesCollapseBtnAll').html('[+]') })
+                        .on('show.bs.collapse', () => { $('#movesCollapseBtnAll').html('[−]') }))
+                    let typesList = $('<ul></ul>').attr('id', 'typesAll').addClass('collapse').css({ 'font-size': '18px' })
+                    $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Move type changes: <a href='#typesAll' data-toggle='collapse' id='typesCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(typesList)
+                        .on('hide.bs.collapse', () => { $('#typesCollapseBtnAll').html('[+]') })
+                        .on('show.bs.collapse', () => { $('#typesCollapseBtnAll').html('[−]') }))
+                    let stdDevList = $('<ul></ul>').attr('id', 'stdDevsAll').addClass('collapse').css({ 'font-size': '18px' })
+                    $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Knob std devs (avg): <a href='#stdDevsAll' data-toggle='collapse' id='stdDevsCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(stdDevList)
+                        .on('hide.bs.collapse', () => { $('#stdDevsCollapseBtnAll').html('[+]') })
+                        .on('show.bs.collapse', () => { $('#stdDevsCollapseBtnAll').html('[−]') }))
+                    let amtsList = $('<ul></ul>').attr('id', 'amtsAll').addClass('collapse').css({ 'font-size': '18px' })
+                    $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Knob max-min (avg): <a href='#amtsAll' data-toggle='collapse' id='amtsCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(amtsList)
+                        .on('hide.bs.collapse', () => { $('#amtsCollapseBtnAll').html('[+]') })
+                        .on('show.bs.collapse', () => { $('#amtsCollapseBtnAll').html('[−]') }))
+                    let amtsTotalList = $('<ul></ul>').attr('id', 'amtsTotalAll').addClass('collapse').css({ 'font-size': '18px' })
+                    $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Knob max-min (total): <a href='#amtsTotalAll' data-toggle='collapse' id='amtsTotalCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(amtsTotalList)
+                        .on('hide.bs.collapse', () => { $('#amtsTotalCollapseBtnAll').html('[+]') })
+                        .on('show.bs.collapse', () => { $('#amtsTotalCollapseBtnAll').html('[−]') }))
 
-                for (let i = Object.keys(data.basicInfoAll.times)[0]; i <= Object.keys(data.basicInfoAll.times)[Object.keys(data.basicInfoAll.times).length-1]; i++) {
-                    if (data.basicInfoAll.times[i] === 'NaN') continue;
-                    // append times
-                    $('#timesAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.times[i].toFixed(2)} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                    for (let i = Object.keys(data.basicInfoAll.times)[0]; i <= Object.keys(data.basicInfoAll.times)[Object.keys(data.basicInfoAll.times).length - 1]; i++) {
+                        if (data.basicInfoAll.times[i] === 'NaN') continue;
+                        // append times
+                        $('#timesAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.times[i].toFixed(2)} sec</div>`).css({ 'font-size': '14px', 'float': 'right', 'padding-right': '100px' })))
 
-                    // append moves
-                    $('#movesAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.numMoves[i].toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-                    
-                    // append types
-                    $('#typesAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.moveTypeChanges[i].toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                        // append moves
+                        $('#movesAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.numMoves[i].toFixed(2)}</div>`).css({ 'font-size': '14px', 'float': 'right', 'padding-right': '100px' })))
 
-                    // append std devs
-                    $('#stdDevsAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.knobStdDevs[i].toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                        // append types
+                        $('#typesAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.moveTypeChanges[i].toFixed(2)}</div>`).css({ 'font-size': '14px', 'float': 'right', 'padding-right': '100px' })))
 
-                    // append knob amounts
-                    $('#amtsAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.avgMaxMin[i].toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                        // append std devs
+                        $('#stdDevsAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.knobStdDevs[i].toFixed(2)}</div>`).css({ 'font-size': '14px', 'float': 'right', 'padding-right': '100px' })))
 
-                    // append knob total amounts
-                    $('#amtsTotalAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.totalMaxMin[i].toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
+                        // append knob amounts
+                        $('#amtsAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.avgMaxMin[i].toFixed(2)}</div>`).css({ 'font-size': '14px', 'float': 'right', 'padding-right': '100px' })))
+
+                        // append knob total amounts
+                        $('#amtsTotalAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.totalMaxMin[i].toFixed(2)}</div>`).css({ 'font-size': '14px', 'float': 'right', 'padding-right': '100px' })))
+                    }
+
+                    $('#timesAll').append($('<hr>').css({ 'margin-bottom': '3px', 'margin-top': '3px' }))
+                    $('#timesAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.totalTime.toFixed(2)} sec</div>`).css({ 'font-size': '14px', 'float': 'right', 'padding-right': '100px' })))
+                    $('#timesAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.avgTime.toFixed(2)} sec</div>`).css({ 'font-size': '14px', 'float': 'right', 'padding-right': '100px' })))
+
+                    $('#movesAll').append($('<hr>').css({ 'margin-bottom': '3px', 'margin-top': '3px' }))
+                    $('#movesAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.totalMoves.toFixed(2)}</div>`).css({ 'font-size': '14px', 'float': 'right', 'padding-right': '100px' })))
+                    $('#movesAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.avgMoves.toFixed(2)}</div>`).css({ 'font-size': '14px', 'float': 'right', 'padding-right': '100px' })))
+
+                    $('#typesAll').append($('<hr>').css({ 'margin-bottom': '3px', 'margin-top': '3px' }))
+                    $('#typesAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.totalMoveChanges.toFixed(2)}</div>`).css({ 'font-size': '14px', 'float': 'right', 'padding-right': '100px' })))
+                    $('#typesAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.avgMoveChanges.toFixed(2)}</div>`).css({ 'font-size': '14px', 'float': 'right', 'padding-right': '100px' })))
+
+                    $('#amtsAll').append($('<hr>').css({ 'margin-bottom': '3px', 'margin-top': '3px' }))
+                    $('#amtsAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.totalKnobAvgs.toFixed(2)}</div>`).css({ 'font-size': '14px', 'float': 'right', 'padding-right': '100px' })))
+                    $('#amtsAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.avgKnobAvgs.toFixed(2)}</div>`).css({ 'font-size': '14px', 'float': 'right', 'padding-right': '100px' })))
+
+                    $('#amtsTotalAll').append($('<hr>').css({ 'margin-bottom': '3px', 'margin-top': '3px' }))
+                    $('#amtsTotalAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.totalKnobTotals.toFixed(2)}</div>`).css({ 'font-size': '14px', 'float': 'right', 'padding-right': '100px' })))
+                    $('#amtsTotalAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.avgKnobTotals.toFixed(2)}</div>`).css({ 'font-size': '14px', 'float': 'right', 'padding-right': '100px' })))
+                    dataHistogram = {
+                        'questionAnswereds': data.questionAnswereds, 'numsQuestions': data.questionsAll.numsQuestions, 'numMoves': data.numMovesAll,
+                        'numLevels': data.numLevelsAll, 'clusters': data.clusters
+                    }
                 }
 
-                $('#timesAll').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
-                $('#timesAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.totalTime.toFixed(2)} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-                $('#timesAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.avgTime.toFixed(2)} sec</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-
-                $('#movesAll').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
-                $('#movesAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.totalMoves.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-                $('#movesAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.avgMoves.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-
-                $('#typesAll').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
-                $('#typesAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.totalMoveChanges.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-                $('#typesAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.avgMoveChanges.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-
-                $('#amtsAll').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
-                $('#amtsAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.totalKnobAvgs.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-                $('#amtsAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.avgKnobAvgs.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-
-                $('#amtsTotalAll').append($('<hr>').css({'margin-bottom':'3px', 'margin-top':'3px'}))
-                $('#amtsTotalAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.totalKnobTotals.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-                $('#amtsTotalAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.avgKnobTotals.toFixed(2)}</div>`).css({'font-size':'14px', 'float':'right', 'padding-right':'100px'})))
-                let dataHistogram = { 'questionAnswereds':data.questionAnswereds, 'numsQuestions': data.questionsAll.numsQuestions, 'numMoves': data.numMovesAll,
-                    'numLevels': data.numLevelsAll, 'clusters': data.clusters }
                 if ($('#sessionSelect option').length > 0) {
                     getSingleData(true, false) 
                 } else if ($('#sessionSelect option').length === 0) {
@@ -1026,16 +1042,19 @@ $(document).ready((event) => {
                         $(value).html(data.lvlsPercentComplete[index] + ' %')
                     }
                 })
-                drawWavesHistograms(dataHistogram)
+                if (otherFeaturesChecked) {
+                    drawWavesHistograms(dataHistogram)
+                }
             } else {
                 off()
                 hideError()
             }
-        }, 'json').fail((jqXHR, textStatus, errorThrown) => {
-            off()
-            console.log('Error triggered by getAllData')
-            showError(errorThrown)
-        })
+        }
+        mainReq = {
+            parameters: parametersBasic,
+            callback: mainCallback
+        }
+        queue.push(mainReq)
 
         return queue
     }
