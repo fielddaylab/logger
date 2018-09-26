@@ -734,7 +734,7 @@ $(document).ready((event) => {
         }
 
         numCols = $('#questionPredictBody').find('tr:first td').length
-        if (true) {
+        if (false) {
             for (let i = 0; i < numCols; i++) {
                 let parametersQuesPredict = {
                     'gameID': $('#gameSelect').val(),
@@ -839,12 +839,12 @@ $(document).ready((event) => {
 
                 let callbackFunc = (data) => {
                     clearInterval(loadTimer)
-                    localStorage.setItem(`data_questions_${column}_predict`, JSON.stringify(data))
-                    let rowNames = []
-                    $('#questionPredictBody tr th').each((j, jval) => {
-                        rowNames.push($(jval).text())
-                    })
-                    localStorage.setItem(`row_names_q_predict`, JSON.stringify(rowNames))
+                    //localStorage.setItem(`data_questions_${column}_predict`, JSON.stringify(data))
+                    //let rowNames = []
+                    //$('#questionPredictBody tr th').each((j, jval) => {
+                    //    rowNames.push($(jval).text())
+                    //})
+                    //localStorage.setItem(`row_names_q_predict`, JSON.stringify(rowNames))
                     columnElements.each((j, jval) => {
                         $(jval).css({
                             'vertical-align': 'middle',

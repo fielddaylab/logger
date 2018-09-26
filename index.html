@@ -23,99 +23,7 @@
                 </div>
                 <div class="modal-body">
                     <div class="container-fluid">
-                        <form id="filterForm" role="form">
-                            <div class="row">
-                                <div class="col-xs-6">
-                                    <h3 style="text-align:center">All table filters</h3>
-                                    <div class="form-group">
-                                        <label for="minMoves">Minimum moves</label>
-                                        <input name="minMoves" required type="number" min="0" class="form-control" id="minMoves" value="0">
-                                        <br>
-                                        <label for="startDate">Filter start date</label>
-                                        <input name="startDate" required type="date" class="form-control" id="startDate" value="2018-03-01">
-                                        <br>
-                                        <label for="endDate">Filter end date</label>
-                                        <input name="endDate" required type="date" class="form-control" id="endDate">
-                                    </div>
-                                </div>
-                                <div class="col-xs-6">
-                                    <h3 style="text-align:center">Question table filters</h3>
-                                    <div class="form-group">
-                                        <label for="minQuestions">Minimum questions answered</label>
-                                        <input name="minQuestions" required type="number" min="0" class="form-control" id="minQuestions" value="0">
-                                        <br>
-                                    </div>
-                                </div>
-                            </div>
-                            <hr>
-                            <div class="row">
-                                <h3 style="text-align:center">Other settings</h3>
-                                <div class="col-xs-6">                                  
-                                    <div class="form-group">
-                                        <label for="maxRows">Max sessions</label>
-                                        <input name="maxRows" required type="number" min="1" value="100" class="form-control" id="maxRows">
-                                    </div>
-                                </div>
-                                <div class="col-xs-6">
-                                    <div class="form-group">
-                                        <label for="sessionInput">Manual session lookup</label>
-                                        <input name="sessionInput" type="text" class="form-control" id="sessionInput" value="">
-                                    </div>
-                                </div>
-                            </div>
-                            <hr>
-                            <h3 style="text-align:center">Cluster graph inputs</h3>
-                            <div class="row">
-                                <div class="col-xs-6">
-                                    <div class="form-group">
-                                        <label>
-                                            <input name="numMovesPerChallenge" id="numMovesPerChallenge" type="checkbox">
-                                            numMovesPerChallenge
-                                        </label>
-                                        <br>
-                                        <label>
-                                            <input name="knobAvgs" id="knobAvgs" type="checkbox">
-                                            knobAvgs
-                                        </label>
-                                        <br>
-                                        <label>
-                                            <input name="levelTimes" id="levelTimes" type="checkbox">
-                                            levelTimes
-                                        </label>
-                                        <br>
-                                        <label>
-                                            <input name="percentGoodMovesAll" id="percentGoodMovesAll" type="checkbox">
-                                            percentGoodMovesAll
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="col-xs-6">
-                                    <div class="form-group">
-                                        <label>
-                                            <input name="moveTypeChangesPerLevel" id="moveTypeChangesPerLevel" type="checkbox">
-                                            moveTypeChangesPerLevel
-                                        </label>
-                                        <br>
-                                        <label>
-                                            <input name="knobStdDevs" id="knobStdDevs" type="checkbox">
-                                            knobStdDevs
-                                        </label>
-                                        <br>
-                                        <label>
-                                            <input name="knobTotalAmts" id="knobTotalAmts" type="checkbox">
-                                            knobTotalAmts
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <div class="col-xs-8">
-                                    <div style="color:red; text-align:left;" id="formError" hidden></div>
-                                </div>
-                                <button type="submit" class="btn btn-primary">Submit</button>
-                                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                            </div>
-                        </form>
+                        
                     </div>
                 </div>
             </div>
@@ -147,6 +55,94 @@
             </div>
             <div class="col-xs-4">
                 <div id="sessions" class="pull-right" style="margin-right:10px">Select a game to see sessions</div>
+            </div>
+        </div>
+        <br>
+        <div class="row">
+            <div class="col-xs-12">
+                <form id="filterForm" role="form">
+                    <div class="row">
+                        <div class="col-xs-2">
+                            <div style="text-align:center; font-size:22px; margin-bottom:5px;"><b>Question table</b></div>
+                            <div class="form-group">
+                                <label for="minQuestions">Minimum questions answered</label>
+                                <input name="minQuestions" required type="number" min="0" class="form-control" id="minQuestions" value="0">
+                                <br>
+                            </div>
+                        </div>
+                        <div class="col-xs-4">
+                            <div style="text-align:center; font-size:22px; margin-bottom:5px;"><b>All tables</b></div>
+                            <div class="col-xs-6">
+                                <div class="form-group">
+                                    <label for="startDate">Filter start date</label>
+                                    <input name="startDate" required type="date" class="form-control" id="startDate" value="2018-03-01">
+                                    <label for="endDate">Filter end date</label>
+                                    <input name="endDate" required type="date" class="form-control" id="endDate">
+                                </div>
+                            </div>
+                            <div class="col-xs-6">
+                                <div class="form-group">
+                                    <label for="minMoves">Minimum moves</label>
+                                    <input name="minMoves" required type="number" min="0" class="form-control" id="minMoves" value="0">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xs-2">
+                            <div style="text-align:center; font-size:22px; margin-bottom:5px;"><b>Other settings</b></div>
+                            <div class="form-group"> 
+                                <label for="maxRows">Max sessions</label>
+                                <input name="maxRows" required type="number" min="1" value="100" class="form-control" id="maxRows">
+                                <label for="sessionInput">Manual session lookup</label>
+                                <input name="sessionInput" type="text" class="form-control" id="sessionInput" value="">
+                            </div>
+                        </div>
+                        <div class="col-xs-4">
+                            <div style="text-align:center; font-size:22px; margin-bottom:5px;"><b>Cluster graph inputs</b></div>
+                            <div class="col-xs-6">
+                                <div class="form-group">
+                                    <label style="font-weight:400;">
+                                        <input name="numMovesPerChallenge" id="numMovesPerChallenge" type="checkbox">
+                                        numMovesPerChallenge
+                                    </label>
+                                    <br>
+                                    <label style="font-weight:400;">
+                                        <input name="knobAvgs" id="knobAvgs" type="checkbox">
+                                        knobAvgs
+                                    </label>
+                                    <br>
+                                    <label style="font-weight:400;">
+                                        <input name="levelTimes" id="levelTimes" type="checkbox">
+                                        levelTimes
+                                    </label>
+                                    <br>
+                                    <label style="font-weight:400;">
+                                        <input name="percentGoodMovesAll" id="percentGoodMovesAll" type="checkbox">
+                                        percentGoodMovesAll
+                                    </label>
+                                    <br>
+                                </div>
+                            </div>
+                            <div class="col-xs-6">
+                                <div class="form-group">
+                                    <label style="font-weight:400;">
+                                        <input name="moveTypeChangesPerLevel" id="moveTypeChangesPerLevel" type="checkbox">
+                                        moveTypeChangesPerLevel
+                                    </label>
+                                    <br>
+                                    <label style="font-weight:400;">
+                                        <input name="knobStdDevs" id="knobStdDevs" type="checkbox">
+                                        knobStdDevs
+                                    </label>
+                                    <br>
+                                    <label style="font-weight:400;">
+                                        <input name="knobTotalAmts" id="knobTotalAmts" type="checkbox">
+                                        knobTotalAmts
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
             </div>
         </div>
         <div class="row">

@@ -499,11 +499,17 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
         foreach (array_keys($sourceColumns[0][0]) as $i) {
             $good = true;
             for ($j = 0; $j < count($sourceColumns); $j++) {
+                if (isset($sourceColumns[$j])) {
                 $val = $sourceColumns[$j][0][$i];
-                if (!is_numeric($val) || in_array($val, $sourceColumns[$j][2])) {
+                    if (!is_numeric($val) || in_array($val, $sourceColumns[$j][2])) {
+                        $good = false;
+                        break;
+                    }
+                } else {
                     $good = false;
                     break;
                 }
+
             }
             if ($good) {
                 for ($j = 0; $j < count($sourceColumns); $j++) {
@@ -1826,7 +1832,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                     $inputs = array_slice($predictArray[$index], 0, -1);
                     $actual = $predictArray[$index][$numVariables-1];
                     $prediction = round(predict($coefficients, $inputs, true));
-                    $percentError = abs(($prediction-$actual) / $actual);
+                    $percentError = ($actual === 0) ? null : abs(($prediction-$actual) / $actual);
                     $totalPercentError += $percentError;
                 }
                 $avgPercentError = ($numPredictions === 0) ? null : $totalPercentError / $numPredictions;
