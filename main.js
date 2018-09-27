@@ -276,6 +276,7 @@ $(document).ready((event) => {
             levelCompletionTableChecked = $('#levelCompletionCheckbox').is(':checked'),
             questionTableChecked = $('#questionsCheckbox').is(':checked'),
             levelRangeQuestionChecked = $('#levelRangeQuestionCheckbox').is(':checked'),
+            quaternaryQuestionChecked = $('#quaternaryQuestionCheckbox').is(':checked'),
             otherFeaturesChecked = $('#otherFeaturesCheckbox').is(':checked'),
             shouldUseAvgs = $('#useAvgs').is(':checked')
         let parametersBasic = {
@@ -910,6 +911,127 @@ $(document).ready((event) => {
                                 }
                             }
                             $(innerText).wrapInner(`<a target="_blank" href="questionsPredict/questionsPredictDataForR_${column}_${Math.floor(j/2)+1}.txt">`)
+                            $(jval).html(innerText)
+                        }
+                        $(innerText).css({ 'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif' })
+                    })
+                    off()
+                }
+
+                req = {
+                    parameters: parametersQuesPredict,
+                    callback: callbackFunc
+                }
+                queue.push(req)
+            }
+        }
+        numTables++
+
+        numCols = $('#quaternaryQuestionBody').find('tr:first td').length
+        if (quaternaryQuestionChecked) {
+            $(`#${collapserNames[numTables]}Collapser`).collapse('show')
+            for (let i = 0; i < numCols; i++) {
+                let parametersQuatQuesPredict = {
+                    'gameID': $('#gameSelect').val(),
+                    'maxRows': $('#maxRows').val(),
+                    'minMoves': $('#minMoves').val(),
+                    'minQuestions': $('#minQuestions').val(),
+                    'minLevels': $('#minLevels').val(),
+                    'maxLevels': $('#maxLevels').val(),
+                    'startDate': $('#startDate').val(),
+                    'endDate': $('#endDate').val(),
+                    'shouldUseAvgs': shouldUseAvgs,
+                }
+                let columnElements = $(`#questionPredictBody tr td:nth-of-type(${i + 1})`)
+                let column
+                switch (i) {
+                    case 0:
+                        column = 'q0'; break
+                    case 1:
+                        column = 'q1'; break
+                    case 2:
+                        column = 'q2'; break
+                    case 3:
+                        column = 'q3'; break
+                }
+
+                parametersQuatQuesPredict['quatQuestionPredictTable'] = true
+                parametersQuatQuesPredict['quatQuestionPredictColumn'] = column
+
+                let loadTimer, backgroundColors = [], borderBottoms = [], borderTops = []
+                columnElements.each((index, value) => {
+                    backgroundColors.push($(value).css('background-color'))
+                    borderBottoms.push($(value).css('border-bottom'))
+                    borderTops.push($(value).css('border-top'))
+                    $(value).css({
+                        'background-color': 'rgba(0, 0, 0, 0.15)',
+                        'border-top': 'none',
+                        'border-bottom': 'none'
+                    })
+                    if (index === 4) {
+                        $(value).addClass('colLoadingText')
+                        let rand = Math.random()
+                        if (rand < 0.333) {
+                            $(value).text('.')
+                        } else if (rand < 0.666) {
+                            $(value).text('. .')
+                        } else {
+                            $(value).text('. . .')
+                        }
+                        $(value).css({
+                            'vertical-align': 'middle',
+                            'text-align': 'center',
+                            'font-size': '16px'
+                        })
+                        loadTimer = setInterval(() => {
+                            let currentText = $(value).html()
+                            let newText
+                            if (currentText !== '. . . .') {
+                                newText = currentText + ' .'
+                            } else {
+                                newText = '.'
+                            }
+                            $(value).html(newText)
+                        }, 400 + Math.random() * 200)
+                    } else {
+                        $(value).text('')
+                    }
+                })
+
+                let callbackFunc = (data) => {
+                    clearInterval(loadTimer)
+                    //localStorage.setItem(`data_questions_${column}_predict`, JSON.stringify(data))
+                    //let rowNames = []
+                    //$('#questionPredictBody tr th').each((j, jval) => {
+                    //    rowNames.push($(jval).text())
+                    //})
+                    //localStorage.setItem(`row_names_q_predict`, JSON.stringify(rowNames))
+                    columnElements.each((j, jval) => {
+                        $(jval).css({
+                            'vertical-align': 'middle',
+                            'background-color': backgroundColors[j],
+                            'border-top': borderTops[j],
+                            'border-bottom': borderBottoms[j]
+                        })
+                        let innerText = $('<div>')
+                        innerText.html('No data')
+                        if (data) {
+                            if (j % 2 === 0) {
+                                let percentCorrectR = parseFloat(data[j/2+1].percentCorrectR)
+                                if (typeof percentCorrectR === 'number' && !isNaN(percentCorrectR)) {
+                                    innerText.html(percentCorrectR.toFixed(4))
+                                } else {
+                                    innerText.html('No data')
+                                }
+                            } else {
+                                let percentCorrectTf = parseFloat(data[(j-1)/2+1].percentCorrectTf)
+                                if (typeof percentCorrectTf === 'number' && !isNaN(percentCorrectTf)) {
+                                    innerText.html(percentCorrectTf.toFixed(4))
+                                } else {
+                                    innerText.html('No data')
+                                }
+                            }
+                            $(innerText).wrapInner(`<a target="_blank" href="quatQuestionsPredict/quatQuestionsPredictDataForR_${column}_${Math.floor(j/2)+1}.txt">`)
                             $(jval).html(innerText)
                         }
                         $(innerText).css({ 'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif' })
