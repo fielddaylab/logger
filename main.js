@@ -206,6 +206,7 @@ $(document).ready((event) => {
             $('#invalidGame').hide()
             if (!queueExists) {
                 queueExists = true
+                $('#doneDiv').html('Working')
                 $('#doneDiv').show()
                 let workingTimer = setInterval(() => {
                     let currentText = $('#doneDiv').html()
