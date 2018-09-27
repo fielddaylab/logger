@@ -118,6 +118,10 @@ function array_column_fixed($input, $column_key) {
 
 function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAttributes, $column, $maxLevel = 100) {
     $sessionIDs = $sessionsAndTimes['sessions'];
+    $shouldUseAvgs = false;
+    if (isset($_GET['shouldUseAvgs'])) {
+        $shouldUseAvgs = $_GET['shouldUseAvgs'];
+    }
     $allData = array();
     // arrays of arrays (temp)
     $levelTimesPerLevelAll = array();
@@ -644,12 +648,20 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
         $quesIndex = intval(substr($column, 1, 1));
         $ansIndex = intval(substr($column, 2, 1));
         foreach ($questionAnswereds as $i=>$val) {
-            if (isset($val[$quesIndex])) {
-                $numMoves = $numMovesAll[$i];
-                $numTypeChanges = array_sum($typeCol[$i]);
-                $time = array_sum($timeCol[$i]);
-                $minMax = array_sum($avgCol[$i]);
-                $predictors []= array($numMoves, $numTypeChanges, $levelsCol[$i], $time, $minMax, $percentGoodMovesAvgs[$i]);
+            if (isset($val[$quesIndex])) {                
+                if ($shouldUseAvgs) {
+                    $numMoves = $numMovesAll[$i] / $levelsCol[$i];
+                    $numTypeChanges = average($typeCol[$i]);
+                    $time = average($timeCol[$i]);
+                    $minMax = average($avgCol[$i]);
+                    $predictors []= array($numMoves, $numTypeChanges, $levelsCol[$i], $time, $minMax, $percentGoodMovesAvgs[$i]);
+                } else {
+                    $numMoves = $numMovesAll[$i];
+                    $numTypeChanges = array_sum($typeCol[$i]);
+                    $time = array_sum($timeCol[$i]);
+                    $minMax = array_sum($avgCol[$i]);
+                    $predictors []= array($numMoves, $numTypeChanges, $levelsCol[$i], $time, $minMax, $percentGoodMovesAvgs[$i]);
+                }
                 $predicted []= ($val[$quesIndex] === $ansIndex) ? 1 : 0;
             }
         }
