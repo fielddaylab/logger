@@ -113,6 +113,22 @@ $(document).ready((event) => {
             <td style="border-left-width:4px; "></td>
             <td style="border-left-width:4px; "></td>
         </tr>
+        <tr>
+        <th scope="row">Random accuracy</th>
+            <td style="border-left-width:4px; "></td>
+            <td></td>
+            <td></td>
+            <td scope="col" style="border-right-width:4px;"></td>
+            <td scope="col" style="border-left-width:4px; "></td>
+            <td></td>
+            <td style="border-right-width:4px;"></td>
+            <td style="border-left-width:4px; "></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td style="border-right-width:4px;"></td>
+            <td style="border-left-width:4px; "></td>
+        </tr>
         `)
     )
     lvls.forEach((value, index, arr) => {
@@ -179,6 +195,22 @@ $(document).ready((event) => {
                 <td style="border-right-width:4px;"></td>
                 <td style="border-left-width:4px; "></td>
             </tr>
+            <tr>
+                <th scope="row">Random accuracy</th>
+                <td style="border-left-width:4px; "></td>
+                <td></td>
+                <td></td>
+                <td scope="col" style="border-right-width:4px;"></td>
+                <td scope="col" style="border-left-width:4px; "></td>
+                <td></td>
+                <td style="border-right-width:4px;"></td>
+                <td style="border-left-width:4px; "></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td style="border-right-width:4px;"></td>
+                <td style="border-left-width:4px; "></td>
+            </tr>
         `)
     )
 
@@ -200,7 +232,8 @@ $(document).ready((event) => {
     $(document).on('click', '#goButton', (event) => {
         event.preventDefault()
         if ($('#gameSelect').val() !== 'WAVES' || !($('#numLevelsTableCheckbox').is(':checked') || $('#levelCompletionCheckbox').is(':checked') ||
-            $('#questionsCheckbox').is(':checked') || $('#levelRangeQuestionCheckbox').is(':checked') || $('#otherFeaturesCheckbox').is(':checked'))) {
+            $('#questionsCheckbox').is(':checked') || $('#levelRangeQuestionCheckbox').is(':checked') || $('#otherFeaturesCheckbox').is(':checked') ||
+            $('#quaternaryQuestionCheckbox').is(':checked'))) {
             $('#invalidGame').fadeIn(100)
         } else {
             $('#invalidGame').hide()
@@ -211,7 +244,7 @@ $(document).ready((event) => {
                 let workingTimer = setInterval(() => {
                     let currentText = $('#doneDiv').html()
                     let newText
-                    if (currentText !== 'Working . . . .') {
+                    if ((currentText.match(/\./g) || []).length < 4) {
                         newText = currentText + ' .'
                     } else {
                         newText = 'Working'
@@ -407,7 +440,7 @@ $(document).ready((event) => {
                         let innerText = $('<div>')
                         innerText.html('No data')
                         if (data && data.pValues) {
-                            if (j < columnElements.length - 2) {
+                            if (j < columnElements.length - 3) {
                                 if (typeof data.pValues[j] === 'number' && !isNaN(data.pValues[j]) && typeof data.coefficients[j] === 'number' && !isNaN(data.coefficients[j])) {
                                     innerText.html(data.coefficients[j].toFixed(4) + ',<br>' + data.pValues[j].toFixed(4))
                                     if (data.pValues[j] < 0.05) {
@@ -417,17 +450,24 @@ $(document).ready((event) => {
                                 $(jval).html(innerText)
                                 $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=challenges&row=${rowNames[j].replace('%', 'percent')}&col=${column}&i=${i}&j=${j}" target="_blank"></a>`)
                             } else {
-                                if (j === columnElements.length - 2) {
+                                if (j === columnElements.length - 3) {
                                     let percentCorrectR = parseFloat(data.percentCorrectR)
                                     if (typeof percentCorrectR === 'number' && !isNaN(percentCorrectR)) {
                                         innerText.html(percentCorrectR.toFixed(5))
                                     } else {
                                         innerText.html('No data')
                                     }
-                                } else {
+                                } else if (j === columnElements.length - 2) {
                                     let mae = parseFloat(data.mae)
                                     if (typeof mae === 'number' && !isNaN(mae)) {
                                         innerText.html(mae.toFixed(5))
+                                    } else {
+                                        innerText.html('No data')
+                                    }
+                                } else if (j === columnElements.length - 1) {
+                                    let percentCorrectRand = parseFloat(data.percentCorrectRand)
+                                    if (typeof percentCorrectRand === 'number' && !isNaN(percentCorrectRand)) {
+                                        innerText.html(percentCorrectRand.toFixed(5))
                                     } else {
                                         innerText.html('No data')
                                     }
@@ -560,7 +600,7 @@ $(document).ready((event) => {
                         let innerText = $('<div>')
                         innerText.html('No data')
                         if (data && data.pValues) {
-                            if (j < columnElements.length - 2) {
+                            if (j < columnElements.length - 3) {
                                 if (typeof data.pValues[j] === 'number' && !isNaN(data.pValues[j]) && typeof data.coefficients[j] === 'number' && !isNaN(data.coefficients[j])) {
                                     innerText.html(data.coefficients[j].toFixed(4) + ',<br>' + data.pValues[j].toFixed(4))
                                     if (data.pValues[j] < 0.05) {
@@ -570,17 +610,24 @@ $(document).ready((event) => {
                                 $(jval).html(innerText)
                                 $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=challenges&row=${rowNames[j].replace('%', 'percent')}&col=${column}&i=${i}&j=${j}" target="_blank"></a>`)
                             } else {
-                                if (j === columnElements.length - 2) {
+                                if (j === columnElements.length - 3) {
                                     let percentCorrectR = parseFloat(data.percentCorrectR)
                                     if (typeof percentCorrectR === 'number' && !isNaN(percentCorrectR)) {
                                         innerText.html(percentCorrectR.toFixed(5))
                                     } else {
                                         innerText.html('No data')
                                     }
-                                } else {
+                                } else if (j === columnElements.length - 2) {
                                     let percentCorrectTf = parseFloat(data.percentCorrectTf)
                                     if (typeof percentCorrectTf === 'number' && !isNaN(percentCorrectTf)) {
                                         innerText.html(percentCorrectTf.toFixed(5))
+                                    } else {
+                                        innerText.html('No data')
+                                    }
+                                } else if (j === columnElements.length - 1) {
+                                    let percentCorrectRand = parseFloat(data.percentCorrectRand)
+                                    if (typeof percentCorrectRand === 'number' && !isNaN(percentCorrectRand)) {
+                                        innerText.html(percentCorrectRand.toFixed(5))
                                     } else {
                                         innerText.html('No data')
                                     }
@@ -726,7 +773,7 @@ $(document).ready((event) => {
                             'border-bottom': borderBottoms[j]
                         })
                         let innerText = $('<div>')
-                        if (j < columnElements.length - 2) {
+                        if (j < columnElements.length - 3) {
                             if (typeof data.pValues[j] === 'number' && !isNaN(data.pValues[j]) && typeof data.coefficients[j] === 'number' && !isNaN(data.coefficients[j])) {
                                 innerText.html(data.coefficients[j].toFixed(4) + ',<br>' + data.pValues[j].toFixed(4))
                                 if (data.pValues[j] < 0.05) {
@@ -738,17 +785,24 @@ $(document).ready((event) => {
                             $(jval).html(innerText)
                             $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=questions&row=${rowNames[j].replace('%', 'percent')}&col=${column}&i=${i}&j=${j}" target="_blank"></a>`)
                         } else {
-                            if (j === columnElements.length - 2) {
+                            if (j === columnElements.length - 3) {
                                 let percentCorrectR = parseFloat(data.percentCorrectR)
                                 if (typeof percentCorrectR === 'number' && !isNaN(percentCorrectR)) {
                                     innerText.html(percentCorrectR.toFixed(5))
                                 } else {
                                     innerText.html('No data')
                                 }
-                            } else {
+                            } else if (j === columnElements.length - 2) {
                                 let percentCorrectTf = parseFloat(data.percentCorrectTf)
                                 if (typeof percentCorrectTf === 'number' && !isNaN(percentCorrectTf)) {
                                     innerText.html(percentCorrectTf.toFixed(5))
+                                } else {
+                                    innerText.html('No data')
+                                }
+                            } else if (j === columnElements.length - 1) {
+                                let percentCorrectRand = parseFloat(data.percentCorrectRand)
+                                if (typeof percentCorrectRand === 'number' && !isNaN(percentCorrectRand)) {
+                                    innerText.html(percentCorrectRand.toFixed(5))
                                 } else {
                                     innerText.html('No data')
                                 }
@@ -942,7 +996,7 @@ $(document).ready((event) => {
                     'endDate': $('#endDate').val(),
                     'shouldUseAvgs': shouldUseAvgs,
                 }
-                let columnElements = $(`#questionPredictBody tr td:nth-of-type(${i + 1})`)
+                let columnElements = $(`#quaternaryQuestionBody tr td:nth-of-type(${i + 1})`)
                 let column
                 switch (i) {
                     case 0:
@@ -955,8 +1009,8 @@ $(document).ready((event) => {
                         column = 'q3'; break
                 }
 
-                parametersQuatQuesPredict['quatQuestionPredictTable'] = true
-                parametersQuatQuesPredict['quatQuestionPredictColumn'] = column
+                parametersQuatQuesPredict['multinomQuestionPredictTable'] = true
+                parametersQuatQuesPredict['multinomQuestionPredictColumn'] = column
 
                 let loadTimer, backgroundColors = [], borderBottoms = [], borderTops = []
                 columnElements.each((index, value) => {
@@ -1000,12 +1054,12 @@ $(document).ready((event) => {
 
                 let callbackFunc = (data) => {
                     clearInterval(loadTimer)
-                    //localStorage.setItem(`data_questions_${column}_predict`, JSON.stringify(data))
-                    //let rowNames = []
-                    //$('#questionPredictBody tr th').each((j, jval) => {
-                    //    rowNames.push($(jval).text())
-                    //})
-                    //localStorage.setItem(`row_names_q_predict`, JSON.stringify(rowNames))
+                    localStorage.setItem(`data_qQuestions_${column}_predict`, JSON.stringify(data))
+                    let rowNames = []
+                    $('#quaternaryQuestionBody tr th').each((j, jval) => {
+                       rowNames.push($(jval).text())
+                    })
+                    localStorage.setItem(`row_names_qQ_predict`, JSON.stringify(rowNames))
                     columnElements.each((j, jval) => {
                         $(jval).css({
                             'vertical-align': 'middle',
@@ -1031,7 +1085,7 @@ $(document).ready((event) => {
                                     innerText.html('No data')
                                 }
                             }
-                            $(innerText).wrapInner(`<a target="_blank" href="quatQuestionsPredict/quatQuestionsPredictDataForR_${column}_${Math.floor(j/2)+1}.txt">`)
+                            //$(innerText).wrapInner(`<a target="_blank" href="multinomQuestionsPredict/multinomQuestionsPredictDataForR_${column}_${Math.floor(j/2)+1}.txt">`)
                             $(jval).html(innerText)
                         }
                         $(innerText).css({ 'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif' })
@@ -1040,7 +1094,7 @@ $(document).ready((event) => {
                 }
 
                 req = {
-                    parameters: parametersQuesPredict,
+                    parameters: parametersQuatQuesPredict,
                     callback: callbackFunc
                 }
                 queue.push(req)
@@ -1974,14 +2028,14 @@ $(document).ready((event) => {
         });
     }
 
-    setInterval(() => {
-        let currentText = $('#loadingText').html()
-        let newText
-        if (currentText !== 'Loading . . . .') {
-            newText = currentText + ' .'
-        } else {
-            newText = 'Loading .'
-        }
-        $('#loadingText').html(newText)
-    }, 500)
+    // setInterval(() => {
+    //     let currentText = $('#loadingText').html()
+    //     let newText
+    //     if ((currentText.match(/./g) || []).length !== 4) {
+    //         newText = currentText + ' .'
+    //     } else {
+    //         newText = 'Loading .'
+    //     }
+    //     $('#loadingText').html(newText)
+    // }, 500)
 })

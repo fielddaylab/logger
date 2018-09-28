@@ -759,6 +759,25 @@
                                             <td></td>
                                             <td></td>
                                         </tr>
+                                        <tr>
+                                            <th scope="row">Random accuracy</th>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                        </tr>
                                     </tbody>
                                 </table>
                                 <div style="font-size:14px; margin-bottom:6px; color:#777">
@@ -789,7 +808,7 @@
                         <div>
                             <div style="font-size:22px; margin-bottom:4px;">
                                 <label><input type="checkbox" id="levelRangeQuestionCheckbox" style="transform:scale(1.21);">
-                                <b>Binary question answer prediction accuracy by level range</b></label>
+                                <b>Binomial question answer prediction accuracy by level range</b></label>
                             </div>
                             <span>
                                 <table id="questionPredictTable" class="table table-striped table-bordered table-hover">
@@ -1136,17 +1155,17 @@
                         <div>
                             <div style="font-size:22px; margin-bottom:4px;">
                                 <label><input type="checkbox" id="quaternaryQuestionCheckbox" style="transform:scale(1.21);">
-                                <b>Quaternary question answer prediction accuracy by level range</b></label>
+                                <b>Multinomial question answer prediction accuracy by level range</b></label>
                             </div>
                             <span>
                                 <table id="quaternaryQuestionTable" class="table table-striped table-bordered table-hover">
                                     <thead>
                                         <tr>
                                             <th scope="col" style="top:0px;background-color:rgb(221, 221, 221);width:12%;"></th>
-                                            <th scope="col">Q1</th>
-                                            <th scope="col">Q2</th>
-                                            <th scope="col">Q3</th>
-                                            <th scope="col">Q4</th>
+                                            <th scope="col" style="width:22%;">Q1</th>
+                                            <th scope="col" style="width:22%;">Q2</th>
+                                            <th scope="col" style="width:22%;">Q3</th>
+                                            <th scope="col" style="width:22%;">Q4</th>
                                         </tr>
                                     </thead>
                                     <tbody id="quaternaryQuestionBody">
@@ -1263,7 +1282,8 @@
                                     The <b>second</b> sub-row of every row is the <b>deep neural net accuracy</b>.
                                 </div>
                                 <div style="font-size:14px; margin-bottom:6px; color:#777">
-                                    Click either the logistic regression or the DNN accuracy to download a CSV file of the data used for that cell.
+                                    Click either the logistic regression or the DNN accuracy to open a new page with a histogram of the data.<br>
+                                    This page also has the CSV download link.
                                 </div>
                             </span>
                         </div>
