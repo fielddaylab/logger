@@ -1635,6 +1635,10 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                     if ($prediction == $actual) {
                         $totalNumRightPredictions++;
                     }
+                    $predictionRand = mt_rand(0, 1);
+                    if ($predictionRand == $actual) {
+                        $totalNumRightPredictionsRand++;
+                    }
                 }
                 $totalNumPredictions += $numPredictions;
             }
@@ -1898,12 +1902,12 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
         $avgAvgPercentErrorRand = average($totalAvgPercentErrorRand);
         $avgAvgPercentError = average($totalAvgPercentError);
         if (is_numeric($avgAvgPercentError)) {
-            $percentCorrectR = 1 - $avgAvgPercentError;
+            $percentCorrectR = $avgAvgPercentError;
         } else {
             $percentCorrectR = null;
         }
         if (is_numeric($avgAvgPercentErrorRand)) {
-            $percentCorrectRand = 1 - $avgAvgPercentErrorRand;
+            $percentCorrectRand = $avgAvgPercentErrorRand;
         } else {
             $percentCorrectRand = null;
         }

@@ -164,7 +164,7 @@ $(document).ready((event) => {
     $('#numLevelsBody').append(
         $(`
             <tr style="border-top: 4px solid rgb(221, 221, 221);">
-                <th scope="row">Log reg accuracy</th>
+                <th scope="row">Log reg mean abs err</th>
                 <td style="border-left-width:4px; "></td>
                 <td></td>
                 <td></td>
@@ -196,7 +196,7 @@ $(document).ready((event) => {
                 <td style="border-left-width:4px; "></td>
             </tr>
             <tr>
-                <th scope="row">Random accuracy</th>
+                <th scope="row">Random mean abs err</th>
                 <td style="border-left-width:4px; "></td>
                 <td></td>
                 <td></td>
