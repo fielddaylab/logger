@@ -128,6 +128,7 @@ $(document).ready((event) => {
             <td></td>
             <td style="border-right-width:4px;"></td>
             <td style="border-left-width:4px; "></td>
+            <td style="border-left-width:4px; "></td>
         </tr>
         `)
     )
@@ -426,6 +427,7 @@ $(document).ready((event) => {
                     clearInterval(loadTimer)
                     localStorage.setItem(`data_numLevels_${column}`, JSON.stringify(data))
                     let rowNames = []
+                    $(`#numLevelsNumSessionsRow td:nth-child(${i+2})`).html(data.numSessions.numTrue + ' / ' + data.numSessions.numFalse)
                     $('#numLevelsBody tr th').each((j, jval) => {
                         rowNames.push($(jval).text())
                     })
@@ -586,6 +588,7 @@ $(document).ready((event) => {
                     clearInterval(loadTimer)
                     localStorage.setItem(`data_challenges_${column}`, JSON.stringify(data))
                     let rowNames = []
+                    $(`#predictNumSessionsRow td:nth-child(${i+2})`).html(data.numSessions.numTrue + ' / ' + data.numSessions.numFalse)
                     $('#predictTableBody tr th').each((j, jval) => {
                         rowNames.push($(jval).text())
                     })
@@ -761,6 +764,7 @@ $(document).ready((event) => {
                     // Store the computation values for retrieval when the link is clicked
                     localStorage.setItem(`data_questions_${column}`, JSON.stringify(data))
                     let rowNames = []
+                    $(`#questionsNumSessionsRow td:nth-child(${i+2})`).html(data.numSessions.numTrue + ' / ' + data.numSessions.numFalse)
                     $('#tableAllBody tr th').each((j, jval) => {
                         rowNames.push($(jval).text())
                     })
@@ -939,6 +943,7 @@ $(document).ready((event) => {
                     //    rowNames.push($(jval).text())
                     //})
                     //localStorage.setItem(`row_names_q_predict`, JSON.stringify(rowNames))
+                    $(`#binomialNumSessionsRow td:nth-child(${i+2})`).html(data.numSessions.numTrue + ' / ' + data.numSessions.numFalse)
                     columnElements.each((j, jval) => {
                         $(jval).css({
                             'vertical-align': 'middle',
@@ -1056,6 +1061,7 @@ $(document).ready((event) => {
                     clearInterval(loadTimer)
                     localStorage.setItem(`data_qQuestions_${column}_predict`, JSON.stringify(data))
                     let rowNames = []
+                    $(`#multinomialNumSessionsRow td:nth-child(${i+2})`).html(data.numSessions.numTrue + ' / ' + data.numSessions.numFalse)
                     $('#quaternaryQuestionBody tr th').each((j, jval) => {
                        rowNames.push($(jval).text())
                     })

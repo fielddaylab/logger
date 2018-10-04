@@ -665,7 +665,9 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
         foreach ($predictors as $i=>$predictor) {
             $predictors[$i][] = $predicted[$i];
         }
-        return array('predictors'=>$predictors, 'predicted'=>$predicted);
+        $numTrue = count(array_filter($predicted, function ($a) { return $a === 1; }));
+        $numFalse = count(array_filter($predicted, function ($a) { return $a === 0; }));
+        return array('predictors'=>$predictors, 'predicted'=>$predicted, 'numSessions'=>array('numTrue'=>$numTrue, 'numFalse'=>$numFalse));
 
     } else if (isset($_GET['predictTable'])) {
         $predictors = array();
@@ -692,8 +694,10 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
         foreach ($predictors as $i=>$predictor) {
             $predictors[$i][] = $predicted[$i];
         }
-        return array('predictors'=>$predictors, 'predicted'=>$predicted);
-    } else if (isset($_GET['numLevelsColumn'])){
+        $numTrue = count(array_filter($predicted, function ($a) { return $a === 1; }));
+        $numFalse = count(array_filter($predicted, function ($a) { return $a === 0; }));
+        return array('predictors'=>$predictors, 'predicted'=>$predicted, 'numSessions'=>array('numTrue'=>$numTrue, 'numFalse'=>$numFalse));
+    } else if (isset($_GET['numLevelsColumn'])) {
         $predictors = array();
         $predicted = array();
         $levelsForTable = array(1, 3, 5, 7, 11, 13, 15, 19, 21, 23, 25, 27, 31, 33);
@@ -718,7 +722,7 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
         foreach ($predictors as $i=>$predictor) {
             $predictors[$i][] = $predicted[$i];
         }
-        return array('predictors'=>$predictors, 'predicted'=>$predicted);
+        return array('predictors'=>$predictors, 'predicted'=>$predicted, 'numSessions'=>count($predictors));
     } else if (isset($_GET['multinomQuestionPredictColumn'])) {
         $predictors = array();
         $predicted = array();
@@ -745,7 +749,7 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
         foreach ($predictors as $i=>$predictor) {
             $predictors[$i][] = $predicted[$i];
         }
-        return array('predictors'=>$predictors, 'predicted'=>$predicted);
+        return array('predictors'=>$predictors, 'predicted'=>$predicted, 'numSessions'=>count($predictors));
     }
 }
 
@@ -869,6 +873,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             $regression = analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAttributes, $column);
             $predictArray = $regression['predictors'];
             $predictedArray = $regression['predicted'];
+            $numPredictors = $regression['numSessions'];
 
             $totalNumPredictions = 0;
             $totalNumRightPredictions = 0;
@@ -938,7 +943,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             $percentCorrectR = ($totalNumPredictions === 0) ? null : $totalNumRightPredictions / $totalNumPredictions;
             $percentCorrectRand = ($totalNumPredictions === 0) ? null : $totalNumRightPredictionsRand / $totalNumPredictions;
 
-            return array('coefficients'=>$coefficients, 'stdErrs'=>$stdErrs, 'pValues'=>$pValues, 'regressionVars'=>$predictArray, 
+            return array('coefficients'=>$coefficients, 'stdErrs'=>$stdErrs, 'pValues'=>$pValues, 'regressionVars'=>$predictArray, 'numSessions'=>$numPredictors,
                 'regressionOutputs'=>$predictedArray, 'percentCorrectR'=>$percentCorrectR, 'percentCorrectTf'=>$percentCorrectTf, 'percentCorrectRand'=>$percentCorrectRand);
         } else {
             $questionPredictCol = $_GET['questionPredictColumn'];
@@ -948,6 +953,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                 $regression = analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAttributes, $questionPredictCol, $predLevel);
                 $predictArray = $regression['predictors'];
                 $predictedArray = $regression['predicted'];
+                $numPredictors = $regression['numSessions'];
 
                 $totalNumPredictions = 0;
                 $totalNumRightPredictions = 0;
@@ -1012,7 +1018,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                 //return array('totalNumRightPredictions'=>$totalNumRightPredictions, 'totalNumPredictions'=>$totalNumPredictions, 'percentCorrect'=>($totalNumRightPredictions / $totalNumPredictions));
                 $percentCorrectR = ($totalNumPredictions === 0) ? null : $totalNumRightPredictions / $totalNumPredictions;
 
-                $returnArray[$predLevel] = array('coefficients'=>$coefficients, 'stdErrs'=>$stdErrs, 'pValues'=>$pValues, 'regressionVars'=>$predictArray, 
+                $returnArray[$predLevel] = array('coefficients'=>$coefficients, 'stdErrs'=>$stdErrs, 'pValues'=>$pValues, 'regressionVars'=>$predictArray, 'numSessions'=>$numPredictors,
                     'regressionOutputs'=>$predictedArray, 'percentCorrectR'=>$percentCorrectR, 'percentCorrectTf'=>$percentCorrectTf);
             }
             return $returnArray;
@@ -1409,11 +1415,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
         $lvlsToUse = array_filter($levelsForTable, function ($a) use($colLvl) { return $a < $colLvl; });
         $isLvl1 = empty($lvlsToUse);
 
-        $colLvl = isset($levelsForTable[$lvlIndex+1]) ? $levelsForTable[$lvlIndex+1] : null;
-        $realColLvl = $levelsForTable[$lvlIndex];
-        if (!isset($colLvl)) {
-            return null;
-        }
+        $prevColLvl = $isLvl1 ? null : $levelsForTable[$lvlIndex-1];
         $params = array();
         $paramTypes = '';
         $query = 
@@ -1574,6 +1576,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
         $regression = analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAttributes, $predictColumn);
         $predictArray = $regression['predictors'];
         $predictedArray = $regression['predicted'];
+        $numPredictors = $regression['numSessions'];
 
         $totalNumPredictions = 0;
         $totalNumRightPredictions = 0;
@@ -1646,7 +1649,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
         $percentCorrectR = ($totalNumPredictions === 0) ? null : $totalNumRightPredictions / $totalNumPredictions;
         $percentCorrectRand = ($totalNumPredictions === 0) ? null : $totalNumRightPredictionsRand / $totalNumPredictions;
 
-        return array('coefficients'=>$coefficients, 'stdErrs'=>$stdErrs, 'pValues'=>$pValues, 'regressionVars'=>$predictArray, 
+        return array('coefficients'=>$coefficients, 'stdErrs'=>$stdErrs, 'pValues'=>$pValues, 'regressionVars'=>$predictArray, 'numSessions'=>$numPredictors,
             'regressionOutputs'=>$predictedArray, 'percentCorrectR'=>$percentCorrectR, 'percentCorrectTf'=>$percentCorrectTf, 'percentCorrectRand'=>$percentCorrectRand);
     } else if (isset($_GET['numLevelsColumn']) && !isset($_GET['questionPredictColumn']) && !isset($_GET['multinomQuestionPredictColumn'])) {
         $numLevelsColumn = $_GET['numLevelsColumn'];
@@ -1827,6 +1830,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
         $regression = analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAttributes, $numLevelsColumn);
         $predictArray = $regression['predictors'];
         $predictedArray = $regression['predicted'];
+        $numPredictors = $regression['numSessions'];
 
         $totalAvgPercentError = array();
         $totalAvgPercentErrorRand = array();
@@ -1912,7 +1916,11 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             $percentCorrectRand = null;
         }
 
-        return array('coefficients'=>$coefficients, 'stdErrs'=>$stdErrs, 'pValues'=>$pValues, 'regressionVars'=>$predictArray, 
+        $trueSessions = array_unique(array_intersect(array_column($completeEvents, 'session_id'), $uniqueSessions));
+        $numTrue = count($trueSessions); // number of sessions who completed every level including current col
+        $numFalse = $numSessions - $numTrue; // number of sessions who completed every level up to but not current col
+
+        return array('coefficients'=>$coefficients, 'stdErrs'=>$stdErrs, 'pValues'=>$pValues, 'regressionVars'=>$predictArray, 'numSessions'=>array('numTrue'=>$numTrue, 'numFalse'=>$numFalse),
             'regressionOutputs'=>$predictedArray, 'percentCorrectR'=>$percentCorrectR, 'mae'=>$mae, 'percentCorrectRand'=>$percentCorrectRand);
     } else if (isset($_GET['multinomQuestionPredictColumn'])) {
         $minMoves = $_GET['minMoves'];
@@ -2022,6 +2030,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             $regression = analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAttributes, $multinomQuestionPredictCol);
             $predictArray = $regression['predictors'];
             $predictedArray = $regression['predicted'];
+            $numPredictors = $regression['numSessions'];
 
             $totalNumPredictions = 0;
             $totalNumRightPredictions = 0;
@@ -2094,7 +2103,11 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             //return array('totalNumRightPredictions'=>$totalNumRightPredictions, 'totalNumPredictions'=>$totalNumPredictions, 'percentCorrect'=>($totalNumRightPredictions / $totalNumPredictions));
             $percentCorrectR = ($totalNumPredictions === 0) ? null : $totalNumRightPredictions / $totalNumPredictions;
 
-            $returnArray[$predLevel] = array('coefficients'=>$coefficients, 'stdErrs'=>$stdErrs, 'pValues'=>$pValues, 'regressionVars'=>$predictArray, 
+            $trueSessions = array_intersect(array_column($completeEvents, 'session_id'), $uniqueSessions);
+            $numTrue = count($trueSessions); // number of sessions who completed every level including current col
+            $numFalse = $numSessions - $numTrue; // number of sessions who completed every level up to but not current col
+
+            $returnArray[$predLevel] = array('coefficients'=>$coefficients, 'stdErrs'=>$stdErrs, 'pValues'=>$pValues, 'regressionVars'=>$predictArray, 'numSessions'=>array('numTrue'=>$numTrue, 'numFalse'=>$numFalse),
                 'regressionOutputs'=>$predictedArray, 'percentCorrectR'=>$percentCorrectR, 'percentCorrectTf'=>$percentCorrectTf);
             return $returnArray;
         }
