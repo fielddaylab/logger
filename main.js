@@ -336,6 +336,7 @@ $(document).ready((event) => {
         numCols = $('#numLevelsBody').find('tr:first td').length
         if (numLevelsTableChecked) {
             $(`#${collapserNames[numTables]}Collapser`).collapse('show')
+            $('#numLevelsNumSessionsRow').children().each((key, value) => { if (key > 0) $(value).html('-') })
             for (let i = 0; i < numCols; i++) {
                 let columnElements = $(`#numLevelsBody tr td:nth-child(${i+2})`).not('.disabled-cell')
                 let column
@@ -497,6 +498,7 @@ $(document).ready((event) => {
         numCols = $('#predictTableBody').find('tr:first td').length
         if (levelCompletionTableChecked) {
             $(`#${collapserNames[numTables]}Collapser`).collapse('show')
+            $('#predictNumSessionsRow').children().each((key, value) => { if (key > 0) $(value).html('-') })
             for (let i = 0; i < numCols; i++) {
                 let parametersChallenge = {
                     'gameID': $('#gameSelect').val(),
@@ -657,6 +659,7 @@ $(document).ready((event) => {
         numCols = $('#tableAllBody').find('tr:first td').length
         if (questionTableChecked) {
             $(`#${collapserNames[numTables]}Collapser`).collapse('show')
+            $('#questionsNumSessionsRow').children().each((key, value) => { if (key > 0) $(value).html('-') })
             for (let i = 0; i < numCols; i++) {
                 let columnElements = $(`#tableAllBody tr td:nth-child(${i+2})`)
                 let column
@@ -832,6 +835,7 @@ $(document).ready((event) => {
         numCols = $('#questionPredictBody').find('tr:first td').length
         if (levelRangeQuestionChecked) {
             $(`#${collapserNames[numTables]}Collapser`).collapse('show')
+            $('#binomialNumSessionsRow').children().each((key, value) => { if (key > 0) $(value).html('-') })
             for (let i = 0; i < numCols; i++) {
                 let parametersQuesPredict = {
                     'gameID': $('#gameSelect').val(),
@@ -989,6 +993,7 @@ $(document).ready((event) => {
         numCols = $('#quaternaryQuestionBody').find('tr:first td').length
         if (quaternaryQuestionChecked) {
             $(`#${collapserNames[numTables]}Collapser`).collapse('show')
+            $('#multinomialNumSessionsRow').children().each((key, value) => { if (key > 0) $(value).html('-') })
             for (let i = 0; i < numCols; i++) {
                 let parametersQuatQuesPredict = {
                     'gameID': $('#gameSelect').val(),
