@@ -783,12 +783,12 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                         WHERE event_custom=1
                         GROUP BY session_id
                         HAVING COUNT(*) >= ?
-                    LIMIT ?) temp
+                    ) temp
                 ) AS moves
             ) ";
             $params[] = $minMoves;
-            $params[] = $maxRows;
-            $paramTypes .= 'ii';
+            //$params[] = $maxRows;
+            $paramTypes .= 'i';
         }
 
         if (isset($column) || isset($_GET['questionPredictColumn'])) $minQuestions = 1;
