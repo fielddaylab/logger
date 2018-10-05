@@ -943,7 +943,7 @@ $(document).ready((event) => {
                     //    rowNames.push($(jval).text())
                     //})
                     //localStorage.setItem(`row_names_q_predict`, JSON.stringify(rowNames))
-                    $(`#binomialNumSessionsRow td:nth-child(${i+2})`).html(data.numSessions.numTrue + ' / ' + data.numSessions.numFalse)
+                    $(`#binomialNumSessionsRow td:nth-child(${i+2})`).html(data[1].numSessions.numTrue + ' / ' + data[1].numSessions.numFalse)
                     columnElements.each((j, jval) => {
                         $(jval).css({
                             'vertical-align': 'middle',
@@ -1997,8 +1997,10 @@ $(document).ready((event) => {
             }
         }
         self.execute = function() {
-            if (self.queue.length <= 0) {
+            if (self.numActiveCalls <= 0) {
                 self.doWhenEmpty()
+            }
+            if (self.queue.length <= 0) {
                 return
             }
             self.numActiveCalls++
@@ -2009,6 +2011,9 @@ $(document).ready((event) => {
                     off()
                     showError(errorThrown)
                 }).then(() => {
+                    self.numActiveCalls--
+                    self.execute()
+                }, () => { // handler of fail, still say this request is done and execute another one
                     self.numActiveCalls--
                     self.execute()
                 })

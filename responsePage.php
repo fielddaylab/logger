@@ -791,6 +791,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             $paramTypes .= 'ii';
         }
 
+        if (isset($column) || isset($_GET['questionPredictColumn'])) $minQuestions = 1;
         if ($minQuestions > 0) {
             $query .= "AND a.session_id IN
             (
@@ -1467,7 +1468,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                     WHERE event_custom=1 AND app_id=? AND session_id IN
                     (
                         SELECT session_id FROM log WHERE app_id=? AND event='COMPLETE'
-                        AND level IN (" . implode(",", array_map('intval', $lvlsToUse)) . ")
+                        AND level IN (" . implode(",", array_map('intval', array_merge($lvlsToUse, [$colLvl]))) . ")
                         GROUP BY session_id
                         HAVING COUNT(DISTINCT level) = ?
                     )
@@ -1477,7 +1478,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                 ) b
             )
             ORDER BY a.client_time";
-            array_push($params, $minMoves, $maxRows, $gameID, $gameID, count($lvlsToUse), $minMoves, $maxRows);
+            array_push($params, $minMoves, $maxRows, $gameID, $gameID, count($lvlsToUse)+1, $minMoves, $maxRows);
             $paramTypes .= 'iissiii';
         } else {
             $query .= "
@@ -1604,9 +1605,9 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             if (!is_dir('challenges')) {
                 mkdir('challenges', 0777, true);
             }
-            $dataFile = 'challenges/challengesDataForR_'. $realColLvl .'.txt';
+            $dataFile = 'challenges/challengesDataForR_'. $colLvl .'.txt';
             file_put_contents($dataFile, $predictString);
-            exec("/usr/local/bin/Rscript challenges/challengesScript.R " . $realColLvl . ' ' . str_replace(',', ' ', $headerString), $rResults);
+            exec("/usr/local/bin/Rscript challenges/challengesScript.R " . $colLvl . ' ' . str_replace(',', ' ', $headerString), $rResults);
             file_put_contents($dataFile, $predictString10Percent, FILE_APPEND);
             exec("source ./tensorflow/bin/activate && python tfscript.py $dataFile " . implode(' ', range(1, count(explode(',', $headerString))+1)), $tfOutput);
             $percentCorrectTf = isset($tfOutput[count($tfOutput)-1]) ? $tfOutput[count($tfOutput)-1] : null;
@@ -1649,7 +1650,11 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
         $percentCorrectR = ($totalNumPredictions === 0) ? null : $totalNumRightPredictions / $totalNumPredictions;
         $percentCorrectRand = ($totalNumPredictions === 0) ? null : $totalNumRightPredictionsRand / $totalNumPredictions;
 
-        return array('coefficients'=>$coefficients, 'stdErrs'=>$stdErrs, 'pValues'=>$pValues, 'regressionVars'=>$predictArray, 'numSessions'=>$numPredictors,
+        $trueSessions = array_unique(array_column(array_filter($completeEvents, function ($a) use ($colLvl) { return $a['level'] == $colLvl; }), 'session_id'));
+        $numTrue = count($trueSessions); // number of sessions who completed every level including current col
+        $numFalse = $numSessions - $numTrue; // number of sessions who completed every level up to but not current col
+
+        return array('coefficients'=>$coefficients, 'stdErrs'=>$stdErrs, 'pValues'=>$pValues, 'regressionVars'=>$predictArray, 'numSessions'=>array('numTrue'=>$numTrue, 'numFalse'=>$numFalse),
             'regressionOutputs'=>$predictedArray, 'percentCorrectR'=>$percentCorrectR, 'percentCorrectTf'=>$percentCorrectTf, 'percentCorrectRand'=>$percentCorrectRand);
     } else if (isset($_GET['numLevelsColumn']) && !isset($_GET['questionPredictColumn']) && !isset($_GET['multinomQuestionPredictColumn'])) {
         $numLevelsColumn = $_GET['numLevelsColumn'];
@@ -1661,15 +1666,11 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
         $levelsForTable = array(1, 3, 5, 7, 11, 13, 15, 19, 21, 23, 25, 27, 31, 33);
         $colLvl = intval(substr($numLevelsColumn, 3));
         $lvlIndex = array_search($colLvl, $levelsForTable);
-        $maxRows = 20 + 5 + $lvlIndex; // n-p=20
+        $maxRows = $_GET['maxRows'];//20 + 5 + $lvlIndex; // n-p=20
         $lvlsToUse = array_filter($levelsForTable, function ($a) use($colLvl) { return $a < $colLvl; });
         $isLvl1 = empty($lvlsToUse);
 
-        $colLvl = isset($levelsForTable[$lvlIndex+1]) ? $levelsForTable[$lvlIndex+1] : null;
-        $realColLvl = $levelsForTable[$lvlIndex];
-        if (!isset($colLvl)) {
-            return null;
-        }
+        $prevColLvl = $isLvl1 ? null : $levelsForTable[$lvlIndex-1];
         $params = array();
         $paramTypes = '';
         $query = 
@@ -1721,7 +1722,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                     WHERE event_custom=1 AND app_id=? AND session_id IN
                     (
                         SELECT session_id FROM log WHERE app_id=? AND event='COMPLETE'
-                        AND level IN (" . implode(",", array_map('intval', $lvlsToUse)) . ")
+                        AND level IN (" . implode(",", array_map('intval', array_merge($lvlsToUse, [$colLvl]))) . ")
                         GROUP BY session_id
                         HAVING COUNT(DISTINCT level) = ?
                     )
@@ -1731,7 +1732,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                 ) b
             )
             ORDER BY a.client_time";
-            array_push($params, $minMoves, $maxRows, $gameID, $gameID, count($lvlsToUse), $minMoves, $maxRows);
+            array_push($params, $minMoves, $maxRows, $gameID, $gameID, count($lvlsToUse)+1, $minMoves, $maxRows);
             $paramTypes .= 'iissiii';
         } else {
             $query .= "
@@ -1839,7 +1840,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             $headerString = "num_slider_moves,num_type_changes,total_time,avg_knob_max_min";
             $numPgms = 0;
             foreach ($levelsForTable as $i=>$level) {
-                if ($level >= $realColLvl) break;
+                if ($level >= $colLvl) break;
                 $headerString .= ',pgm_lvl' . $level;
                 $numPgms++;
             }
@@ -1857,9 +1858,9 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             if (!is_dir('numLevels')) {
                 mkdir('numLevels', 0777, true);
             }
-            $dataFile = 'numLevels/numLevelDataForR_'. $realColLvl .'.txt';
+            $dataFile = 'numLevels/numLevelDataForR_'. $colLvl .'.txt';
             file_put_contents($dataFile, $predictString);
-            exec("/usr/local/bin/Rscript numLevels/numLevelsScript.R " . $realColLvl . ' ' . str_replace(',', ' ', $headerString), $rResults);
+            exec("/usr/local/bin/Rscript numLevels/numLevelsScript.R " . $colLvl . ' ' . str_replace(',', ' ', $headerString), $rResults);
             file_put_contents($dataFile, $predictString10Percent, FILE_APPEND);
             exec("source ./tensorflow/bin/activate && python tfscript.py $dataFile " . implode(' ', range(1, count(explode(',', $headerString))+1)), $tfOutput);
             $mae = isset($tfOutput[count($tfOutput)-1]) ? $tfOutput[count($tfOutput)-1] : null;
@@ -1915,8 +1916,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
         } else {
             $percentCorrectRand = null;
         }
-
-        $trueSessions = array_unique(array_intersect(array_column($completeEvents, 'session_id'), $uniqueSessions));
+        $trueSessions = array_unique(array_column(array_filter($completeEvents, function ($a) use ($colLvl) { return $a['level'] == $colLvl; }), 'session_id'));
         $numTrue = count($trueSessions); // number of sessions who completed every level including current col
         $numFalse = $numSessions - $numTrue; // number of sessions who completed every level up to but not current col
 
