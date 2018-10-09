@@ -42,7 +42,21 @@ $(document).ready((event) => {
             })
     })
     
-
+    let algorithmNames = ['Nearest Neighbors', 'Linear SVM', 'RBF SVM', 'Gaussian Process',
+    'Decision Tree', 'Random Forest', 'Neural Net', 'AdaBoost', 'Naive Bayes', 'QDA']
+    $('#quaternaryQuestionBody tr').each((i, ival) => {
+        for (let j = 0; j < 10; j++) {
+            $(ival).after($(
+                `<tr>
+                    <td style="width:15%; ${(j === 0) ? 'border-bottom-width:4px;' : ''}">${algorithmNames[9-j]}</td>
+                    <td ${(j === 0) ? 'style=\"border-bottom-width:4px;\"' : ''}></td>
+                    <td ${(j === 0) ? 'style=\"border-bottom-width:4px;\"' : ''}></td>
+                    <td ${(j === 0) ? 'style=\"border-bottom-width:4px;\"' : ''}></td>
+                    <td ${(j === 0) ? 'style=\"border-bottom-width:4px;\"' : ''}></td>
+                </tr>`
+            ))
+        }
+    })
     let queueExists = false
 
     let lvls = [1, 3, 5, 7, 11, 13, 15, 19, 21, 23, 25, 27, 31]
@@ -77,61 +91,63 @@ $(document).ready((event) => {
             }
         })
     })
-    $('#predictTableBody').append(
-        $(`
-        <tr style="border-top: 4px solid rgb(221, 221, 221);">
-            <th scope="row">Log reg accuracy</th>
-            <td style="border-left-width:4px; "></td>
-            <td></td>
-            <td></td>
-            <td scope="col" style="border-right-width:4px;"></td>
-            <td scope="col" style="border-left-width:4px; "></td>
-            <td></td>
-            <td style="border-right-width:4px;"></td>
-            <td style="border-left-width:4px; "></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td style="border-right-width:4px;"></td>
-            <td style="border-left-width:4px; "></td>
-            <td style="border-left-width:4px; "></td>
-        </tr>
-        <tr>
-            <th scope="row">DNN accuracy</th>
-            <td style="border-left-width:4px; "></td>
-            <td></td>
-            <td></td>
-            <td scope="col" style="border-right-width:4px;"></td>
-            <td scope="col" style="border-left-width:4px; "></td>
-            <td></td>
-            <td style="border-right-width:4px;"></td>
-            <td style="border-left-width:4px; "></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td style="border-right-width:4px;"></td>
-            <td style="border-left-width:4px; "></td>
-            <td style="border-left-width:4px; "></td>
-        </tr>
-        <tr>
-        <th scope="row">Random accuracy</th>
-            <td style="border-left-width:4px; "></td>
-            <td></td>
-            <td></td>
-            <td scope="col" style="border-right-width:4px;"></td>
-            <td scope="col" style="border-left-width:4px; "></td>
-            <td></td>
-            <td style="border-right-width:4px;"></td>
-            <td style="border-left-width:4px; "></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td style="border-right-width:4px;"></td>
-            <td style="border-left-width:4px; "></td>
-            <td style="border-left-width:4px; "></td>
-        </tr>
-        `)
-    )
+    if (true) {
+        $('#predictTableBody').append(
+            $(`
+            <tr style="border-top: 4px solid rgb(221, 221, 221);">
+                <th scope="row">Log reg accuracy</th>
+                <td style="border-left-width:4px; "></td>
+                <td></td>
+                <td></td>
+                <td scope="col" style="border-right-width:4px;"></td>
+                <td scope="col" style="border-left-width:4px; "></td>
+                <td></td>
+                <td style="border-right-width:4px;"></td>
+                <td style="border-left-width:4px; "></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td style="border-right-width:4px;"></td>
+                <td style="border-left-width:4px; "></td>
+                <td style="border-left-width:4px; "></td>
+            </tr>
+            <tr>
+                <th scope="row">DNN accuracy</th>
+                <td style="border-left-width:4px; "></td>
+                <td></td>
+                <td></td>
+                <td scope="col" style="border-right-width:4px;"></td>
+                <td scope="col" style="border-left-width:4px; "></td>
+                <td></td>
+                <td style="border-right-width:4px;"></td>
+                <td style="border-left-width:4px; "></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td style="border-right-width:4px;"></td>
+                <td style="border-left-width:4px; "></td>
+                <td style="border-left-width:4px; "></td>
+            </tr>
+            <tr>
+            <th scope="row">Random accuracy</th>
+                <td style="border-left-width:4px; "></td>
+                <td></td>
+                <td></td>
+                <td scope="col" style="border-right-width:4px;"></td>
+                <td scope="col" style="border-left-width:4px; "></td>
+                <td></td>
+                <td style="border-right-width:4px;"></td>
+                <td style="border-left-width:4px; "></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td style="border-right-width:4px;"></td>
+                <td style="border-left-width:4px; "></td>
+                <td style="border-left-width:4px; "></td>
+            </tr>
+            `)
+        )   
+    }
     lvls.forEach((value, index, arr) => {
         let newRow = $(`<tr class="rowLvl">`)
         newRow.append(
@@ -162,58 +178,60 @@ $(document).ready((event) => {
             }
         })
     })
-    $('#numLevelsBody').append(
-        $(`
-            <tr style="border-top: 4px solid rgb(221, 221, 221);">
-                <th scope="row">Log reg mean abs err</th>
-                <td style="border-left-width:4px; "></td>
-                <td></td>
-                <td></td>
-                <td scope="col" style="border-right-width:4px;"></td>
-                <td scope="col" style="border-left-width:4px; "></td>
-                <td></td>
-                <td style="border-right-width:4px;"></td>
-                <td style="border-left-width:4px; "></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td style="border-right-width:4px;"></td>
-                <td style="border-left-width:4px; "></td>
-            </tr>
-            <tr>
-                <th scope="row">DNN mean abs err</th>
-                <td style="border-left-width:4px; "></td>
-                <td></td>
-                <td></td>
-                <td scope="col" style="border-right-width:4px;"></td>
-                <td scope="col" style="border-left-width:4px; "></td>
-                <td></td>
-                <td style="border-right-width:4px;"></td>
-                <td style="border-left-width:4px; "></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td style="border-right-width:4px;"></td>
-                <td style="border-left-width:4px; "></td>
-            </tr>
-            <tr>
-                <th scope="row">Random mean abs err</th>
-                <td style="border-left-width:4px; "></td>
-                <td></td>
-                <td></td>
-                <td scope="col" style="border-right-width:4px;"></td>
-                <td scope="col" style="border-left-width:4px; "></td>
-                <td></td>
-                <td style="border-right-width:4px;"></td>
-                <td style="border-left-width:4px; "></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td style="border-right-width:4px;"></td>
-                <td style="border-left-width:4px; "></td>
-            </tr>
-        `)
-    )
+    if (true) { // this is simply so I can minimize this section of code
+        $('#numLevelsBody').append(
+            $(`
+                <tr style="border-top: 4px solid rgb(221, 221, 221);">
+                    <th scope="row">Log reg mean abs err</th>
+                    <td style="border-left-width:4px; "></td>
+                    <td></td>
+                    <td></td>
+                    <td scope="col" style="border-right-width:4px;"></td>
+                    <td scope="col" style="border-left-width:4px; "></td>
+                    <td></td>
+                    <td style="border-right-width:4px;"></td>
+                    <td style="border-left-width:4px; "></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td style="border-right-width:4px;"></td>
+                    <td style="border-left-width:4px; "></td>
+                </tr>
+                <tr>
+                    <th scope="row">DNN mean abs err</th>
+                    <td style="border-left-width:4px; "></td>
+                    <td></td>
+                    <td></td>
+                    <td scope="col" style="border-right-width:4px;"></td>
+                    <td scope="col" style="border-left-width:4px; "></td>
+                    <td></td>
+                    <td style="border-right-width:4px;"></td>
+                    <td style="border-left-width:4px; "></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td style="border-right-width:4px;"></td>
+                    <td style="border-left-width:4px; "></td>
+                </tr>
+                <tr>
+                    <th scope="row">Random mean abs err</th>
+                    <td style="border-left-width:4px; "></td>
+                    <td></td>
+                    <td></td>
+                    <td scope="col" style="border-right-width:4px;"></td>
+                    <td scope="col" style="border-left-width:4px; "></td>
+                    <td></td>
+                    <td style="border-right-width:4px;"></td>
+                    <td style="border-left-width:4px; "></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td style="border-right-width:4px;"></td>
+                    <td style="border-left-width:4px; "></td>
+                </tr>
+            `)
+        )
+    }
 
     let totalSessions
     let errorTracker = 0
@@ -994,7 +1012,7 @@ $(document).ready((event) => {
         if (quaternaryQuestionChecked) {
             $(`#${collapserNames[numTables]}Collapser`).collapse('show')
             $('#multinomialNumSessionsRow').children().each((key, value) => { if (key > 0) $(value).html('-') })
-            for (let i = 0; i < numCols; i++) {
+            for (let i = 1; i < 2; i++) {
                 let parametersQuatQuesPredict = {
                     'gameID': $('#gameSelect').val(),
                     'maxRows': $('#maxRows').val(),
@@ -1009,13 +1027,13 @@ $(document).ready((event) => {
                 let columnElements = $(`#quaternaryQuestionBody tr td:nth-of-type(${i + 1})`)
                 let column
                 switch (i) {
-                    case 0:
-                        column = 'q0'; break
                     case 1:
-                        column = 'q1'; break
+                        column = 'q0'; break
                     case 2:
-                        column = 'q2'; break
+                        column = 'q1'; break
                     case 3:
+                        column = 'q2'; break
+                    case 4:
                         column = 'q3'; break
                 }
 
@@ -1064,9 +1082,9 @@ $(document).ready((event) => {
 
                 let callbackFunc = (data) => {
                     clearInterval(loadTimer)
-                    localStorage.setItem(`data_qQuestions_${column}_predict`, JSON.stringify(data))
+                    localStorage.setItem(`data_multinomQuestions_${column}_predict`, JSON.stringify(data))
                     let rowNames = []
-                    $(`#multinomialNumSessionsRow td:nth-child(${i+2})`).html(data.numSessions.numTrue + ' / ' + data.numSessions.numFalse)
+                    $(`#multinomialNumSessionsRow td:nth-child(${i+1})`).html(data[1].numSessions.numA + ' / ' + data[1].numSessions.numB + ' / ' + data[1].numSessions.numC + ' / ' + data[1].numSessions.numD)
                     $('#quaternaryQuestionBody tr th').each((j, jval) => {
                        rowNames.push($(jval).text())
                     })
@@ -1081,22 +1099,18 @@ $(document).ready((event) => {
                         let innerText = $('<div>')
                         innerText.html('No data')
                         if (data) {
-                            if (j % 2 === 0) {
-                                let percentCorrectR = parseFloat(data[j/2+1].percentCorrectR)
-                                if (typeof percentCorrectR === 'number' && !isNaN(percentCorrectR)) {
-                                    innerText.html(percentCorrectR.toFixed(4))
+                            let numAlgorithms = 10
+                            if (j % numAlgorithms === 0 && data[Math.floor(j / numAlgorithms)]) {
+                                let percentCorrect = parseFloat(data[Math.floor(j / numAlgorithms)].accuracies[j % numAlgorithms])
+                                if (typeof percentCorrect === 'number' && !isNaN(percentCorrect)) {
+                                    innerText.html(percentCorrect.toFixed(4))
                                 } else {
                                     innerText.html('No data')
                                 }
                             } else {
-                                let percentCorrectTf = parseFloat(data[(j-1)/2+1].percentCorrectTf)
-                                if (typeof percentCorrectTf === 'number' && !isNaN(percentCorrectTf)) {
-                                    innerText.html(percentCorrectTf.toFixed(4))
-                                } else {
-                                    innerText.html('No data')
-                                }
+                                innerText.html('No data')
                             }
-                            //$(innerText).wrapInner(`<a target="_blank" href="multinomQuestionsPredict/multinomQuestionsPredictDataForR_${column}_${Math.floor(j/2)+1}.txt">`)
+                            $(innerText).wrapInner(`<a target="_blank" href="multinomQuestionsPredict/multinomQuestionsPredictDataForR_${column}.txt">`)
                             $(jval).html(innerText)
                         }
                         $(innerText).css({ 'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif' })

@@ -23,3 +23,4 @@ Installing TensorFlow:
 	hello = tf.constant('Hello, TensorFlow!')
 	sess = tf.Session()
 	print(sess.run(hello))
+10. pip install -U scikit-learn

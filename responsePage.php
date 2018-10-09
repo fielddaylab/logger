@@ -1953,7 +1953,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             $params[] = $maxRows;
             $paramTypes .= 'ii';
         }
-
+        if ($minQuestions == 0) $minQuestions = 1;
         if ($minQuestions > 0) {
             $query .= "AND a.session_id IN
             (
@@ -2032,85 +2032,42 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             $predictedArray = $regression['predicted'];
             $numPredictors = $regression['numSessions'];
 
-            $totalNumPredictions = 0;
-            $totalNumRightPredictions = 0;
-            for ($trial = 0; $trial < 10; $trial++) {
-                $predictString = "# Generated " . date("Y-m-d H:i:s") . "\n" . $multinomQuestionPredictCol . ",";
-                $headerString = "num_slider_moves,num_type_changes,num_levels,total_time,avg_knob_max_min,avg_pgm";
-                $predictString .= $headerString . ",result\n";
-                $predict10Percent = array(); // Use 10% to test the model
-                $predictString10Percent = '';
-                foreach ($predictArray as $i=>$array) {
-                    if (random() < $percentTesting) {
-                        $predictString .= $multinomQuestionPredictCol . ',' . implode(',', $array) . "\n";
-                    } else {
-                        $predictString10Percent .= $multinomQuestionPredictCol . ',' . implode(',', $array) . "\n";
-                        $predict10Percent[] = $i;
-                    }
-                }
-                if (!is_dir('multinomQuestionsPredict')) {
-                    mkdir('multinomQuestionsPredict', 0777, true);
-                }
-                $dataFile = 'multinomQuestionsPredict/multinomQuestionsPredictDataForR_'. $multinomQuestionPredictCol .'.txt';
-                //file_put_contents($dataFile, $predictString);
-                exec("/usr/local/bin/Rscript multinomQuestionsPredict/multinomQuestionsPredictScript.R " . $multinomQuestionPredictCol . ' ' . str_replace(',', ' ', $headerString), $rResults);
-                // Write the other 10% of data to the file after R is done with it
-                //file_put_contents($dataFile, $predictString10Percent, FILE_APPEND);
-                //exec("source ./tensorflow/bin/activate && python tfscript.py $dataFile " . implode(' ', range(1, count(explode(',', $headerString))+1)), $tfOutput);
-                //$percentCorrectTf = isset($tfOutput[count($tfOutput)-1]) ? $tfOutput[count($tfOutput)-1] : null;
+            $predictString = "# Generated " . date("Y-m-d H:i:s") . "\n" . $multinomQuestionPredictCol . ",";
+            $headerString = "num_slider_moves,num_type_changes,num_levels,total_time,avg_knob_max_min,avg_pgm";
+            $predictString .= $headerString . ",result\n";
+            foreach ($predictArray as $i=>$array) {
+                $predictString .= $multinomQuestionPredictCol . ',' . implode(',', $array) . "\n";
+            }
+            if (!is_dir('multinomQuestionsPredict')) {
+                mkdir('multinomQuestionsPredict', 0777, true);
+            }
+            $dataFile = 'multinomQuestionsPredict/multinomQuestionsPredictDataForR_'. $multinomQuestionPredictCol .'.txt';
+            file_put_contents($dataFile, $predictString);
+            unset($sklOutput);
+            exec("/usr/local/bin/python sklearnscript.py $dataFile 1 2 3 4 5 6 7 2>&1", $sklOutput);
 
-                $coefficients = array();
-                $stdErrs = array();
-                $pValues = array();
-                $coefStart = 0;
-                foreach ($rResults as $key=>$string) {
-                    if (stristr($string, 'converged')) {
-                        $coefStart = $key;
-                        break;
-                    }
-                }
-                $probabilities = array();
-                $mostLikelyProbs = array();
-                $mostLikelyAnss = array(); // anss is plural of ans
-                if ($coefStart != 0) {
-                    for ($i = $coefStart+2, $lastRow = count($rResults); $i < $lastRow; $i++) {
-                        $values = preg_split('/\ +/', $rResults[$i]);  // put "words" of this line into an array
-                        $probabilities[] = array(is_numeric($x = str_replace(['<', '>'], '', $values[1])) ? $x+0 : null,
-                                                 is_numeric($x = str_replace(['<', '>'], '', $values[2])) ? $x+0 : null,
-                                                 is_numeric($x = str_replace(['<', '>'], '', $values[3])) ? $x+0 : null,
-                                                 is_numeric($x = str_replace(['<', '>'], '', $values[4])) ? $x+0 : null);
-                    }
-                    foreach ($probabilities as $i=>$prob) {
-                        $mostLikelyProbs[] = max(...$prob); // highest probability answer
-                        $mostLikelyAnss[] = array_keys($prob, $mostLikelyProbs[$i])[0];
-                    }
-                    return (array($predictedArray, $predictArray));
-                    $numRightPredictions = 0;
-                    $numPredictions = count($predict10Percent);
-                    foreach ($predict10Percent as $i=>$index) {
-                        $inputs = array_slice($predictArray[$index], 0, -1);
-                        $actual = $predictArray[$index];
-                        $prediction = $mostLikelyAnss[$i];
-                        if ($prediction == $actual) {
-                            $numRightPredictions++;
-                        }
-                    }
-                    $totalNumPredictions += $numPredictions;
-                    $totalNumRightPredictions += $numRightPredictions;
-                    //return array('numRightPredictions'=>$numRightPredictions, 'numPredictions'=>$numPredictions, 'percentCorrect'=>($numRightPredictions / $numPredictions));
+            $algorithmNames = array();
+            $accuracies = array();
+            if ($sklOutput) {
+                for ($i = 0, $lastRow = count($sklOutput); $i < $lastRow; $i++) {
+                    $values = preg_split('/\ +/', $sklOutput[$i]);  // put "words" of this line into an array
+                    $algorithmNames[] = implode(' ', array_slice($values, 0, -1));
+                    $accuracies[] = end($values);
                 }
             }
-            //return array('totalNumRightPredictions'=>$totalNumRightPredictions, 'totalNumPredictions'=>$totalNumPredictions, 'percentCorrect'=>($totalNumRightPredictions / $totalNumPredictions));
-            $percentCorrectR = ($totalNumPredictions === 0) ? null : $totalNumRightPredictions / $totalNumPredictions;
 
-            $trueSessions = array_intersect(array_column($completeEvents, 'session_id'), $uniqueSessions);
-            $numTrue = count($trueSessions); // number of sessions who completed every level including current col
-            $numFalse = $numSessions - $numTrue; // number of sessions who completed every level up to but not current col
+            $ansA = array_filter($predictedArray, function ($a) { return $a == 0; });
+            $ansB = array_filter($predictedArray, function ($a) { return $a == 1; });
+            $ansC = array_filter($predictedArray, function ($a) { return $a == 2; });
+            $ansD = array_filter($predictedArray, function ($a) { return $a == 3; });
+            $numA = count($ansA);
+            $numB = count($ansB);
+            $numC = count($ansC);
+            $numD = count($ansD);
 
-            $returnArray[$predLevel] = array('coefficients'=>$coefficients, 'stdErrs'=>$stdErrs, 'pValues'=>$pValues, 'regressionVars'=>$predictArray, 'numSessions'=>array('numTrue'=>$numTrue, 'numFalse'=>$numFalse),
-                'regressionOutputs'=>$predictedArray, 'percentCorrectR'=>$percentCorrectR, 'percentCorrectTf'=>$percentCorrectTf);
-            return $returnArray;
+            $returnArray[$predLevel] = array('numSessions'=>array('numA'=>$numA, 'numB'=>$numB, 'numC'=>$numC, 'numD'=>$numD), 'algorithmNames'=>$algorithmNames, 'accuracies'=>$accuracies);
         }
+        return $returnArray;
     } else {
         return array('error'=>'Incorrect parameters provided.');
     }
