@@ -1946,12 +1946,11 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                         WHERE event_custom=1
                         GROUP BY session_id
                         HAVING COUNT(*) >= ?
-                    LIMIT ?) temp
+                    ) temp
                 ) AS moves
             ) ";
             $params[] = $minMoves;
-            $params[] = $maxRows;
-            $paramTypes .= 'ii';
+            $paramTypes .= 'i';
         }
         if ($minQuestions == 0) $minQuestions = 1;
         if ($minQuestions > 0) {
@@ -2044,15 +2043,16 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             $dataFile = 'multinomQuestionsPredict/multinomQuestionsPredictDataForR_'. $multinomQuestionPredictCol .'.txt';
             file_put_contents($dataFile, $predictString);
             unset($sklOutput);
-            exec("/usr/local/bin/python sklearnscript.py $dataFile 1 2 3 4 5 6 7 2>&1", $sklOutput);
+            exec("/usr/local/bin/python -W ignore sklearnscript.py $dataFile 1 2 3 4 5 6 7", $sklOutput);
 
             $algorithmNames = array();
             $accuracies = array();
             if ($sklOutput) {
                 for ($i = 0, $lastRow = count($sklOutput); $i < $lastRow; $i++) {
                     $values = preg_split('/\ +/', $sklOutput[$i]);  // put "words" of this line into an array
-                    $algorithmNames[] = implode(' ', array_slice($values, 0, -1));
-                    $accuracies[] = end($values);
+                    $algorithmName = implode(' ', array_slice($values, 0, -1));
+                    $algorithmNames[] = $algorithmName;
+                    $accuracies[$algorithmName] = end($values);
                 }
             }
 

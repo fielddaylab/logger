@@ -23,6 +23,8 @@ from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 
 import sys
 from sys import argv
+sys.tracebacklimit = 0
+sys.stderr = open(os.devnull,'wb')
 args = sys.argv
 num_args = len(sys.argv)
 
@@ -54,7 +56,7 @@ classifiers = [
 # preprocess dataset, split into training and test part
 X = StandardScaler().fit_transform(X)
 X_train, X_test, y_train, y_test = \
-    train_test_split(X, y, test_size=.2)
+    train_test_split(X, y, test_size=.2, random_state=123)
 
 # iterate over classifiers
 for name, clf in zip(names, classifiers):

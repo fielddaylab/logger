@@ -1008,11 +1008,11 @@ $(document).ready((event) => {
         }
         numTables++
 
-        numCols = $('#quaternaryQuestionBody').find('tr:first td').length
+        numCols = $('#quaternaryQuestionBody').find('tr:not(:nth-of-type(1)):first td').length
         if (quaternaryQuestionChecked) {
             $(`#${collapserNames[numTables]}Collapser`).collapse('show')
             $('#multinomialNumSessionsRow').children().each((key, value) => { if (key > 0) $(value).html('-') })
-            for (let i = 1; i < 2; i++) {
+            for (let i = 1; i < numCols; i++) {
                 let parametersQuatQuesPredict = {
                     'gameID': $('#gameSelect').val(),
                     'maxRows': $('#maxRows').val(),
@@ -1081,6 +1081,7 @@ $(document).ready((event) => {
                 })
 
                 let callbackFunc = (data) => {
+                    //console.log(data)
                     clearInterval(loadTimer)
                     localStorage.setItem(`data_multinomQuestions_${column}_predict`, JSON.stringify(data))
                     let rowNames = []
@@ -1090,6 +1091,7 @@ $(document).ready((event) => {
                     })
                     localStorage.setItem(`row_names_qQ_predict`, JSON.stringify(rowNames))
                     columnElements.each((j, jval) => {
+                        //console.log(j)
                         $(jval).css({
                             'vertical-align': 'middle',
                             'background-color': backgroundColors[j],
@@ -1100,8 +1102,10 @@ $(document).ready((event) => {
                         innerText.html('No data')
                         if (data) {
                             let numAlgorithms = 10
-                            if (j % numAlgorithms === 0 && data[Math.floor(j / numAlgorithms)]) {
-                                let percentCorrect = parseFloat(data[Math.floor(j / numAlgorithms)].accuracies[j % numAlgorithms])
+                            let rowName = $(jval).siblings(`td:first`).text()
+                            if (data[Math.floor(j / numAlgorithms) + 1]) {
+                                //console.log((Math.floor(j / numAlgorithms) + 1) + ', ' + rowName + ", " + data[Math.floor(j / numAlgorithms) + 1].algorithmNames[j % numAlgorithms] + ', ' + String(rowName === data[Math.floor(j / numAlgorithms)].algorithmNames[j % numAlgorithms]))
+                                let percentCorrect = parseFloat(data[Math.floor(j / numAlgorithms) + 1].accuracies[rowName])
                                 if (typeof percentCorrect === 'number' && !isNaN(percentCorrect)) {
                                     innerText.html(percentCorrect.toFixed(4))
                                 } else {
