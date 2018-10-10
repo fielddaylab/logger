@@ -834,8 +834,6 @@ $(document).ready((event) => {
                             }
                             $(jval).html(innerText)
                         }
-
-        
                         $(innerText).css({'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif'})
                     })
                     off()
@@ -1085,7 +1083,9 @@ $(document).ready((event) => {
                     clearInterval(loadTimer)
                     localStorage.setItem(`data_multinomQuestions_${column}_predict`, JSON.stringify(data))
                     let rowNames = []
-                    $(`#multinomialNumSessionsRow td:nth-child(${i+1})`).html(data[1].numSessions.numA + ' / ' + data[1].numSessions.numB + ' / ' + data[1].numSessions.numC + ' / ' + data[1].numSessions.numD)
+                    let expectedAccuracy = Math.max(...Object.values(data[1].numSessions)) / Object.values(data[1].numSessions).reduce((sum, num) => sum + num, 0)
+                    $(`#multinomialNumSessionsRow td:nth-child(${i+1})`).html(data[1].numSessions.numA + ' / ' + data[1].numSessions.numB + ' / ' + data[1].numSessions.numC + ' / ' + data[1].numSessions.numD +
+                            '<br>(' + (expectedAccuracy).toFixed(2) + ' accuracy of expected val)')
                     $('#quaternaryQuestionBody tr th').each((j, jval) => {
                        rowNames.push($(jval).text())
                     })
@@ -1106,7 +1106,11 @@ $(document).ready((event) => {
                             if (data[Math.floor(j / numAlgorithms) + 1]) {
                                 //console.log((Math.floor(j / numAlgorithms) + 1) + ', ' + rowName + ", " + data[Math.floor(j / numAlgorithms) + 1].algorithmNames[j % numAlgorithms] + ', ' + String(rowName === data[Math.floor(j / numAlgorithms)].algorithmNames[j % numAlgorithms]))
                                 let percentCorrect = parseFloat(data[Math.floor(j / numAlgorithms) + 1].accuracies[rowName])
+                                // Color accuracies higher than random informed green
                                 if (typeof percentCorrect === 'number' && !isNaN(percentCorrect)) {
+                                    if (percentCorrect > expectedAccuracy) {
+                                        $(innerText).css('background-color', '#82e072')
+                                    }
                                     innerText.html(percentCorrect.toFixed(4))
                                 } else {
                                     innerText.html('No data')
