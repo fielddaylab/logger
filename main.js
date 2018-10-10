@@ -233,6 +233,7 @@ $(document).ready((event) => {
         )
     }
 
+    let theQueue
     let totalSessions
     let errorTracker = 0
     window.onerror = () => {
@@ -270,13 +271,21 @@ $(document).ready((event) => {
                     }
                     $('#doneDiv').html(newText).css('color', 'blue')
                 }, 500)
-                let queue = getAllData(true)
-                queue.emptyFunc = () => {
+                theQueue = getAllData(true)
+                theQueue.emptyFunc = () => {
                     clearInterval(workingTimer)
-                    $('#doneDiv').html('Done.').css('color', 'green')
                     queueExists = false
+                    if (!theQueue.aborted) $('#doneDiv').html('Done.').css('color', 'green')
+                    else $('#doneDiv').html('Aborted.').css('color', 'red')
                 }
             }
+        }
+    })
+
+    $(document).on('click', '#abortButton', (event) => {
+        event.preventDefault()
+        if (queueExists) {
+            theQueue.abort()
         }
     })
 
@@ -508,7 +517,7 @@ $(document).ready((event) => {
                     parameters: parametersLevels,
                     callback: callbackFunc
                 }
-                queue.push(req)
+                queue.push(req, loadTimer, columnElements, { 'backgroundColors': backgroundColors, 'borderBottoms': borderBottoms, 'borderTops': borderTops})
             }
         }
         numTables++
@@ -669,7 +678,7 @@ $(document).ready((event) => {
                     parameters: parametersChallenge,
                     callback: callbackFunc
                 }
-                queue.push(req)
+                queue.push(req, loadTimer, columnElements, { 'backgroundColors': backgroundColors, 'borderBottoms': borderBottoms, 'borderTops': borderTops})
             }
         }
         numTables++
@@ -843,7 +852,7 @@ $(document).ready((event) => {
                     parameters: parametersQues,
                     callback: callbackFunc
                 }
-                queue.push(req)
+                queue.push(req, loadTimer, columnElements, { 'backgroundColors': backgroundColors, 'borderBottoms': borderBottoms, 'borderTops': borderTops})
             }
         }
         numTables++
@@ -1001,7 +1010,7 @@ $(document).ready((event) => {
                     parameters: parametersQuesPredict,
                     callback: callbackFunc
                 }
-                queue.push(req)
+                queue.push(req, loadTimer, columnElements, { 'backgroundColors': backgroundColors, 'borderBottoms': borderBottoms, 'borderTops': borderTops})
             }
         }
         numTables++
@@ -1130,7 +1139,7 @@ $(document).ready((event) => {
                     parameters: parametersQuatQuesPredict,
                     callback: callbackFunc
                 }
-                queue.push(req)
+                queue.push(req, loadTimer, columnElements, { 'backgroundColors': backgroundColors, 'borderBottoms': borderBottoms, 'borderTops': borderTops})
             }
         }
         numTables++
@@ -2016,8 +2025,17 @@ $(document).ready((event) => {
         self.numActiveCalls = 0
         self.numSimultaneous = numSimultaneous
         self.promises = []
+        self.jqXHRs = []
         self.emptyFunc = undefined
-        self.push = function(call) {
+        self.aborted = false
+        self.loadTimers = [] // Used for aborting to reset columns
+        self.columnElements = []
+        self.columnStyles = []
+        self.push = function(call, loadTimer, colElements, colStyles) {
+            self.loadTimers.push(loadTimer)
+            self.columnElements.push(colElements)
+            self.columnStyles.push(colStyles)
+
             self.queue.push(call)
             if (self.numActiveCalls < self.numSimultaneous) {
                 self.execute()
@@ -2032,11 +2050,12 @@ $(document).ready((event) => {
             }
             self.numActiveCalls++
             let call = self.queue.shift()
+            let jqXHR = $.get('responsePage.php', call.parameters, (data, status, jqXHR) => { call.callback(data); }, 'json')
+            self.jqXHRs.push(jqXHR)
             self.promises.push(
-                $.get('responsePage.php', call.parameters, (data, status, jqXHR) => { call.callback(data); },
-                'json').fail((jqXHR, textStatus, errorThrown) => {
+                jqXHR.fail((jqXHR, textStatus, errorThrown) => {
                     off()
-                    showError(errorThrown)
+                    if (!self.aborted) showError(errorThrown)
                 }).then(() => {
                     self.numActiveCalls--
                     self.execute()
@@ -2050,6 +2069,32 @@ $(document).ready((event) => {
             if (self.emptyFunc) {
                 self.emptyFunc()
             }
+        }
+        self.abort = function() {
+            self.aborted = true
+            if (self.queue.length <= 0 && self.numActiveCalls <= 0) return
+            $(self.jqXHRs).each((index, jqXHR) => {
+                jqXHR.abort()
+            })
+            $(self.loadTimers).each((index, timer) => {
+                clearInterval(timer)
+            })
+            $(self.columnElements).each((index, colElements) => {
+                $(colElements).each((cellIndex, element) => {
+                    let text = $(element).text()
+                    if (text === '.' || text === '. .' || text === '. . .' || text === '. . . .') $(element).text('')
+                    $(element).css({
+                        'vertical-align': 'middle',
+                        'background-color': self.columnStyles[index].backgroundColors[cellIndex],
+                        'border-top': self.columnStyles[index].borderTops[cellIndex],
+                        'border-bottom': self.columnStyles[index].borderBottoms[cellIndex]
+                    })
+                })
+            })
+            self.queue = []
+            self.promises = []
+            self.jqXHRs = []
+            self.doWhenEmpty()
         }
     }
 
@@ -2065,15 +2110,4 @@ $(document).ready((event) => {
             return index == 0 ? match.toLowerCase() : match.toUpperCase();
         });
     }
-
-    // setInterval(() => {
-    //     let currentText = $('#loadingText').html()
-    //     let newText
-    //     if ((currentText.match(/./g) || []).length !== 4) {
-    //         newText = currentText + ' .'
-    //     } else {
-    //         newText = 'Loading .'
-    //     }
-    //     $('#loadingText').html(newText)
-    // }, 500)
 })

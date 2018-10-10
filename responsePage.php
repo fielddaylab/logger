@@ -1589,7 +1589,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             $predict10Percent = array(); // Use 10% to test the model
             $predictString10Percent = '';
             foreach ($levelsForTable as $i=>$level) {
-                if ($level >= $realColLvl) break;
+                if ($level >= $colLvl) break;
                 $headerString .= ',pgm_lvl' . $level;
                 $numPgms++;
             }
