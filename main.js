@@ -617,7 +617,9 @@ $(document).ready((event) => {
                     clearInterval(loadTimer)
                     localStorage.setItem(`data_challenges_${column}`, JSON.stringify(data))
                     let rowNames = []
-                    $(`#predictNumSessionsRow td:nth-child(${i+2})`).html(data.numSessions.numTrue + ' / ' + data.numSessions.numFalse)
+                    let expectedAccuracy = Math.max(data.numSessions.numTrue, data.numSessions.numFalse) / (data.numSessions.numTrue + data.numSessions.numFalse)
+                    $(`#predictNumSessionsRow td:nth-child(${i+2})`).html(data.numSessions.numTrue + ' / ' + data.numSessions.numFalse +
+                        '<br>(' + (expectedAccuracy).toFixed(2) + ' accuracy of expected val)')
                     $('#predictTableBody tr th').each((j, jval) => {
                         rowNames.push($(jval).text())
                     })
@@ -646,6 +648,9 @@ $(document).ready((event) => {
                                     let percentCorrectR = parseFloat(data.percentCorrectR)
                                     if (typeof percentCorrectR === 'number' && !isNaN(percentCorrectR)) {
                                         innerText.html(percentCorrectR.toFixed(5))
+                                        if (percentCorrectR > expectedAccuracy) {
+                                            $(innerText).css('background-color', '#82e072')
+                                        }
                                     } else {
                                         innerText.html('No data')
                                     }
@@ -653,6 +658,9 @@ $(document).ready((event) => {
                                     let percentCorrectTf = parseFloat(data.percentCorrectTf)
                                     if (typeof percentCorrectTf === 'number' && !isNaN(percentCorrectTf)) {
                                         innerText.html(percentCorrectTf.toFixed(5))
+                                        if (percentCorrectTf > expectedAccuracy) {
+                                            $(innerText).css('background-color', '#82e072')
+                                        }
                                     } else {
                                         innerText.html('No data')
                                     }
@@ -794,7 +802,9 @@ $(document).ready((event) => {
                     // Store the computation values for retrieval when the link is clicked
                     localStorage.setItem(`data_questions_${column}`, JSON.stringify(data))
                     let rowNames = []
-                    $(`#questionsNumSessionsRow td:nth-child(${i+2})`).html(data.numSessions.numTrue + ' / ' + data.numSessions.numFalse)
+                    let expectedAccuracy = Math.max(data.numSessions.numTrue, data.numSessions.numFalse) / (data.numSessions.numTrue + data.numSessions.numFalse)
+                    $(`#questionsNumSessionsRow td:nth-child(${i+2})`).html(data.numSessions.numTrue + ' / ' + data.numSessions.numFalse +
+                        '<br>(' + (expectedAccuracy).toFixed(2) + ' accuracy of expected val)')
                     $('#tableAllBody tr th').each((j, jval) => {
                         rowNames.push($(jval).text())
                     })
@@ -823,6 +833,9 @@ $(document).ready((event) => {
                                 let percentCorrectR = parseFloat(data.percentCorrectR)
                                 if (typeof percentCorrectR === 'number' && !isNaN(percentCorrectR)) {
                                     innerText.html(percentCorrectR.toFixed(5))
+                                    if (percentCorrectR > expectedAccuracy) {
+                                        $(innerText).css('background-color', '#82e072')
+                                    }
                                 } else {
                                     innerText.html('No data')
                                 }
@@ -830,6 +843,9 @@ $(document).ready((event) => {
                                 let percentCorrectTf = parseFloat(data.percentCorrectTf)
                                 if (typeof percentCorrectTf === 'number' && !isNaN(percentCorrectTf)) {
                                     innerText.html(percentCorrectTf.toFixed(5))
+                                    if (percentCorrectTf > expectedAccuracy) {
+                                        $(innerText).css('background-color', '#82e072')
+                                    }
                                 } else {
                                     innerText.html('No data')
                                 }
@@ -972,7 +988,9 @@ $(document).ready((event) => {
                     //    rowNames.push($(jval).text())
                     //})
                     //localStorage.setItem(`row_names_q_predict`, JSON.stringify(rowNames))
-                    $(`#binomialNumSessionsRow td:nth-child(${i+2})`).html(data[1].numSessions.numTrue + ' / ' + data[1].numSessions.numFalse)
+                    let expectedAccuracy = Math.max(data[1].numSessions.numTrue, data[1].numSessions.numFalse) / (data[1].numSessions.numTrue + data[1].numSessions.numFalse)
+                    $(`#binomialNumSessionsRow td:nth-child(${i+2})`).html(data[1].numSessions.numTrue + ' / ' + data[1].numSessions.numFalse +
+                        '<br>(' + (expectedAccuracy).toFixed(2) + ' accuracy of expected val)')
                     columnElements.each((j, jval) => {
                         $(jval).css({
                             'vertical-align': 'middle',
@@ -987,6 +1005,9 @@ $(document).ready((event) => {
                                 let percentCorrectR = parseFloat(data[j/2+1].percentCorrectR)
                                 if (typeof percentCorrectR === 'number' && !isNaN(percentCorrectR)) {
                                     innerText.html(percentCorrectR.toFixed(4))
+                                    if (percentCorrectR > expectedAccuracy) {
+                                        $(innerText).css('background-color', '#82e072')
+                                    }
                                 } else {
                                     innerText.html('No data')
                                 }
@@ -994,6 +1015,9 @@ $(document).ready((event) => {
                                 let percentCorrectTf = parseFloat(data[(j-1)/2+1].percentCorrectTf)
                                 if (typeof percentCorrectTf === 'number' && !isNaN(percentCorrectTf)) {
                                     innerText.html(percentCorrectTf.toFixed(4))
+                                    if (percentCorrectTf > expectedAccuracy) {
+                                        $(innerText).css('background-color', '#82e072')
+                                    }
                                 } else {
                                     innerText.html('No data')
                                 }
