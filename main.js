@@ -19,6 +19,7 @@ $(document).ready((event) => {
     let clusterGraph = $('#clusterGraph')[0]
 
     let endDate = new Date()
+    let requestStartTime
     let enddd = endDate.getDate()
     let endmm = endDate.getMonth() + 1
     let endyyyy = endDate.getFullYear()
@@ -259,6 +260,7 @@ $(document).ready((event) => {
             $('#invalidGame').hide()
             if (!queueExists) {
                 queueExists = true
+                requestStartTime = new Date()
                 $('#doneDiv').html('Working')
                 $('#doneDiv').show()
                 let workingTimer = setInterval(() => {
@@ -275,7 +277,11 @@ $(document).ready((event) => {
                 theQueue.emptyFunc = () => {
                     clearInterval(workingTimer)
                     queueExists = false
-                    if (!theQueue.aborted) $('#doneDiv').html('Done.').css('color', 'green')
+                    let timeString = ''
+                    let reqTime = Math.round((new Date() - requestStartTime) / 1000)
+                    if (reqTime >= 60) timeString = `${Math.round(reqTime / 60)}m ${reqTime % 60}s`
+                    else timeString = reqTime
+                    if (!theQueue.aborted) $('#doneDiv').html(`Done. (${timeString})`).css('color', 'green')
                     else $('#doneDiv').html('Aborted.').css('color', 'red')
                 }
             }
