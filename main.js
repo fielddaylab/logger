@@ -96,23 +96,6 @@ $(document).ready((event) => {
         $('#predictTableBody').append(
             $(`
             <tr style="border-top: 4px solid rgb(221, 221, 221);">
-                <th scope="row">Random accuracy</th>
-                <td style="border-left-width:4px; "></td>
-                <td></td>
-                <td></td>
-                <td scope="col" style="border-right-width:4px;"></td>
-                <td scope="col" style="border-left-width:4px; "></td>
-                <td></td>
-                <td style="border-right-width:4px;"></td>
-                <td style="border-left-width:4px; "></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td style="border-right-width:4px;"></td>
-                <td style="border-left-width:4px; "></td>
-                <td style="border-left-width:4px; "></td>
-            </tr>
-            <tr>
                 <th scope="row">Log reg accuracy</th>
                 <td style="border-left-width:4px; "></td>
                 <td></td>
@@ -640,7 +623,7 @@ $(document).ready((event) => {
                         let innerText = $('<div>')
                         innerText.html('No data')
                         if (data && data.pValues) {
-                            if (j < columnElements.length - 3) {
+                            if (j < columnElements.length - 2) {
                                 if (typeof data.pValues[j] === 'number' && !isNaN(data.pValues[j]) && typeof data.coefficients[j] === 'number' && !isNaN(data.coefficients[j])) {
                                     innerText.html(data.coefficients[j].toFixed(4) + ',<br>' + data.pValues[j].toFixed(4))
                                     if (data.pValues[j] < 0.05) {
@@ -650,14 +633,7 @@ $(document).ready((event) => {
                                 $(jval).html(innerText)
                                 $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=challenges&row=${rowNames[j].replace('%', 'percent')}&col=${column}&i=${i}&j=${j}" target="_blank"></a>`)
                             } else {
-                                if (j === columnElements.length - 3) {
-                                    let percentCorrectRand = parseFloat(data.percentCorrectRand)
-                                    if (typeof percentCorrectRand === 'number' && !isNaN(percentCorrectRand)) {
-                                        innerText.html(percentCorrectRand.toFixed(5))
-                                    } else {
-                                        innerText.html('No data')
-                                    }
-                                } else if (j === columnElements.length - 2) {
+                                if (j === columnElements.length - 2) {
                                     let percentCorrectR = parseFloat(data.percentCorrectR)
                                     if (typeof percentCorrectR === 'number' && !isNaN(percentCorrectR)) {
                                         innerText.html(percentCorrectR.toFixed(5))
@@ -823,7 +799,7 @@ $(document).ready((event) => {
                             'border-bottom': borderBottoms[j]
                         })
                         let innerText = $('<div>')
-                        if (j < columnElements.length - 3) {
+                        if (j < columnElements.length - 2) {
                             if (typeof data.pValues[j] === 'number' && !isNaN(data.pValues[j]) && typeof data.coefficients[j] === 'number' && !isNaN(data.coefficients[j])) {
                                 innerText.html(data.coefficients[j].toFixed(4) + ',<br>' + data.pValues[j].toFixed(4))
                                 if (data.pValues[j] < 0.05) {
@@ -835,14 +811,7 @@ $(document).ready((event) => {
                             $(jval).html(innerText)
                             $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=questions&row=${rowNames[j].replace('%', 'percent')}&col=${column}&i=${i}&j=${j}" target="_blank"></a>`)
                         } else {
-                            if (j === columnElements.length - 3) {
-                                let percentCorrectRand = parseFloat(data.percentCorrectRand)
-                                if (typeof percentCorrectRand === 'number' && !isNaN(percentCorrectRand)) {
-                                    innerText.html(percentCorrectRand.toFixed(5))
-                                } else {
-                                    innerText.html('No data')
-                                }
-                            } else if (j === columnElements.length - 2) {
+                            if (j === columnElements.length - 2) {
                                 let percentCorrectR = parseFloat(data.percentCorrectR)
                                 if (typeof percentCorrectR === 'number' && !isNaN(percentCorrectR)) {
                                     innerText.html(percentCorrectR.toFixed(5))

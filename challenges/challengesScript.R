@@ -1,3 +1,4 @@
+suppressMessages(library(caret))
 args <- commandArgs(TRUE)
 table <- paste("challenges/challengesDataForR_", args[1], ".txt", sep="")
 formula <- "result~"
@@ -11,5 +12,10 @@ for (i in seq_along(args)) {
 formula <- as.formula(formula)
 
 challengesData <- read.table(table, sep=",", header=TRUE)
-fit <- glm(formula,data=challengesData,family=binomial(link="logit"))
-summary(fit)
+challengesData$result <- as.factor(challengesData$result)
+
+ctrl <- trainControl(method="repeatedcv", number=2, repeats=5)
+mod_fit <- train(formula, data=challengesData, method="glm", family="binomial", trControl=ctrl)
+
+mod_fit$results
+summary(mod_fit)
