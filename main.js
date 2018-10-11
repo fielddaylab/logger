@@ -92,10 +92,27 @@ $(document).ready((event) => {
             }
         })
     })
-    if (true) {
+    if (true) { // this is simply so I can collapse this section of code
         $('#predictTableBody').append(
             $(`
             <tr style="border-top: 4px solid rgb(221, 221, 221);">
+                <th scope="row">Random accuracy</th>
+                <td style="border-left-width:4px; "></td>
+                <td></td>
+                <td></td>
+                <td scope="col" style="border-right-width:4px;"></td>
+                <td scope="col" style="border-left-width:4px; "></td>
+                <td></td>
+                <td style="border-right-width:4px;"></td>
+                <td style="border-left-width:4px; "></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td style="border-right-width:4px;"></td>
+                <td style="border-left-width:4px; "></td>
+                <td style="border-left-width:4px; "></td>
+            </tr>
+            <tr>
                 <th scope="row">Log reg accuracy</th>
                 <td style="border-left-width:4px; "></td>
                 <td></td>
@@ -113,24 +130,7 @@ $(document).ready((event) => {
                 <td style="border-left-width:4px; "></td>
             </tr>
             <tr>
-                <th scope="row">DNN accuracy</th>
-                <td style="border-left-width:4px; "></td>
-                <td></td>
-                <td></td>
-                <td scope="col" style="border-right-width:4px;"></td>
-                <td scope="col" style="border-left-width:4px; "></td>
-                <td></td>
-                <td style="border-right-width:4px;"></td>
-                <td style="border-left-width:4px; "></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td style="border-right-width:4px;"></td>
-                <td style="border-left-width:4px; "></td>
-                <td style="border-left-width:4px; "></td>
-            </tr>
-            <tr>
-            <th scope="row">Random accuracy</th>
+                <th scope="row">DNN (TF) accuracy</th>
                 <td style="border-left-width:4px; "></td>
                 <td></td>
                 <td></td>
@@ -179,10 +179,26 @@ $(document).ready((event) => {
             }
         })
     })
-    if (true) { // this is simply so I can minimize this section of code
+    if (true) {
         $('#numLevelsBody').append(
             $(`
                 <tr style="border-top: 4px solid rgb(221, 221, 221);">
+                    <th scope="row">Random mean abs err</th>
+                    <td style="border-left-width:4px; "></td>
+                    <td></td>
+                    <td></td>
+                    <td scope="col" style="border-right-width:4px;"></td>
+                    <td scope="col" style="border-left-width:4px; "></td>
+                    <td></td>
+                    <td style="border-right-width:4px;"></td>
+                    <td style="border-left-width:4px; "></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td style="border-right-width:4px;"></td>
+                    <td style="border-left-width:4px; "></td>
+                </tr>
+                <tr>
                     <th scope="row">Log reg mean abs err</th>
                     <td style="border-left-width:4px; "></td>
                     <td></td>
@@ -199,23 +215,7 @@ $(document).ready((event) => {
                     <td style="border-left-width:4px; "></td>
                 </tr>
                 <tr>
-                    <th scope="row">DNN mean abs err</th>
-                    <td style="border-left-width:4px; "></td>
-                    <td></td>
-                    <td></td>
-                    <td scope="col" style="border-right-width:4px;"></td>
-                    <td scope="col" style="border-left-width:4px; "></td>
-                    <td></td>
-                    <td style="border-right-width:4px;"></td>
-                    <td style="border-left-width:4px; "></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td style="border-right-width:4px;"></td>
-                    <td style="border-left-width:4px; "></td>
-                </tr>
-                <tr>
-                    <th scope="row">Random mean abs err</th>
+                    <th scope="row">DNN (TF) mean abs err</th>
                     <td style="border-left-width:4px; "></td>
                     <td></td>
                     <td></td>
@@ -366,8 +366,8 @@ $(document).ready((event) => {
         let queue = new networkQueue(numSimultaneous)
         let numCols, numTables = 0
 
-        numCols = $('#numLevelsBody').find('tr:first td').length
         if (numLevelsTableChecked) {
+            numCols = $('#numLevelsBody').find('tr:first td').length
             $(`#${collapserNames[numTables]}Collapser`).collapse('show')
             $('#numLevelsNumSessionsRow').children().each((key, value) => { if (key > 0) $(value).html('-') })
             for (let i = 0; i < numCols; i++) {
@@ -487,27 +487,27 @@ $(document).ready((event) => {
                                 $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=challenges&row=${rowNames[j].replace('%', 'percent')}&col=${column}&i=${i}&j=${j}" target="_blank"></a>`)
                             } else {
                                 if (j === columnElements.length - 3) {
-                                    let percentCorrectR = parseFloat(data.percentCorrectR)
-                                    if (typeof percentCorrectR === 'number' && !isNaN(percentCorrectR)) {
-                                        innerText.html(percentCorrectR.toFixed(5))
-                                    } else {
-                                        innerText.html('No data')
-                                    }
-                                } else if (j === columnElements.length - 2) {
-                                    let mae = parseFloat(data.mae)
-                                    if (typeof mae === 'number' && !isNaN(mae)) {
-                                        innerText.html(mae.toFixed(5))
-                                    } else {
-                                        innerText.html('No data')
-                                    }
-                                } else if (j === columnElements.length - 1) {
                                     let percentCorrectRand = parseFloat(data.percentCorrectRand)
                                     if (typeof percentCorrectRand === 'number' && !isNaN(percentCorrectRand)) {
                                         innerText.html(percentCorrectRand.toFixed(5))
                                     } else {
                                         innerText.html('No data')
                                     }
-                                }
+                                } else if (j === columnElements.length - 2) {
+                                    let percentCorrectR = parseFloat(data.percentCorrectR)
+                                    if (typeof percentCorrectR === 'number' && !isNaN(percentCorrectR)) {
+                                        innerText.html(percentCorrectR.toFixed(5))
+                                    } else {
+                                        innerText.html('No data')
+                                    }
+                                } else if (j === columnElements.length - 1) {
+                                    let mae = parseFloat(data.mae)
+                                    if (typeof mae === 'number' && !isNaN(mae)) {
+                                        innerText.html(mae.toFixed(5))
+                                    } else {
+                                        innerText.html('No data')
+                                    }
+                                } 
                                 $(jval).html(innerText)
                             }
                         } else {
@@ -528,8 +528,8 @@ $(document).ready((event) => {
         }
         numTables++
 
-        numCols = $('#predictTableBody').find('tr:first td').length
         if (levelCompletionTableChecked) {
+            numCols = $('#predictTableBody').find('tr:first td').length
             $(`#${collapserNames[numTables]}Collapser`).collapse('show')
             $('#predictNumSessionsRow').children().each((key, value) => { if (key > 0) $(value).html('-') })
             for (let i = 0; i < numCols; i++) {
@@ -651,6 +651,13 @@ $(document).ready((event) => {
                                 $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=challenges&row=${rowNames[j].replace('%', 'percent')}&col=${column}&i=${i}&j=${j}" target="_blank"></a>`)
                             } else {
                                 if (j === columnElements.length - 3) {
+                                    let percentCorrectRand = parseFloat(data.percentCorrectRand)
+                                    if (typeof percentCorrectRand === 'number' && !isNaN(percentCorrectRand)) {
+                                        innerText.html(percentCorrectRand.toFixed(5))
+                                    } else {
+                                        innerText.html('No data')
+                                    }
+                                } else if (j === columnElements.length - 2) {
                                     let percentCorrectR = parseFloat(data.percentCorrectR)
                                     if (typeof percentCorrectR === 'number' && !isNaN(percentCorrectR)) {
                                         innerText.html(percentCorrectR.toFixed(5))
@@ -660,20 +667,13 @@ $(document).ready((event) => {
                                     } else {
                                         innerText.html('No data')
                                     }
-                                } else if (j === columnElements.length - 2) {
+                                } else if (j === columnElements.length - 1) {
                                     let percentCorrectTf = parseFloat(data.percentCorrectTf)
                                     if (typeof percentCorrectTf === 'number' && !isNaN(percentCorrectTf)) {
                                         innerText.html(percentCorrectTf.toFixed(5))
                                         if (percentCorrectTf > expectedAccuracy) {
                                             $(innerText).css('background-color', '#82e072')
                                         }
-                                    } else {
-                                        innerText.html('No data')
-                                    }
-                                } else if (j === columnElements.length - 1) {
-                                    let percentCorrectRand = parseFloat(data.percentCorrectRand)
-                                    if (typeof percentCorrectRand === 'number' && !isNaN(percentCorrectRand)) {
-                                        innerText.html(percentCorrectRand.toFixed(5))
                                     } else {
                                         innerText.html('No data')
                                     }
@@ -697,8 +697,8 @@ $(document).ready((event) => {
         }
         numTables++
 
-        numCols = $('#tableAllBody').find('tr:first td').length
         if (questionTableChecked) {
+            numCols = $('#tableAllBody').find('tr:first td').length
             $(`#${collapserNames[numTables]}Collapser`).collapse('show')
             $('#questionsNumSessionsRow').children().each((key, value) => { if (key > 0) $(value).html('-') })
             for (let i = 0; i < numCols; i++) {
@@ -836,6 +836,13 @@ $(document).ready((event) => {
                             $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=questions&row=${rowNames[j].replace('%', 'percent')}&col=${column}&i=${i}&j=${j}" target="_blank"></a>`)
                         } else {
                             if (j === columnElements.length - 3) {
+                                let percentCorrectRand = parseFloat(data.percentCorrectRand)
+                                if (typeof percentCorrectRand === 'number' && !isNaN(percentCorrectRand)) {
+                                    innerText.html(percentCorrectRand.toFixed(5))
+                                } else {
+                                    innerText.html('No data')
+                                }
+                            } else if (j === columnElements.length - 2) {
                                 let percentCorrectR = parseFloat(data.percentCorrectR)
                                 if (typeof percentCorrectR === 'number' && !isNaN(percentCorrectR)) {
                                     innerText.html(percentCorrectR.toFixed(5))
@@ -845,20 +852,13 @@ $(document).ready((event) => {
                                 } else {
                                     innerText.html('No data')
                                 }
-                            } else if (j === columnElements.length - 2) {
+                            } else if (j === columnElements.length - 1) {
                                 let percentCorrectTf = parseFloat(data.percentCorrectTf)
                                 if (typeof percentCorrectTf === 'number' && !isNaN(percentCorrectTf)) {
                                     innerText.html(percentCorrectTf.toFixed(5))
                                     if (percentCorrectTf > expectedAccuracy) {
                                         $(innerText).css('background-color', '#82e072')
                                     }
-                                } else {
-                                    innerText.html('No data')
-                                }
-                            } else if (j === columnElements.length - 1) {
-                                let percentCorrectRand = parseFloat(data.percentCorrectRand)
-                                if (typeof percentCorrectRand === 'number' && !isNaN(percentCorrectRand)) {
-                                    innerText.html(percentCorrectRand.toFixed(5))
                                 } else {
                                     innerText.html('No data')
                                 }
@@ -879,8 +879,8 @@ $(document).ready((event) => {
         }
         numTables++
 
-        numCols = $('#questionPredictBody').find('tr:first td').length
         if (levelRangeQuestionChecked) {
+            numCols = $('#questionPredictBody').find('tr:first td').length
             $(`#${collapserNames[numTables]}Collapser`).collapse('show')
             $('#binomialNumSessionsRow').children().each((key, value) => { if (key > 0) $(value).html('-') })
             for (let i = 0; i < numCols; i++) {
@@ -1045,8 +1045,8 @@ $(document).ready((event) => {
         }
         numTables++
 
-        numCols = $('#quaternaryQuestionBody').find('tr:not(:nth-of-type(1)):first td').length
         if (quaternaryQuestionChecked) {
+            numCols = $('#quaternaryQuestionBody').find('tr:not(:nth-of-type(1)):first td').length
             $(`#${collapserNames[numTables]}Collapser`).collapse('show')
             $('#multinomialNumSessionsRow').children().each((key, value) => { if (key > 0) $(value).html('-') })
             for (let i = 1; i < numCols; i++) {
