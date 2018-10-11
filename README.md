@@ -5,6 +5,7 @@ Required software:
 - Apache
 - MySQL 5.6.38
 - R 3.5.1
+	- Install "caret" package
 - Chrome 68
 - Python 2.7
 
