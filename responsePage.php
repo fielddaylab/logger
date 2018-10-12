@@ -13,6 +13,7 @@ require_once "PCA/pca.php";
 
 ini_set('memory_limit','4096M');
 ini_set('max_execution_time', 30000);
+ini_set('max_input_vars', 2000);
 date_default_timezone_set('America/Chicago');
 
 $db = connectToDatabase(DBDeets::DB_NAME_DATA);
@@ -59,6 +60,7 @@ function predict($coefficients, $inputs, $isLinear = false) {
 }
 
 if (isset($_GET['gameID'])) {
+    //echo ''; return;
     $returned;
     if (isset($_GET['sessionID'])) {
         if (isset($_GET['level'])) {
@@ -892,6 +894,19 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             exec("/usr/local/bin/Rscript questions/questionsScript.R " . $column . ' ' . str_replace(',', ' ', $headerString), $rResults);
             exec("source ./tensorflow/bin/activate && python tfscript.py $dataFile " . implode(' ', range(1, count(explode(',', $headerString))+1)), $tfOutput);
             $percentCorrectTf = isset($tfOutput[count($tfOutput)-1]) ? $tfOutput[count($tfOutput)-1] : null;
+            unset($sklOutput);
+            exec("/usr/local/bin/python -W ignore sklearnscript.py $dataFile 1 2 3 4 5 6 7", $sklOutput);
+    
+            $algorithmNames = array();
+            $accuracies = array();
+            if ($sklOutput) {
+                for ($i = 0, $lastRow = count($sklOutput); $i < $lastRow; $i++) {
+                    $values = preg_split('/\ +/', $sklOutput[$i]);  // put "words" of this line into an array
+                    $algorithmName = implode(' ', array_slice($values, 0, -1));
+                    $algorithmNames[] = $algorithmName;
+                    $accuracies[$algorithmName] = end($values);
+                }
+            }
 
             $accStart = 0;
             $coefficients = array();
@@ -907,7 +922,10 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                     break;
                 }
             }
-            $accuracy = preg_split('/\ +/', $rResults[$accStart+1])[2];
+            if (isset($rResults[$accStart+1])) {
+                $accuracyLine = preg_split('/\ +/', $rResults[$accStart+1]);
+                if (isset($accuracyLine[2])) $accuracy = $accuracyLine[2];
+            }
             if ($coefStart !== 0) {
                 for ($i = $coefStart+1, $lastRow = 7+$coefStart; $i <= $lastRow; $i++) {
                     $values = preg_split('/\ +/', $rResults[$i]);  // put "words" of this line into an array
@@ -919,7 +937,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             $percentCorrectR = $accuracy;
 
             return array('coefficients'=>$coefficients, 'stdErrs'=>$stdErrs, 'pValues'=>$pValues, 'regressionVars'=>$predictArray, 'numSessions'=>$numPredictors,
-                'regressionOutputs'=>$predictedArray, 'percentCorrectR'=>$percentCorrectR, 'percentCorrectTf'=>$percentCorrectTf);
+                'regressionOutputs'=>$predictedArray, 'percentCorrectR'=>$percentCorrectR, 'percentCorrectTf'=>$percentCorrectTf, 'algorithmNames'=>$algorithmNames, 'accuracies'=>$accuracies);
         } else {
             $questionPredictCol = $_GET['questionPredictColumn'];
             $sessionsAndTimes = array('sessions'=>$uniqueSessions, 'times'=>array_values($times));
@@ -947,6 +965,19 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                 exec("/usr/local/bin/Rscript questionsPredict/questionsPredictScript.R " . $column . ' ' . $predLevel . ' ' . str_replace(',', ' ', $headerString), $rResults);
                 exec("source ./tensorflow/bin/activate && python tfscript.py $dataFile " . implode(' ', range(1, count(explode(',', $headerString))+1)), $tfOutput);
                 $percentCorrectTf = isset($tfOutput[count($tfOutput)-1]) ? $tfOutput[count($tfOutput)-1] : null;
+                unset($sklOutput);
+                exec("/usr/local/bin/python -W ignore sklearnscript.py $dataFile 1 2 3 4 5 6 7", $sklOutput);
+        
+                $algorithmNames = array();
+                $accuracies = array();
+                if ($sklOutput) {
+                    for ($i = 0, $lastRow = count($sklOutput); $i < $lastRow; $i++) {
+                        $values = preg_split('/\ +/', $sklOutput[$i]);  // put "words" of this line into an array
+                        $algorithmName = implode(' ', array_slice($values, 0, -1));
+                        $algorithmNames[] = $algorithmName;
+                        $accuracies[$algorithmName] = end($values);
+                    }
+                }
 
                 $accStart = 0;
                 $coefficients = array();
@@ -962,7 +993,10 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                         break; // estimate comes after accuracy in the output
                     }
                 }
-                $accuracy = preg_split('/\ +/', $rResults[$accStart+1])[2];
+                if (isset($rResults[$accStart+1])) {
+                    $accuracyLine = preg_split('/\ +/', $rResults[$accStart+1]);
+                    if (isset($accuracyLine[2])) $percentCorrectR = $accuracyLine[2];
+                }
                 if ($coefStart !== 0) {
                     for ($i = $coefStart+1, $lastRow = 7+$coefStart; $i <= $lastRow; $i++) {
                         $values = preg_split('/\ +/', $rResults[$i]);  // put "words" of this line into an array
@@ -971,10 +1005,9 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                         $pValues[] = is_numeric($x = str_replace(['<', '>'], '', $values[4])) ? $x+0 : null;
                     }
                 }
-                $percentCorrectR = $accuracy;
 
                 $returnArray[$predLevel] = array('coefficients'=>$coefficients, 'stdErrs'=>$stdErrs, 'pValues'=>$pValues, 'regressionVars'=>$predictArray, 'numSessions'=>$numPredictors,
-                    'regressionOutputs'=>$predictedArray, 'percentCorrectR'=>$percentCorrectR, 'percentCorrectTf'=>$percentCorrectTf);
+                    'regressionOutputs'=>$predictedArray, 'percentCorrectR'=>$percentCorrectR, 'percentCorrectTf'=>$percentCorrectTf, 'algorithmNames'=>$algorithmNames, 'accuracies'=>$accuracies);
             }
             return $returnArray;
         }
@@ -1555,6 +1588,19 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
         exec("/usr/local/bin/Rscript challenges/challengesScript.R " . $colLvl . ' ' . str_replace(',', ' ', $headerString), $rResults);
         exec("source ./tensorflow/bin/activate && python tfscript.py $dataFile " . implode(' ', range(1, count(explode(',', $headerString))+1)), $tfOutput);
         $percentCorrectTf = isset($tfOutput[count($tfOutput)-1]) ? $tfOutput[count($tfOutput)-1] : null;
+        unset($sklOutput);
+        exec("/usr/local/bin/python -W ignore sklearnscript.py $dataFile " . implode(' ', range(1, count(explode(',', $headerString))+1)), $sklOutput);
+
+        $algorithmNames = array();
+        $accuracies = array();
+        if ($sklOutput) {
+            for ($i = 0, $lastRow = count($sklOutput); $i < $lastRow; $i++) {
+                $values = preg_split('/\ +/', $sklOutput[$i]);  // put "words" of this line into an array
+                $algorithmName = implode(' ', array_slice($values, 0, -1));
+                $algorithmNames[] = $algorithmName;
+                $accuracies[$algorithmName] = end($values);
+            }
+        }
 
         $coefficients = array();
         $stdErrs = array();
@@ -1571,7 +1617,10 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             }
         }
 
-        $accuracy = preg_split('/\ +/', $rResults[$accStart+1])[2];
+        if (isset($rResults[$accStart+1])) {
+            $accuracyLine = preg_split('/\ +/', $rResults[$accStart+1]);
+            if (isset($accuracyLine[2])) $percentCorrectR = $accuracyLine[2];
+        }
         if ($coefStart !== 0) {
             for ($i = $coefStart+1, $lastRow = 5+$numPgms+$coefStart; $i <= $lastRow; $i++) {
                 $values = preg_split('/\ +/', $rResults[$i]);  // put "words" of this line into an array
@@ -1580,14 +1629,13 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                 $pValues[] = is_numeric($x = str_replace(['<', '>'], '', $values[4])) ? $x+0 : null;
             }
         }
-        $percentCorrectR = $accuracy;
 
         $trueSessions = array_unique(array_column(array_filter($completeEvents, function ($a) use ($colLvl) { return $a['level'] == $colLvl; }), 'session_id'));
         $numTrue = count($trueSessions); // number of sessions who completed every level including current col
         $numFalse = $numSessions - $numTrue; // number of sessions who completed every level up to but not current col
 
         return array('coefficients'=>$coefficients, 'stdErrs'=>$stdErrs, 'pValues'=>$pValues, 'regressionVars'=>$predictArray, 'numSessions'=>array('numTrue'=>$numTrue, 'numFalse'=>$numFalse),
-            'regressionOutputs'=>$predictedArray, 'percentCorrectR'=>$percentCorrectR, 'percentCorrectTf'=>$percentCorrectTf);
+            'regressionOutputs'=>$predictedArray, 'percentCorrectR'=>$percentCorrectR, 'percentCorrectTf'=>$percentCorrectTf, 'algorithmNames'=>$algorithmNames, 'accuracies'=>$accuracies);
     } else if (isset($_GET['numLevelsColumn']) && !isset($_GET['questionPredictColumn']) && !isset($_GET['multinomQuestionPredictColumn'])) {
         $numLevelsColumn = $_GET['numLevelsColumn'];
         $minMoves = $_GET['minMoves'];

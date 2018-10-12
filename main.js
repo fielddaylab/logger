@@ -61,42 +61,14 @@ $(document).ready((event) => {
     let queueExists = false
 
     let lvls = [1, 3, 5, 7, 11, 13, 15, 19, 21, 23, 25, 27, 31]
-    lvls.forEach((value, index, arr) => {
-        let newRow = $(`<tr class="rowLvl">`)
-        newRow.append(
-            `
-            <th scope="row">% good moves lvl ${value}</th>
-            <td style="border-left-width:4px; "></td>
-            <td></td>
-            <td></td>
-            <td scope="col" style="border-right-width:4px;"></td>
-            <td scope="col" style="border-left-width:4px; "></td>
-            <td></td>
-            <td style="border-right-width:4px;"></td>
-            <td style="border-left-width:4px; "></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td style="border-right-width:4px;"></td>
-            <td style="border-left-width:4px; "></td>
-            <td style="border-left-width:4px; "></td>
-            `
-        )
-        $('#predictTableBody').append(newRow)
-    })
-    $('#predictTableBody .rowLvl').each((i, value) => {
-        $(value).children('td').each((j, jval) => {
-            if (i+1 > j) {
-                $(jval).css('background-color', 'rgb(221, 221, 221)')
-                $(jval).addClass('disabled-cell')
-            }
-        })
-    })
+
+    // numLevelsBody
     if (true) { // this is simply so I can collapse this section of code
-        $('#predictTableBody').append(
-            $(`
-            <tr style="border-top: 4px solid rgb(221, 221, 221);">
-                <th scope="row">Log reg accuracy</th>
+        lvls.forEach((value, index, arr) => {
+            let newRow = $(`<tr class="rowLvl">`)
+            newRow.append(
+                `
+                <th scope="row">% good moves lvl ${value}</th>
                 <td style="border-left-width:4px; "></td>
                 <td></td>
                 <td></td>
@@ -110,68 +82,28 @@ $(document).ready((event) => {
                 <td></td>
                 <td style="border-right-width:4px;"></td>
                 <td style="border-left-width:4px; "></td>
-                <td style="border-left-width:4px; "></td>
-            </tr>
-            <tr>
-                <th scope="row">DNN (TF) accuracy</th>
-                <td style="border-left-width:4px; "></td>
-                <td></td>
-                <td></td>
-                <td scope="col" style="border-right-width:4px;"></td>
-                <td scope="col" style="border-left-width:4px; "></td>
-                <td></td>
-                <td style="border-right-width:4px;"></td>
-                <td style="border-left-width:4px; "></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td style="border-right-width:4px;"></td>
-                <td style="border-left-width:4px; "></td>
-                <td style="border-left-width:4px; "></td>
-            </tr>
-            `)
-        )   
-    }
-    lvls.forEach((value, index, arr) => {
-        let newRow = $(`<tr class="rowLvl">`)
-        newRow.append(
-            `
-            <th scope="row">% good moves lvl ${value}</th>
-            <td style="border-left-width:4px; "></td>
-            <td></td>
-            <td></td>
-            <td scope="col" style="border-right-width:4px;"></td>
-            <td scope="col" style="border-left-width:4px; "></td>
-            <td></td>
-            <td style="border-right-width:4px;"></td>
-            <td style="border-left-width:4px; "></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td style="border-right-width:4px;"></td>
-            <td style="border-left-width:4px; "></td>
-            `
-        )
-        $('#numLevelsBody').append(newRow)
-    })
-    $('#numLevelsBody .rowLvl').each((i, value) => {
-        $(value).children('td').each((j, jval) => {
-            if (i+1 > j) {
-                $(jval).css('background-color', 'rgb(221, 221, 221)')
-                $(jval).addClass('disabled-cell')
-            }
+                `
+            )
+            $('#numLevelsBody').append(newRow)
         })
-    })
-    if (true) {
-        $('#numLevelsBody').append(
-            $(`
-                <tr style="border-top: 4px solid rgb(221, 221, 221);">
-                    <th scope="row">Random mean abs err</th>
+        $('#numLevelsBody .rowLvl').each((i, value) => {
+            $(value).children('td').each((j, jval) => {
+                if (i+1 > j) {
+                    $(jval).css('background-color', 'rgb(221, 221, 221)')
+                    $(jval).addClass('disabled-cell')
+                }
+            })
+        })
+        $(['Random', 'Log reg', 'DNN (TF)']).each((i, value) => {
+            $('#numLevelsBody').append(
+                $(`
+                <tr ${(i === 0) ? 'style="border-top: 4px solid rgb(221, 221, 221);"' : ''}>
+                    <th scope="row">${value}  mean abs err</th>
                     <td style="border-left-width:4px; "></td>
                     <td></td>
                     <td></td>
-                    <td scope="col" style="border-right-width:4px;"></td>
-                    <td scope="col" style="border-left-width:4px; "></td>
+                    <td style="border-right-width:4px;"></td>
+                    <td style="border-left-width:4px; "></td>
                     <td></td>
                     <td style="border-right-width:4px;"></td>
                     <td style="border-left-width:4px; "></td>
@@ -181,41 +113,91 @@ $(document).ready((event) => {
                     <td style="border-right-width:4px;"></td>
                     <td style="border-left-width:4px; "></td>
                 </tr>
-                <tr>
-                    <th scope="row">Log reg mean abs err</th>
-                    <td style="border-left-width:4px; "></td>
-                    <td></td>
-                    <td></td>
-                    <td scope="col" style="border-right-width:4px;"></td>
-                    <td scope="col" style="border-left-width:4px; "></td>
-                    <td></td>
-                    <td style="border-right-width:4px;"></td>
-                    <td style="border-left-width:4px; "></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td style="border-right-width:4px;"></td>
-                    <td style="border-left-width:4px; "></td>
-                </tr>
-                <tr>
-                    <th scope="row">DNN (TF) mean abs err</th>
-                    <td style="border-left-width:4px; "></td>
-                    <td></td>
-                    <td></td>
-                    <td scope="col" style="border-right-width:4px;"></td>
-                    <td scope="col" style="border-left-width:4px; "></td>
-                    <td></td>
-                    <td style="border-right-width:4px;"></td>
-                    <td style="border-left-width:4px; "></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td style="border-right-width:4px;"></td>
-                    <td style="border-left-width:4px; "></td>
-                </tr>
-            `)
-        )
+                `)
+            )
+        })
     }
+    // predictTableBody
+    if (true) { 
+        lvls.forEach((value, index, arr) => {
+            let newRow = $(`<tr class="rowLvl">`)
+            newRow.append(
+                `
+                <th scope="row">% good moves lvl ${value}</th>
+                <td style="border-left-width:4px; "></td>
+                <td></td>
+                <td></td>
+                <td scope="col" style="border-right-width:4px;"></td>
+                <td scope="col" style="border-left-width:4px; "></td>
+                <td></td>
+                <td style="border-right-width:4px;"></td>
+                <td style="border-left-width:4px; "></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td style="border-right-width:4px;"></td>
+                <td style="border-left-width:4px; "></td>
+                <td style="border-left-width:4px; "></td>
+                `
+            )
+            $('#predictTableBody').append(newRow)
+        })
+        $('#predictTableBody .rowLvl').each((i, value) => {
+            $(value).children('td').each((j, jval) => {
+                if (i+1 > j) {
+                    $(jval).css('background-color', 'rgb(221, 221, 221)')
+                    $(jval).addClass('disabled-cell')
+                }
+            })
+        })
+        $(['Log reg', 'DNN (TF)'].concat(algorithmNames)).each((i, value) => {
+            $('#predictTableBody').append(
+                $(`
+                <tr ${(i === 0) ? 'style="border-top: 4px solid rgb(221, 221, 221);"' : ''}>
+                    <th scope="row">${value} accuracy</th>
+                    <td style="border-left-width:4px; "></td>
+                    <td></td>
+                    <td></td>
+                    <td style="border-right-width:4px;"></td>
+                    <td style="border-left-width:4px; "></td>
+                    <td></td>
+                    <td style="border-right-width:4px;"></td>
+                    <td style="border-left-width:4px; "></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td style="border-right-width:4px;"></td>
+                    <td style="border-left-width:4px; "></td>
+                    <td style="border-left-width:4px; "></td>
+                </tr>
+                `)
+            )
+        })
+    }
+    // tableAllBody aka question answers from challenge 1
+    if (true) {
+        let rowNames = ['Constant term', '# slider moves', '# type changes', '# levels completed', 'Time', 'Avg knob max-min', 'Avg % good moves']
+        $(rowNames).each((i, rowName) => {
+            $('#tableAllBody').append(`
+            <tr>
+                <th scope="row">${rowName}</th>
+                ${'<td></td>'.repeat(16)}
+            </tr>
+            `)
+        })
+        $(['Log reg', 'DNN (TF)'].concat(algorithmNames)).each((i, value) => {
+            $('#tableAllBody').append(
+                $(`
+                <tr ${(i === 0) ? 'style="border-top: 4px solid rgb(221, 221, 221);"' : ''}>
+                    <th scope="row">${value} accuracy</th>
+                    ${'<td></td>'.repeat(16)}
+                </tr>
+                `)
+            )
+        })
+    }
+
+    $('#mainContainer').hide().show(0) // force the page to redraw so collapsed elements don't open upwards
 
     let theQueue
     let totalSessions
@@ -263,7 +245,7 @@ $(document).ready((event) => {
                     let timeString = ''
                     let reqTime = Math.round((new Date() - requestStartTime) / 1000)
                     if (reqTime >= 60) timeString = `${Math.round(reqTime / 60)}m ${reqTime % 60}s`
-                    else timeString = reqTime
+                    else timeString = reqTime + 's'
                     if (!theQueue.aborted) $('#doneDiv').html(`Done. (${timeString})`).css('color', 'green')
                     else $('#doneDiv').html('Aborted.').css('color', 'red')
                 }
@@ -623,7 +605,7 @@ $(document).ready((event) => {
                         let innerText = $('<div>')
                         innerText.html('No data')
                         if (data && data.pValues) {
-                            if (j < columnElements.length - 2) {
+                            if (j < columnElements.length - (2 + algorithmNames.length)) {
                                 if (typeof data.pValues[j] === 'number' && !isNaN(data.pValues[j]) && typeof data.coefficients[j] === 'number' && !isNaN(data.coefficients[j])) {
                                     innerText.html(data.coefficients[j].toFixed(4) + ',<br>' + data.pValues[j].toFixed(4))
                                     if (data.pValues[j] < 0.05) {
@@ -633,7 +615,7 @@ $(document).ready((event) => {
                                 $(jval).html(innerText)
                                 $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=challenges&row=${rowNames[j].replace('%', 'percent')}&col=${column}&i=${i}&j=${j}" target="_blank"></a>`)
                             } else {
-                                if (j === columnElements.length - 2) {
+                                if (j === columnElements.length - (2 + algorithmNames.length)) {
                                     let percentCorrectR = parseFloat(data.percentCorrectR)
                                     if (typeof percentCorrectR === 'number' && !isNaN(percentCorrectR)) {
                                         innerText.html(percentCorrectR.toFixed(5))
@@ -643,13 +625,25 @@ $(document).ready((event) => {
                                     } else {
                                         innerText.html('No data')
                                     }
-                                } else if (j === columnElements.length - 1) {
+                                } else if (j === columnElements.length - (1 + algorithmNames.length)) {
                                     let percentCorrectTf = parseFloat(data.percentCorrectTf)
                                     if (typeof percentCorrectTf === 'number' && !isNaN(percentCorrectTf)) {
                                         innerText.html(percentCorrectTf.toFixed(5))
                                         if (percentCorrectTf > expectedAccuracy) {
                                             $(innerText).css('background-color', '#82e072')
                                         }
+                                    } else {
+                                        innerText.html('No data')
+                                    }
+                                } else {
+                                    let currentAlgorithm = j - columnElements.length + algorithmNames.length
+                                    let percentCorrect = parseFloat(data.accuracies[algorithmNames[currentAlgorithm]])
+                                    // Color accuracies higher than random informed green
+                                    if (typeof percentCorrect === 'number' && !isNaN(percentCorrect)) {
+                                        if (percentCorrect > expectedAccuracy) {
+                                            $(innerText).css('background-color', '#82e072')
+                                        }
+                                        innerText.html(percentCorrect.toFixed(4))
                                     } else {
                                         innerText.html('No data')
                                     }
@@ -799,7 +793,7 @@ $(document).ready((event) => {
                             'border-bottom': borderBottoms[j]
                         })
                         let innerText = $('<div>')
-                        if (j < columnElements.length - 2) {
+                        if (j < columnElements.length - (2 + algorithmNames.length)) {
                             if (typeof data.pValues[j] === 'number' && !isNaN(data.pValues[j]) && typeof data.coefficients[j] === 'number' && !isNaN(data.coefficients[j])) {
                                 innerText.html(data.coefficients[j].toFixed(4) + ',<br>' + data.pValues[j].toFixed(4))
                                 if (data.pValues[j] < 0.05) {
@@ -811,7 +805,7 @@ $(document).ready((event) => {
                             $(jval).html(innerText)
                             $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=questions&row=${rowNames[j].replace('%', 'percent')}&col=${column}&i=${i}&j=${j}" target="_blank"></a>`)
                         } else {
-                            if (j === columnElements.length - 2) {
+                            if (j === columnElements.length - (2 + algorithmNames.length)) {
                                 let percentCorrectR = parseFloat(data.percentCorrectR)
                                 if (typeof percentCorrectR === 'number' && !isNaN(percentCorrectR)) {
                                     innerText.html(percentCorrectR.toFixed(5))
@@ -821,13 +815,25 @@ $(document).ready((event) => {
                                 } else {
                                     innerText.html('No data')
                                 }
-                            } else if (j === columnElements.length - 1) {
+                            } else if (j === columnElements.length - (1 + algorithmNames.length)) {
                                 let percentCorrectTf = parseFloat(data.percentCorrectTf)
                                 if (typeof percentCorrectTf === 'number' && !isNaN(percentCorrectTf)) {
                                     innerText.html(percentCorrectTf.toFixed(5))
                                     if (percentCorrectTf > expectedAccuracy) {
                                         $(innerText).css('background-color', '#82e072')
                                     }
+                                } else {
+                                    innerText.html('No data')
+                                }
+                            } else {
+                                let currentAlgorithm = j - columnElements.length + algorithmNames.length
+                                let percentCorrect = parseFloat(data.accuracies[algorithmNames[currentAlgorithm]])
+                                // Color accuracies higher than random informed green
+                                if (typeof percentCorrect === 'number' && !isNaN(percentCorrect)) {
+                                    if (percentCorrect > expectedAccuracy) {
+                                        $(innerText).css('background-color', '#82e072')
+                                    }
+                                    innerText.html(percentCorrect.toFixed(4))
                                 } else {
                                     innerText.html('No data')
                                 }
@@ -1303,7 +1309,7 @@ $(document).ready((event) => {
             parameters: parametersBasic,
             callback: mainCallback
         }
-        queue.push(mainReq)
+        //queue.push(mainReq)
 
         return queue
     }
