@@ -46,7 +46,7 @@ $(document).ready((event) => {
     let algorithmNames = ['Nearest Neighbors', 'Linear SVM', 'RBF SVM', 'Gaussian Process',
     'Decision Tree', 'Random Forest', 'Neural Net', 'AdaBoost', 'Naive Bayes', 'QDA']
     $('#quaternaryQuestionBody tr').each((i, ival) => {
-        for (let j = 0; j < 10; j++) {
+        for (let j = 0; j < algorithmNames.length; j++) {
             $(ival).after($(
                 `<tr>
                     <td style="width:15%; ${(j === 0) ? 'border-bottom-width:4px;' : ''}">${algorithmNames[9-j]}</td>
@@ -194,6 +194,31 @@ $(document).ready((event) => {
                 </tr>
                 `)
             )
+        })
+    }
+    // questionPredictBody
+    if (true) {
+        $('#questionPredictBody tr').each((i, ival) => {
+            // This is a little hard to follow but these elements are appended after the "L1..." cell that spans 13 rows
+            // meaning these rows are added from the bottom up
+            for (let j = 0; j < algorithmNames.length; j++) {
+                $(ival).after(`
+                <tr>
+                    <td style="width:6%; ${(j === 0) ? 'border-bottom-width:4px;' : ''}">${algorithmNames[9-j]}</td>
+                    ${((j === 0) ? '<td style=\"border-bottom-width:4px;\"></td>' : '<td></td>').repeat(16)}
+                </tr>
+                `)
+            }
+            $(ival).after(`
+            <tr>
+                <td style="width:10%;">Log reg</td>
+                ${'<td></td>'.repeat(16)}
+            </tr>
+            <tr>
+                <td style="width:10%;">DNN (TF)</td>
+                ${'<td></td>'.repeat(16)}
+            </tr>
+            `) // these 2 rows are added together so they're not in reverse order
         })
     }
 
@@ -855,10 +880,10 @@ $(document).ready((event) => {
         numTables++
 
         if (levelRangeQuestionChecked) {
-            numCols = $('#questionPredictBody').find('tr:first td').length
+            numCols = $('#questionPredictBody').find('tr:not(:nth-of-type(1)):first td').length
             $(`#${collapserNames[numTables]}Collapser`).collapse('show')
             $('#binomialNumSessionsRow').children().each((key, value) => { if (key > 0) $(value).html('-') })
-            for (let i = 0; i < numCols; i++) {
+            for (let i = 1; i < numCols; i++) {
                 let parametersQuesPredict = {
                     'gameID': $('#gameSelect').val(),
                     'maxRows': $('#maxRows').val(),
@@ -873,37 +898,37 @@ $(document).ready((event) => {
                 let columnElements = $(`#questionPredictBody tr td:nth-of-type(${i + 1})`)
                 let column
                 switch (i) {
-                    case 0:
-                        column = 'q00'; break
                     case 1:
-                        column = 'q01'; break
+                        column = 'q00'; break
                     case 2:
-                        column = 'q02'; break
+                        column = 'q01'; break
                     case 3:
-                        column = 'q03'; break
+                        column = 'q02'; break
                     case 4:
-                        column = 'q10'; break
+                        column = 'q03'; break
                     case 5:
-                        column = 'q11'; break
+                        column = 'q10'; break
                     case 6:
-                        column = 'q12'; break
+                        column = 'q11'; break
                     case 7:
-                        column = 'q13'; break
+                        column = 'q12'; break
                     case 8:
-                        column = 'q20'; break
+                        column = 'q13'; break
                     case 9:
-                        column = 'q21'; break
+                        column = 'q20'; break
                     case 10:
-                        column = 'q22'; break
+                        column = 'q21'; break
                     case 11:
-                        column = 'q23'; break
+                        column = 'q22'; break
                     case 12:
-                        column = 'q30'; break
+                        column = 'q23'; break
                     case 13:
-                        column = 'q31'; break
+                        column = 'q30'; break
                     case 14:
-                        column = 'q32'; break
+                        column = 'q31'; break
                     case 15:
+                        column = 'q32'; break
+                    case 16:
                         column = 'q33'; break
                 }
 
@@ -982,8 +1007,8 @@ $(document).ready((event) => {
                         let innerText = $('<div>')
                         innerText.html('No data')
                         if (data) {
-                            if (j % 2 === 0) {
-                                let percentCorrectR = parseFloat(data[j/2+1].percentCorrectR)
+                            if (j % (2 + algorithmNames.length) === 0) {
+                                let percentCorrectR = parseFloat(data[j/(2 + algorithmNames.length)+1].percentCorrectR)
                                 if (typeof percentCorrectR === 'number' && !isNaN(percentCorrectR)) {
                                     innerText.html(percentCorrectR.toFixed(4))
                                     if (percentCorrectR > expectedAccuracy) {
@@ -992,12 +1017,29 @@ $(document).ready((event) => {
                                 } else {
                                     innerText.html('No data')
                                 }
-                            } else {
-                                let percentCorrectTf = parseFloat(data[(j-1)/2+1].percentCorrectTf)
+                            } else if (j % (2 + algorithmNames.length) === 1) {
+                                let percentCorrectTf = parseFloat(data[(j-1)/(2 + algorithmNames.length)+1].percentCorrectTf)
                                 if (typeof percentCorrectTf === 'number' && !isNaN(percentCorrectTf)) {
                                     innerText.html(percentCorrectTf.toFixed(4))
                                     if (percentCorrectTf > expectedAccuracy) {
                                         $(innerText).css('background-color', '#82e072')
+                                    }
+                                } else {
+                                    innerText.html('No data')
+                                }
+                            } else {
+                                let numAlgorithms = 10
+                                let rowName = $(jval).siblings(`td:first`).text()
+                                if (data[Math.floor(j / (numAlgorithms+ 2)) + 1]) {
+                                    let percentCorrect = parseFloat(data[Math.floor(j / (numAlgorithms+ 2)) + 1].accuracies[rowName])
+                                    // Color accuracies higher than random informed green
+                                    if (typeof percentCorrect === 'number' && !isNaN(percentCorrect)) {
+                                        if (percentCorrect > expectedAccuracy) {
+                                            $(innerText).css('background-color', '#82e072')
+                                        }
+                                        innerText.html(percentCorrect.toFixed(4))
+                                    } else {
+                                        innerText.html('No data')
                                     }
                                 } else {
                                     innerText.html('No data')
@@ -1309,7 +1351,7 @@ $(document).ready((event) => {
             parameters: parametersBasic,
             callback: mainCallback
         }
-        //queue.push(mainReq)
+        queue.push(mainReq)
 
         return queue
     }
