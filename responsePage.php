@@ -16,6 +16,9 @@ ini_set('max_execution_time', 30000);
 ini_set('max_input_vars', 2000);
 date_default_timezone_set('America/Chicago');
 
+define("PYTHON_DIR", "/usr/local/bin/python");
+define("RSCRIPT_DIR", "/usr/local/bin/Rscript");
+
 $db = connectToDatabase(DBDeets::DB_NAME_DATA);
 if ($db->connect_error) {
     http_response_code(500);
@@ -893,11 +896,11 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             file_put_contents($dataFile, $predictString);
             unset($rResults);
             unset($tfOutput);
-            exec("/usr/local/bin/Rscript questions/questionsScript.R " . $column . ' ' . str_replace(',', ' ', $headerString), $rResults);
+            exec(RSCRIPT_DIR . " questions/questionsScript.R " . $column . ' ' . str_replace(',', ' ', $headerString), $rResults);
             exec("source ./tensorflow/bin/activate && python tfscript.py $dataFile " . implode(' ', range(1, count(explode(',', $headerString))+1)), $tfOutput);
             $percentCorrectTf = isset($tfOutput[count($tfOutput)-1]) ? $tfOutput[count($tfOutput)-1] : null;
             unset($sklOutput);
-            exec("/usr/local/bin/python -W ignore sklearnscript.py $dataFile 1 2 3 4 5 6 7", $sklOutput);
+            exec(PYTHON_DIR . " -W ignore sklearnscript.py $dataFile 1 2 3 4 5 6 7", $sklOutput);
     
             $algorithmNames = array();
             $accuracies = array();
@@ -964,11 +967,11 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                 file_put_contents($dataFile, $predictString);
                 unset($rResults);
                 unset($tfOutput);
-                exec("/usr/local/bin/Rscript questionsPredict/questionsPredictScript.R " . $column . ' ' . $predLevel . ' ' . str_replace(',', ' ', $headerString), $rResults);
+                exec(RSCRIPT_DIR . " questionsPredict/questionsPredictScript.R " . $column . ' ' . $predLevel . ' ' . str_replace(',', ' ', $headerString), $rResults);
                 exec("source ./tensorflow/bin/activate && python tfscript.py $dataFile " . implode(' ', range(1, count(explode(',', $headerString))+1)), $tfOutput);
                 $percentCorrectTf = isset($tfOutput[count($tfOutput)-1]) ? $tfOutput[count($tfOutput)-1] : null;
                 unset($sklOutput);
-                exec("/usr/local/bin/python -W ignore sklearnscript.py $dataFile 1 2 3 4 5 6 7", $sklOutput);
+                exec(PYTHON_DIR . " -W ignore sklearnscript.py $dataFile 1 2 3 4 5 6 7", $sklOutput);
         
                 $algorithmNames = array();
                 $accuracies = array();
@@ -1587,11 +1590,11 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
         file_put_contents($dataFile, $predictString);
         unset($rResults);
         unset($tfOutput);
-        exec("/usr/local/bin/Rscript challenges/challengesScript.R " . $colLvl . ' ' . str_replace(',', ' ', $headerString), $rResults);
+        exec(RSCRIPT_DIR . " challenges/challengesScript.R " . $colLvl . ' ' . str_replace(',', ' ', $headerString), $rResults);
         exec("source ./tensorflow/bin/activate && python tfscript.py $dataFile " . implode(' ', range(1, count(explode(',', $headerString))+1)), $tfOutput);
         $percentCorrectTf = isset($tfOutput[count($tfOutput)-1]) ? $tfOutput[count($tfOutput)-1] : null;
         unset($sklOutput);
-        exec("/usr/local/bin/python -W ignore sklearnscript.py $dataFile " . implode(' ', range(1, count(explode(',', $headerString))+1)), $sklOutput);
+        exec(PYTHON_DIR . " -W ignore sklearnscript.py $dataFile " . implode(' ', range(1, count(explode(',', $headerString))+1)), $sklOutput);
 
         $algorithmNames = array();
         $accuracies = array();
@@ -1842,7 +1845,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             }
             $dataFile = 'numLevels/numLevelDataForR_'. $colLvl .'.txt';
             file_put_contents($dataFile, $predictString);
-            exec("/usr/local/bin/Rscript numLevels/numLevelsScript.R " . $colLvl . ' ' . str_replace(',', ' ', $headerString), $rResults);
+            exec(RSCRIPT_DIR . " numLevels/numLevelsScript.R " . $colLvl . ' ' . str_replace(',', ' ', $headerString), $rResults);
             file_put_contents($dataFile, $predictString10Percent, FILE_APPEND);
             if ($trial === 0) {
                 exec("source ./tensorflow/bin/activate && python tfscript.py $dataFile " . implode(' ', range(1, count(explode(',', $headerString))+1)), $tfOutput);
@@ -2027,7 +2030,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             $dataFile = 'multinomQuestionsPredict/multinomQuestionsPredictDataForR_'. $multinomQuestionPredictCol .'.txt';
             file_put_contents($dataFile, $predictString);
             unset($sklOutput);
-            exec("/usr/local/bin/python -W ignore sklearnscript.py $dataFile 1 2 3 4 5 6 7", $sklOutput);
+            exec(PYTHON_DIR . " -W ignore sklearnscript.py $dataFile 1 2 3 4 5 6 7", $sklOutput);
 
             $algorithmNames = array();
             $accuracies = array();
