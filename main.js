@@ -987,7 +987,7 @@ $(document).ready((event) => {
                     //})
                     //localStorage.setItem(`row_names_q_predict`, JSON.stringify(rowNames))
                     let expectedAccuracy = Math.max(data[1].numSessions.numTrue, data[1].numSessions.numFalse) / (data[1].numSessions.numTrue + data[1].numSessions.numFalse)
-                    $(`#binomialNumSessionsRow td:nth-child(${i+2})`).html(data[1].numSessions.numTrue + ' / ' + data[1].numSessions.numFalse +
+                    $(`#binomialNumSessionsRow td:nth-child(${i+1})`).html(data[1].numSessions.numTrue + ' / ' + data[1].numSessions.numFalse +
                         '<br>(' + (expectedAccuracy).toFixed(2) + ' accuracy of expected val)')
                     columnElements.each((j, jval) => {
                         $(jval).css({
