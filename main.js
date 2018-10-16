@@ -11,21 +11,13 @@ $(document).ready((event) => {
     let goalsGraph1 = $('#goalsGraph1')[0]
     let goalsGraph2 = $('#goalsGraph2')[0]
 
-    let graphLeftAll = $('#graphLeftAll')[0]
-    let graphRightAll = $('#graphRightAll')[0]
     let histogramAll1 = $('#goalsGraph1All')[0]
     let histogramAll2 = $('#goalsGraph2All')[0]
     let histogramAll3 = $('#goalsGraph3All')[0]
+    let histogramAll8 = $('#goalsGraph8All')[0]
     let clusterGraph = $('#clusterGraph')[0]
 
-    let endDate = new Date()
     let requestStartTime
-    let enddd = endDate.getDate()
-    let endmm = endDate.getMonth() + 1
-    let endyyyy = endDate.getFullYear()
-    if (enddd < 10) { enddd = '0' + enddd }
-    if (endmm < 10) { endmm = '0' + endmm }
-    $('#endDate').val(endyyyy+'-'+endmm+'-'+enddd)
 
     // Minimize each table
     let collapserNames = []
@@ -1318,9 +1310,10 @@ $(document).ready((event) => {
                     $('#amtsTotalAll').append($('<hr>').css({ 'margin-bottom': '3px', 'margin-top': '3px' }))
                     $('#amtsTotalAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.totalKnobTotals.toFixed(2)}</div>`).css({ 'font-size': '14px', 'float': 'right', 'padding-right': '100px' })))
                     $('#amtsTotalAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.avgKnobTotals.toFixed(2)}</div>`).css({ 'font-size': '14px', 'float': 'right', 'padding-right': '100px' })))
+                    console.log(data)
                     dataHistogram = {
                         'questionAnswereds': data.questionAnswereds, 'numsQuestions': data.questionsAll.numsQuestions, 'numMoves': data.numMovesAll,
-                        'numLevels': data.numLevelsAll, 'clusters': data.clusters
+                        'numLevels': data.numLevelsAll, 'numTypeChanges': data.numTypeChangesAll, 'clusters': data.clusters
                     }
                 }
 
@@ -1466,8 +1459,6 @@ $(document).ready((event) => {
                         return 'C'
                     case 3:
                         return 'D'
-                    case undefined:
-                        return 'Did not answer'
                 }
             }).sort()
         }
@@ -1611,6 +1602,39 @@ $(document).ready((event) => {
 
             Plotly.newPlot($(`#goalsGraph${i+4}All`)[0], [trace], layout)
         }
+
+        $(`#goalsDiv8All`).html(`Histogram 8: Type changes`)
+        $(`#goalsDiv8All`).css(`display`, `block`)
+        $(`#goalsGraph8All`).css(`display`, `block`)
+        let trace8 = {
+            x: data.numTypeChanges,
+            type: 'histogram'
+        }
+        let layout8 = {
+            margin: { t: 35 },
+            height: 200,
+            plot_bgcolor: '#F6F6F3',
+            paper_bgcolor: '#F6F6F3',
+            xaxis: {
+                title: 'Number of type changes',
+                titlefont: {
+                    family: 'Courier New, monospace',
+                    size: 12,
+                    color: '#7f7f7f'
+                }
+            },
+            yaxis: {
+                title: 'Number of sessions',
+                titlefont: {
+                    family: 'Courier New, monospace',
+                    size: 12,
+                    color: '#7f7f7f'
+                }
+            },
+            showlegend: false
+        }
+
+        Plotly.newPlot(histogramAll8, [trace8], layout8)
 
         $('#clusterGraph').html('Cluster graph, dunn = ' + data.clusters.dunn)
         $('#clusterGraph').css('display', 'block')
