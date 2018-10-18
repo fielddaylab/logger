@@ -16,8 +16,16 @@ ini_set('max_execution_time', 30000);
 ini_set('max_input_vars', 2000);
 date_default_timezone_set('America/Chicago');
 
-define("PYTHON_DIR", "/usr/local/bin/python");
-define("RSCRIPT_DIR", "/usr/local/bin/Rscript");
+// local directories
+// define("PYTHON_DIR", "/usr/local/bin/python");
+// define("RSCRIPT_DIR", "/usr/local/bin/Rscript");
+// define("TENSORFLOW_ACTIVATE", "tensorflow/bin/activate");
+
+// server directories
+define("PYTHON_DIR", "/usr/bin/python");
+define("RSCRIPT_DIR", "/usr/bin/Rscript");
+define("TENSORFLOW_ACTIVATE", "bin/activate");
+
 define("DATA_DIR", "../../logger-data");
 
 $db = connectToDatabase(DBDeets::DB_NAME_DATA);
@@ -924,7 +932,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             unset($rResults);
             unset($tfOutput);
             exec(RSCRIPT_DIR . " scripts/questionsScript.R " . $column . ' ' . str_replace(',', ' ', $headerString), $rResults);
-            exec("source ./tensorflow/bin/activate && python scripts/tfscript.py $dataFile " . implode(' ', range(1, $numVariables)), $tfOutput);
+            exec("source" . TENSORFLOW_ACTIVATE . " && python scripts/tfscript.py $dataFile " . implode(' ', range(1, $numVariables)), $tfOutput);
             $percentCorrectTf = isset($tfOutput[count($tfOutput)-1]) ? $tfOutput[count($tfOutput)-1] : null;
             unset($sklOutput);
             exec(PYTHON_DIR . " -W ignore scripts/sklearnscript.py $dataFile " . implode(' ', range(1, $numVariables)), $sklOutput);
@@ -997,7 +1005,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                 unset($rResults);
                 unset($tfOutput);
                 exec(RSCRIPT_DIR . " scripts/questionsPredictScript.R " . $column . ' ' . $predLevel . ' ' . str_replace(',', ' ', $headerString), $rResults);
-                exec("source ./tensorflow/bin/activate && python scripts/tfscript.py $dataFile " . implode(' ', range(1, count(explode(',', $headerString))+1)), $tfOutput);
+                exec("source" . TENSORFLOW_ACTIVATE . "&& python scripts/tfscript.py $dataFile " . implode(' ', range(1, count(explode(',', $headerString))+1)), $tfOutput);
                 $percentCorrectTf = isset($tfOutput[count($tfOutput)-1]) ? $tfOutput[count($tfOutput)-1] : null;
                 unset($sklOutput);
                 exec(PYTHON_DIR . " -W ignore scripts/sklearnscript.py $dataFile " . implode(' ', range(1, count(explode(',', $headerString))+1)), $sklOutput);
@@ -1624,7 +1632,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
         unset($tfOutput);
         $numVariables = count(explode(',', $headerString)) + 1;
         exec(RSCRIPT_DIR . " scripts/challengesScript.R " . $colLvl . ' ' . str_replace(',', ' ', $headerString), $rResults);
-        exec("source ./tensorflow/bin/activate && python scripts/tfscript.py $dataFile " . implode(' ', range(1, $numVariables)), $tfOutput);
+        exec("source" . TENSORFLOW_ACTIVATE . "&& python scripts/tfscript.py $dataFile " . implode(' ', range(1, $numVariables)), $tfOutput);
         $percentCorrectTf = isset($tfOutput[count($tfOutput)-1]) ? $tfOutput[count($tfOutput)-1] : null;
         unset($sklOutput);
         exec(PYTHON_DIR . " -W ignore scripts/sklearnscript.py $dataFile " . implode(' ', range(1, $numVariables)), $sklOutput);
@@ -1882,7 +1890,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             exec(RSCRIPT_DIR . " scripts/numLevelsScript.R " . $colLvl . ' ' . str_replace(',', ' ', $headerString), $rResults);
             file_put_contents($dataFile, $predictString10Percent, FILE_APPEND);
             if ($trial === 0) {
-                exec("source ./tensorflow/bin/activate && python scripts/tfscript.py $dataFile " . implode(' ', range(1, $numVariables)), $tfOutput);
+                exec("source" . TENSORFLOW_ACTIVATE . "&& python scripts/tfscript.py $dataFile " . implode(' ', range(1, $numVariables)), $tfOutput);
                 $mae = isset($tfOutput[count($tfOutput)-1]) ? $tfOutput[count($tfOutput)-1] : null;
             }
             //echo var_dump($rResults); return;
