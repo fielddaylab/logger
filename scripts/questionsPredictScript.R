@@ -1,6 +1,6 @@
 suppressMessages(library(caret))
 args <- commandArgs(TRUE)
-table <- paste("questionsPredict/questionsPredictDataForR_", args[1], "_", args[2], ".txt", sep="")
+table <- paste("../logger-data/questionsPredict/questionsPredictDataForR_", args[1], "_", args[2], ".txt", sep="")
 formula <- "result~"
 
 for (i in seq_along(args)) {

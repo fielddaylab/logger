@@ -168,7 +168,8 @@ $(document).ready((event) => {
     }
     // tableAllBody aka question answers from challenge 1
     if (true) {
-        let rowNames = ['Constant term', '# slider moves', '# type changes', '# levels completed', 'Time', 'Avg knob max-min', 'Avg % good moves']
+        let rowNames = ['Constant term', '# slider moves', '# type changes', '# levels completed', 'Time', 'Avg knob max-min', 
+            'Avg % good moves', '# offset moves', '# wavelength moves', '# amplitude moves']
         $(rowNames).each((i, rowName) => {
             $('#tableAllBody').append(`
             <tr>
@@ -1037,7 +1038,7 @@ $(document).ready((event) => {
                                     innerText.html('No data')
                                 }
                             }
-                            $(innerText).wrapInner(`<a target="_blank" href="questionsPredict/questionsPredictDataForR_${column}_${Math.floor(j/2)+1}.txt">`)
+                            $(innerText).wrapInner(`<a target="_blank" href="../logger-data/questionsPredict/questionsPredictDataForR_${column}_${Math.floor(j/2)+1}.txt">`)
                             $(jval).html(innerText)
                         }
                         $(innerText).css({ 'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif' })
@@ -1166,7 +1167,7 @@ $(document).ready((event) => {
                             } else {
                                 innerText.html('No data')
                             }
-                            $(innerText).wrapInner(`<a target="_blank" href="multinomQuestionsPredict/multinomQuestionsPredictDataForR_${column}.txt">`)
+                            $(innerText).wrapInner(`<a target="_blank" href="../logger-data/multinomQuestionsPredict/multinomQuestionsPredictDataForR_${column}.txt">`)
                             $(jval).html(innerText)
                         }
                         $(innerText).css({ 'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif' })

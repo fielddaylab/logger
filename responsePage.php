@@ -18,6 +18,7 @@ date_default_timezone_set('America/Chicago');
 
 define("PYTHON_DIR", "/usr/local/bin/python");
 define("RSCRIPT_DIR", "/usr/local/bin/Rscript");
+define("DATA_DIR", "../logger-data");
 
 $db = connectToDatabase(DBDeets::DB_NAME_DATA);
 if ($db->connect_error) {
@@ -122,6 +123,7 @@ function array_column_fixed($input, $column_key) {
 
 function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAttributes, $column, $maxLevel = 100) {
     $sessionIDs = $sessionsAndTimes['sessions'];
+    $sliderTypes = ['OFFSET', 'WAVELENGTH', 'AMPLITUDE'];
     $shouldUseAvgs = false;
     if (isset($_GET['shouldUseAvgs'])) {
         $shouldUseAvgs = ($_GET['shouldUseAvgs'] === 'true');
@@ -225,8 +227,10 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
             $levelTimes = array();
             $avgKnobStdDevs = array();
             $knobAvgs = array();
+            $numMovesPerChallengePerSlider = array();
             foreach ($dataObj['levels'] as $i) {
                 $numMovesPerChallenge[$i] = array();
+                $numMovesPerChallengePerSlider[$i] = array_fill_keys($sliderTypes, 0);
                 $indicesToSplice[$i] = array();
 
                 $startIndices[$i] = null;
@@ -252,11 +256,12 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
                         }
                     } else if ($dataObj['events'][$i] === 'CUSTOM' && ($dataJson['event_custom'] === 'SLIDER_MOVE_RELEASE')) {
                         if ($lastSlider !== $dataJson['slider']) {
-                            if (!isset($moveTypeChangesPerLevel[$dataObj['levels'][$i]])) $moveTypeChangesPerLevel[$dataObj['levels'][$i]] = 0;
                             $moveTypeChangesPerLevel[$dataObj['levels'][$i]]++;
                         }
-                        $lastSlider = $dataJson['slider'];
+                        $lastSlider = $dataJson['slider']; // possible slider values: "AMPLITUDE", "OFFSET", "WAVELENGTH"
                         $numMovesPerChallenge[$dataObj['levels'][$i]][] = $i;
+                        if (!isset($numMovesPerChallengePerSlider[$dataObj['levels'][$i]][$lastSlider])) $numMovesPerChallengePerSlider[$dataObj['levels'][$i]][$lastSlider] = 0;
+                        $numMovesPerChallengePerSlider[$dataObj['levels'][$i]][$lastSlider]++;
                         //if (!isset($knobNumStdDevs[$dataObj['levels'][$i]])) $knobNumStdDevs[$dataObj['levels'][$i]] = 0;
                         $knobNumStdDevs[$dataObj['levels'][$i]]++;
                         //if (!isset($knobStdDevs[$dataObj['levels'][$i]])) $knobStdDevs[$dataObj['levels'][$i]] = 0;
@@ -305,11 +310,18 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
         foreach ($filteredNumMoves as $j=>$value) {
             $numMoves[$j] = count($numMovesPerChallenge[$j]);
         }
+        $numMovesPerSliderCols = array();
+        foreach ($sliderTypes as $i=>$slider) {
+            $numMovesPerSliderCols[$slider] = array_column($numMovesPerChallengePerSlider, $slider);
+        }
+        $avgNumMovesPerChallengePerSlider = array_map('average', $numMovesPerSliderCols);
+        $numMovesPerChallengePerSliderTotals = array_map('array_sum', $numMovesPerSliderCols);
+
         $allData[$sessionID] = array('levelTimes'=>$levelTimes, 'avgTime'=>$avgTime, 'totalTime'=>$totalTime, 'numMovesPerChallenge'=>$numMoves, 'totalMoves'=>$totalMoves,
         'avgMoves'=>$avgMoves, 'moveTypeChangesPerLevel'=>$moveTypeChangesPerLevel, 'moveTypeChangesTotal'=>$moveTypeChangesTotal, 'moveTypeChangesAvg'=>$moveTypeChangesAvg,
         'knobStdDevs'=>$avgKnobStdDevs, 'knobNumStdDevs'=>$knobNumStdDevs, 'knobAvgs'=>$knobAvgs, 'knobAmtsTotalAvg'=>$knobAmtsTotal, 'knobAmtsAvgAvg'=>$knobAmtsAvg,
         'knobTotalAmts'=>$knobAmts, 'knobSumTotal'=>$knobSumTotal, 'knobTotalAvg'=>$knobSumAvg, 'numMovesPerChallengeArray'=>$numMovesPerChallenge, 'dataObj'=>$dataObj,
-        'numLevels'=>count($levelTimes));
+        'numMovesPerChallengePerSliderTotals'=>$numMovesPerChallengePerSliderTotals, 'avgNumMovesPerChallengePerSlider'=>$avgNumMovesPerChallengePerSlider, 'numLevels'=>count($levelTimes));
     }
 
     // loop through all the sessions we got above and add their variables to totals
@@ -320,6 +332,14 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
     $stdCol = array_column($allData, 'knobStdDevs');
     $totalCol = array_column($allData, 'knobTotalAmts');
     $avgCol = array_column($allData, 'knobAvgs');
+    $numMovesPerSliderCol = array_column($allData, 'numMovesPerChallengePerSliderTotals');
+    $avgMovesPerSliderCol = array_column($allData, 'avgNumMovesPerChallengePerSlider');
+    $movesPerSliderCols = array();
+    $avgMovesPerSliderCols = array();
+    foreach ($sliderTypes as $i=>$type) {
+        $movesPerSliderCols[$type] = array_column($numMovesPerSliderCol, $type);
+        $avgMovesPerSliderCols[$type] = array_column($avgMovesPerSliderCol, $type);
+    }
 
     $newArray = array();
     $a = array_column($allEvents, 'level');
@@ -658,13 +678,15 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
                     $numTypeChanges = average($typeCol[$i]);
                     $time = average($timeCol[$i]);
                     $minMax = average($avgCol[$i]);
-                    $predictors[] = array($numMoves, $numTypeChanges, $levelsCol[$i], $time, $minMax, $percentGoodMovesAvgs[$i]);
+                    $numMovesPerType = array_column($avgMovesPerSliderCols, $i);
+                    $predictors[] = array_merge(array($numMoves, $numTypeChanges, $levelsCol[$i], $time, $minMax, $percentGoodMovesAvgs[$i]), $numMovesPerType);
                 } else {
                     $numMoves = $numMovesAll[$i];
                     $numTypeChanges = array_sum($typeCol[$i]);
                     $time = array_sum($timeCol[$i]);
                     $minMax = array_sum($avgCol[$i]);
-                    $predictors[] = array($numMoves, $numTypeChanges, $levelsCol[$i], $time, $minMax, $percentGoodMovesAvgs[$i]);
+                    $numMovesPerType = array_column($movesPerSliderCols, $i);
+                    $predictors[] = array_merge(array($numMoves, $numTypeChanges, $levelsCol[$i], $time, $minMax, $percentGoodMovesAvgs[$i]), $numMovesPerType);
                 }
                 $predicted[] = ($val[$quesIndex] === $ansIndex) ? 1 : 0;
             }
@@ -684,9 +706,9 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
         foreach ($sessionIDs as $i=>$val) {
             $percentQuestionsCorrect = ($questionsAll['numsQuestions'][$i] === 0) ? 0 : $questionsAll['numsCorrect'][$i] / $questionsAll['numsQuestions'][$i];
             if ($shouldUseAvgs) {
-                $predictor = array(($levelsCol[$i] == 0) ? null : $numMovesAll[$i] / $levelsCol[$i], average($typeCol[$i]), average($timeCol[$i]), average($avgCol[$i]));
+                $predictor = array_merge(array(($levelsCol[$i] == 0) ? null : $numMovesAll[$i] / $levelsCol[$i], average($typeCol[$i]), average($timeCol[$i]), average($avgCol[$i])), array_column($avgMovesPerSliderCols, $i));
             } else {
-                $predictor = array($numMovesAll[$i], array_sum($typeCol[$i]), array_sum($timeCol[$i]), array_sum($avgCol[$i]));
+                $predictor = array_merge(array($numMovesAll[$i], array_sum($typeCol[$i]), array_sum($timeCol[$i]), array_sum($avgCol[$i])), array_column($movesPerSliderCols, $i));
             }
             
             $colLvl = intval(substr($column, 3));
@@ -712,9 +734,9 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
         foreach ($sessionIDs as $i=>$val) {
             $percentQuestionsCorrect = ($questionsAll['numsQuestions'][$i] === 0) ? 0 : $questionsAll['numsCorrect'][$i] / $questionsAll['numsQuestions'][$i];
             if ($shouldUseAvgs) {
-                $predictor = array(($levelsCol[$i] == 0) ? null : $numMovesAll[$i] / $levelsCol[$i], average($typeCol[$i]), average($timeCol[$i]), average($avgCol[$i]));
+                $predictor = array_merge(array(($levelsCol[$i] == 0) ? null : $numMovesAll[$i] / $levelsCol[$i], average($typeCol[$i]), average($timeCol[$i]), average($avgCol[$i])), array_column($avgMovesPerSliderCols, $i));
             } else {
-                $predictor = array($numMovesAll[$i], array_sum($typeCol[$i]), array_sum($timeCol[$i]), array_sum($avgCol[$i]));
+                $predictor = array_merge(array($numMovesAll[$i], array_sum($typeCol[$i]), array_sum($timeCol[$i]), array_sum($avgCol[$i])), array_column($movesPerSliderCols, $i));
             }
             
             $colLvl = intval(substr($column, 3));
@@ -742,13 +764,15 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
                     $numTypeChanges = average($typeCol[$i]);
                     $time = average($timeCol[$i]);
                     $minMax = average($avgCol[$i]);
-                    $predictors[] = array($numMoves, $numTypeChanges, $levelsCol[$i], $time, $minMax, $percentGoodMovesAvgs[$i]);
+                    $numMovesPerType = array_column($avgMovesPerSliderCols, $i);
+                    $predictors[] = array_merge(array($numMoves, $numTypeChanges, $levelsCol[$i], $time, $minMax, $percentGoodMovesAvgs[$i]), $numMovesPerType);
                 } else {
                     $numMoves = $numMovesAll[$i];
                     $numTypeChanges = array_sum($typeCol[$i]);
                     $time = array_sum($timeCol[$i]);
                     $minMax = array_sum($avgCol[$i]);
-                    $predictors[] = array($numMoves, $numTypeChanges, $levelsCol[$i], $time, $minMax, $percentGoodMovesAvgs[$i]);
+                    $numMovesPerType = array_column($movesPerSliderCols, $i);
+                    $predictors[] = array_merge(array($numMoves, $numTypeChanges, $levelsCol[$i], $time, $minMax, $percentGoodMovesAvgs[$i]), $numMovesPerType);
                 }
                 $predicted[] = $val[$quesIndex];
             }
@@ -766,7 +790,7 @@ function random() {
 
 function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
     $percentTesting = 0.5;
-    if (!isset($reqSessionID) && !isset($_GET['predictColumn']) && !isset($_GET['numLevelsColumn']) && !isset($_GET['multinomQuestionPredictColumn'])) {
+    if/* binomial/binary qs */ (!isset($reqSessionID) && !isset($_GET['predictColumn']) && !isset($_GET['numLevelsColumn']) && !isset($_GET['multinomQuestionPredictColumn'])) {
         $minMoves = $_GET['minMoves'];
         $minQuestions = $_GET['minQuestions'];
         $startDate = $_GET['startDate'];
@@ -884,23 +908,26 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             $numPredictors = $regression['numSessions'];
 
             $predictString = "# Generated " . date("Y-m-d H:i:s") . "\n" . $column . ",";
-            $headerString = "num_slider_moves,num_type_changes,num_levels,total_time,avg_knob_max_min,avg_pgm";
+            $headerString = "num_slider_moves,num_type_changes,num_levels,total_time,avg_knob_max_min,avg_pgm,offset,wavelength,amp";
             $predictString .= $headerString . ",result\n";
             foreach ($predictArray as $i=>$array) {
                 $predictString .= $column . ',' . implode(',', $array) . "\n";
             }
-            if (!is_dir('questions')) {
-                mkdir('questions', 0777, true);
+            $numVariables = count(explode(',', $headerString)) + 1;
+
+            if (!is_dir(DATA_DIR . '/questions')) {
+                mkdir(DATA_DIR . '/questions', 0777, true);
             }
-            $dataFile = 'questions/questionsDataForR_'. $_GET['column'] .'.txt';
+
+            $dataFile = DATA_DIR . '/questions/questionsDataForR_'. $_GET['column'] .'.txt';
             file_put_contents($dataFile, $predictString);
             unset($rResults);
             unset($tfOutput);
-            exec(RSCRIPT_DIR . " questions/questionsScript.R " . $column . ' ' . str_replace(',', ' ', $headerString), $rResults);
-            exec("source ./tensorflow/bin/activate && python tfscript.py $dataFile " . implode(' ', range(1, count(explode(',', $headerString))+1)), $tfOutput);
+            exec(RSCRIPT_DIR . " scripts/questionsScript.R " . $column . ' ' . str_replace(',', ' ', $headerString), $rResults);
+            exec("source ./tensorflow/bin/activate && python scripts/tfscript.py $dataFile " . implode(' ', range(1, $numVariables)), $tfOutput);
             $percentCorrectTf = isset($tfOutput[count($tfOutput)-1]) ? $tfOutput[count($tfOutput)-1] : null;
             unset($sklOutput);
-            exec(PYTHON_DIR . " -W ignore sklearnscript.py $dataFile 1 2 3 4 5 6 7", $sklOutput);
+            exec(PYTHON_DIR . " -W ignore scripts/sklearnscript.py $dataFile " . implode(' ', range(1, $numVariables)), $sklOutput);
     
             $algorithmNames = array();
             $accuracies = array();
@@ -927,12 +954,13 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                     break;
                 }
             }
+            $accuracy = null;
             if (isset($rResults[$accStart+1])) {
                 $accuracyLine = preg_split('/\ +/', $rResults[$accStart+1]);
                 if (isset($accuracyLine[2])) $accuracy = $accuracyLine[2];
             }
             if ($coefStart !== 0) {
-                for ($i = $coefStart+1, $lastRow = 7+$coefStart; $i <= $lastRow; $i++) {
+                for ($i = $coefStart+1, $lastRow = $numVariables+$coefStart; $i <= $lastRow; $i++) {
                     $values = preg_split('/\ +/', $rResults[$i]);  // put "words" of this line into an array
                     $coefficients[] = is_numeric($x = str_replace(['<', '>'], '', $values[1])) ? $x+0 : null; // + 0 is to force the scientific notation into a regular number
                     $stdErrs[] = is_numeric($x = str_replace(['<', '>'], '', $values[2])) ? $x+0 : null;
@@ -954,24 +982,25 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                 $numPredictors = $regression['numSessions'];
 
                 $predictString = "# Generated " . date("Y-m-d H:i:s") . "\n" . $column . ",";
-                $headerString = "num_slider_moves,num_type_changes,num_levels,total_time,avg_knob_max_min,avg_pgm";
+                $headerString = "num_slider_moves,num_type_changes,num_levels,total_time,avg_knob_max_min,avg_pgm,offset,wavelength,amp";
                 $predictString .= $headerString . ",result\n";
                 foreach ($predictArray as $i=>$array) {
                     $predictString .= $column . ',' . implode(',', $array) . "\n";
                 }
-                
-                if (!is_dir('questionsPredict')) {
-                    mkdir('questionsPredict', 0777, true);
+
+                if (!is_dir(DATA_DIR . '/questionsPredict')) {
+                    mkdir(DATA_DIR . '/questionsPredict', 0777, true);
                 }
-                $dataFile = 'questionsPredict/questionsPredictDataForR_'. $questionPredictCol . '_' . $predLevel .'.txt';
+
+                $dataFile = DATA_DIR . '/questionsPredict/questionsPredictDataForR_'. $questionPredictCol . '_' . $predLevel .'.txt';
                 file_put_contents($dataFile, $predictString);
                 unset($rResults);
                 unset($tfOutput);
-                exec(RSCRIPT_DIR . " questionsPredict/questionsPredictScript.R " . $column . ' ' . $predLevel . ' ' . str_replace(',', ' ', $headerString), $rResults);
-                exec("source ./tensorflow/bin/activate && python tfscript.py $dataFile " . implode(' ', range(1, count(explode(',', $headerString))+1)), $tfOutput);
+                exec(RSCRIPT_DIR . " scripts/questionsPredictScript.R " . $column . ' ' . $predLevel . ' ' . str_replace(',', ' ', $headerString), $rResults);
+                exec("source ./tensorflow/bin/activate && python scripts/tfscript.py $dataFile " . implode(' ', range(1, count(explode(',', $headerString))+1)), $tfOutput);
                 $percentCorrectTf = isset($tfOutput[count($tfOutput)-1]) ? $tfOutput[count($tfOutput)-1] : null;
                 unset($sklOutput);
-                exec(PYTHON_DIR . " -W ignore sklearnscript.py $dataFile 1 2 3 4 5 6 7", $sklOutput);
+                exec(PYTHON_DIR . " -W ignore scripts/sklearnscript.py $dataFile " . implode(' ', range(1, count(explode(',', $headerString))+1)), $sklOutput);
         
                 $algorithmNames = array();
                 $accuracies = array();
@@ -998,6 +1027,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                         break; // estimate comes after accuracy in the output
                     }
                 }
+                $percentCorrectR = null;
                 if (isset($rResults[$accStart+1])) {
                     $accuracyLine = preg_split('/\ +/', $rResults[$accStart+1]);
                     if (isset($accuracyLine[2])) $percentCorrectR = $accuracyLine[2];
@@ -1016,7 +1046,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             }
             return $returnArray;
         }
-    } else if (!isset($_GET['predictColumn']) && !isset($_GET['numLevelsColumn']) && !isset($_GET['questionPredictColumn']) && !isset($_GET['multinomQuestionPredictColumn'])) {
+    } /* single session     */ else if (!isset($_GET['predictColumn']) && !isset($_GET['numLevelsColumn']) && !isset($_GET['questionPredictColumn']) && !isset($_GET['multinomQuestionPredictColumn'])) {
         $query =
         "SELECT session_id, level, event, event_custom, event_data_complex, client_time
         FROM log
@@ -1396,7 +1426,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
 
         // Return ALL the above information at once in a big array
         return replaceNans($output);
-    } else if (isset($_GET['predictColumn']) && !isset($_GET['questionPredictColumn']) && !isset($_GET['multinomQuestionPredictColumn'])) {
+    } /* level completion   */ else if (isset($_GET['predictColumn']) && !isset($_GET['questionPredictColumn']) && !isset($_GET['multinomQuestionPredictColumn'])) {
         $predictColumn = $_GET['predictColumn'];
         $startDate = $_GET['startDate'];
         $endDate = $_GET['endDate'];
@@ -1572,7 +1602,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
         $numPredictors = $regression['numSessions'];
 
         $predictString = "# Generated " . date("Y-m-d H:i:s") . "\n" . $predictColumn . ",";
-        $headerString = "num_slider_moves,num_type_changes,total_time,avg_knob_max_min";
+        $headerString = "num_slider_moves,num_type_changes,total_time,avg_knob_max_min,offset,wavelength,amp";
         $numPgms = 0;
         foreach ($levelsForTable as $i=>$level) {
             if ($level >= $colLvl) break;
@@ -1583,18 +1613,21 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
         foreach ($predictArray as $i=>$array) {
             $predictString .= $predictColumn . ',' . implode(',', $array) . "\n";
         }
-        if (!is_dir('challenges')) {
-            mkdir('challenges', 0777, true);
+
+        if (!is_dir(DATA_DIR . '/challenges')) {
+            mkdir(DATA_DIR . '/challenges', 0777, true);
         }
-        $dataFile = 'challenges/challengesDataForR_'. $colLvl .'.txt';
+
+        $dataFile = DATA_DIR . '/challenges/challengesDataForR_'. $colLvl .'.txt';
         file_put_contents($dataFile, $predictString);
         unset($rResults);
         unset($tfOutput);
-        exec(RSCRIPT_DIR . " challenges/challengesScript.R " . $colLvl . ' ' . str_replace(',', ' ', $headerString), $rResults);
-        exec("source ./tensorflow/bin/activate && python tfscript.py $dataFile " . implode(' ', range(1, count(explode(',', $headerString))+1)), $tfOutput);
+        $numVariables = count(explode(',', $headerString)) + 1;
+        exec(RSCRIPT_DIR . " scripts/challengesScript.R " . $colLvl . ' ' . str_replace(',', ' ', $headerString), $rResults);
+        exec("source ./tensorflow/bin/activate && python scripts/tfscript.py $dataFile " . implode(' ', range(1, $numVariables)), $tfOutput);
         $percentCorrectTf = isset($tfOutput[count($tfOutput)-1]) ? $tfOutput[count($tfOutput)-1] : null;
         unset($sklOutput);
-        exec(PYTHON_DIR . " -W ignore sklearnscript.py $dataFile " . implode(' ', range(1, count(explode(',', $headerString))+1)), $sklOutput);
+        exec(PYTHON_DIR . " -W ignore scripts/sklearnscript.py $dataFile " . implode(' ', range(1, $numVariables)), $sklOutput);
 
         $algorithmNames = array();
         $accuracies = array();
@@ -1622,12 +1655,13 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             }
         }
 
+        $percentCorrectR = null;
         if (isset($rResults[$accStart+1])) {
             $accuracyLine = preg_split('/\ +/', $rResults[$accStart+1]);
             if (isset($accuracyLine[2])) $percentCorrectR = $accuracyLine[2];
         }
         if ($coefStart !== 0) {
-            for ($i = $coefStart+1, $lastRow = 5+$numPgms+$coefStart; $i <= $lastRow; $i++) {
+            for ($i = $coefStart+1, $lastRow = $numVariables+$numPgms+$coefStart; $i <= $lastRow; $i++) {
                 $values = preg_split('/\ +/', $rResults[$i]);  // put "words" of this line into an array
                 $coefficients[] = is_numeric($x = str_replace(['<', '>'], '', $values[1])) ? $x+0 : null; // + 0 is to force the scientific notation into a regular number
                 $stdErrs[] = is_numeric($x = str_replace(['<', '>'], '', $values[2])) ? $x+0 : null;
@@ -1641,7 +1675,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
 
         return array('coefficients'=>$coefficients, 'stdErrs'=>$stdErrs, 'pValues'=>$pValues, 'regressionVars'=>$predictArray, 'numSessions'=>array('numTrue'=>$numTrue, 'numFalse'=>$numFalse),
             'regressionOutputs'=>$predictedArray, 'percentCorrectR'=>$percentCorrectR, 'percentCorrectTf'=>$percentCorrectTf, 'algorithmNames'=>$algorithmNames, 'accuracies'=>$accuracies);
-    } else if (isset($_GET['numLevelsColumn']) && !isset($_GET['questionPredictColumn']) && !isset($_GET['multinomQuestionPredictColumn'])) {
+    } /* num levels         */ else if (isset($_GET['numLevelsColumn']) && !isset($_GET['questionPredictColumn']) && !isset($_GET['multinomQuestionPredictColumn'])) {
         $numLevelsColumn = $_GET['numLevelsColumn'];
         $minMoves = $_GET['minMoves'];
         $minQuestions = $_GET['minQuestions'];
@@ -1758,9 +1792,6 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             $paramTypes .= 'iissiii';
         }
 
-        //echo $query; return;
-
-
         $stmt = queryMultiParam($db, $query, $paramTypes, $params);
         if($stmt === NULL) {
             http_response_code(500);
@@ -1810,7 +1841,6 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             $times[$i] = $val[0]['time'];
         }
 
-        // Construct sessions and times array
         $sessionsAndTimes = array('sessions'=>$uniqueSessions, 'times'=>array_values($times));
 
         $regression = analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAttributes, $numLevelsColumn);
@@ -1822,12 +1852,11 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
         $totalAvgPercentErrorRand = array();
         for ($trial = 0; $trial < 10; $trial++) {
             $predictString = "# Generated " . date("Y-m-d H:i:s") . "\n" . $numLevelsColumn . ",";
-            $headerString = "num_slider_moves,num_type_changes,total_time,avg_knob_max_min";
+            $headerString = "num_slider_moves,num_type_changes,total_time,avg_knob_max_min,offset,wavelength,amp";
             $numPgms = 0;
             foreach ($levelsForTable as $i=>$level) {
                 if ($level >= $colLvl) break;
                 $headerString .= ',pgm_lvl' . $level;
-                $numPgms++;
             }
             $predictString .= $headerString . ",result\n";
             $predict10Percent = array(); // Use 10% to test the model
@@ -1840,15 +1869,20 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                     $predict10Percent[] = $i;
                 }
             }
-            if (!is_dir('numLevels')) {
-                mkdir('numLevels', 0777, true);
+            $numVariables = count(explode(',', $headerString)) + 1;
+
+            if (!is_dir(DATA_DIR . '/numLevels')) {
+                mkdir(DATA_DIR . '/numLevels', 0777, true);
             }
-            $dataFile = 'numLevels/numLevelDataForR_'. $colLvl .'.txt';
+
+            $dataFile = DATA_DIR . '/numLevels/numLevelDataForR_'. $colLvl .'.txt';
             file_put_contents($dataFile, $predictString);
-            exec(RSCRIPT_DIR . " numLevels/numLevelsScript.R " . $colLvl . ' ' . str_replace(',', ' ', $headerString), $rResults);
+            unset($rResults);
+            unset($tfOutput);
+            exec(RSCRIPT_DIR . " scripts/numLevelsScript.R " . $colLvl . ' ' . str_replace(',', ' ', $headerString), $rResults);
             file_put_contents($dataFile, $predictString10Percent, FILE_APPEND);
             if ($trial === 0) {
-                exec("source ./tensorflow/bin/activate && python tfscript.py $dataFile " . implode(' ', range(1, count(explode(',', $headerString))+1)), $tfOutput);
+                exec("source ./tensorflow/bin/activate && python scripts/tfscript.py $dataFile " . implode(' ', range(1, $numVariables)), $tfOutput);
                 $mae = isset($tfOutput[count($tfOutput)-1]) ? $tfOutput[count($tfOutput)-1] : null;
             }
             //echo var_dump($rResults); return;
@@ -1864,7 +1898,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             }
 
             if ($coefStart !== 0) {
-                for ($i = $coefStart+1, $lastRow = 5+$numPgms+$coefStart; $i <= $lastRow; $i++) {
+                for ($i = $coefStart+1, $lastRow = $numVariables+$coefStart; $i <= $lastRow; $i++) {
                     $values = preg_split('/\ +/', $rResults[$i]);  // put "words" of this line into an array
                     $coefficients[] = is_numeric($x = str_replace(['<', '>'], '', $values[1])) ? $x+0 : null; // + 0 is to force the scientific notation into a regular number
                     $stdErrs[] = is_numeric($x = str_replace(['<', '>'], '', $values[2])) ? $x+0 : null;
@@ -1909,7 +1943,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
 
         return array('coefficients'=>$coefficients, 'stdErrs'=>$stdErrs, 'pValues'=>$pValues, 'regressionVars'=>$predictArray, 'numSessions'=>array('numTrue'=>$numTrue, 'numFalse'=>$numFalse),
             'regressionOutputs'=>$predictedArray, 'percentCorrectR'=>$percentCorrectR, 'mae'=>$mae, 'percentCorrectRand'=>$percentCorrectRand);
-    } else if (isset($_GET['multinomQuestionPredictColumn'])) {
+    } /* multinomial ques   */ else if (isset($_GET['multinomQuestionPredictColumn'])) {
         $minMoves = $_GET['minMoves'];
         $minQuestions = $_GET['minQuestions'];
         $startDate = $_GET['startDate'];
@@ -2019,18 +2053,19 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             $numPredictors = $regression['numSessions'];
 
             $predictString = "# Generated " . date("Y-m-d H:i:s") . "\n" . $multinomQuestionPredictCol . ",";
-            $headerString = "num_slider_moves,num_type_changes,num_levels,total_time,avg_knob_max_min,avg_pgm";
+            $headerString = "num_slider_moves,num_type_changes,num_levels,total_time,avg_knob_max_min,avg_pgm,offset,wavelength,amp";
             $predictString .= $headerString . ",result\n";
             foreach ($predictArray as $i=>$array) {
                 $predictString .= $multinomQuestionPredictCol . ',' . implode(',', $array) . "\n";
             }
-            if (!is_dir('multinomQuestionsPredict')) {
-                mkdir('multinomQuestionsPredict', 0777, true);
+            if (!is_dir(DATA_DIR . '/multinomQuestionsPredict')) {
+                mkdir(DATA_DIR . '/multinomQuestionsPredict', 0777, true);
             }
-            $dataFile = 'multinomQuestionsPredict/multinomQuestionsPredictDataForR_'. $multinomQuestionPredictCol .'.txt';
+            $numVariables = count(explode(',', $headerString)) + 1;
+            $dataFile = DATA_DIR . '/multinomQuestionsPredict/multinomQuestionsPredictDataForR_'. $multinomQuestionPredictCol .'.txt';
             file_put_contents($dataFile, $predictString);
             unset($sklOutput);
-            exec(PYTHON_DIR . " -W ignore sklearnscript.py $dataFile 1 2 3 4 5 6 7", $sklOutput);
+            exec(PYTHON_DIR . " -W ignore scripts/sklearnscript.py $dataFile " . implode(' ', range(1, $numVariables)), $sklOutput);
 
             $algorithmNames = array();
             $accuracies = array();
