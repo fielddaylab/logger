@@ -1000,15 +1000,17 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                     mkdir(DATA_DIR . '/questionsPredict', 0777, true);
                 }
 
+                $numVariables = count(explode(',', $headerString)) + 1;
+
                 $dataFile = DATA_DIR . '/questionsPredict/questionsPredictDataForR_'. $questionPredictCol . '_' . $predLevel .'.txt';
                 file_put_contents($dataFile, $predictString);
                 unset($rResults);
                 unset($tfOutput);
                 exec(RSCRIPT_DIR . " scripts/questionsPredictScript.R " . $column . ' ' . $predLevel . ' ' . str_replace(',', ' ', $headerString), $rResults);
-                exec("source " . TENSORFLOW_ACTIVATE . " && python scripts/tfscript.py $dataFile " . implode(' ', range(1, count(explode(',', $headerString))+1)), $tfOutput);
+                exec("source " . TENSORFLOW_ACTIVATE . " && python scripts/tfscript.py $dataFile " . implode(' ', range(1, $numVariables)), $tfOutput);
                 $percentCorrectTf = isset($tfOutput[count($tfOutput)-1]) ? $tfOutput[count($tfOutput)-1] : null;
                 unset($sklOutput);
-                exec(PYTHON_DIR . " -W ignore scripts/sklearnscript.py $dataFile " . implode(' ', range(1, count(explode(',', $headerString))+1)), $sklOutput);
+                exec(PYTHON_DIR . " -W ignore scripts/sklearnscript.py $dataFile " . implode(' ', range(1, $numVariables)), $sklOutput);
         
                 $algorithmNames = array();
                 $accuracies = array();
@@ -1041,7 +1043,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                     if (isset($accuracyLine[2])) $percentCorrectR = $accuracyLine[2];
                 }
                 if ($coefStart !== 0) {
-                    for ($i = $coefStart+1, $lastRow = 7+$coefStart; $i <= $lastRow; $i++) {
+                    for ($i = $coefStart+1, $lastRow = $numVariables+$coefStart; $i <= $lastRow; $i++) {
                         $values = preg_split('/\ +/', $rResults[$i]);  // put "words" of this line into an array
                         $coefficients[] = is_numeric($x = str_replace(['<', '>'], '', $values[1])) ? $x+0 : null; // + 0 is to force the scientific notation into a regular number
                         $stdErrs[] = is_numeric($x = str_replace(['<', '>'], '', $values[2])) ? $x+0 : null;
