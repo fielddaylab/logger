@@ -6,8 +6,6 @@ from pprint import pprint
 import numpy as np
 from numpy import loadtxt
 
-import matplotlib.pyplot as plt
-from matplotlib.colors import ListedColormap
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.datasets import make_moons, make_circles, make_classification
