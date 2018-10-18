@@ -18,7 +18,7 @@ date_default_timezone_set('America/Chicago');
 
 define("PYTHON_DIR", "/usr/local/bin/python");
 define("RSCRIPT_DIR", "/usr/local/bin/Rscript");
-define("DATA_DIR", "../logger-data");
+define("DATA_DIR", "../../logger-data");
 
 $db = connectToDatabase(DBDeets::DB_NAME_DATA);
 if ($db->connect_error) {

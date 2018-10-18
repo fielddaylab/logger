@@ -1,7 +1,7 @@
 suppressMessages(library(caret))
 args <- commandArgs(TRUE)
 getwd()
-table <- paste("../logger-data/questions/questionsDataForR_", args[1], ".txt", sep="")
+table <- paste("../../logger-data/questions/questionsDataForR_", args[1], ".txt", sep="")
 formula <- "result~"
 
 for (i in seq_along(args)) {

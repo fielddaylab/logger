@@ -29,7 +29,7 @@ args = sys.argv
 num_args = len(sys.argv)
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
-filename = dir_path + "/../" + args[1]
+filename = dir_path + "/../../" + args[1]
 
 percentTesting = 0.5 # number between 0 and 1 for what % of dataset should be used for testing
 X = loadtxt(filename, ndmin=2, delimiter=',', skiprows=2, usecols=tuple(map(int, args[2:num_args-1])))

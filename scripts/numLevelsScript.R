@@ -1,5 +1,5 @@
 args <- commandArgs(TRUE)
-table <- paste("../logger-data/numLevels/numLevelDataForR_", args[1], ".txt", sep="")
+table <- paste("../../logger-data/numLevels/numLevelDataForR_", args[1], ".txt", sep="")
 formula <- "result~"
 
 for (i in seq_along(args)) {
