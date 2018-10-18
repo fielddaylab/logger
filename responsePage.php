@@ -17,14 +17,14 @@ ini_set('max_input_vars', 2000);
 date_default_timezone_set('America/Chicago');
 
 // local directories
-// define("PYTHON_DIR", "/usr/local/bin/python");
-// define("RSCRIPT_DIR", "/usr/local/bin/Rscript");
-// define("TENSORFLOW_ACTIVATE", "tensorflow/bin/activate");
+define("PYTHON_DIR", "/usr/local/bin/python");
+define("RSCRIPT_DIR", "/usr/local/bin/Rscript");
+define("TENSORFLOW_ACTIVATE", "tensorflow/bin/activate");
 
 // server directories
-define("PYTHON_DIR", "/usr/bin/python");
-define("RSCRIPT_DIR", "/usr/bin/Rscript");
-define("TENSORFLOW_ACTIVATE", "bin/activate");
+// define("PYTHON_DIR", "/usr/bin/python");
+// define("RSCRIPT_DIR", "/usr/bin/Rscript");
+// define("TENSORFLOW_ACTIVATE", "bin/activate");
 
 define("DATA_DIR", "../../logger-data");
 
@@ -969,10 +969,10 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             }
             if ($coefStart !== 0) {
                 for ($i = $coefStart+1, $lastRow = $numVariables+$coefStart; $i <= $lastRow; $i++) {
-                    $values = preg_split('/\ +/', $rResults[$i]);  // put "words" of this line into an array
-                    $coefficients[] = is_numeric($x = str_replace(['<', '>'], '', $values[1])) ? $x+0 : null; // + 0 is to force the scientific notation into a regular number
-                    $stdErrs[] = is_numeric($x = str_replace(['<', '>'], '', $values[2])) ? $x+0 : null;
-                    $pValues[] = is_numeric($x = str_replace(['<', '>'], '', $values[4])) ? $x+0 : null;
+                    $values = preg_split('/\ +/', str_replace(['<', '>'], '', $rResults[$i]));  // put "words" of this line into an array
+                    $coefficients[] = $values[1] + 0; // + 0 is to force the scientific notation into a regular number
+                    $stdErrs[] = $values[2] + 0;
+                    $pValues[] = $values[4] + 0;
                 }
             }
             $percentCorrectR = $accuracy;
@@ -1044,10 +1044,10 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                 }
                 if ($coefStart !== 0) {
                     for ($i = $coefStart+1, $lastRow = $numVariables+$coefStart; $i <= $lastRow; $i++) {
-                        $values = preg_split('/\ +/', $rResults[$i]);  // put "words" of this line into an array
-                        $coefficients[] = is_numeric($x = str_replace(['<', '>'], '', $values[1])) ? $x+0 : null; // + 0 is to force the scientific notation into a regular number
-                        $stdErrs[] = is_numeric($x = str_replace(['<', '>'], '', $values[2])) ? $x+0 : null;
-                        $pValues[] = is_numeric($x = str_replace(['<', '>'], '', $values[4])) ? $x+0 : null;
+                        $values = preg_split('/\ +/', str_replace(['<', '>'], '', $rResults[$i]));  // put "words" of this line into an array
+                        $coefficients[] = $values[1] + 0; // + 0 is to force the scientific notation into a regular number
+                        $stdErrs[] = $values[2] + 0;
+                        $pValues[] = $values[4] + 0;
                     }
                 }
 
@@ -1672,10 +1672,10 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
         }
         if ($coefStart !== 0) {
             for ($i = $coefStart+1, $lastRow = $numVariables+$numPgms+$coefStart; $i <= $lastRow; $i++) {
-                $values = preg_split('/\ +/', $rResults[$i]);  // put "words" of this line into an array
-                $coefficients[] = is_numeric($x = str_replace(['<', '>'], '', $values[1])) ? $x+0 : null; // + 0 is to force the scientific notation into a regular number
-                $stdErrs[] = is_numeric($x = str_replace(['<', '>'], '', $values[2])) ? $x+0 : null;
-                $pValues[] = is_numeric($x = str_replace(['<', '>'], '', $values[4])) ? $x+0 : null;
+                $values = preg_split('/\ +/', str_replace(['<', '>'], '', $rResults[$i]));  // put "words" of this line into an array
+                $coefficients[] = $values[1] + 0; // + 0 is to force the scientific notation into a regular number
+                $stdErrs[] = $values[2] + 0;
+                $pValues[] = $values[4] + 0;
             }
         }
 
@@ -1909,10 +1909,10 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
 
             if ($coefStart !== 0) {
                 for ($i = $coefStart+1, $lastRow = $numVariables+$coefStart; $i <= $lastRow; $i++) {
-                    $values = preg_split('/\ +/', $rResults[$i]);  // put "words" of this line into an array
-                    $coefficients[] = is_numeric($x = str_replace(['<', '>'], '', $values[1])) ? $x+0 : null; // + 0 is to force the scientific notation into a regular number
-                    $stdErrs[] = is_numeric($x = str_replace(['<', '>'], '', $values[2])) ? $x+0 : null;
-                    $pValues[] = is_numeric($x = str_replace(['<', '>'], '', $values[4])) ? $x+0 : null;
+                    $values = preg_split('/\ +/', str_replace(['<', '>'], '', $rResults[$i]));  // put "words" of this line into an array
+                    $coefficients[] = $values[1] + 0; // + 0 is to force the scientific notation into a regular number
+                    $stdErrs[] = $values[2] + 0;
+                    $pValues[] = $values[4] + 0;
                 }
                 $numPredictions = count($predict10Percent);
                 $numVariables = count($predictArray[0]);
