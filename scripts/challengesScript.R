@@ -19,4 +19,3 @@ mod_fit <- train(formula, data=challengesData, method="glm", family="binomial", 
 
 mod_fit$results
 summary(mod_fit)
-warnings()

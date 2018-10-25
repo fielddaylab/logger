@@ -37,7 +37,7 @@ $(document).ready((event) => {
     
     let algorithmNames = ['Nearest Neighbors', 'Linear SVM', 'RBF SVM', 'Gaussian Process',
     'Decision Tree', 'Random Forest', 'Neural Net', 'AdaBoost', 'Naive Bayes', 'QDA']
-    $('#quaternaryQuestionBody tr').each((i, ival) => {
+    $('#multinomialQuestionBody tr').each((i, ival) => {
         for (let j = 0; j < algorithmNames.length; j++) {
             $(ival).after($(
                 `<tr>
@@ -53,6 +53,40 @@ $(document).ready((event) => {
     let queueExists = false
 
     let lvls = [1, 3, 5, 7, 11, 13, 15, 19, 21, 23, 25, 27, 31]
+    let featureNames = {
+        '(Intercept)':             'Constant term',
+        'numMovesPerChallenge':    '# slider moves',
+        'moveTypeChangesPerLevel': '# type changes',
+        'numLevels':               '# levels completed',
+        'levelTimes':              'Time',
+        'avgPercentGoodMoves':     'Avg % good moves',
+        'knobAvgs':                'Avg knob max-min',
+        'OFFSET':                  '# offset moves',
+        'WAVELENGTH':              '# wavelength moves',
+        'AMPLITUDE':               '# amplitude moves',
+        'numFailsPerLevel':        '# failures',
+        'pgm_1':                   '% good moves lvl 1',
+        'pgm_3':                   '% good moves lvl 3',
+        'pgm_5':                   '% good moves lvl 5',
+        'pgm_7':                   '% good moves lvl 7',
+        'pgm_11':                  '% good moves lvl 11',
+        'pgm_13':                  '% good moves lvl 13',
+        'pgm_15':                  '% good moves lvl 15',
+        'pgm_19':                  '% good moves lvl 19',
+        'pgm_21':                  '% good moves lvl 21',
+        'pgm_23':                  '% good moves lvl 23',
+        'pgm_25':                  '% good moves lvl 25',
+        'pgm_27':                  '% good moves lvl 27',
+        'pgm_31':                  '% good moves lvl 31'
+    }
+    $(Object.keys(featureNames)).each((index, value) => {
+        if (index > 0) $('#featuresList').append(`
+        <li>
+            <input type="checkbox" name="${value}" id="${value}" checked>
+            <label for="${value}" style="font-weight:400;">${featureNames[value]}</label>
+        </li>
+        `)
+    })
 
     // numLevelsBody
     if (true) { // this is simply so I can collapse this section of code
@@ -237,7 +271,7 @@ $(document).ready((event) => {
         event.preventDefault()
         if ($('#gameSelect').val() !== 'WAVES' || !($('#numLevelsTableCheckbox').is(':checked') || $('#levelCompletionCheckbox').is(':checked') ||
             $('#questionsCheckbox').is(':checked') || $('#levelRangeQuestionCheckbox').is(':checked') || $('#otherFeaturesCheckbox').is(':checked') ||
-            $('#quaternaryQuestionCheckbox').is(':checked'))) {
+            $('#multinomialQuestionCheckbox').is(':checked'))) {
             $('#invalidGame').fadeIn(100)
         } else {
             $('#invalidGame').hide()
@@ -326,9 +360,13 @@ $(document).ready((event) => {
             levelCompletionTableChecked = $('#levelCompletionCheckbox').is(':checked'),
             questionTableChecked = $('#questionsCheckbox').is(':checked'),
             levelRangeQuestionChecked = $('#levelRangeQuestionCheckbox').is(':checked'),
-            quaternaryQuestionChecked = $('#quaternaryQuestionCheckbox').is(':checked'),
+            multinomialQuestionChecked = $('#multinomialQuestionCheckbox').is(':checked'),
             otherFeaturesChecked = $('#otherFeaturesCheckbox').is(':checked'),
             shouldUseAvgs = $('#useAvgs').is(':checked')
+        let featuresListParameters = {}
+        $(Object.keys(featureNames)).each((index, value) => {
+            if (index > 0) featuresListParameters[value] = $(`#${value}`).is(':checked')
+        })
         let parametersBasic = {
             'gameID': $('#gameSelect').val(),
             'maxRows': $('#maxRows').val(),
@@ -337,15 +375,15 @@ $(document).ready((event) => {
             'startDate': $('#startDate').val(),
             'endDate': $('#endDate').val(),
             'shouldUseAvgs': shouldUseAvgs,
-            'numMovesPerChallenge': $('#numMovesPerChallenge').prop('checked') ? true : undefined,
-            'knobAvgs': $('#knobAvgs').prop('checked') ? true : undefined,
-            'levelTimes': $('#levelTimes').prop('checked') ? true : undefined,
-            'percentGoodMovesAll': $('#percentGoodMovesAll').prop('checked') ? true : undefined,
-            'moveTypeChangesPerLevel': $('#moveTypeChangesPerLevel').prop('checked') ? true : undefined,
-            'knobStdDevs': $('#knobStdDevs').prop('checked') ? true : undefined,
-            'knobTotalAmts': $('#knobTotalAmts').prop('checked') ? true : undefined,
+            'numMovesPerChallenge': $('#numMovesPerChallengeCluster').prop('checked') ? true : undefined,
+            'knobAvgs': $('#knobAvgsCluster').prop('checked') ? true : undefined,
+            'levelTimes': $('#levelTimesCluster').prop('checked') ? true : undefined,
+            'percentGoodMovesAll': $('#percentGoodMovesAllCluster').prop('checked') ? true : undefined,
+            'moveTypeChangesPerLevel': $('#moveTypeChangesPerLevelCluster').prop('checked') ? true : undefined,
+            'knobStdDevs': $('#knobStdDevsCluster').prop('checked') ? true : undefined,
+            'knobTotalAmts': $('#knobTotalAmtsCluster').prop('checked') ? true : undefined,
         }
-        let numSimultaneous = navigator.hardwareConcurrency
+        let numSimultaneous = 12
         let queue = new networkQueue(numSimultaneous)
         let numCols, numTables = 0
 
@@ -355,6 +393,7 @@ $(document).ready((event) => {
             $('#numLevelsNumSessionsRow').children().each((key, value) => { if (key > 0) $(value).html('-') })
             for (let i = 0; i < numCols; i++) {
                 let columnElements = $(`#numLevelsBody tr td:nth-child(${i+2})`).not('.disabled-cell')
+                let columnIndexes = Object.keys(columnElements.toArray())
                 let column
 
                 switch (i) {
@@ -399,6 +438,16 @@ $(document).ready((event) => {
                     'numLevelsColumn': column,
                     'shouldUseAvgs': shouldUseAvgs,
                 }
+                let numAlgorithms = 3
+                let checkedFeatures = $(`#numLevelsBody tr th:gt(0):lt(${columnElements.length-numAlgorithms-1})`).toArray().map((ele, idx) => { return $.trim(ele.innerText) }).filter((ele, index) => { return $.inArray(index.toString(), columnIndexes) >= 0 && featuresListParameters[getKeyByValue(ele)] })
+                checkedFeatures = $(checkedFeatures).map((ele, idx) => { return getKeyByValue(idx) }).toArray()
+                checkedFeaturesParams = {}
+                $(checkedFeatures).each((index, value) => {
+                    checkedFeaturesParams[value] = true
+                })
+                featuresListTemp = {}
+                Object.keys(featuresListParameters).forEach(x => featuresListTemp[x] = false) // reset all features to false and overwrite the true ones
+                finalFeaturesParams = {...featuresListTemp, ...checkedFeaturesParams}
 
                 let loadTimer, backgroundColors = [], borderBottoms = [], borderTops = []
 
@@ -456,13 +505,14 @@ $(document).ready((event) => {
                             'border-top': borderTops[j],
                             'border-bottom': borderBottoms[j]
                         })
+                        let rowName = getKeyByValue($('#numLevelsBody tr th').eq(j).text())
                         let innerText = $('<div>')
                         innerText.html('No data')
                         if (data && data.pValues) {
                             if (j < columnElements.length - 3) {
-                                if (typeof data.pValues[j] === 'number' && !isNaN(data.pValues[j]) && typeof data.coefficients[j] === 'number' && !isNaN(data.coefficients[j])) {
-                                    innerText.html(data.coefficients[j].toFixed(4) + ',<br>' + data.pValues[j].toFixed(4))
-                                    if (data.pValues[j] < 0.05) {
+                                if (typeof data.pValues[rowName] === 'number' && !isNaN(data.pValues[rowName]) && typeof data.coefficients[rowName] === 'number' && !isNaN(data.coefficients[rowName])) {
+                                    innerText.html(data.coefficients[rowName].toFixed(4) + ',<br>' + data.pValues[rowName].toFixed(4))
+                                    if (data.pValues[rowName] < 0.05) {
                                         $(innerText).css('background-color', '#82e072')
                                     }
                                 }
@@ -503,7 +553,7 @@ $(document).ready((event) => {
                 }
 
                 req = {
-                    parameters: parametersLevels,
+                    parameters: {...parametersLevels, 'features': finalFeaturesParams},
                     callback: callbackFunc
                 }
                 queue.push(req, loadTimer, columnElements, { 'backgroundColors': backgroundColors, 'borderBottoms': borderBottoms, 'borderTops': borderTops})
@@ -1055,8 +1105,8 @@ $(document).ready((event) => {
         }
         numTables++
 
-        if (quaternaryQuestionChecked) {
-            numCols = $('#quaternaryQuestionBody').find('tr:not(:nth-of-type(1)):first td').length
+        if (multinomialQuestionChecked) {
+            numCols = $('#multinomialQuestionBody').find('tr:not(:nth-of-type(1)):first td').length
             $(`#${collapserNames[numTables]}Collapser`).collapse('show')
             $('#multinomialNumSessionsRow').children().each((key, value) => { if (key > 0) $(value).html('-') })
             for (let i = 1; i < numCols; i++) {
@@ -1071,7 +1121,7 @@ $(document).ready((event) => {
                     'endDate': $('#endDate').val(),
                     'shouldUseAvgs': shouldUseAvgs,
                 }
-                let columnElements = $(`#quaternaryQuestionBody tr td:nth-of-type(${i + 1})`)
+                let columnElements = $(`#multinomialQuestionBody tr td:nth-of-type(${i + 1})`)
                 let column
                 switch (i) {
                     case 1:
@@ -1135,7 +1185,7 @@ $(document).ready((event) => {
                     let expectedAccuracy = Math.max(...Object.values(data[1].numSessions)) / Object.values(data[1].numSessions).reduce((sum, num) => sum + num, 0)
                     $(`#multinomialNumSessionsRow td:nth-child(${i+1})`).html(data[1].numSessions.numA + ' / ' + data[1].numSessions.numB + ' / ' + data[1].numSessions.numC + ' / ' + data[1].numSessions.numD +
                             '<br>(' + (expectedAccuracy).toFixed(2) + ' accuracy of expected val)')
-                    $('#quaternaryQuestionBody tr th').each((j, jval) => {
+                    $('#multinomialQuestionBody tr th').each((j, jval) => {
                        rowNames.push($(jval).text())
                     })
                     localStorage.setItem(`row_names_qQ_predict`, JSON.stringify(rowNames))
@@ -2181,5 +2231,22 @@ $(document).ready((event) => {
             if (+match === 0) return ""; // or if (/\s+/.test(match)) for white spaces
             return index == 0 ? match.toLowerCase() : match.toUpperCase();
         });
+    }
+
+    $('#toggleFeatures').on('click', (event) => {
+        event.preventDefault()
+        if ($('#featuresList input:not(:checked)').length > 0) {
+            $('#featuresList input').each((index, value) => {
+                $(value).prop('checked', true)
+            })
+        } else {
+            $('#featuresList input').each((index, value) => {
+                $(value).prop('checked', false)
+            })
+        }
+    })
+
+    function getKeyByValue(str) {
+        return Object.keys(featureNames).find(key => featureNames[key] === str)
     }
 })

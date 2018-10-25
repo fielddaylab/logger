@@ -94,22 +94,22 @@
                             <div class="col-xs-6">
                                 <div class="form-group">
                                     <label style="font-weight:400;">
-                                        <input name="numMovesPerChallenge" id="numMovesPerChallenge" type="checkbox">
+                                        <input name="numMovesPerChallengeCluster" id="numMovesPerChallengeCluster" type="checkbox">
                                         numMovesPerChallenge
                                     </label>
                                     <br>
                                     <label style="font-weight:400;">
-                                        <input name="knobAvgs" id="knobAvgs" type="checkbox">
+                                        <input name="knobAvgsCluster" id="knobAvgsCluster" type="checkbox">
                                         knobAvgs
                                     </label>
                                     <br>
                                     <label style="font-weight:400;">
-                                        <input name="levelTimes" id="levelTimes" type="checkbox">
+                                        <input name="levelTimesCluster" id="levelTimesCluster" type="checkbox">
                                         levelTimes
                                     </label>
                                     <br>
                                     <label style="font-weight:400;">
-                                        <input name="percentGoodMovesAll" id="percentGoodMovesAll" type="checkbox">
+                                        <input name="percentGoodMovesAllCluster" id="percentGoodMovesAllCluster" type="checkbox">
                                         percentGoodMovesAll
                                     </label>
                                     <br>
@@ -118,17 +118,17 @@
                             <div class="col-xs-6">
                                 <div class="form-group">
                                     <label style="font-weight:400;">
-                                        <input name="moveTypeChangesPerLevel" id="moveTypeChangesPerLevel" type="checkbox">
+                                        <input name="moveTypeChangesPerLevelCluster" id="moveTypeChangesPerLevelCluster" type="checkbox">
                                         moveTypeChangesPerLevel
                                     </label>
                                     <br>
                                     <label style="font-weight:400;">
-                                        <input name="knobStdDevs" id="knobStdDevs" type="checkbox">
+                                        <input name="knobStdDevsCluster" id="knobStdDevsCluster" type="checkbox">
                                         knobStdDevs
                                     </label>
                                     <br>
                                     <label style="font-weight:400;">
-                                        <input name="knobTotalAmts" id="knobTotalAmts" type="checkbox">
+                                        <input name="knobTotalAmtsCluster" id="knobTotalAmtsCluster" type="checkbox">
                                         knobTotalAmts
                                     </label>
                                 </div>
@@ -137,6 +137,21 @@
                     </div>
                 </form>
             </div>
+        </div>
+        <div class="row">
+            <div class="col-xs-1"></div>
+            <div class="col-xs-10">
+                <div style="text-align:center; font-size:22px; margin-bottom:5px;"><b>Features to use</b></div>
+                <div style="text-align:center; margin-bottom:5px">
+                    <a href="#" id="toggleFeatures">Select all</a>
+                </div>
+                <form id="featuresForm" role="form">
+                    <div style="column-count:5">
+                        <ul id="featuresList" style="list-style:none; padding:0; margin:0;"></ul>
+                    </div>
+                </form>
+            </div>
+            <div class="col-xs-1"></div>
         </div>
         <div class="row">
             <div class="col-xs-12">
@@ -888,11 +903,11 @@
                     <div class="col-xs-12">
                         <div>
                             <div style="font-size:22px; margin-bottom:4px;">
-                                <label><input type="checkbox" id="quaternaryQuestionCheckbox" style="transform:scale(1.21);">
+                                <label><input type="checkbox" id="multinomialQuestionCheckbox" style="transform:scale(1.21);">
                                 <b>Multinomial question answer prediction accuracy by level range</b></label>
                             </div>
                             <span>
-                                <table id="quaternaryQuestionTable" class="table table-striped table-bordered table-hover">
+                                <table id="multinomialQuestionTable" class="table table-striped table-bordered table-hover">
                                     <thead>
                                         <tr>
                                             <th scope="col" colspan=2 style="top:0px;background-color:rgb(221, 221, 221);width:12%;"></th>
@@ -909,7 +924,7 @@
                                             <td style="text-align:center;">-</td>
                                         </tr>
                                     </thead>
-                                    <tbody id="quaternaryQuestionBody">
+                                    <tbody id="multinomialQuestionBody">
                                         <tr>
                                             <th rowspan=11 style="vertical-align:middle; border-bottom-width:4px;">L1 only</th>
                                         </tr>
