@@ -1,5 +1,5 @@
 $(document).ready((event) => {
-    let numSimultaneous = 4 //default value
+    let numSimultaneous = 4 // default value
     $.get('config.json', {}, (data, status, jqXHR) => { 
         numSimultaneous = data.numSimultaneous
 
@@ -90,9 +90,6 @@ $(document).ready((event) => {
             </li>
             `)
         })
-        
-        // Get number of cores from config file in php
-    
     
         // numLevelsBody
         if (true) { // this is simply so I can collapse this section of code
@@ -675,8 +672,9 @@ $(document).ready((event) => {
                         //localStorage.setItem(`data_challenges_${column}`, JSON.stringify(data))
                         let rowNames = []
                         let expectedAccuracy = Math.max(data.numSessions.numTrue, data.numSessions.numFalse) / (data.numSessions.numTrue + data.numSessions.numFalse)
-                        $(`#predictNumSessionsRow td:nth-child(${i+2})`).html(data.numSessions.numTrue + ' / ' + data.numSessions.numFalse +
-                            '<br>(' + (expectedAccuracy).toFixed(2) + ' accuracy of expected val)')
+                        let expectedAccuracyStr = data.numSessions.numTrue + ' / ' + data.numSessions.numFalse
+                        if (!isNaN(expectedAccuracy)) expectedAccuracyStr += '<br>(' + (expectedAccuracy).toFixed(2) + ' accuracy of expected val)'
+                        $(`#predictNumSessionsRow td:nth-child(${i+2})`).html(expectedAccuracyStr)
                         $('#predictTableBody tr th').each((j, jval) => {
                             rowNames.push($(jval).text())
                         })
@@ -705,7 +703,7 @@ $(document).ready((event) => {
                                     if (j === columnElements.length - (2 + algorithmNames.length)) {
                                         let percentCorrectR = parseFloat(data.percentCorrectR)
                                         if (typeof percentCorrectR === 'number' && !isNaN(percentCorrectR)) {
-                                            innerText.html(percentCorrectR.toFixed(5))
+                                            innerText.html(percentCorrectR.toFixed(5) + ',<br>' + ((100 * percentCorrectR / expectedAccuracy) - 100).toFixed(4) + '%')
                                             if (percentCorrectR > expectedAccuracy) {
                                                 $(innerText).css('background-color', '#82e072')
                                             }
@@ -715,7 +713,7 @@ $(document).ready((event) => {
                                     } else if (j === columnElements.length - (1 + algorithmNames.length)) {
                                         let percentCorrectTf = parseFloat(data.percentCorrectTf)
                                         if (typeof percentCorrectTf === 'number' && !isNaN(percentCorrectTf)) {
-                                            innerText.html(percentCorrectTf.toFixed(5))
+                                            innerText.html(percentCorrectTf.toFixed(5) + ',<br>' + ((100 * percentCorrectTf / expectedAccuracy) - 100).toFixed(4) + '%')
                                             if (percentCorrectTf > expectedAccuracy) {
                                                 $(innerText).css('background-color', '#82e072')
                                             }
@@ -730,7 +728,7 @@ $(document).ready((event) => {
                                             if (percentCorrect > expectedAccuracy) {
                                                 $(innerText).css('background-color', '#82e072')
                                             }
-                                            innerText.html(percentCorrect.toFixed(4))
+                                            innerText.html(percentCorrect.toFixed(5) + ',<br>' + ((100 * percentCorrect / expectedAccuracy) - 100).toFixed(4) + '%')
                                         } else {
                                             innerText.html('No data')
                                         }
@@ -878,8 +876,9 @@ $(document).ready((event) => {
                         //localStorage.setItem(`data_questions_${column}`, JSON.stringify(data))
                         let rowNames = []
                         let expectedAccuracy = Math.max(data.numSessions.numTrue, data.numSessions.numFalse) / (data.numSessions.numTrue + data.numSessions.numFalse)
-                        $(`#questionsNumSessionsRow td:nth-child(${i+2})`).html(data.numSessions.numTrue + ' / ' + data.numSessions.numFalse +
-                            '<br>(' + (expectedAccuracy).toFixed(2) + ' accuracy of expected val)')
+                        let expectedAccuracyStr = data.numSessions.numTrue + ' / ' + data.numSessions.numFalse
+                        if (!isNaN(expectedAccuracy)) expectedAccuracyStr += '<br>(' + (expectedAccuracy).toFixed(2) + ' accuracy of expected val)'
+                        $(`#questionsNumSessionsRow td:nth-child(${i+2})`).html(expectedAccuracyStr)
                         $('#tableAllBody tr th').each((j, jval) => {
                             rowNames.push($(jval).text())
                         })
@@ -908,7 +907,7 @@ $(document).ready((event) => {
                                 if (j === columnElements.length - (2 + algorithmNames.length)) {
                                     let percentCorrectR = parseFloat(data.percentCorrectR)
                                     if (typeof percentCorrectR === 'number' && !isNaN(percentCorrectR)) {
-                                        innerText.html(percentCorrectR.toFixed(5))
+                                        innerText.html(percentCorrectR.toFixed(5) + ',<br>' + ((100 * percentCorrectR / expectedAccuracy) - 100).toFixed(4) + '%')
                                         if (percentCorrectR > expectedAccuracy) {
                                             $(innerText).css('background-color', '#82e072')
                                         }
@@ -918,7 +917,7 @@ $(document).ready((event) => {
                                 } else if (j === columnElements.length - (1 + algorithmNames.length)) {
                                     let percentCorrectTf = parseFloat(data.percentCorrectTf)
                                     if (typeof percentCorrectTf === 'number' && !isNaN(percentCorrectTf)) {
-                                        innerText.html(percentCorrectTf.toFixed(5))
+                                        innerText.html(percentCorrectTf.toFixed(5) + ',<br>' + ((100 * percentCorrectTf / expectedAccuracy) - 100).toFixed(4) + '%')
                                         if (percentCorrectTf > expectedAccuracy) {
                                             $(innerText).css('background-color', '#82e072')
                                         }
@@ -933,7 +932,7 @@ $(document).ready((event) => {
                                         if (percentCorrect > expectedAccuracy) {
                                             $(innerText).css('background-color', '#82e072')
                                         }
-                                        innerText.html(percentCorrect.toFixed(4))
+                                        innerText.html(percentCorrect.toFixed(5) + ',<br>' + ((100 * percentCorrect / expectedAccuracy) - 100).toFixed(4) + '%')
                                     } else {
                                         innerText.html('No data')
                                     }
@@ -1082,8 +1081,9 @@ $(document).ready((event) => {
                         //})
                         //localStorage.setItem(`row_names_q_predict`, JSON.stringify(rowNames))
                         let expectedAccuracy = Math.max(data[1].numSessions.numTrue, data[1].numSessions.numFalse) / (data[1].numSessions.numTrue + data[1].numSessions.numFalse)
-                        $(`#binomialNumSessionsRow td:nth-child(${i+1})`).html(data[1].numSessions.numTrue + ' / ' + data[1].numSessions.numFalse +
-                            '<br>(' + (expectedAccuracy).toFixed(2) + ' accuracy of expected val)')
+                        let expectedAccuracyStr = data[1].numSessions.numTrue + ' / ' + data[1].numSessions.numFalse
+                        if (!isNaN(expectedAccuracy)) expectedAccuracyStr += '<br>(' + (expectedAccuracy).toFixed(2) + ' accuracy of expected val)'
+                        $(`#binomialNumSessionsRow td:nth-child(${i+1})`).html(expectedAccuracyStr)
                         columnElements.each((j, jval) => {
                             $(jval).css({
                                 'vertical-align': 'middle',
@@ -1098,7 +1098,7 @@ $(document).ready((event) => {
                                 if (j % (2 + algorithmNames.length) === 0) {
                                     let percentCorrectR = parseFloat(data[j/(2 + algorithmNames.length)+1].percentCorrectR)
                                     if (typeof percentCorrectR === 'number' && !isNaN(percentCorrectR)) {
-                                        innerText.html(percentCorrectR.toFixed(4))
+                                        innerText.html(percentCorrectR.toFixed(4) + ',<br>' + ((100 * percentCorrectR / expectedAccuracy) - 100).toFixed(4) + '%')
                                         if (percentCorrectR > expectedAccuracy) {
                                             $(innerText).css('background-color', '#82e072')
                                         }
@@ -1108,7 +1108,7 @@ $(document).ready((event) => {
                                 } else if (j % (2 + algorithmNames.length) === 1) {
                                     let percentCorrectTf = parseFloat(data[(j-1)/(2 + algorithmNames.length)+1].percentCorrectTf)
                                     if (typeof percentCorrectTf === 'number' && !isNaN(percentCorrectTf)) {
-                                        innerText.html(percentCorrectTf.toFixed(4))
+                                        innerText.html(percentCorrectTf.toFixed(4) + ',<br>' + ((100 * percentCorrectTf / expectedAccuracy) - 100).toFixed(4) + '%')
                                         if (percentCorrectTf > expectedAccuracy) {
                                             $(innerText).css('background-color', '#82e072')
                                         }
@@ -1125,7 +1125,7 @@ $(document).ready((event) => {
                                             if (percentCorrect > expectedAccuracy) {
                                                 $(innerText).css('background-color', '#82e072')
                                             }
-                                            innerText.html(percentCorrect.toFixed(4))
+                                            innerText.html(percentCorrect.toFixed(4) + ',<br>' + ((100 * percentCorrect / expectedAccuracy) - 100).toFixed(4) + '%')
                                         } else {
                                             innerText.html('No data')
                                         }
@@ -1240,8 +1240,9 @@ $(document).ready((event) => {
                         //localStorage.setItem(`data_multinomQuestions_${column}_predict`, JSON.stringify(data))
                         let rowNames = []
                         let expectedAccuracy = Math.max(...Object.values(data[1].numSessions)) / Object.values(data[1].numSessions).reduce((sum, num) => sum + num, 0)
-                        $(`#multinomialNumSessionsRow td:nth-child(${i+1})`).html(data[1].numSessions.numA + ' / ' + data[1].numSessions.numB + ' / ' + data[1].numSessions.numC + ' / ' + data[1].numSessions.numD +
-                                '<br>(' + (expectedAccuracy).toFixed(2) + ' accuracy of expected val)')
+                        let expectedAccuracyStr = data[1].numSessions.numA + ' / ' + data[1].numSessions.numB + ' / ' + data[1].numSessions.numC + ' / ' + data[1].numSessions.numD
+                        if (!isNaN(expectedAccuracy)) expectedAccuracyStr += '<br>(' + (expectedAccuracy).toFixed(2) + ' accuracy of expected val)'
+                        $(`#multinomialNumSessionsRow td:nth-child(${i+1})`).html(expectedAccuracyStr)
                         $('#multinomialQuestionBody tr th').each((j, jval) => {
                            rowNames.push($(jval).text())
                         })
@@ -1268,7 +1269,7 @@ $(document).ready((event) => {
                                         if (percentCorrect > expectedAccuracy) {
                                             $(innerText).css('background-color', '#82e072')
                                         }
-                                        innerText.html(percentCorrect.toFixed(4))
+                                        innerText.html(percentCorrect.toFixed(4) + ',<br>' + ((100 * percentCorrect / expectedAccuracy) - 100).toFixed(4) + '%')
                                     } else {
                                         innerText.html('No data')
                                     }

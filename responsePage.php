@@ -1046,9 +1046,9 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                 'coefficients'=>$coefficients,
                 'stdErrs'=>$stdErrs,
                 'pValues'=>$pValues,
-                'regressionVars'=>$predictArray,
+                // 'regressionVars'=>$predictArray,
                 'numSessions'=>$numPredictors,
-                'regressionOutputs'=>$predictedArray,
+                // 'regressionOutputs'=>$predictedArray,
                 'percentCorrectR'=>$percentCorrectR,
                 'percentCorrectTf'=>$percentCorrectTf,
                 'algorithmNames'=>$algorithmNames,
@@ -1131,9 +1131,9 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                     'coefficients'=>$coefficients,
                     'stdErrs'=>$stdErrs,
                     'pValues'=>$pValues,
-                    'regressionVars'=>$predictArray,
+                    // 'regressionVars'=>$predictArray,
                     'numSessions'=>$numPredictors,
-                    'regressionOutputs'=>$predictedArray,
+                    // 'regressionOutputs'=>$predictedArray,
                     'percentCorrectR'=>$percentCorrectR,
                     'percentCorrectTf'=>$percentCorrectTf,
                     'algorithmNames'=>$algorithmNames,
@@ -1771,12 +1771,14 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             'coefficients'=>$coefficients,
             'stdErrs'=>$stdErrs,
             'pValues'=>$pValues,
-            'regressionVars'=>$predictArray,
+            // 'regressionVars'=>$predictArray,
             'numSessions'=>array('numTrue'=>$numTrue, 'numFalse'=>$numFalse),
-            'regressionOutputs'=>$predictedArray,
+            // 'regressionOutputs'=>$predictedArray,
             'percentCorrectR'=>$percentCorrectR,
             'percentCorrectTf'=>$percentCorrectTf,
-            'algorithmNames'=>$algorithmNames, 'accuracies'=>$accuracies);
+            'algorithmNames'=>$algorithmNames,
+            'accuracies'=>$accuracies
+        );
     } /* num levels         */ else if (isset($_GET['numLevelsColumn']) && !isset($_GET['questionPredictColumn']) && !isset($_GET['multinomQuestionPredictColumn'])) {
         $numLevelsColumn = $_GET['numLevelsColumn'];
         $minMoves = $_GET['minMoves'];
@@ -2042,10 +2044,10 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
         return array(
             'coefficients'=>$coefficients,
             'stdErrs'=>$stdErrs, 'pValues'=>$pValues,
-            'regressionVars'=>$predictArray,
+            // 'regressionVars'=>$predictArray,
             'numSessions'=>array('numTrue'=>$numTrue,
             'numFalse'=>$numFalse),
-            'regressionOutputs'=>$predictedArray,
+            // 'regressionOutputs'=>$predictedArray,
             'percentCorrectR'=>$percentCorrectR,
             'mae'=>$mae,
             'percentCorrectRand'=>$percentCorrectRand
