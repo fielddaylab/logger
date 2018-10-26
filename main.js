@@ -493,13 +493,13 @@ $(document).ready((event) => {
                     })
                     let callbackFunc = (data) => {
                         clearInterval(loadTimer)
-                        //.setItem(`data_numLevels_${column}`, JSON.stringify(data))
+                        localStorage.setItem(`data_numLevels_${column}`, JSON.stringify({ 'coefficients': data.coefficients, 'stdErrs': data.stdErrs }))
                         let rowNames = []
                         $(`#numLevelsNumSessionsRow td:nth-child(${i+2})`).html(data.numSessions.numTrue + ' / ' + data.numSessions.numFalse)
                         $('#numLevelsBody tr th').each((j, jval) => {
                             rowNames.push($(jval).text())
                         })
-                        //localStorage.setItem(`row_names_numLevels`, JSON.stringify(rowNames))
+                        localStorage.setItem(`row_names_numLevels`, JSON.stringify(rowNames))
                         columnElements.each((j, jval) => {
                             $(jval).css({
                                 'vertical-align': 'middle',
@@ -519,7 +519,7 @@ $(document).ready((event) => {
                                         }
                                     }
                                     $(jval).html(innerText)
-                                    $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=challenges&row=${rowNames[j].replace('%', 'percent')}&col=${column}&i=${i}&j=${j}" target="_blank"></a>`)
+                                    $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=numLevels&row=${getKeyByValue(rowNames[j])}&col=${column}&i=${i}&j=${j}" target="_blank"></a>`)
                                 } else {
                                     if (j === columnElements.length - 3) {
                                         let percentCorrectRand = parseFloat(data.percentCorrectRand)
@@ -669,7 +669,7 @@ $(document).ready((event) => {
     
                     let callbackFunc = (data) => {
                         clearInterval(loadTimer)
-                        //localStorage.setItem(`data_challenges_${column}`, JSON.stringify(data))
+                        localStorage.setItem(`data_challenges_${column}`, JSON.stringify({ 'coefficients': data.coefficients, 'stdErrs': data.stdErrs }))
                         let rowNames = []
                         let expectedAccuracy = Math.max(data.numSessions.numTrue, data.numSessions.numFalse) / (data.numSessions.numTrue + data.numSessions.numFalse)
                         let expectedAccuracyStr = data.numSessions.numTrue + ' / ' + data.numSessions.numFalse
@@ -678,7 +678,7 @@ $(document).ready((event) => {
                         $('#predictTableBody tr th').each((j, jval) => {
                             rowNames.push($(jval).text())
                         })
-                        //localStorage.setItem(`row_names_challenges`, JSON.stringify(rowNames))
+                        localStorage.setItem(`row_names_challenges`, JSON.stringify(rowNames))
                         columnElements.each((j, jval) => {
                             $(jval).css({
                                 'vertical-align': 'middle',
@@ -698,7 +698,7 @@ $(document).ready((event) => {
                                         }
                                     }
                                     $(jval).html(innerText)
-                                    $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=challenges&row=${rowNames[j].replace('%', 'percent')}&col=${column}&i=${i}&j=${j}" target="_blank"></a>`)
+                                    $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=challenges&row=${getKeyByValue(rowNames[j])}&col=${column}&i=${i}&j=${j}" target="_blank"></a>`)
                                 } else {
                                     if (j === columnElements.length - (2 + algorithmNames.length)) {
                                         let percentCorrectR = parseFloat(data.percentCorrectR)
@@ -873,7 +873,7 @@ $(document).ready((event) => {
                     let callbackFunc = (data) => {
                         clearInterval(loadTimer)
                         // Store the computation values for retrieval when the link is clicked
-                        //localStorage.setItem(`data_questions_${column}`, JSON.stringify(data))
+                        localStorage.setItem(`data_questions_${column}`, JSON.stringify({ 'coefficients': data.coefficients, 'stdErrs': data.stdErrs }))
                         let rowNames = []
                         let expectedAccuracy = Math.max(data.numSessions.numTrue, data.numSessions.numFalse) / (data.numSessions.numTrue + data.numSessions.numFalse)
                         let expectedAccuracyStr = data.numSessions.numTrue + ' / ' + data.numSessions.numFalse
@@ -882,7 +882,7 @@ $(document).ready((event) => {
                         $('#tableAllBody tr th').each((j, jval) => {
                             rowNames.push($(jval).text())
                         })
-                        //localStorage.setItem(`row_names_questions`, JSON.stringify(rowNames))
+                        localStorage.setItem(`row_names_questions`, JSON.stringify(rowNames))
                         columnElements.each((j, jval) => {
                             $(jval).css({
                                 'vertical-align': 'middle',
@@ -902,7 +902,7 @@ $(document).ready((event) => {
                                     innerText.html('No data')
                                 }
                                 $(jval).html(innerText)
-                                $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=questions&row=${rowNames[j].replace('%', 'percent')}&col=${column}&i=${i}&j=${j}" target="_blank"></a>`)
+                                $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=questions&row=${getKeyByValue(rowNames[j])}&col=${column}&i=${i}&j=${j}" target="_blank"></a>`)
                             } else {
                                 if (j === columnElements.length - (2 + algorithmNames.length)) {
                                     let percentCorrectR = parseFloat(data.percentCorrectR)
