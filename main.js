@@ -746,7 +746,7 @@ $(document).ready((event) => {
                     }
     
                     req = {
-                        parameters: parametersChallenge,
+                        parameters: {...parametersChallenge, 'features': finalFeaturesParams},
                         callback: callbackFunc
                     }
                     queue.push(req, loadTimer, columnElements, { 'backgroundColors': backgroundColors, 'borderBottoms': borderBottoms, 'borderTops': borderTops})
@@ -894,9 +894,9 @@ $(document).ready((event) => {
                             let rowName = getKeyByValue($('#numLevelsBody tr th').eq(j).text())
                             let innerText = $('<div>')
                             if (j < columnElements.length - (2 + algorithmNames.length)) {
-                                if (typeof data.pValues[j] === 'number' && !isNaN(data.pValues[j]) && typeof data.coefficients[j] === 'number' && !isNaN(data.coefficients[j])) {
-                                    innerText.html(data.coefficients[j].toFixed(4) + ',<br>' + data.pValues[j].toFixed(4))
-                                    if (data.pValues[j] < 0.05) {
+                                if (typeof data.pValues[rowName] === 'number' && !isNaN(data.pValues[rowName]) && typeof data.coefficients[rowName] === 'number' && !isNaN(data.coefficients[rowName])) {
+                                    innerText.html(data.coefficients[rowName].toFixed(4) + ',<br>' + data.pValues[rowName].toFixed(4))
+                                    if (data.pValues[rowName] < 0.05) {
                                         $(innerText).css('background-color', '#82e072')
                                     }
                                 } else {
@@ -946,7 +946,7 @@ $(document).ready((event) => {
                     }
     
                     req = {
-                        parameters: parametersQues,
+                        parameters: {...parametersQues, 'features': finalFeaturesParams},
                         callback: callbackFunc
                     }
                     queue.push(req, loadTimer, columnElements, { 'backgroundColors': backgroundColors, 'borderBottoms': borderBottoms, 'borderTops': borderTops})
@@ -1142,7 +1142,7 @@ $(document).ready((event) => {
                     }
     
                     req = {
-                        parameters: parametersQuesPredict,
+                        parameters: {...parametersQuesPredict, 'features': finalFeaturesParams},
                         callback: callbackFunc
                     }
                     queue.push(req, loadTimer, columnElements, { 'backgroundColors': backgroundColors, 'borderBottoms': borderBottoms, 'borderTops': borderTops})
@@ -1284,7 +1284,7 @@ $(document).ready((event) => {
                     }
     
                     req = {
-                        parameters: parametersQuatQuesPredict,
+                        parameters: {...parametersQuatQuesPredict, 'features': finalFeaturesParams},
                         callback: callbackFunc
                     }
                     queue.push(req, loadTimer, columnElements, { 'backgroundColors': backgroundColors, 'borderBottoms': borderBottoms, 'borderTops': borderTops})

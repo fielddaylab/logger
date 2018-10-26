@@ -837,28 +837,22 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
         $quesIndex = intval(substr($column, 1, 1));
         foreach ($questionAnswereds as $i=>$val) {
             if (isset($val[$quesIndex])) {                
-                if ($shouldUseAvgs) {
-                    $numMoves = ($levelsCol[$i] == 0) ? null : $numMovesAll[$i] / $levelsCol[$i];
-                    $numTypeChanges = average($typeCol[$i]);
-                    $time = average($timeCol[$i]);
-                    $minMax = average($avgCol[$i]);
-                    $numMovesPerType = array_column($avgMovesPerSliderCols, $i);
-                    $predictors[] = array_merge(array($numMoves, $numTypeChanges, $levelsCol[$i], $time, $minMax, $percentGoodMovesAvgs[$i]), $numMovesPerType);
-                } else {
-                    $numMoves = $numMovesAll[$i];
-                    $numTypeChanges = array_sum($typeCol[$i]);
-                    $time = array_sum($timeCol[$i]);
-                    $minMax = array_sum($avgCol[$i]);
-                    $numMovesPerType = array_column($movesPerSliderCols, $i);
-                    $predictors[] = array_merge(array($numMoves, $numTypeChanges, $levelsCol[$i], $time, $minMax, $percentGoodMovesAvgs[$i]), $numMovesPerType);
+                $predictor = array();
+                foreach ($featureCols as $j=>$feature) {
+                    if ($shouldUseAvgs) {
+                        $predictor[$j] = average($feature[$i]); 
+                    } else {
+                        $predictor[$j] = array_sum2($feature[$i]);
+                    }
                 }
+                $predictors[] = $predictor;
                 $predicted[] = $val[$quesIndex];
             }
         }
         foreach ($predictors as $i=>$predictor) {
             $predictors[$i][] = $predicted[$i];
         }
-        return array('predictors'=>$predictors, 'predicted'=>$predicted, 'numSessions'=>count($predictors));
+        return array('predictors'=>$predictors, 'predicted'=>$predicted, 'numSessions'=>count($predictors), 'featureNames'=>array_keys($featureCols));
     }
 }
 
