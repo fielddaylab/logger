@@ -496,13 +496,13 @@ $(document).ready((event) => {
                     })
                     let callbackFunc = (data) => {
                         clearInterval(loadTimer)
-                        localStorage.setItem(`data_numLevels_${column}`, JSON.stringify(data))
+                        //.setItem(`data_numLevels_${column}`, JSON.stringify(data))
                         let rowNames = []
                         $(`#numLevelsNumSessionsRow td:nth-child(${i+2})`).html(data.numSessions.numTrue + ' / ' + data.numSessions.numFalse)
                         $('#numLevelsBody tr th').each((j, jval) => {
                             rowNames.push($(jval).text())
                         })
-                        localStorage.setItem(`row_names_numLevels`, JSON.stringify(rowNames))
+                        //localStorage.setItem(`row_names_numLevels`, JSON.stringify(rowNames))
                         columnElements.each((j, jval) => {
                             $(jval).css({
                                 'vertical-align': 'middle',
@@ -672,7 +672,7 @@ $(document).ready((event) => {
     
                     let callbackFunc = (data) => {
                         clearInterval(loadTimer)
-                        localStorage.setItem(`data_challenges_${column}`, JSON.stringify(data))
+                        //localStorage.setItem(`data_challenges_${column}`, JSON.stringify(data))
                         let rowNames = []
                         let expectedAccuracy = Math.max(data.numSessions.numTrue, data.numSessions.numFalse) / (data.numSessions.numTrue + data.numSessions.numFalse)
                         $(`#predictNumSessionsRow td:nth-child(${i+2})`).html(data.numSessions.numTrue + ' / ' + data.numSessions.numFalse +
@@ -680,7 +680,7 @@ $(document).ready((event) => {
                         $('#predictTableBody tr th').each((j, jval) => {
                             rowNames.push($(jval).text())
                         })
-                        localStorage.setItem(`row_names_challenges`, JSON.stringify(rowNames))
+                        //localStorage.setItem(`row_names_challenges`, JSON.stringify(rowNames))
                         columnElements.each((j, jval) => {
                             $(jval).css({
                                 'vertical-align': 'middle',
@@ -875,7 +875,7 @@ $(document).ready((event) => {
                     let callbackFunc = (data) => {
                         clearInterval(loadTimer)
                         // Store the computation values for retrieval when the link is clicked
-                        localStorage.setItem(`data_questions_${column}`, JSON.stringify(data))
+                        //localStorage.setItem(`data_questions_${column}`, JSON.stringify(data))
                         let rowNames = []
                         let expectedAccuracy = Math.max(data.numSessions.numTrue, data.numSessions.numFalse) / (data.numSessions.numTrue + data.numSessions.numFalse)
                         $(`#questionsNumSessionsRow td:nth-child(${i+2})`).html(data.numSessions.numTrue + ' / ' + data.numSessions.numFalse +
@@ -883,7 +883,7 @@ $(document).ready((event) => {
                         $('#tableAllBody tr th').each((j, jval) => {
                             rowNames.push($(jval).text())
                         })
-                        localStorage.setItem(`row_names_questions`, JSON.stringify(rowNames))
+                        //localStorage.setItem(`row_names_questions`, JSON.stringify(rowNames))
                         columnElements.each((j, jval) => {
                             $(jval).css({
                                 'vertical-align': 'middle',
@@ -1237,7 +1237,7 @@ $(document).ready((event) => {
                     let callbackFunc = (data) => {
                         //console.log(data)
                         clearInterval(loadTimer)
-                        localStorage.setItem(`data_multinomQuestions_${column}_predict`, JSON.stringify(data))
+                        //localStorage.setItem(`data_multinomQuestions_${column}_predict`, JSON.stringify(data))
                         let rowNames = []
                         let expectedAccuracy = Math.max(...Object.values(data[1].numSessions)) / Object.values(data[1].numSessions).reduce((sum, num) => sum + num, 0)
                         $(`#multinomialNumSessionsRow td:nth-child(${i+1})`).html(data[1].numSessions.numA + ' / ' + data[1].numSessions.numB + ' / ' + data[1].numSessions.numC + ' / ' + data[1].numSessions.numD +
@@ -1245,7 +1245,7 @@ $(document).ready((event) => {
                         $('#multinomialQuestionBody tr th').each((j, jval) => {
                            rowNames.push($(jval).text())
                         })
-                        localStorage.setItem(`row_names_qQ_predict`, JSON.stringify(rowNames))
+                        //localStorage.setItem(`row_names_qQ_predict`, JSON.stringify(rowNames))
                         columnElements.each((j, jval) => {
                             //console.log(j)
                             $(jval).css({
