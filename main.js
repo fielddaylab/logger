@@ -688,6 +688,7 @@ $(document).ready((event) => {
                                 'border-top': borderTops[j],
                                 'border-bottom': borderBottoms[j]
                             })
+                            let rowName = getKeyByValue($('#numLevelsBody tr th').eq(j).text())
                             let innerText = $('<div>')
                             innerText.html('No data')
                             if (data && data.pValues) {
@@ -890,6 +891,7 @@ $(document).ready((event) => {
                                 'border-top': borderTops[j],
                                 'border-bottom': borderBottoms[j]
                             })
+                            let rowName = getKeyByValue($('#numLevelsBody tr th').eq(j).text())
                             let innerText = $('<div>')
                             if (j < columnElements.length - (2 + algorithmNames.length)) {
                                 if (typeof data.pValues[j] === 'number' && !isNaN(data.pValues[j]) && typeof data.coefficients[j] === 'number' && !isNaN(data.coefficients[j])) {
@@ -1089,6 +1091,7 @@ $(document).ready((event) => {
                                 'border-top': borderTops[j],
                                 'border-bottom': borderBottoms[j]
                             })
+                            let rowName = getKeyByValue($('#numLevelsBody tr th').eq(j).text())
                             let innerText = $('<div>')
                             innerText.html('No data')
                             if (data) {
@@ -1251,6 +1254,7 @@ $(document).ready((event) => {
                                 'border-top': borderTops[j],
                                 'border-bottom': borderBottoms[j]
                             })
+                            let rowName = getKeyByValue($('#numLevelsBody tr th').eq(j).text())
                             let innerText = $('<div>')
                             innerText.html('No data')
                             if (data) {
