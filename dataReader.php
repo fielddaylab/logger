@@ -19,7 +19,7 @@ if (!file_exists($dataFile)) {
 }
 
 $csv = array_map('str_getcsv', array_slice(file($dataFile), 1));
-$header = array_shift($csv); 
+$header = array_shift($csv);
 
 $output = array();
 $c = array_search($row, $header);

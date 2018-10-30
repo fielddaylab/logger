@@ -1976,7 +1976,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                 mkdir(DATA_DIR . '/numLevels', 0777, true);
             }
 
-            $dataFile = DATA_DIR . '/numLevels/numLevelDataForR_'. $colLvl .'.txt';
+            $dataFile = DATA_DIR . '/numLevels/numLevelsDataForR_'. $colLvl .'.txt';
             file_put_contents($dataFile, $predictString);
             unset($rResults);
             unset($tfOutput);

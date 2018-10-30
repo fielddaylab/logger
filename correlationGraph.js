@@ -61,8 +61,15 @@ $(document).ready(() => {
             mode: 'markers',
             type: 'scatter'
         }
-        let xValsFalse = xVals.filter((value, i, arr) => { if (yVals[i] == 0) return value })
-        let xValsTrue = xVals.filter((value, i, arr) => { if (yVals[i] == 1) return value })
+        let xValsFalse, xValsTrue
+        if (table === 'numLevels') {
+            let column = col.substr(3)
+            xValsFalse = xVals.filter((value, i, arr) => { return (yVals[i] < column) })
+            xValsTrue = xVals.filter((value, i, arr) => { return (yVals[i] >= column) })
+        } else {
+            xValsFalse = xVals.filter((value, i, arr) => { return (yVals[i] == 0) })
+            xValsTrue = xVals.filter((value, i, arr) => { return (yVals[i] == 1) })
+        }
         let trace0 = {
             y: xValsFalse,
             boxpoints: 'all',
