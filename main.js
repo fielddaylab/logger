@@ -206,7 +206,7 @@ $(document).ready((event) => {
         // tableAllBody aka question answers from challenge 1
         if (true) {
             let rowNames = ['Constant term', '# slider moves', '# type changes', '# levels completed', 'Time', 'Avg knob max-min', 
-                'Avg % good moves', '# offset moves', '# wavelength moves', '# amplitude moves']
+                'Avg % good moves', '# offset moves', '# wavelength moves', '# amplitude moves', '# failures']
             $(rowNames).each((i, rowName) => {
                 $('#tableAllBody').append(`
                 <tr>

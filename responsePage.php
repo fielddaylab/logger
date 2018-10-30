@@ -514,8 +514,10 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
     // Put features into columns
     $featureCols = array();
     $allFeatures = array_column($allData, 'features');
-    foreach ($allFeatures[0] as $i=>$featureCol) {
-        $featureCols[$i] = array_column($allFeatures, $i);
+    if (isset($allFeatures[0])) {
+        foreach ($allFeatures[0] as $i=>$featureCol) {
+            $featureCols[$i] = array_column($allFeatures, $i);
+        }
     }
 
     // All this stuff depends on the columns
@@ -2156,7 +2158,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
         $sessionsAndTimes = array('sessions'=>$uniqueSessions, 'times'=>array_values($times));
         $returnArray = array();
         for ($predLevel = 1; $predLevel < 9; $predLevel++) { // repeat calculations for each cell, adding a level of data each iteration
-            $regression = analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAttributes, $multinomQuestionPredictCol);
+            $regression = analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAttributes, $multinomQuestionPredictCol, $predLevel);
             $predictArray = $regression['predictors'];
             $predictedArray = $regression['predicted'];
             $numPredictors = $regression['numSessions'];
