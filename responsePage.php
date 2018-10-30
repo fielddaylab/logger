@@ -9,7 +9,6 @@ ini_set('max_input_vars', $settings['max_input_vars']);
 define('DATA_DIR', $settings['DATA_DIR']);
 define('PYTHON_DIR', $settings['PYTHON_DIR']);
 define('RSCRIPT_DIR', $settings['RSCRIPT_DIR']);
-define('TENSORFLOW_ACTIVATE', $settings['TENSORFLOW_ACTIVATE']);
 
 // Establish the database connection
 include "database.php";
@@ -20,22 +19,7 @@ require_once "KMeans/Cluster.php";
 
 require_once "PCA/pca.php";
 
-// ini_set('memory_limit','4096M');
-// ini_set('max_execution_time', 30000);
-// ini_set('max_input_vars', 2000);
 date_default_timezone_set('America/Chicago');
-
-// local directories
-// define("PYTHON_DIR", "/usr/local/bin/python");
-// define("RSCRIPT_DIR", "/usr/local/bin/Rscript");
-// define("TENSORFLOW_ACTIVATE", "tensorflow/bin/activate");
-
-// server directories
-// define("PYTHON_DIR", "/usr/bin/python");
-// define("RSCRIPT_DIR", "/usr/bin/Rscript");
-// define("TENSORFLOW_ACTIVATE", "bin/activate");
-
-// define("DATA_DIR", "../../logger-data");
 
 $db = connectToDatabase($DB_NAME_DATA);
 if ($db->connect_error) {
@@ -359,6 +343,8 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
         foreach ($sliderTypes as $i=>$slider) {
             $numMovesPerSliderCols[$slider] = array_column($numMovesPerChallengePerSlider, $slider);
         }
+        $numFailsPerLevel = array_filter($numFailsPerLevel, function ($index) use ($endIndices) { return in_array($index, array_keys($endIndices)); }, ARRAY_FILTER_USE_KEY);
+        $numMoves = array_filter($numMoves, function ($index) use ($endIndices) { return in_array($index, array_keys($endIndices)); }, ARRAY_FILTER_USE_KEY);
 
         $sessionData = array(
             'avgTime'=>$avgTime,
@@ -387,6 +373,12 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
         $sessionData['features']['knobAvgs'] = $knobAvgs;
         foreach ($sliderTypes as $i=>$slider) {
             $sessionData['features'][$slider] = $numMovesPerSliderCols[$slider];
+            $movesScalar = array_sum($numMoves);
+            if ($movesScalar > 0) {
+                $sessionData['features']['percent'.$slider] = array_sum($numMovesPerSliderCols[$slider]) / $movesScalar;
+            } else {
+                $sessionData['features']['percent'.$slider] = 0;
+            }
         }
         $sessionData['features']['numFailsPerLevel'] = $numFailsPerLevel;
 
@@ -997,10 +989,10 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             $dataFile = DATA_DIR . '/questions/questionsDataForR_'. $_GET['column'] .'.txt';
             file_put_contents($dataFile, $predictString);
             unset($rResults);
-            unset($tfOutput);
+            //unset($tfOutput);
             exec(RSCRIPT_DIR . " scripts/questionsScript.R " . $column . ' ' . str_replace(',', ' ', $headerString), $rResults);
-            exec("source " . TENSORFLOW_ACTIVATE . " && python scripts/tfscript.py $dataFile " . implode(' ', range(1, $numVariables)), $tfOutput);
-            $percentCorrectTf = isset($tfOutput[count($tfOutput)-1]) ? $tfOutput[count($tfOutput)-1] : null;
+            //exec("source " . TENSORFLOW_ACTIVATE . " && python scripts/tfscript.py $dataFile " . implode(' ', range(1, $numVariables)), $tfOutput);
+            //$percentCorrectTf = isset($tfOutput[count($tfOutput)-1]) ? $tfOutput[count($tfOutput)-1] : null;
             unset($sklOutput);
             exec(PYTHON_DIR . " -W ignore scripts/sklearnscript.py $dataFile " . implode(' ', range(1, $numVariables)), $sklOutput);
     
@@ -1052,7 +1044,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                 'numSessions'=>$numPredictors,
                 // 'regressionOutputs'=>$predictedArray,
                 'percentCorrectR'=>$percentCorrectR,
-                'percentCorrectTf'=>$percentCorrectTf,
+                //'percentCorrectTf'=>$percentCorrectTf,
                 'algorithmNames'=>$algorithmNames,
                 'accuracies'=>$accuracies
             );
@@ -1083,10 +1075,10 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                 $dataFile = DATA_DIR . '/questionsPredict/questionsPredictDataForR_'. $questionPredictCol . '_' . $predLevel .'.txt';
                 file_put_contents($dataFile, $predictString);
                 unset($rResults);
-                unset($tfOutput);
+                //unset($tfOutput);
                 exec(RSCRIPT_DIR . " scripts/questionsPredictScript.R " . $column . ' ' . $predLevel . ' ' . str_replace(',', ' ', $headerString), $rResults);
-                exec("source " . TENSORFLOW_ACTIVATE . " && python scripts/tfscript.py $dataFile " . implode(' ', range(1, $numVariables)), $tfOutput);
-                $percentCorrectTf = isset($tfOutput[count($tfOutput)-1]) ? $tfOutput[count($tfOutput)-1] : null;
+                //exec("source " . TENSORFLOW_ACTIVATE . " && python scripts/tfscript.py $dataFile " . implode(' ', range(1, $numVariables)), $tfOutput);
+                //$percentCorrectTf = isset($tfOutput[count($tfOutput)-1]) ? $tfOutput[count($tfOutput)-1] : null;
                 unset($sklOutput);
                 exec(PYTHON_DIR . " -W ignore scripts/sklearnscript.py $dataFile " . implode(' ', range(1, $numVariables)), $sklOutput);
         
@@ -1137,7 +1129,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                     'numSessions'=>$numPredictors,
                     // 'regressionOutputs'=>$predictedArray,
                     'percentCorrectR'=>$percentCorrectR,
-                    'percentCorrectTf'=>$percentCorrectTf,
+                    //'percentCorrectTf'=>$percentCorrectTf,
                     'algorithmNames'=>$algorithmNames,
                     'accuracies'=>$accuracies
                 );
@@ -1717,11 +1709,11 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
         $dataFile = DATA_DIR . '/challenges/challengesDataForR_'. $colLvl .'.txt';
         file_put_contents($dataFile, $predictString);
         unset($rResults);
-        unset($tfOutput);
+        //unset($tfOutput);
         $numVariables = count(explode(',', $headerString)) + 1;
         exec(RSCRIPT_DIR . " scripts/challengesScript.R " . $colLvl . ' ' . str_replace(',', ' ', $headerString), $rResults);
-        exec("source " . TENSORFLOW_ACTIVATE . "&& python scripts/tfscript.py $dataFile " . implode(' ', range(1, $numVariables)), $tfOutput);
-        $percentCorrectTf = isset($tfOutput[count($tfOutput)-1]) ? $tfOutput[count($tfOutput)-1] : null;
+        //exec("source " . TENSORFLOW_ACTIVATE . "&& python scripts/tfscript.py $dataFile " . implode(' ', range(1, $numVariables)), $tfOutput);
+        //$percentCorrectTf = isset($tfOutput[count($tfOutput)-1]) ? $tfOutput[count($tfOutput)-1] : null;
         unset($sklOutput);
         exec(PYTHON_DIR . " -W ignore scripts/sklearnscript.py $dataFile " . implode(' ', range(1, $numVariables)), $sklOutput);
 
@@ -1777,7 +1769,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             'numSessions'=>array('numTrue'=>$numTrue, 'numFalse'=>$numFalse),
             // 'regressionOutputs'=>$predictedArray,
             'percentCorrectR'=>$percentCorrectR,
-            'percentCorrectTf'=>$percentCorrectTf,
+            //'percentCorrectTf'=>$percentCorrectTf,
             'algorithmNames'=>$algorithmNames,
             'accuracies'=>$accuracies
         );
@@ -1981,12 +1973,12 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             $dataFile = DATA_DIR . '/numLevels/numLevelsDataForR_'. $colLvl .'.txt';
             file_put_contents($dataFile, $predictString);
             unset($rResults);
-            unset($tfOutput);
+            //unset($tfOutput);
             exec(RSCRIPT_DIR . " scripts/numLevelsScript.R " . $colLvl . ' ' . str_replace(',', ' ', $headerString), $rResults);
             file_put_contents($dataFile, $predictString10Percent, FILE_APPEND);
             if ($trial === 0) {
-                exec("source " . TENSORFLOW_ACTIVATE . "&& python scripts/tfscript.py $dataFile " . implode(' ', range(1, $numVariables)), $tfOutput);
-                $mae = isset($tfOutput[count($tfOutput)-1]) ? $tfOutput[count($tfOutput)-1] : null;
+                //exec("source " . TENSORFLOW_ACTIVATE . "&& python scripts/tfscript.py $dataFile " . implode(' ', range(1, $numVariables)), $tfOutput);
+                //$mae = isset($tfOutput[count($tfOutput)-1]) ? $tfOutput[count($tfOutput)-1] : null;
             }
             $coefficients = array();
             $stdErrs = array();
@@ -2051,7 +2043,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             'numFalse'=>$numFalse),
             // 'regressionOutputs'=>$predictedArray,
             'percentCorrectR'=>$percentCorrectR,
-            'mae'=>$mae,
+            //'mae'=>$mae,
             'percentCorrectRand'=>$percentCorrectRand
         );
     } /* multinomial ques   */ else if (isset($_GET['multinomQuestionPredictColumn'])) {

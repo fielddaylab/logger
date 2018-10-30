@@ -38,8 +38,18 @@ $(document).ready((event) => {
                 })
         })
         
-        let algorithmNames = ['Nearest Neighbors', 'Linear SVM', 'RBF SVM', 'Gaussian Process',
-        'Decision Tree', 'Random Forest', 'Neural Net', 'AdaBoost', 'Naive Bayes', 'QDA']
+        let algorithmNames = [
+            'Nearest Neighbors',
+            'Linear SVM',
+            'RBF SVM',
+            'Gaussian Process',
+            'Decision Tree',
+            'Random Forest',
+            'Neural Net',
+            'AdaBoost',
+            'Naive Bayes',
+            'QDA'
+        ]
         $('#multinomialQuestionBody tr').each((i, ival) => {
             for (let j = 0; j < algorithmNames.length; j++) {
                 $(ival).after($(
@@ -68,6 +78,9 @@ $(document).ready((event) => {
             'WAVELENGTH':              '# wavelength moves',
             'AMPLITUDE':               '# amplitude moves',
             'numFailsPerLevel':        '# failures',
+            'percentOFFSET':           '% offset moves',
+            'percentWAVELENGTH':       '% wavelength moves',
+            'percentAMPLITUDE':        '% amplitude moves',
             'pgm_1':                   '% good moves lvl 1',
             'pgm_3':                   '% good moves lvl 3',
             'pgm_5':                   '% good moves lvl 5',
@@ -85,7 +98,7 @@ $(document).ready((event) => {
         $(Object.keys(featureNames)).each((index, value) => {
             if (index > 0) $('#featuresList').append(`
             <li>
-                <input type="checkbox" name="${value}" id="${value}" checked>
+                <input type="checkbox" name="${value}" id="${value}" ${(value == 'OFFSET' || value == 'WAVELENGTH' || value == 'AMPLITUDE') ? '' : 'checked'}>
                 <label for="${value}" style="font-weight:400;">${featureNames[value]}</label>
             </li>
             `)
@@ -93,6 +106,40 @@ $(document).ready((event) => {
     
         // numLevelsBody
         if (true) { // this is simply so I can collapse this section of code
+            let rowNames = [
+                'Constant term',
+                '# slider moves',
+                '# type changes',
+                'Time',
+                'Avg knob max-min', 
+                '# offset moves',
+                '# wavelength moves',
+                '# amplitude moves',
+                '# failures',
+                '% offset moves',
+                '% wavelength moves',
+                '% amplitude moves'
+            ]
+            $(rowNames).each((i, rowName) => {
+                $('#numLevelsBody').append(`
+                <tr>
+                    <th scope="row">${rowName}</th>
+                    <td style="border-left-width:4px; "></td>
+                    <td></td>
+                    <td></td>
+                    <td scope="col" style="border-right-width:4px;"></td>
+                    <td scope="col" style="border-left-width:4px; "></td>
+                    <td></td>
+                    <td style="border-right-width:4px;"></td>
+                    <td style="border-left-width:4px; "></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td style="border-right-width:4px;"></td>
+                    <td style="border-left-width:4px; "></td>
+                </tr>
+                `)
+            })
             lvls.forEach((value, index, arr) => {
                 let newRow = $(`<tr class="rowLvl">`)
                 newRow.append(
@@ -147,7 +194,42 @@ $(document).ready((event) => {
             })
         }
         // predictTableBody
-        if (true) { 
+        if (true) {
+            let rowNames = [
+                'Constant term',
+                '# slider moves',
+                '# type changes',
+                'Time',
+                'Avg knob max-min', 
+                '# offset moves',
+                '# wavelength moves',
+                '# amplitude moves',
+                '# failures',
+                '% offset moves',
+                '% wavelength moves',
+                '% amplitude moves'
+            ]
+            $(rowNames).each((i, rowName) => {
+                $('#predictTableBody').append(`
+                <tr>
+                    <th scope="row">${rowName}</th>
+                    <td style="border-left-width:4px; "></td>
+                    <td></td>
+                    <td></td>
+                    <td scope="col" style="border-right-width:4px;"></td>
+                    <td scope="col" style="border-left-width:4px; "></td>
+                    <td></td>
+                    <td style="border-right-width:4px;"></td>
+                    <td style="border-left-width:4px; "></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td style="border-right-width:4px;"></td>
+                    <td style="border-left-width:4px; "></td>
+                    <td style="border-left-width:4px; "></td>
+                </tr>
+                `)
+            })
             lvls.forEach((value, index, arr) => {
                 let newRow = $(`<tr class="rowLvl">`)
                 newRow.append(
@@ -205,8 +287,22 @@ $(document).ready((event) => {
         }
         // tableAllBody aka question answers from challenge 1
         if (true) {
-            let rowNames = ['Constant term', '# slider moves', '# type changes', '# levels completed', 'Time', 'Avg knob max-min', 
-                'Avg % good moves', '# offset moves', '# wavelength moves', '# amplitude moves', '# failures']
+            let rowNames = [
+                'Constant term',
+                '# slider moves',
+                '# type changes',
+                '# levels completed',
+                'Time',
+                'Avg knob max-min', 
+                'Avg % good moves',
+                '# offset moves',
+                '# wavelength moves',
+                '# amplitude moves',
+                '# failures',
+                '% offset moves',
+                '% wavelength moves',
+                '% amplitude moves'
+            ]
             $(rowNames).each((i, rowName) => {
                 $('#tableAllBody').append(`
                 <tr>
