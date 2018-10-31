@@ -989,12 +989,12 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             $dataFile = DATA_DIR . '/questions/questionsDataForR_'. $_GET['column'] .'.txt';
             file_put_contents($dataFile, $predictString);
             unset($rResults);
-            //unset($tfOutput);
+
             exec(RSCRIPT_DIR . " scripts/questionsScript.R " . $column . ' ' . str_replace(',', ' ', $headerString), $rResults);
-            //exec("source " . TENSORFLOW_ACTIVATE . " && python scripts/tfscript.py $dataFile " . implode(' ', range(1, $numVariables)), $tfOutput);
-            //$percentCorrectTf = isset($tfOutput[count($tfOutput)-1]) ? $tfOutput[count($tfOutput)-1] : null;
+            unset($sklRegOutput);
             unset($sklOutput);
             exec(PYTHON_DIR . " -W ignore scripts/sklearnscript.py $dataFile " . implode(' ', range(1, $numVariables)), $sklOutput);
+            exec(PYTHON_DIR . " -W ignore scripts/sklearnLogRegScript.py $dataFile " . implode(' ', range(1, $numVariables)), $sklRegOutput);
     
             $algorithmNames = array();
             $accuracies = array();
@@ -1036,15 +1036,16 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             }
             $percentCorrectR = $accuracy;
 
+            $sklName = 'LogReg (SKL)';
+            $algorithmNames[] = $sklName;
+            $accuracies[$sklName] = (isset($sklRegOutput[0])) ? $sklRegOutput[0] : null;
+
             return array(
                 'coefficients'=>$coefficients,
                 'stdErrs'=>$stdErrs,
                 'pValues'=>$pValues,
-                // 'regressionVars'=>$predictArray,
                 'numSessions'=>$numPredictors,
-                // 'regressionOutputs'=>$predictedArray,
                 'percentCorrectR'=>$percentCorrectR,
-                //'percentCorrectTf'=>$percentCorrectTf,
                 'algorithmNames'=>$algorithmNames,
                 'accuracies'=>$accuracies
             );
@@ -1075,10 +1076,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                 $dataFile = DATA_DIR . '/questionsPredict/questionsPredictDataForR_'. $questionPredictCol . '_' . $predLevel .'.txt';
                 file_put_contents($dataFile, $predictString);
                 unset($rResults);
-                //unset($tfOutput);
                 exec(RSCRIPT_DIR . " scripts/questionsPredictScript.R " . $column . ' ' . $predLevel . ' ' . str_replace(',', ' ', $headerString), $rResults);
-                //exec("source " . TENSORFLOW_ACTIVATE . " && python scripts/tfscript.py $dataFile " . implode(' ', range(1, $numVariables)), $tfOutput);
-                //$percentCorrectTf = isset($tfOutput[count($tfOutput)-1]) ? $tfOutput[count($tfOutput)-1] : null;
                 unset($sklOutput);
                 unset($sklRegOutput);
                 exec(PYTHON_DIR . " -W ignore scripts/sklearnscript.py $dataFile " . implode(' ', range(1, $numVariables)), $sklOutput);
@@ -1097,7 +1095,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
 
                 $sklName = 'LogReg (SKL)';
                 $algorithmNames[] = $sklName;
-                $accuracies[$sklName] = $sklRegOutput[0];
+                $accuracies[$sklName] = (isset($sklRegOutput[0])) ? $sklRegOutput[0] : null;
 
                 $accStart = 0;
                 $coefficients = array();
@@ -1131,11 +1129,8 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                     'coefficients'=>$coefficients,
                     'stdErrs'=>$stdErrs,
                     'pValues'=>$pValues,
-                    // 'regressionVars'=>$predictArray,
                     'numSessions'=>$numPredictors,
-                    // 'regressionOutputs'=>$predictedArray,
                     'percentCorrectR'=>$percentCorrectR,
-                    //'percentCorrectTf'=>$percentCorrectTf,
                     'algorithmNames'=>$algorithmNames,
                     'accuracies'=>$accuracies
                 );
@@ -1715,13 +1710,12 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
         $dataFile = DATA_DIR . '/challenges/challengesDataForR_'. $colLvl .'.txt';
         file_put_contents($dataFile, $predictString);
         unset($rResults);
-        //unset($tfOutput);
         $numVariables = count(explode(',', $headerString)) + 1;
         exec(RSCRIPT_DIR . " scripts/challengesScript.R " . $colLvl . ' ' . str_replace(',', ' ', $headerString), $rResults);
-        //exec("source " . TENSORFLOW_ACTIVATE . "&& python scripts/tfscript.py $dataFile " . implode(' ', range(1, $numVariables)), $tfOutput);
-        //$percentCorrectTf = isset($tfOutput[count($tfOutput)-1]) ? $tfOutput[count($tfOutput)-1] : null;
         unset($sklOutput);
+        unset($sklRegOutput);
         exec(PYTHON_DIR . " -W ignore scripts/sklearnscript.py $dataFile " . implode(' ', range(1, $numVariables)), $sklOutput);
+        exec(PYTHON_DIR . " -W ignore scripts/sklearnLogRegScript.py $dataFile " . implode(' ', range(1, $numVariables)), $sklRegOutput);
 
         $algorithmNames = array();
         $accuracies = array();
@@ -1762,6 +1756,10 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                 $pValues[$values[0]] = sciToNum($values[4]);
             }
         }
+
+        $sklName = 'LogReg (SKL)';
+        $algorithmNames[] = $sklName;
+        $accuracies[$sklName] = (isset($sklRegOutput[0])) ? $sklRegOutput[0] : null;
 
         $trueSessions = array_unique(array_column(array_filter($completeEvents, function ($a) use ($colLvl) { return $a['level'] == $colLvl; }), 'session_id'));
         $numTrue = count($trueSessions); // number of sessions who completed every level including current col
@@ -1979,13 +1977,8 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             $dataFile = DATA_DIR . '/numLevels/numLevelsDataForR_'. $colLvl .'.txt';
             file_put_contents($dataFile, $predictString);
             unset($rResults);
-            //unset($tfOutput);
             exec(RSCRIPT_DIR . " scripts/numLevelsScript.R " . $colLvl . ' ' . str_replace(',', ' ', $headerString), $rResults);
             file_put_contents($dataFile, $predictString10Percent, FILE_APPEND);
-            if ($trial === 0) {
-                //exec("source " . TENSORFLOW_ACTIVATE . "&& python scripts/tfscript.py $dataFile " . implode(' ', range(1, $numVariables)), $tfOutput);
-                //$mae = isset($tfOutput[count($tfOutput)-1]) ? $tfOutput[count($tfOutput)-1] : null;
-            }
             $coefficients = array();
             $stdErrs = array();
             $pValues = array();
@@ -2012,11 +2005,12 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                     $inputs = array_slice($predictArray[$index], 0, -1);
                     $actual = $predictArray[$index][0];
                     $prediction = round(predict($coefficients, $inputs, true));
-                    $percentError = ($actual == 0) ? null : abs(($prediction-$actual) / $actual);
+                    // when actual=0, percent error can't be computed normally
+                    $percentError = ($actual == 0 && $prediction == 0) ? 0 : 2 * ($actual - $prediction) / (abs($actual) + abs($prediction));
                     $totalPercentError += $percentError;
 
                     $predictionRand = array_rand($levelsForTable);
-                    $percentErrorRand = ($actual == 0) ? null : abs(($predictionRand-$actual) / $actual);
+                    $percentErrorRand = ($actual == 0 && $predictionRand == 0) ? 0 : 2 * ($actual - $predictionRand) / (abs($actual) + abs($predictionRand));
                     $totalPercentErrorRand += $percentErrorRand;
                 }
                 $avgPercentError = ($numPredictions == 0) ? null : $totalPercentError / $numPredictions;
@@ -2192,7 +2186,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
 
             $sklName = 'LogReg (SKL)';
             $algorithmNames[] = $sklName;
-            $accuracies[$sklName] = $sklRegOutput[0];
+            $accuracies[$sklName] = (isset($sklRegOutput[0])) ? $sklRegOutput[0] : null;
 
             $ansA = array_filter($predictedArray, function ($a) { return $a == 0; });
             $ansB = array_filter($predictedArray, function ($a) { return $a == 1; });

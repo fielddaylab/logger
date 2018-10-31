@@ -966,11 +966,17 @@ $(document).ready((event) => {
                                 'border-top': borderTops[j],
                                 'border-bottom': borderBottoms[j]
                             })
-                            let rowName = getKeyByValue($('#numLevelsBody tr th').eq(j).text())
+                            let rowName = getKeyByValue($('#tableAllBody tr th').eq(j).text())
                             let innerText = $('<div>')
                             if (j < columnElements.length - (1 + algorithmNames.length)) {
-                                if (typeof data.pValues[rowName] === 'number' && !isNaN(data.pValues[rowName]) && typeof data.coefficients[rowName] === 'number' && !isNaN(data.coefficients[rowName])) {
-                                    innerText.html(data.coefficients[rowName].toFixed(4) + ',<br>' + data.pValues[rowName].toFixed(4))
+                                if (typeof data.coefficients[rowName] === 'number' && !isNaN(data.coefficients[rowName])) {
+                                    let text = data.coefficients[rowName].toFixed(4)
+                                    if (typeof data.pValues[rowName] === 'number' && !isNaN(data.pValues[rowName])) {
+                                        text += ',<br>' + data.pValues[rowName].toFixed(4)
+                                    } else {
+                                        text += ',<br>' + 'NaN'
+                                    }
+                                    innerText.html(text)
                                     if (data.pValues[rowName] < 0.05) {
                                         $(innerText).css('background-color', '#82e072')
                                     }
@@ -1154,8 +1160,8 @@ $(document).ready((event) => {
                             let innerText = $('<div>')
                             innerText.html('No data')
                             if (data) {
-                                if (j % (2 + algorithmNames.length) === 0) {
-                                    let percentCorrectR = parseFloat(data[j/(2 + algorithmNames.length)+1].percentCorrectR)
+                                if (j % (1 + algorithmNames.length) === 0) {
+                                    let percentCorrectR = parseFloat(data[Math.floor(j/(1 + algorithmNames.length))+1].percentCorrectR)
                                     if (typeof percentCorrectR === 'number' && !isNaN(percentCorrectR)) {
                                         innerText.html(percentCorrectR.toFixed(4) + ',<br>' + ((100 * percentCorrectR / expectedAccuracy) - 100).toFixed(4) + '%')
                                         if (percentCorrectR > expectedAccuracy) {
@@ -1167,8 +1173,8 @@ $(document).ready((event) => {
                                 } else {
                                     let numAlgorithms = algorithmNames.length
                                     let rowName = $(jval).siblings(`td:first`).text()
-                                    if (data[Math.floor(j / (numAlgorithms + 2)) + 1]) {
-                                        let percentCorrect = parseFloat(data[Math.floor(j / (numAlgorithms+ 2)) + 1].accuracies[rowName])
+                                    if (data[Math.floor(j / (numAlgorithms + 1)) + 1]) {
+                                        let percentCorrect = parseFloat(data[Math.floor(j / (numAlgorithms + 1)) + 1].accuracies[rowName])
                                         // Color accuracies higher than random informed green
                                         if (typeof percentCorrect === 'number' && !isNaN(percentCorrect)) {
                                             if (percentCorrect > expectedAccuracy) {
@@ -1182,7 +1188,7 @@ $(document).ready((event) => {
                                         innerText.html('No data')
                                     }
                                 }
-                                $(innerText).wrapInner(`<a target="_blank" href="../logger-data/questionsPredict/questionsPredictDataForR_${column}_${Math.floor(j/2)+1}.txt">`)
+                                $(innerText).wrapInner(`<a target="_blank" href="../logger-data/questionsPredict/questionsPredictDataForR_${column}_${Math.floor(j/(1 + algorithmNames.length))+1}.txt">`)
                                 $(jval).html(innerText)
                             }
                             $(innerText).css({ 'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif' })
@@ -1284,9 +1290,7 @@ $(document).ready((event) => {
                     })
     
                     let callbackFunc = (data) => {
-                        //console.log(data)
                         clearInterval(loadTimer)
-                        //localStorage.setItem(`data_multinomQuestions_${column}_predict`, JSON.stringify(data))
                         let rowNames = []
                         let expectedAccuracy = Math.max(...Object.values(data[1].numSessions)) / Object.values(data[1].numSessions).reduce((sum, num) => sum + num, 0)
                         let expectedAccuracyStr = data[1].numSessions.numA + ' / ' + data[1].numSessions.numB + ' / ' + data[1].numSessions.numC + ' / ' + data[1].numSessions.numD
@@ -1295,9 +1299,7 @@ $(document).ready((event) => {
                         $('#multinomialQuestionBody tr th').each((j, jval) => {
                            rowNames.push($(jval).text())
                         })
-                        //localStorage.setItem(`row_names_qQ_predict`, JSON.stringify(rowNames))
                         columnElements.each((j, jval) => {
-                            //console.log(j)
                             $(jval).css({
                                 'vertical-align': 'middle',
                                 'background-color': backgroundColors[j],
@@ -1467,7 +1469,6 @@ $(document).ready((event) => {
                         $('#amtsTotalAll').append($('<hr>').css({ 'margin-bottom': '3px', 'margin-top': '3px' }))
                         $('#amtsTotalAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.totalKnobTotals.toFixed(2)}</div>`).css({ 'font-size': '14px', 'float': 'right', 'padding-right': '100px' })))
                         $('#amtsTotalAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.avgKnobTotals.toFixed(2)}</div>`).css({ 'font-size': '14px', 'float': 'right', 'padding-right': '100px' })))
-                        console.log(data)
                         dataHistogram = {
                             'questionAnswereds': data.questionAnswereds, 'numsQuestions': data.questionsAll.numsQuestions, 'numMoves': data.numMovesAll,
                             'numLevels': data.numLevelsAll, 'numTypeChanges': data.numTypeChangesAll, 'clusters': data.clusters
