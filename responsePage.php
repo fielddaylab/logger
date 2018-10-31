@@ -1080,7 +1080,9 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                 //exec("source " . TENSORFLOW_ACTIVATE . " && python scripts/tfscript.py $dataFile " . implode(' ', range(1, $numVariables)), $tfOutput);
                 //$percentCorrectTf = isset($tfOutput[count($tfOutput)-1]) ? $tfOutput[count($tfOutput)-1] : null;
                 unset($sklOutput);
+                unset($sklRegOutput);
                 exec(PYTHON_DIR . " -W ignore scripts/sklearnscript.py $dataFile " . implode(' ', range(1, $numVariables)), $sklOutput);
+                exec(PYTHON_DIR . " -W ignore scripts/sklearnLogRegScript.py $dataFile " . implode(' ', range(1, $numVariables)), $sklRegOutput);
         
                 $algorithmNames = array();
                 $accuracies = array();
@@ -1092,6 +1094,10 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                         $accuracies[$algorithmName] = end($values);
                     }
                 }
+
+                $sklName = 'LogReg (SKL)';
+                $algorithmNames[] = $sklName;
+                $accuracies[$sklName] = $sklRegOutput;
 
                 $accStart = 0;
                 $coefficients = array();
@@ -2169,7 +2175,9 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             $dataFile = DATA_DIR . '/multinomQuestionsPredict/multinomQuestionsPredictDataForR_'. $multinomQuestionPredictCol .'.txt';
             file_put_contents($dataFile, $predictString);
             unset($sklOutput);
+            unset($sklRegOutput);
             exec(PYTHON_DIR . " -W ignore scripts/sklearnscript.py $dataFile " . implode(' ', range(1, $numVariables)), $sklOutput);
+            exec(PYTHON_DIR . " -W ignore scripts/sklearnLogRegScript.py $dataFile " . implode(' ', range(1, $numVariables)), $sklRegOutput);
 
             $algorithmNames = array();
             $accuracies = array();
@@ -2181,6 +2189,10 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                     $accuracies[$algorithmName] = end($values);
                 }
             }
+
+            $sklName = 'LogReg (SKL)';
+            $algorithmNames[] = $sklName;
+            $accuracies[$sklName] = $sklRegOutput;
 
             $ansA = array_filter($predictedArray, function ($a) { return $a == 0; });
             $ansB = array_filter($predictedArray, function ($a) { return $a == 1; });

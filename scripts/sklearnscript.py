@@ -8,7 +8,6 @@ from numpy import loadtxt
 
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from sklearn.datasets import make_moons, make_circles, make_classification
 from sklearn.neural_network import MLPClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
@@ -33,7 +32,6 @@ percentTesting = 0.5 # number between 0 and 1 for what % of dataset should be us
 X = loadtxt(filename, ndmin=2, delimiter=',', skiprows=2, usecols=tuple(map(int, args[2:num_args-1])))
 y = loadtxt(filename, delimiter=',', skiprows=2, usecols=int(args[num_args-1]))
 
-h = .02  # step size in the mesh
 
 names = ["Nearest Neighbors", "Linear SVM", "RBF SVM", "Gaussian Process",
          "Decision Tree", "Random Forest", "Neural Net", "AdaBoost",
@@ -54,7 +52,7 @@ classifiers = [
 # preprocess dataset, split into training and test part
 X = StandardScaler().fit_transform(X)
 X_train, X_test, y_train, y_test = \
-    train_test_split(X, y, test_size=.2, random_state=123)
+    train_test_split(X, y, test_size=.5, random_state=123)
 
 # iterate over classifiers
 for name, clf in zip(names, classifiers):

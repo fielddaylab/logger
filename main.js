@@ -48,13 +48,14 @@ $(document).ready((event) => {
             'Neural Net',
             'AdaBoost',
             'Naive Bayes',
-            'QDA'
+            'QDA',
+            'LogReg (SKL)'
         ]
         $('#multinomialQuestionBody tr').each((i, ival) => {
             for (let j = 0; j < algorithmNames.length; j++) {
                 $(ival).after($(
                     `<tr>
-                        <td style="width:15%; ${(j === 0) ? 'border-bottom-width:4px;' : ''}">${algorithmNames[9-j]}</td>
+                        <td style="width:15%; ${(j === 0) ? 'border-bottom-width:4px;' : ''}">${algorithmNames[algorithmNames.length-1-j]}</td>
                         <td ${(j === 0) ? 'style=\"border-bottom-width:4px;\"' : ''}></td>
                         <td ${(j === 0) ? 'style=\"border-bottom-width:4px;\"' : ''}></td>
                         <td ${(j === 0) ? 'style=\"border-bottom-width:4px;\"' : ''}></td>
@@ -170,7 +171,7 @@ $(document).ready((event) => {
                     }
                 })
             })
-            $(['Random', 'Log reg', 'DNN (TF)']).each((i, value) => {
+            $(['Random', 'Log reg']).each((i, value) => {
                 $('#numLevelsBody').append(
                     $(`
                     <tr ${(i === 0) ? 'style="border-top: 4px solid rgb(221, 221, 221);"' : ''}>
@@ -261,7 +262,7 @@ $(document).ready((event) => {
                     }
                 })
             })
-            $(['Log reg', 'DNN (TF)'].concat(algorithmNames)).each((i, value) => {
+            $(['Log reg'].concat(algorithmNames)).each((i, value) => {
                 $('#predictTableBody').append(
                     $(`
                     <tr ${(i === 0) ? 'style="border-top: 4px solid rgb(221, 221, 221);"' : ''}>
@@ -311,7 +312,7 @@ $(document).ready((event) => {
                 </tr>
                 `)
             })
-            $(['Log reg', 'DNN (TF)'].concat(algorithmNames)).each((i, value) => {
+            $(['Log reg'].concat(algorithmNames)).each((i, value) => {
                 $('#tableAllBody').append(
                     $(`
                     <tr ${(i === 0) ? 'style="border-top: 4px solid rgb(221, 221, 221);"' : ''}>
@@ -330,7 +331,7 @@ $(document).ready((event) => {
                 for (let j = 0; j < algorithmNames.length; j++) {
                     $(ival).after(`
                     <tr>
-                        <td style="width:6%; ${(j === 0) ? 'border-bottom-width:4px;' : ''}">${algorithmNames[9-j]}</td>
+                        <td style="width:6%; ${(j === 0) ? 'border-bottom-width:4px;' : ''}">${algorithmNames[algorithmNames.length-1-j]}</td>
                         ${((j === 0) ? '<td style=\"border-bottom-width:4px;\"></td>' : '<td></td>').repeat(16)}
                     </tr>
                     `)
@@ -340,11 +341,7 @@ $(document).ready((event) => {
                     <td style="width:10%;">Log reg</td>
                     ${'<td></td>'.repeat(16)}
                 </tr>
-                <tr>
-                    <td style="width:10%;">DNN (TF)</td>
-                    ${'<td></td>'.repeat(16)}
-                </tr>
-                `) // these 2 rows are added together so they're not in reverse order
+                `)
             })
         }
     
