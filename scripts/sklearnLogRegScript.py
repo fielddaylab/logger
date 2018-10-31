@@ -29,7 +29,7 @@ X = StandardScaler().fit_transform(X)
 lab_enc = preprocessing.LabelEncoder()
 encoded = lab_enc.fit_transform(y)
 X_train, X_test, y_train, y_test = \
-    train_test_split(X, y, test_size=.5, random_state=123)
+    train_test_split(X, y, test_size=.5)
 
 clf = LogisticRegression(multi_class='multinomial', solver='saga', max_iter=5000).fit(X_train, y_train)
 score = clf.score(X_test, y_test)

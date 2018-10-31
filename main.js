@@ -533,7 +533,7 @@ $(document).ready((event) => {
                         'numLevelsColumn': column,
                         'shouldUseAvgs': shouldUseAvgs,
                     }
-                    let numAlgorithms = 3
+                    let numAlgorithms = 2
                     let checkedFeatures = $(`#numLevelsBody tr th:gt(0):lt(${columnElements.length-numAlgorithms-1})`).toArray().map((ele, idx) => { return $.trim(ele.innerText) }).filter((ele, index) => { return $.inArray(index.toString(), columnIndexes) >= 0 && featuresListParameters[getKeyByValue(ele)] })
                     checkedFeatures = $(checkedFeatures).map((ele, idx) => { return getKeyByValue(idx) }).toArray()
                     checkedFeaturesParams = {}
@@ -604,7 +604,7 @@ $(document).ready((event) => {
                             let innerText = $('<div>')
                             innerText.html('No data')
                             if (data && data.pValues) {
-                                if (j < columnElements.length - 3) {
+                                if (j < columnElements.length - 2) {
                                     if (typeof data.pValues[rowName] === 'number' && !isNaN(data.pValues[rowName]) && typeof data.coefficients[rowName] === 'number' && !isNaN(data.coefficients[rowName])) {
                                         innerText.html(data.coefficients[rowName].toFixed(4) + ',<br>' + data.pValues[rowName].toFixed(4))
                                         if (data.pValues[rowName] < 0.05) {
@@ -614,28 +614,21 @@ $(document).ready((event) => {
                                     $(jval).html(innerText)
                                     $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=numLevels&row=${getKeyByValue(rowNames[j])}&col=${column}&i=${i}&j=${j}" target="_blank"></a>`)
                                 } else {
-                                    if (j === columnElements.length - 3) {
+                                    if (j === columnElements.length - 2) {
                                         let percentCorrectRand = parseFloat(data.percentCorrectRand)
                                         if (typeof percentCorrectRand === 'number' && !isNaN(percentCorrectRand)) {
                                             innerText.html(percentCorrectRand.toFixed(5))
                                         } else {
                                             innerText.html('No data')
                                         }
-                                    } else if (j === columnElements.length - 2) {
+                                    } else if (j === columnElements.length - 1) {
                                         let percentCorrectR = parseFloat(data.percentCorrectR)
                                         if (typeof percentCorrectR === 'number' && !isNaN(percentCorrectR)) {
                                             innerText.html(percentCorrectR.toFixed(5))
                                         } else {
                                             innerText.html('No data')
                                         }
-                                    } else if (j === columnElements.length - 1) {
-                                        let mae = parseFloat(data.mae)
-                                        if (typeof mae === 'number' && !isNaN(mae)) {
-                                            innerText.html(mae.toFixed(5))
-                                        } else {
-                                            innerText.html('No data')
-                                        }
-                                    } 
+                                    }
                                     $(jval).html(innerText)
                                 }
                             } else {
@@ -709,7 +702,7 @@ $(document).ready((event) => {
                     parametersChallenge['predictTable'] = true
                     parametersChallenge['predictColumn'] = column
     
-                    let numAlgorithms = 12
+                    let numAlgorithms = algorithmNames.length+1
                     let checkedFeatures = $(`#predictTableBody tr th:gt(0):lt(${columnElements.length-numAlgorithms-1})`).toArray().map((ele, idx) => { return $.trim(ele.innerText) }).filter((ele, index) => { return $.inArray(index.toString(), columnIndexes) >= 0 && featuresListParameters[getKeyByValue(ele)] })
                     checkedFeatures = $(checkedFeatures).map((ele, idx) => { return getKeyByValue(idx) }).toArray()
                     checkedFeaturesParams = {}
@@ -783,7 +776,7 @@ $(document).ready((event) => {
                             let innerText = $('<div>')
                             innerText.html('No data')
                             if (data && data.pValues) {
-                                if (j < columnElements.length - (2 + algorithmNames.length)) {
+                                if (j < columnElements.length - (1 + algorithmNames.length)) {
                                     if (typeof data.pValues[rowName] === 'number' && !isNaN(data.pValues[rowName]) && typeof data.coefficients[rowName] === 'number' && !isNaN(data.coefficients[rowName])) {
                                         innerText.html(data.coefficients[rowName].toFixed(4) + ',<br>' + data.pValues[rowName].toFixed(4))
                                         if (data.pValues[rowName] < 0.05) {
@@ -793,21 +786,11 @@ $(document).ready((event) => {
                                     $(jval).html(innerText)
                                     $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=challenges&row=${getKeyByValue(rowNames[j])}&col=${column}&i=${i}&j=${j}" target="_blank"></a>`)
                                 } else {
-                                    if (j === columnElements.length - (2 + algorithmNames.length)) {
+                                    if (j === columnElements.length - (1 + algorithmNames.length)) {
                                         let percentCorrectR = parseFloat(data.percentCorrectR)
                                         if (typeof percentCorrectR === 'number' && !isNaN(percentCorrectR)) {
                                             innerText.html(percentCorrectR.toFixed(5) + ',<br>' + ((100 * percentCorrectR / expectedAccuracy) - 100).toFixed(4) + '%')
                                             if (percentCorrectR > expectedAccuracy) {
-                                                $(innerText).css('background-color', '#82e072')
-                                            }
-                                        } else {
-                                            innerText.html('No data')
-                                        }
-                                    } else if (j === columnElements.length - (1 + algorithmNames.length)) {
-                                        let percentCorrectTf = parseFloat(data.percentCorrectTf)
-                                        if (typeof percentCorrectTf === 'number' && !isNaN(percentCorrectTf)) {
-                                            innerText.html(percentCorrectTf.toFixed(5) + ',<br>' + ((100 * percentCorrectTf / expectedAccuracy) - 100).toFixed(4) + '%')
-                                            if (percentCorrectTf > expectedAccuracy) {
                                                 $(innerText).css('background-color', '#82e072')
                                             }
                                         } else {
@@ -902,7 +885,7 @@ $(document).ready((event) => {
                     parametersQues['column'] = column
                     let loadTimer, backgroundColors = [], borderBottoms = [], borderTops = []
     
-                    let numAlgorithms = 12
+                    let numAlgorithms = algorithmNames.length + 1
                     let checkedFeatures = $(`#tableAllBody tr th:gt(0):lt(${columnElements.length-numAlgorithms-1})`).toArray().map((ele, idx) => { return $.trim(ele.innerText) }).filter((ele, index) => { return $.inArray(index.toString(), columnIndexes) >= 0 && featuresListParameters[getKeyByValue(ele)] })
                     checkedFeatures = $(checkedFeatures).map((ele, idx) => { return getKeyByValue(idx) }).toArray()
                     checkedFeaturesParams = {}
@@ -985,7 +968,7 @@ $(document).ready((event) => {
                             })
                             let rowName = getKeyByValue($('#numLevelsBody tr th').eq(j).text())
                             let innerText = $('<div>')
-                            if (j < columnElements.length - (2 + algorithmNames.length)) {
+                            if (j < columnElements.length - (1 + algorithmNames.length)) {
                                 if (typeof data.pValues[rowName] === 'number' && !isNaN(data.pValues[rowName]) && typeof data.coefficients[rowName] === 'number' && !isNaN(data.coefficients[rowName])) {
                                     innerText.html(data.coefficients[rowName].toFixed(4) + ',<br>' + data.pValues[rowName].toFixed(4))
                                     if (data.pValues[rowName] < 0.05) {
@@ -997,21 +980,11 @@ $(document).ready((event) => {
                                 $(jval).html(innerText)
                                 $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=questions&row=${getKeyByValue(rowNames[j])}&col=${column}&i=${i}&j=${j}" target="_blank"></a>`)
                             } else {
-                                if (j === columnElements.length - (2 + algorithmNames.length)) {
+                                if (j === columnElements.length - (1 + algorithmNames.length)) {
                                     let percentCorrectR = parseFloat(data.percentCorrectR)
                                     if (typeof percentCorrectR === 'number' && !isNaN(percentCorrectR)) {
                                         innerText.html(percentCorrectR.toFixed(5) + ',<br>' + ((100 * percentCorrectR / expectedAccuracy) - 100).toFixed(4) + '%')
                                         if (percentCorrectR > expectedAccuracy) {
-                                            $(innerText).css('background-color', '#82e072')
-                                        }
-                                    } else {
-                                        innerText.html('No data')
-                                    }
-                                } else if (j === columnElements.length - (1 + algorithmNames.length)) {
-                                    let percentCorrectTf = parseFloat(data.percentCorrectTf)
-                                    if (typeof percentCorrectTf === 'number' && !isNaN(percentCorrectTf)) {
-                                        innerText.html(percentCorrectTf.toFixed(5) + ',<br>' + ((100 * percentCorrectTf / expectedAccuracy) - 100).toFixed(4) + '%')
-                                        if (percentCorrectTf > expectedAccuracy) {
                                             $(innerText).css('background-color', '#82e072')
                                         }
                                     } else {
@@ -1103,7 +1076,7 @@ $(document).ready((event) => {
                     parametersQuesPredict['questionPredictTable'] = true
                     parametersQuesPredict['questionPredictColumn'] = column
     
-                    let numAlgorithms = 12 // tableAllBody is intentional here, since features aren't in this table
+                    let numAlgorithms = algorithmNames.length + 1 // tableAllBody is intentional here, since features aren't in this table
                     let checkedFeatures = $(`#tableAllBody tr th:gt(0):lt(${columnElements.length-numAlgorithms-1})`).toArray().map((ele, idx) => { return $.trim(ele.innerText) }).filter((ele, index) => { return $.inArray(index.toString(), columnIndexes) >= 0 && featuresListParameters[getKeyByValue(ele)] })
                     checkedFeatures = $(checkedFeatures).map((ele, idx) => { return getKeyByValue(idx) }).toArray()
                     checkedFeaturesParams = {}
@@ -1167,12 +1140,6 @@ $(document).ready((event) => {
     
                     let callbackFunc = (data) => {
                         clearInterval(loadTimer)
-                        //localStorage.setItem(`data_questions_${column}_predict`, JSON.stringify(data))
-                        //let rowNames = []
-                        //$('#questionPredictBody tr th').each((j, jval) => {
-                        //    rowNames.push($(jval).text())
-                        //})
-                        //localStorage.setItem(`row_names_q_predict`, JSON.stringify(rowNames))
                         let expectedAccuracy = Math.max(data[1].numSessions.numTrue, data[1].numSessions.numFalse) / (data[1].numSessions.numTrue + data[1].numSessions.numFalse)
                         let expectedAccuracyStr = data[1].numSessions.numTrue + ' / ' + data[1].numSessions.numFalse
                         if (!isNaN(expectedAccuracy)) expectedAccuracyStr += '<br>(' + (expectedAccuracy).toFixed(2) + ' accuracy of expected val)'
@@ -1184,7 +1151,6 @@ $(document).ready((event) => {
                                 'border-top': borderTops[j],
                                 'border-bottom': borderBottoms[j]
                             })
-                            let rowName = getKeyByValue($('#numLevelsBody tr th').eq(j).text())
                             let innerText = $('<div>')
                             innerText.html('No data')
                             if (data) {
@@ -1198,20 +1164,10 @@ $(document).ready((event) => {
                                     } else {
                                         innerText.html('No data')
                                     }
-                                } else if (j % (2 + algorithmNames.length) === 1) {
-                                    let percentCorrectTf = parseFloat(data[(j-1)/(2 + algorithmNames.length)+1].percentCorrectTf)
-                                    if (typeof percentCorrectTf === 'number' && !isNaN(percentCorrectTf)) {
-                                        innerText.html(percentCorrectTf.toFixed(4) + ',<br>' + ((100 * percentCorrectTf / expectedAccuracy) - 100).toFixed(4) + '%')
-                                        if (percentCorrectTf > expectedAccuracy) {
-                                            $(innerText).css('background-color', '#82e072')
-                                        }
-                                    } else {
-                                        innerText.html('No data')
-                                    }
                                 } else {
-                                    let numAlgorithms = 10
+                                    let numAlgorithms = algorithmNames.length
                                     let rowName = $(jval).siblings(`td:first`).text()
-                                    if (data[Math.floor(j / (numAlgorithms+ 2)) + 1]) {
+                                    if (data[Math.floor(j / (numAlgorithms + 2)) + 1]) {
                                         let percentCorrect = parseFloat(data[Math.floor(j / (numAlgorithms+ 2)) + 1].accuracies[rowName])
                                         // Color accuracies higher than random informed green
                                         if (typeof percentCorrect === 'number' && !isNaN(percentCorrect)) {
@@ -1276,7 +1232,7 @@ $(document).ready((event) => {
                     parametersQuatQuesPredict['multinomQuestionPredictTable'] = true
                     parametersQuatQuesPredict['multinomQuestionPredictColumn'] = column
     
-                    let numAlgorithms = 10 // tableAllBody is intentional here, since features aren't in this table
+                    let numAlgorithms = algorithmNames.length // tableAllBody is intentional here, since features aren't in this table
                     let checkedFeatures = $(`#tableAllBody tr th:gt(0):lt(${columnElements.length-numAlgorithms-1})`).toArray().map((ele, idx) => { return $.trim(ele.innerText) }).filter((ele, index) => { return $.inArray(index.toString(), columnIndexes) >= 0 && featuresListParameters[getKeyByValue(ele)] })
                     checkedFeatures = $(checkedFeatures).map((ele, idx) => { return getKeyByValue(idx) }).toArray()
                     checkedFeaturesParams = {}
@@ -1348,14 +1304,12 @@ $(document).ready((event) => {
                                 'border-top': borderTops[j],
                                 'border-bottom': borderBottoms[j]
                             })
-                            let rowName = getKeyByValue($('#numLevelsBody tr th').eq(j).text())
                             let innerText = $('<div>')
                             innerText.html('No data')
                             if (data) {
-                                let numAlgorithms = 10
+                                let numAlgorithms = algorithmNames.length
                                 let rowName = $(jval).siblings(`td:first`).text()
                                 if (data[Math.floor(j / numAlgorithms) + 1]) {
-                                    //console.log((Math.floor(j / numAlgorithms) + 1) + ', ' + rowName + ", " + data[Math.floor(j / numAlgorithms) + 1].algorithmNames[j % numAlgorithms] + ', ' + String(rowName === data[Math.floor(j / numAlgorithms)].algorithmNames[j % numAlgorithms]))
                                     let percentCorrect = parseFloat(data[Math.floor(j / numAlgorithms) + 1].accuracies[rowName])
                                     // Color accuracies higher than random informed green
                                     if (typeof percentCorrect === 'number' && !isNaN(percentCorrect)) {

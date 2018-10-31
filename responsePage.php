@@ -1097,7 +1097,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
 
                 $sklName = 'LogReg (SKL)';
                 $algorithmNames[] = $sklName;
-                $accuracies[$sklName] = $sklRegOutput;
+                $accuracies[$sklName] = $sklRegOutput[0];
 
                 $accStart = 0;
                 $coefficients = array();
@@ -2192,7 +2192,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
 
             $sklName = 'LogReg (SKL)';
             $algorithmNames[] = $sklName;
-            $accuracies[$sklName] = $sklRegOutput;
+            $accuracies[$sklName] = $sklRegOutput[0];
 
             $ansA = array_filter($predictedArray, function ($a) { return $a == 0; });
             $ansB = array_filter($predictedArray, function ($a) { return $a == 1; });
