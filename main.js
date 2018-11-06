@@ -42,6 +42,8 @@ $(document).ready((event) => {
         let totalSessions
         let errorTracker = 0
         let queueExists = false
+        let model
+        let allFeatures
         window.onerror = () => {
             errorTracker = 0
             off()
@@ -52,8 +54,8 @@ $(document).ready((event) => {
             event.preventDefault()
             // Send request that gets the model and populate tables and headers
             $.get('model.json', {}, data => {
-                let model = data[$('#gameSelect').val()]
-
+                model = data[$('#gameSelect').val()]
+                allFeatures = flattenObj(model.features)
                 // numLevelsBody
                 if (true) { // this is simply so I can collapse this section of code
                     let algorithmNames = model.algorithms.numLevelsTable
@@ -333,12 +335,11 @@ $(document).ready((event) => {
                     })
                 }
 
-                let featureNames = flattenObj(model.features)
-                $(Object.keys(featureNames)).each((index, value) => {
+                $(Object.keys(allFeatures)).each((index, value) => {
                     if (index > 0) $('#featuresList').append(`
                     <li>
                         <input type="checkbox" name="${value}" id="${value}" ${(value == 'OFFSET' || value == 'WAVELENGTH' || value == 'AMPLITUDE') ? '' : 'checked'}>
-                        <label for="${value}" style="font-weight:400;">${featureNames[value]}</label>
+                        <label for="${value}" style="font-weight:400;">${allFeatures[value]}</label>
                     </li>
                     `)
                 })
@@ -446,7 +447,7 @@ $(document).ready((event) => {
                 otherFeaturesChecked = $('#otherFeaturesCheckbox').is(':checked'),
                 shouldUseAvgs = $('#useAvgs').is(':checked')
             let featuresListParameters = {}
-            $(Object.keys(featureNames)).each((index, value) => {
+            $(Object.keys(allFeatures)).each((index, value) => {
                 if (index > 0) featuresListParameters[value] = $(`#${value}`).is(':checked')
             })
             let parametersBasic = {
@@ -475,36 +476,7 @@ $(document).ready((event) => {
                 for (let i = 0; i < numCols; i++) {
                     let columnElements = $(`#numLevelsBody tr td:nth-child(${i+2})`).not('.disabled-cell')
                     let columnIndexes = Object.keys(columnElements.toArray())
-                    let column
-    
-                    switch (i) {
-                        case 0:
-                            column = 'lvl1'; break
-                        case 1:
-                            column = 'lvl3'; break
-                        case 2:
-                            column = 'lvl5'; break
-                        case 3:
-                            column = 'lvl7'; break
-                        case 4:
-                            column = 'lvl11'; break
-                        case 5:
-                            column = 'lvl13'; break
-                        case 6:
-                            column = 'lvl15'; break
-                        case 7:
-                            column = 'lvl19'; break
-                        case 8:
-                            column = 'lvl21'; break
-                        case 9:
-                            column = 'lvl23'; break
-                        case 10:
-                            column = 'lvl25'; break
-                        case 11:
-                            column = 'lvl27'; break
-                        case 12:
-                            column = 'lvl31'; break
-                    }
+                    let column = Object.keys(model.columns.numLevelsTable.headers)[i]
     
                     let parametersLevels = {
                         'gameID': $('#gameSelect').val(),
@@ -519,7 +491,11 @@ $(document).ready((event) => {
                         'numLevelsColumn': column,
                         'shouldUseAvgs': shouldUseAvgs,
                     }
-                    let numAlgorithms = 2
+                    let numAlgorithms = model.algorithms.numLevelsTable.length
+                    // find a way to map true/false values to the ids of inputs
+                    let featuresParams = $('#featuresList input').map((j, val) => {return $(val).is(':checked') && Object.keys(flattenObj(model.features.numLevelsTable)).inArray(val)})
+                    console.log(featuresParams)
+                    break
                     let checkedFeatures = $(`#numLevelsBody tr th:gt(0):lt(${columnElements.length-numAlgorithms-1})`).toArray().map((ele, idx) => { return $.trim(ele.innerText) }).filter((ele, index) => { return $.inArray(index.toString(), columnIndexes) >= 0 && featuresListParameters[getKeyByValue(ele)] })
                     checkedFeatures = $(checkedFeatures).map((ele, idx) => { return getKeyByValue(idx) }).toArray()
                     checkedFeaturesParams = {}
@@ -2340,7 +2316,7 @@ $(document).ready((event) => {
         })
     
         function getKeyByValue(str) {
-            return Object.keys(featureNames).find(key => featureNames[key] === str)
+            return Object.keys(allFeatures).find(key => allFeatures[key] === str)
         }
 
         function flattenObj(obj) {
