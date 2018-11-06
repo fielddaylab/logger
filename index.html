@@ -21,7 +21,6 @@
             <div class="col-xs-4">
                 <label for="gameSelect" style="padding-top:10px; padding-left:10px">Game</label>
                 <select id="gameSelect" class="js-example-basic-single">
-                    <option value="empty"></option>
                     <option value="BACTERIA" disabled>Bacteria</option>
                     <option value="BALLOON" disabled>Balloon</option>
                     <option value="CRYSTAL" disabled>Crystal</option>
@@ -279,44 +278,12 @@
                             </div>
                             <span>
                                 <table id="numLevelsTable" class="table table-striped table-bordered table-hover" style="table-layout:fixed">
-                                    <thead>
+                                    <thead id="numLevelsHead">
                                         <tr>
-                                            <th scope="col" rowspan="2" style="width:180px;top:0;z-index:4;background-color:rgb(221, 221, 221)"></th>
-                                            <th class="challenge-header" scope="col" colspan="4">Challenge 1</th>
-                                            <th class="challenge-header" scope="col" colspan="3">Challenge 2</th>
-                                            <th class="challenge-header" scope="col" colspan="5">Challenge 3</th>
-                                            <th class="challenge-header" style="border-right-width:2px !important;" scope="col" colspan="1">Challenge 4</th>
-                                        </tr>
-                                        <tr>
-                                            <th style="border-left-width:4px; "><a target="_blank" href="../logger-data/numLevels/numLevelDataForR_1.txt">Up to 1</th>
-                                            <th                                ><a target="_blank" href="../logger-data/numLevels/numLevelDataForR_3.txt">Up to 3</th>
-                                            <th                                ><a target="_blank" href="../logger-data/numLevels/numLevelDataForR_5.txt">Up to 5</th>
-                                            <th style="border-right-width:4px;"><a target="_blank" href="../logger-data/numLevels/numLevelDataForR_7.txt">Up to 7</a></th>
-                                            <th style="border-left-width:4px; "><a target="_blank" href="../logger-data/numLevels/numLevelDataForR_11.txt">Up to 11</a></th>
-                                            <th                                ><a target="_blank" href="../logger-data/numLevels/numLevelDataForR_13.txt">Up to 13</a></th> 
-                                            <th style="border-right-width:4px;"><a target="_blank" href="../logger-data/numLevels/numLevelDataForR_15.txt">Up to 15</a></th>
-                                            <th style="border-left-width:4px; "><a target="_blank" href="../logger-data/numLevels/numLevelDataForR_19.txt">Up to 19</a></th>
-                                            <th                                ><a target="_blank" href="../logger-data/numLevels/numLevelDataForR_21.txt">Up to 21</a></th>
-                                            <th                                ><a target="_blank" href="../logger-data/numLevels/numLevelDataForR_23.txt">Up to 23</a></th>
-                                            <th                                ><a target="_blank" href="../logger-data/numLevels/numLevelDataForR_25.txt">Up to 25</a></th>
-                                            <th style="border-left-width:4px; "><a target="_blank" href="../logger-data/numLevels/numLevelDataForR_27.txt">Up to 27</a></th>
-                                            <th style="border-left-width:4px; "><a target="_blank" href="../logger-data/numLevels/numLevelDataForR_31.txt">Up to 31</a></th>
+                                            <th scope="col" style="width:180px;top:0;z-index:4;background-color:rgb(221, 221, 221)"></th>
                                         </tr>
                                         <tr id="numLevelsNumSessionsRow">
                                             <th scope="row" style="position:initial;text-align:right">Num sessions used</th>
-                                            <td style="text-align:center;border-left-width:4px; ">-</td>
-                                            <td style="text-align:center;"                       >-</td>
-                                            <td style="text-align:center;"                       >-</td>
-                                            <td style="text-align:center;border-right-width:4px;">-</td>
-                                            <td style="text-align:center;border-left-width:4px; ">-</td>
-                                            <td style="text-align:center;"                       >-</td>
-                                            <td style="text-align:center;border-right-width:4px;">-</td>
-                                            <td style="text-align:center;border-left-width:4px; ">-</td>
-                                            <td style="text-align:center;"                       >-</td>
-                                            <td style="text-align:center;"                       >-</td>
-                                            <td style="text-align:center;"                       >-</td>
-                                            <td style="text-align:center;border-right-width:4px;">-</td>
-                                            <td style="text-align:center;border-left-width:4px; ">-</td>
                                         </tr>
                                     </thead>
                                     <tbody id="numLevelsBody">
@@ -351,64 +318,15 @@
                             </div>
                             <span>
                                 <table id="predictTableAll" class="table table-striped table-bordered table-hover">
-                                    <thead>
+                                    <thead id="predictTableHead">
                                         <tr>
-                                            <th scope="col" rowspan="2" style="top:0;z-index:4;background-color:rgb(221, 221, 221)"></th>
-                                            <th class="challenge-header" scope="col" colspan="4">Challenge 1</th>
-                                            <th class="challenge-header" scope="col" colspan="3">Challenge 2</th>
-                                            <th class="challenge-header" scope="col" colspan="5">Challenge 3</th>
-                                            <th class="challenge-header" scope="col" colspan="1">Challenge 4</th>
-                                            <th class="challenge-header" style="border-right-width:2px !important;" scope="col" colspan="1">Challenge 5</th>
-                                        </tr>
-                                        <tr>
-                                            <th scope="col" style="border-left-width:4px; "><a target="_blank" href="../logger-data/challenges/challengesDataForR_1.txt">Lvl 1</a></th>
-                                            <th scope="col"                                ><a target="_blank" href="../logger-data/challenges/challengesDataForR_3.txt">Lvl 3</a></th>
-                                            <th scope="col"                                ><a target="_blank" href="../logger-data/challenges/challengesDataForR_5.txt">Lvl 5</a></th>
-                                            <th scope="col" style="border-right-width:4px;"><a target="_blank" href="../logger-data/challenges/challengesDataForR_7.txt">Lvl 7</a></th>
-                                            <th scope="col" style="border-left-width:4px; "><a target="_blank" href="../logger-data/challenges/challengesDataForR_11.txt">Lvl 11</a></th>
-                                            <th scope="col"                                ><a target="_blank" href="../logger-data/challenges/challengesDataForR_13.txt">Lvl 13</a></th>
-                                            <th scope="col" style="border-right-width:4px;"><a target="_blank" href="../logger-data/challenges/challengesDataForR_15.txt">Lvl 15</a></th>
-                                            <th scope="col" style="border-left-width:4px; "><a target="_blank" href="../logger-data/challenges/challengesDataForR_19.txt">Lvl 19</a></th>
-                                            <th scope="col"                                ><a target="_blank" href="../logger-data/challenges/challengesDataForR_21.txt">Lvl 21</a></th>
-                                            <th scope="col"                                ><a target="_blank" href="../logger-data/challenges/challengesDataForR_23.txt">Lvl 23</a></th>
-                                            <th scope="col"                                ><a target="_blank" href="../logger-data/challenges/challengesDataForR_25.txt">Lvl 25</a></th>
-                                            <th scope="col" style="border-right-width:4px;"><a target="_blank" href="../logger-data/challenges/challengesDataForR_27.txt">Lvl 27</a></th>
-                                            <th scope="col" style="border-left-width:4px; "><a target="_blank" href="../logger-data/challenges/challengesDataForR_31.txt">Lvl 31</a></th>
-                                            <th scope="col" style="border-left-width:4px; "><a target="_blank" href="../logger-data/challenges/challengesDataForR_33.txt">Lvl 33</a></th>
+                                            <th scope="col" style="top:0;z-index:4;background-color:rgb(221, 221, 221)"></th>
                                         </tr>
                                         <tr id="percentCompleteRow">
                                             <th scope="row" style="position:initial;text-align:right">% who completed</th>
-                                            <td style="text-align:center;border-left-width:4px; ">- %</td>
-                                            <td style="text-align:center;">- %</td>
-                                            <td style="text-align:center;">- %</td>
-                                            <td style="text-align:center;border-right-width:4px;">- %</td>
-                                            <td style="text-align:center;border-left-width:4px; ">- %</td>
-                                            <td style="text-align:center;">- %</td>
-                                            <td style="text-align:center;border-right-width:4px;">- %</td>
-                                            <td style="text-align:center;border-left-width:4px; ">- %</td>
-                                            <td style="text-align:center;">- %</td>
-                                            <td style="text-align:center;">- %</td>
-                                            <td style="text-align:center;">- %</td>
-                                            <td style="text-align:center;border-right-width:4px;">- %</td>
-                                            <td style="text-align:center;border-left-width:4px; ">- %</td>
-                                            <td style="text-align:center;border-left-width:4px; ">- %</td>
                                         </tr>
                                         <tr id="predictNumSessionsRow">
                                             <th scope="row" style="position:initial;text-align:right">Num sessions used</th>
-                                            <td style="text-align:center;border-left-width:4px; ">-</td>
-                                            <td style="text-align:center;"                       >-</td>
-                                            <td style="text-align:center;"                       >-</td>
-                                            <td style="text-align:center;border-right-width:4px;">-</td>
-                                            <td style="text-align:center;border-left-width:4px; ">-</td>
-                                            <td style="text-align:center;"                       >-</td>
-                                            <td style="text-align:center;border-right-width:4px;">-</td>
-                                            <td style="text-align:center;border-left-width:4px; ">-</td>
-                                            <td style="text-align:center;"                       >-</td>
-                                            <td style="text-align:center;"                       >-</td>
-                                            <td style="text-align:center;"                       >-</td>
-                                            <td style="text-align:center;border-right-width:4px;">-</td>
-                                            <td style="text-align:center;border-left-width:4px; ">-</td>
-                                            <td style="text-align:center;border-left-width:4px; ">-</td>
                                         </tr>
                                     </thead>
                                     <tbody id="predictTableBody">
@@ -515,71 +433,15 @@
                             </div>
                             <span>
                                 <table id="questionPredictTable" class="table table-striped table-bordered table-hover">
-                                    <thead>
+                                    <thead id="questionPredictHeader">
                                         <tr>
-                                            <th scope="col" colspan="2" style="top:0px;background-color:rgb(221, 221, 221);width:12%;"></th>
-                                            <th scope="col">Q1/A</th>
-                                            <th scope="col">Q1/B</th>
-                                            <th scope="col">Q1/C</th>
-                                            <th scope="col">Q1/D</th>
-                                            <th scope="col">Q2/A</th>
-                                            <th scope="col">Q2/B</th>
-                                            <th scope="col">Q2/C</th>
-                                            <th scope="col">Q2/D</th>
-                                            <th scope="col">Q3/A</th>
-                                            <th scope="col">Q3/B</th>
-                                            <th scope="col">Q3/C</th>
-                                            <th scope="col">Q3/D</th>
-                                            <th scope="col">Q4/A</th>
-                                            <th scope="col">Q4/B</th>
-                                            <th scope="col">Q4/C</th>
-                                            <th scope="col">Q4/D</th>
+                                            <th scope="col" colspan="2" style="top:0px;background-color:rgb(221, 221, 221);width:12;"></th>
                                         </tr>
                                         <tr id="binomialNumSessionsRow">
                                             <th scope="row" colspan="2" style="position:initial;text-align:right">Num sessions used</th>
-                                            <td style="text-align:center;">-</td>
-                                            <td style="text-align:center;">-</td>
-                                            <td style="text-align:center;">-</td>
-                                            <td style="text-align:center;">-</td>
-                                            <td style="text-align:center;">-</td>
-                                            <td style="text-align:center;">-</td>
-                                            <td style="text-align:center;">-</td>
-                                            <td style="text-align:center;">-</td>
-                                            <td style="text-align:center;">-</td>
-                                            <td style="text-align:center;">-</td>
-                                            <td style="text-align:center;">-</td>
-                                            <td style="text-align:center;">-</td>
-                                            <td style="text-align:center;">-</td>
-                                            <td style="text-align:center;">-</td>
-                                            <td style="text-align:center;">-</td>
-                                            <td style="text-align:center;">-</td>
                                         </tr>
                                     </thead>
                                     <tbody id="questionPredictBody">
-                                        <tr>
-                                            <th rowspan=13 style="vertical-align:middle; border-bottom-width:4px;">L1 only</th>
-                                        </tr>
-                                        <tr>
-                                            <th rowspan=13 style="vertical-align:middle; border-bottom-width:4px;">L1-L2</th>
-                                        </tr>
-                                        <tr>
-                                            <th rowspan=13 style="vertical-align:middle; border-bottom-width:4px;">L1-L3</th>
-                                        </tr>
-                                        <tr>
-                                            <th rowspan=13 style="vertical-align:middle; border-bottom-width:4px;">L1-L4</th>
-                                        </tr>
-                                        <tr>
-                                            <th rowspan=13 style="vertical-align:middle; border-bottom-width:4px;">L1-L5</th>
-                                        </tr>
-                                        <tr>
-                                            <th rowspan=13 style="vertical-align:middle; border-bottom-width:4px;">L1-L6</th>
-                                        </tr>
-                                        <tr>
-                                            <th rowspan=13 style="vertical-align:middle; border-bottom-width:4px;">L1-L7</th>
-                                        </tr>
-                                        <tr>
-                                            <th rowspan=13 style="vertical-align:middle; border-bottom-width:4px;">L1-L8</th>
-                                        </tr>
                                     </tbody>
                                 </table>
                                 <div style="font-size:14px; margin-bottom:6px; color:#777">
@@ -609,47 +471,15 @@
                             </div>
                             <span>
                                 <table id="multinomialQuestionTable" class="table table-striped table-bordered table-hover">
-                                    <thead>
+                                    <thead id="multinomialQuestionHeader">
                                         <tr>
                                             <th scope="col" colspan=2 style="top:0px;background-color:rgb(221, 221, 221);width:12%;"></th>
-                                            <th scope="col" style="width:20%;">Q1</th>
-                                            <th scope="col" style="width:20%;">Q2</th>
-                                            <th scope="col" style="width:20%;">Q3</th>
-                                            <th scope="col" style="width:20%;">Q4</th>
                                         </tr>
                                         <tr id="multinomialNumSessionsRow">
                                             <th scope="row" style="position:initial;text-align:right" colspan=2>Num sessions used</th>
-                                            <td style="text-align:center;">-</td>
-                                            <td style="text-align:center;">-</td>
-                                            <td style="text-align:center;">-</td>
-                                            <td style="text-align:center;">-</td>
                                         </tr>
                                     </thead>
                                     <tbody id="multinomialQuestionBody">
-                                        <tr>
-                                            <th rowspan=12 style="vertical-align:middle; border-bottom-width:4px;">L1 only</th>
-                                        </tr>
-                                        <tr>
-                                            <th rowspan=12 style="vertical-align:middle; border-bottom-width:4px;">L1-L2</th>
-                                        </tr>
-                                        <tr>
-                                            <th rowspan=12 style="vertical-align:middle; border-bottom-width:4px;">L1-L3</th>
-                                        </tr>
-                                        <tr>
-                                            <th rowspan=12 style="vertical-align:middle; border-bottom-width:4px;">L1-L4</th>
-                                        </tr>
-                                        <tr>
-                                            <th rowspan=12 style="vertical-align:middle; border-bottom-width:4px;">L1-L5</th>
-                                        </tr>
-                                        <tr>
-                                            <th rowspan=12 style="vertical-align:middle; border-bottom-width:4px;">L1-L6</th>
-                                        </tr>
-                                        <tr>
-                                            <th rowspan=12 style="vertical-align:middle; border-bottom-width:4px;">L1-L7</th>
-                                        </tr>
-                                        <tr>
-                                            <th rowspan=12 style="vertical-align:middle; border-bottom-width:4px;">L1-L8</th>
-                                        </tr>
                                     </tbody>
                                 </table>
                                 <div style="font-size:14px; margin-bottom:6px; color:#777">

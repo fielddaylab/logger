@@ -1,0 +1,360 @@
+{
+    "WAVES": {
+        "levels": [ 1, 3, 5, 7, 11, 13, 15, 19, 21, 23, 25, 27, 31 ],
+        "features": {
+            "numLevelsTable": {
+                "general": {
+                    "(Constant)":               "Constant term",
+                    "numMovesPerChallenge":     "# slider moves",
+                    "levelTimes":               "Time"
+                },
+                "specific": {
+                    "moveTypeChangesPerLevel":  "# type changes",
+                    "knobAvgs":                 "Avg knob max-min",
+                    "OFFSET":                   "# offset moves",
+                    "WAVELENGTH":               "# wavelength moves",
+                    "AMPLITUDE":                "# amplitude moves",
+                    "numFailsPerLevel":         "# failures",
+                    "percentOFFSET":            "% offset moves",
+                    "percentWAVELENGTH":        "% wavelength moves",
+                    "percentAMPLITUDE":         "% amplitude moves"
+                },
+                "perLevel": {
+                    "pgm_1":                    "% good moves lvl 1",
+                    "pgm_3":                    "% good moves lvl 3",
+                    "pgm_5":                    "% good moves lvl 5",
+                    "pgm_7":                    "% good moves lvl 7",
+                    "pgm_11":                   "% good moves lvl 11",
+                    "pgm_13":                   "% good moves lvl 13",
+                    "pgm_15":                   "% good moves lvl 15",
+                    "pgm_19":                   "% good moves lvl 19",
+                    "pgm_21":                   "% good moves lvl 21",
+                    "pgm_23":                   "% good moves lvl 23",
+                    "pgm_25":                   "% good moves lvl 25",
+                    "pgm_27":                   "% good moves lvl 27",
+                    "pgm_31":                   "% good moves lvl 31"
+                }
+            },
+            "individualLevelsTable": {
+                "general": {
+                    "(Constant)":               "Constant term",
+                    "numMovesPerChallenge":     "# slider moves",
+                    "levelTimes":               "Time"
+                },
+                "specific": {
+                    "moveTypeChangesPerLevel":  "# type changes",
+                    "knobAvgs":                 "Avg knob max-min", 
+                    "OFFSET":                   "# offset moves",
+                    "WAVELENGTH":               "# wavelength moves",
+                    "AMPLITUDE":                "# amplitude moves",
+                    "numFailsPerLevel":         "# failures",
+                    "percentOFFSET":            "% offset moves",
+                    "percentWAVELENGTH":        "% wavelength moves",
+                    "percentAMPLITUDE":         "% amplitude moves"
+                },
+                "perLevel": {
+                    "pgm_1":                    "% good moves lvl 1",
+                    "pgm_3":                    "% good moves lvl 3",
+                    "pgm_5":                    "% good moves lvl 5",
+                    "pgm_7":                    "% good moves lvl 7",
+                    "pgm_11":                   "% good moves lvl 11",
+                    "pgm_13":                   "% good moves lvl 13",
+                    "pgm_15":                   "% good moves lvl 15",
+                    "pgm_19":                   "% good moves lvl 19",
+                    "pgm_21":                   "% good moves lvl 21",
+                    "pgm_23":                   "% good moves lvl 23",
+                    "pgm_25":                   "% good moves lvl 25",
+                    "pgm_27":                   "% good moves lvl 27",
+                    "pgm_31":                   "% good moves lvl 31"
+                }
+            },
+            "binomialQuestionTable": {
+                "general": {
+                    "(Constant)":               "Constant term",
+                    "numMovesPerChallenge":     "# slider moves",
+                    "levelTimes":               "Time"
+                },
+                "specific": {
+                    "moveTypeChangesPerLevel":  "# type changes",
+                    "avgPercentGoodMoves":      "Avg % good moves", 
+                    "knobAvgs":                 "Avg knob max-min",
+                    "OFFSET":                   "# offset moves",
+                    "WAVELENGTH":               "# wavelength moves",
+                    "AMPLITUDE":                "# amplitude moves",
+                    "numFailsPerLevel":         "# failures",
+                    "percentOFFSET":            "% offset moves",
+                    "percentWAVELENGTH":        "% wavelength moves",
+                    "percentAMPLITUDE":         "% amplitude moves"
+                }
+            },
+            "multinomialQuestionTable": {
+                "general": {
+                    "(Constant)":               "Constant term",
+                    "numMovesPerChallenge":     "# slider moves",
+                    "levelTimes":               "Time"
+                },
+                "specific": {
+                    "moveTypeChangesPerLevel":  "# type changes",
+                    "avgPercentGoodMoves":      "Avg % good moves", 
+                    "knobAvgs":                 "Avg knob max-min",
+                    "OFFSET":                   "# offset moves",
+                    "WAVELENGTH":               "# wavelength moves",
+                    "AMPLITUDE":                "# amplitude moves",
+                    "numFailsPerLevel":         "# failures",
+                    "percentOFFSET":            "% offset moves",
+                    "percentWAVELENGTH":        "% wavelength moves",
+                    "percentAMPLITUDE":         "% amplitude moves"
+                }
+            }
+        },
+        "columns": {
+            "numLevelsTable": {
+                "headerSpans": {
+                    "0": {
+                        "title": "Challenge 1",
+                        "colSpan": 4
+                    },
+                    "1": {
+                        "title": "Challenge 2",
+                        "colSpan": 3
+                    },
+                    "2": {
+                        "title": "Challenge 3",
+                        "colSpan": 5
+                    },
+                    "3": {
+                        "title": "Challenge 4",
+                        "colSpan": 1
+                    },
+                    "4": {
+                        "title": "Challenge 5",
+                        "colSpan": 1
+                    }
+                },
+                "headers": {
+                    "lvl1": {
+                        "title": "Up to lvl 1",
+                        "href": "../logger-data/numLevels/numLevelDataForR_1.txt"
+                    },
+                    "lvl3": {
+                        "title": "Up to lvl 3",
+                        "href": "../logger-data/numLevels/numLevelDataForR_3.txt"
+                    },
+                    "lvl5": {
+                        "title": "Up to lvl 5",
+                        "href": "../logger-data/numLevels/numLevelDataForR_5.txt"
+                    },
+                    "lvl7": {
+                        "title": "Up to lvl 7",
+                        "href": "../logger-data/numLevels/numLevelDataForR_7.txt"
+                    },
+                    "lvl11": {
+                        "title": "Up to lvl 11",
+                        "href": "../logger-data/numLevels/numLevelDataForR_11.txt"
+                    },
+                    "lvl13": {
+                        "title": "Up to lvl 13",
+                        "href": "../logger-data/numLevels/numLevelDataForR_13.txt"
+                    },
+                    "lvl15": {
+                        "title": "Up to lvl 15",
+                        "href": "../logger-data/numLevels/numLevelDataForR_15.txt"
+                    },
+                    "lvl19": {
+                        "title": "Up to lvl 19",
+                        "href": "../logger-data/numLevels/numLevelDataForR_19.txt"
+                    },
+                    "lvl21": {
+                        "title": "Up to lvl 21",
+                        "href": "../logger-data/numLevels/numLevelDataForR_21.txt"
+                    },
+                    "lvl23": {
+                        "title": "Up to lvl 23",
+                        "href": "../logger-data/numLevels/numLevelDataForR_23.txt"
+                    },
+                    "lvl25": {
+                        "title": "Up to lvl 25",
+                        "href": "../logger-data/numLevels/numLevelDataForR_25.txt"
+                    },
+                    "lvl27": {
+                        "title": "Up to lvl 27",
+                        "href": "../logger-data/numLevels/numLevelDataForR_27.txt"
+                    },
+                    "lvl31": {
+                        "title": "Up to lvl 31",
+                        "href": "../logger-data/numLevels/numLevelDataForR_31.txt"
+                    },
+                    "lvl33": {
+                        "title": "Up to lvl 33",
+                        "href": "../logger-data/numLevels/numLevelDataForR_33.txt"
+                    }
+                }
+            },
+            "individualLevelsTable": {
+                "headerSpans": {
+                    "0": {
+                        "title": "Challenge 1",
+                        "colSpan": 4
+                    },
+                    "1": {
+                        "title": "Challenge 2",
+                        "colSpan": 3
+                    },
+                    "2": {
+                        "title": "Challenge 3",
+                        "colSpan": 5
+                    },
+                    "3": {
+                        "title": "Challenge 4",
+                        "colSpan": 1
+                    },
+                    "4": {
+                        "title": "Challenge 5",
+                        "colSpan": 1
+                    }
+                },
+                "headers": {
+                    "lvl1": {
+                        "title": "Lvl 1",
+                        "href": "../logger-data/challenges/challengesDataForR_1.txt"
+                    },
+                    "lvl3": {
+                        "title": "Lvl 3",
+                        "href": "../logger-data/challenges/challengesDataForR_3.txt"
+                    },
+                    "lvl5": {
+                        "title": "Lvl 5",
+                        "href": "../logger-data/challenges/challengesDataForR_5.txt"
+                    },
+                    "lvl7": {
+                        "title": "Lvl 7",
+                        "href": "../logger-data/challenges/challengesDataForR_7.txt"
+                    },
+                    "lvl11": {
+                        "title": "Lvl 11",
+                        "href": "../logger-data/challenges/challengesDataForR_11.txt"
+                    },
+                    "lvl13": {
+                        "title": "Lvl 13",
+                        "href": "../logger-data/challenges/challengesDataForR_13.txt"
+                    },
+                    "lvl15": {
+                        "title": "Lvl 15",
+                        "href": "../logger-data/challenges/challengesDataForR_15.txt"
+                    },
+                    "lvl19": {
+                        "title": "Lvl 19",
+                        "href": "../logger-data/challenges/challengesDataForR_19.txt"
+                    },
+                    "lvl21": {
+                        "title": "Lvl 21",
+                        "href": "../logger-data/challenges/challengesDataForR_21.txt"
+                    },
+                    "lvl23": {
+                        "title": "Lvl 23",
+                        "href": "../logger-data/challenges/challengesDataForR_23.txt"
+                    },
+                    "lvl25": {
+                        "title": "Lvl 25",
+                        "href": "../logger-data/challenges/challengesDataForR_25.txt"
+                    },
+                    "lvl27": {
+                        "title": "Lvl 27",
+                        "href": "../logger-data/challenges/challengesDataForR_27.txt"
+                    },
+                    "lvl31": {
+                        "title": "Lvl 31",
+                        "href": "../logger-data/challenges/challengesDataForR_31.txt"
+                    },
+                    "lvl33": {
+                        "title": "Lvl 33",
+                        "href": "../logger-data/challenges/challengesDataForR_33.txt"
+                    }
+                }
+            },
+            "binomialQuestionTable": {
+                "headerSpans": {},
+                "headers": {
+                    "q00":    "Q1/A",
+                    "q01":    "Q1/B",
+                    "q02":    "Q1/C",
+                    "q03":    "Q1/D",
+                    "q10":    "Q2/A",
+                    "q11":    "Q2/D",
+                    "q12":    "Q2/C",
+                    "q13":    "Q2/D",
+                    "q20":    "Q3/A",
+                    "q21":    "Q3/B",
+                    "q22":    "Q3/C",
+                    "q23":    "Q3/D",
+                    "q30":    "Q4/A",
+                    "q31":    "Q4/B",
+                    "q32":    "Q4/C",
+                    "q33":    "Q4/D"
+                }
+            },
+            "multinomialQuestionTable": {
+                "headerSpans": {},
+                "headers": {
+                    "q0":    "Q1",
+                    "q1":    "Q2",
+                    "q2":    "Q3",
+                    "q3":    "Q4"
+                }
+            }
+        },
+        "algorithms": {
+            "numLevelsTable": [ "Random", "Log reg" ],
+            "individualLevelsTable": [
+                "Log reg",
+                "Nearest Neighbors",
+                "Linear SVM",
+                "RBF SVM",
+                "Gaussian Process",
+                "Decision Tree",
+                "Random Forest",
+                "Neural Net",
+                "AdaBoost",
+                "Naive Bayes",
+                "QDA",
+                "LogReg (SKL)"
+            ],
+            "binomialQuestionTable": [
+                "Log reg",
+                "Nearest Neighbors",
+                "Linear SVM",
+                "RBF SVM",
+                "Gaussian Process",
+                "Decision Tree",
+                "Random Forest",
+                "Neural Net",
+                "AdaBoost",
+                "Naive Bayes",
+                "QDA",
+                "LogReg (SKL)"
+            ],
+            "multinomialQuestionTable": [
+                "Nearest Neighbors",
+                "Linear SVM",
+                "RBF SVM",
+                "Gaussian Process",
+                "Decision Tree",
+                "Random Forest",
+                "Neural Net",
+                "AdaBoost",
+                "Naive Bayes",
+                "QDA",
+                "LogReg (SKL)"
+            ]
+        },
+        "sqlEventCustoms": {
+            "question": 3,
+            "move": [ 1 ],
+            "other": {
+                "reset": 4
+            }
+        },
+        "questionLevels": [ 8, 8, 33, 33 ],
+        "levelsToIgnore": [ 0, 9, 10, 17, 18, 29, 32, 34 ]
+    }
+}

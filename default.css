@@ -100,9 +100,7 @@ th {
 
 thead tr th {
     z-index: 2;
-    outline: 1px solid #ddd;                
-    border:none; 
-    outline-offset: -1px;
+    border:none;
 }
 
 .challenge-header {
@@ -110,6 +108,9 @@ thead tr th {
     z-index: 4;
     text-align: center;
     background-color: white;
-    border-right-width: 4px !important;
     border-left-width: 4px !important; 
+}
+
+#percentCompleteRow td, #predictNumSessionsRow td {
+    text-align: center
 }

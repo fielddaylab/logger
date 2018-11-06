@@ -37,319 +37,11 @@ $(document).ready((event) => {
                     $(`#${id}Btn`).html('[−]')
                 })
         })
-        
-        let algorithmNames = [
-            'Nearest Neighbors',
-            'Linear SVM',
-            'RBF SVM',
-            'Gaussian Process',
-            'Decision Tree',
-            'Random Forest',
-            'Neural Net',
-            'AdaBoost',
-            'Naive Bayes',
-            'QDA',
-            'LogReg (SKL)'
-        ]
-        $('#multinomialQuestionBody tr').each((i, ival) => {
-            for (let j = 0; j < algorithmNames.length; j++) {
-                $(ival).after($(
-                    `<tr>
-                        <td style="width:15%; ${(j === 0) ? 'border-bottom-width:4px;' : ''}">${algorithmNames[algorithmNames.length-1-j]}</td>
-                        <td ${(j === 0) ? 'style=\"border-bottom-width:4px;\"' : ''}></td>
-                        <td ${(j === 0) ? 'style=\"border-bottom-width:4px;\"' : ''}></td>
-                        <td ${(j === 0) ? 'style=\"border-bottom-width:4px;\"' : ''}></td>
-                        <td ${(j === 0) ? 'style=\"border-bottom-width:4px;\"' : ''}></td>
-                    </tr>`
-                ))
-            }
-        })
-        let queueExists = false
-    
-        let lvls = [1, 3, 5, 7, 11, 13, 15, 19, 21, 23, 25, 27, 31]
-        let featureNames = {
-            '(Intercept)':             'Constant term',
-            'numMovesPerChallenge':    '# slider moves',
-            'moveTypeChangesPerLevel': '# type changes',
-            'numLevels':               '# levels completed',
-            'levelTimes':              'Time',
-            'avgPercentGoodMoves':     'Avg % good moves',
-            'knobAvgs':                'Avg knob max-min',
-            'OFFSET':                  '# offset moves',
-            'WAVELENGTH':              '# wavelength moves',
-            'AMPLITUDE':               '# amplitude moves',
-            'numFailsPerLevel':        '# failures',
-            'percentOFFSET':           '% offset moves',
-            'percentWAVELENGTH':       '% wavelength moves',
-            'percentAMPLITUDE':        '% amplitude moves',
-            'pgm_1':                   '% good moves lvl 1',
-            'pgm_3':                   '% good moves lvl 3',
-            'pgm_5':                   '% good moves lvl 5',
-            'pgm_7':                   '% good moves lvl 7',
-            'pgm_11':                  '% good moves lvl 11',
-            'pgm_13':                  '% good moves lvl 13',
-            'pgm_15':                  '% good moves lvl 15',
-            'pgm_19':                  '% good moves lvl 19',
-            'pgm_21':                  '% good moves lvl 21',
-            'pgm_23':                  '% good moves lvl 23',
-            'pgm_25':                  '% good moves lvl 25',
-            'pgm_27':                  '% good moves lvl 27',
-            'pgm_31':                  '% good moves lvl 31'
-        }
-        $(Object.keys(featureNames)).each((index, value) => {
-            if (index > 0) $('#featuresList').append(`
-            <li>
-                <input type="checkbox" name="${value}" id="${value}" ${(value == 'OFFSET' || value == 'WAVELENGTH' || value == 'AMPLITUDE') ? '' : 'checked'}>
-                <label for="${value}" style="font-weight:400;">${featureNames[value]}</label>
-            </li>
-            `)
-        })
-    
-        // numLevelsBody
-        if (true) { // this is simply so I can collapse this section of code
-            let rowNames = [
-                'Constant term',
-                '# slider moves',
-                '# type changes',
-                'Time',
-                'Avg knob max-min', 
-                '# offset moves',
-                '# wavelength moves',
-                '# amplitude moves',
-                '# failures',
-                '% offset moves',
-                '% wavelength moves',
-                '% amplitude moves'
-            ]
-            $(rowNames).each((i, rowName) => {
-                $('#numLevelsBody').append(`
-                <tr>
-                    <th scope="row">${rowName}</th>
-                    <td style="border-left-width:4px; "></td>
-                    <td></td>
-                    <td></td>
-                    <td scope="col" style="border-right-width:4px;"></td>
-                    <td scope="col" style="border-left-width:4px; "></td>
-                    <td></td>
-                    <td style="border-right-width:4px;"></td>
-                    <td style="border-left-width:4px; "></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td style="border-right-width:4px;"></td>
-                    <td style="border-left-width:4px; "></td>
-                </tr>
-                `)
-            })
-            lvls.forEach((value, index, arr) => {
-                let newRow = $(`<tr class="rowLvl">`)
-                newRow.append(
-                    `
-                    <th scope="row">% good moves lvl ${value}</th>
-                    <td style="border-left-width:4px; "></td>
-                    <td></td>
-                    <td></td>
-                    <td scope="col" style="border-right-width:4px;"></td>
-                    <td scope="col" style="border-left-width:4px; "></td>
-                    <td></td>
-                    <td style="border-right-width:4px;"></td>
-                    <td style="border-left-width:4px; "></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td style="border-right-width:4px;"></td>
-                    <td style="border-left-width:4px; "></td>
-                    `
-                )
-                $('#numLevelsBody').append(newRow)
-            })
-            $('#numLevelsBody .rowLvl').each((i, value) => {
-                $(value).children('td').each((j, jval) => {
-                    if (i+1 > j) {
-                        $(jval).css('background-color', 'rgb(221, 221, 221)')
-                        $(jval).addClass('disabled-cell')
-                    }
-                })
-            })
-            $(['Random', 'Log reg']).each((i, value) => {
-                $('#numLevelsBody').append(
-                    $(`
-                    <tr ${(i === 0) ? 'style="border-top: 4px solid rgb(221, 221, 221);"' : ''}>
-                        <th scope="row">${value}  mean abs err</th>
-                        <td style="border-left-width:4px; "></td>
-                        <td></td>
-                        <td></td>
-                        <td style="border-right-width:4px;"></td>
-                        <td style="border-left-width:4px; "></td>
-                        <td></td>
-                        <td style="border-right-width:4px;"></td>
-                        <td style="border-left-width:4px; "></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td style="border-right-width:4px;"></td>
-                        <td style="border-left-width:4px; "></td>
-                    </tr>
-                    `)
-                )
-            })
-        }
-        // predictTableBody
-        if (true) {
-            let rowNames = [
-                'Constant term',
-                '# slider moves',
-                '# type changes',
-                'Time',
-                'Avg knob max-min', 
-                '# offset moves',
-                '# wavelength moves',
-                '# amplitude moves',
-                '# failures',
-                '% offset moves',
-                '% wavelength moves',
-                '% amplitude moves'
-            ]
-            $(rowNames).each((i, rowName) => {
-                $('#predictTableBody').append(`
-                <tr>
-                    <th scope="row">${rowName}</th>
-                    <td style="border-left-width:4px; "></td>
-                    <td></td>
-                    <td></td>
-                    <td scope="col" style="border-right-width:4px;"></td>
-                    <td scope="col" style="border-left-width:4px; "></td>
-                    <td></td>
-                    <td style="border-right-width:4px;"></td>
-                    <td style="border-left-width:4px; "></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td style="border-right-width:4px;"></td>
-                    <td style="border-left-width:4px; "></td>
-                    <td style="border-left-width:4px; "></td>
-                </tr>
-                `)
-            })
-            lvls.forEach((value, index, arr) => {
-                let newRow = $(`<tr class="rowLvl">`)
-                newRow.append(
-                    `
-                    <th scope="row">% good moves lvl ${value}</th>
-                    <td style="border-left-width:4px; "></td>
-                    <td></td>
-                    <td></td>
-                    <td scope="col" style="border-right-width:4px;"></td>
-                    <td scope="col" style="border-left-width:4px; "></td>
-                    <td></td>
-                    <td style="border-right-width:4px;"></td>
-                    <td style="border-left-width:4px; "></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td style="border-right-width:4px;"></td>
-                    <td style="border-left-width:4px; "></td>
-                    <td style="border-left-width:4px; "></td>
-                    `
-                )
-                $('#predictTableBody').append(newRow)
-            })
-            $('#predictTableBody .rowLvl').each((i, value) => {
-                $(value).children('td').each((j, jval) => {
-                    if (i+1 > j) {
-                        $(jval).css('background-color', 'rgb(221, 221, 221)')
-                        $(jval).addClass('disabled-cell')
-                    }
-                })
-            })
-            $(['Log reg'].concat(algorithmNames)).each((i, value) => {
-                $('#predictTableBody').append(
-                    $(`
-                    <tr ${(i === 0) ? 'style="border-top: 4px solid rgb(221, 221, 221);"' : ''}>
-                        <th scope="row">${value} accuracy</th>
-                        <td style="border-left-width:4px; "></td>
-                        <td></td>
-                        <td></td>
-                        <td style="border-right-width:4px;"></td>
-                        <td style="border-left-width:4px; "></td>
-                        <td></td>
-                        <td style="border-right-width:4px;"></td>
-                        <td style="border-left-width:4px; "></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td style="border-right-width:4px;"></td>
-                        <td style="border-left-width:4px; "></td>
-                        <td style="border-left-width:4px; "></td>
-                    </tr>
-                    `)
-                )
-            })
-        }
-        // tableAllBody aka question answers from challenge 1
-        if (true) {
-            let rowNames = [
-                'Constant term',
-                '# slider moves',
-                '# type changes',
-                '# levels completed',
-                'Time',
-                'Avg knob max-min', 
-                'Avg % good moves',
-                '# offset moves',
-                '# wavelength moves',
-                '# amplitude moves',
-                '# failures',
-                '% offset moves',
-                '% wavelength moves',
-                '% amplitude moves'
-            ]
-            $(rowNames).each((i, rowName) => {
-                $('#tableAllBody').append(`
-                <tr>
-                    <th scope="row">${rowName}</th>
-                    ${'<td></td>'.repeat(16)}
-                </tr>
-                `)
-            })
-            $(['Log reg'].concat(algorithmNames)).each((i, value) => {
-                $('#tableAllBody').append(
-                    $(`
-                    <tr ${(i === 0) ? 'style="border-top: 4px solid rgb(221, 221, 221);"' : ''}>
-                        <th scope="row">${value} accuracy</th>
-                        ${'<td></td>'.repeat(16)}
-                    </tr>
-                    `)
-                )
-            })
-        }
-        // questionPredictBody
-        if (true) {
-            $('#questionPredictBody tr').each((i, ival) => {
-                // This is a little hard to follow but these elements are appended after the "L1..." cell that spans 13 rows
-                // meaning these rows are added from the bottom up
-                for (let j = 0; j < algorithmNames.length; j++) {
-                    $(ival).after(`
-                    <tr>
-                        <td style="width:6%; ${(j === 0) ? 'border-bottom-width:4px;' : ''}">${algorithmNames[algorithmNames.length-1-j]}</td>
-                        ${((j === 0) ? '<td style=\"border-bottom-width:4px;\"></td>' : '<td></td>').repeat(16)}
-                    </tr>
-                    `)
-                }
-                $(ival).after(`
-                <tr>
-                    <td style="width:10%;">Log reg</td>
-                    ${'<td></td>'.repeat(16)}
-                </tr>
-                `)
-            })
-        }
-    
-        $('#mainContainer').hide().show(0) // force the page to redraw so collapsed elements don't open upwards
     
         let theQueue
         let totalSessions
         let errorTracker = 0
+        let queueExists = false
         window.onerror = () => {
             errorTracker = 0
             off()
@@ -357,11 +49,305 @@ $(document).ready((event) => {
         }
         
         $(document).on('change', '#gameSelect', (event) => {
-            // console.time('gameSelect')
             event.preventDefault()
-            $('#gameIDForm').val($('#gameSelect').val())
-            //getAllData(true)
+            // Send request that gets the model and populate tables and headers
+            $.get('model.json', {}, data => {
+                let model = data[$('#gameSelect').val()]
+
+                // numLevelsBody
+                if (true) { // this is simply so I can collapse this section of code
+                    let algorithmNames = model.algorithms.numLevelsTable
+                    let rowNames = { ...model.features.numLevelsTable.general, ...model.features.numLevelsTable.specific }
+                    let headers = model.columns.numLevelsTable.headers // each one has title and href
+                    let headerSpans = model.columns.numLevelsTable.headerSpans
+                    let headerSpanIndexes = $.map(headerSpans, (val, i) => { // array of indexes where a headerSpan starts
+                        let currentIndex = 0;
+                        for (let j = 0; j <= i-1; j++) {
+                            currentIndex += headerSpans[j].colSpan
+                        }
+                        return currentIndex
+                    })
+                    let hasHeader = Object.keys(headerSpans).length > 0
+
+                    if (hasHeader) {
+                        $('#numLevelsHead tr:eq(0) th:eq(0)').attr('rowspan', 2)
+                        $('#numLevelsHead tr:eq(0)').after($('<tr></tr>'))
+                    }
+
+                    $.each(headerSpans, (i, headerSpan) => {
+                        let headerSpanElement = $(`<th class="challenge-header" scope="col" colspan="${headerSpan.colSpan}">${headerSpan.title}</th>`)
+                        $('#numLevelsHead tr:eq(0)').append(headerSpanElement)
+                    })
+
+                    let zeroIndex = 0
+                    $.each(headers, (i, header) => {
+                        let style = ''
+                        if (zeroIndex == 0 || headerSpanIndexes.indexOf(zeroIndex) !== -1) { // first col and new headerspans have thicker left borders
+                            style = 'border-left-width:4px;'
+                        }
+                        let headerElement = $(`<th scope="col" style="${style}"><a target="_blank" href="${header.href}">${header.title}</a></th>`)
+                        $(`#numLevelsHead tr:eq(${hasHeader ? 1 : 0})`).append(headerElement)
+
+                        let numSessionsElement = $(`<td style="${style}">-</td>`)
+                        $(`#numLevelsNumSessionsRow`).append(numSessionsElement)
+                        zeroIndex++
+                    })
+                    
+                    $.each(rowNames, (i, rowName) => {
+                        let newRow = $('<tr></tr>')
+                        zeroIndex = 0
+                        newRow.append($(`<th scope="row">${rowName}</th>`))
+                        $.each(headers, (j, header) => {
+                            let style = ''
+                            if (zeroIndex == 0 || headerSpanIndexes.indexOf(zeroIndex) !== -1) { // first col and new headerspans have thicker left borders
+                                style = 'border-left-width:4px;'
+                            }
+                            newRow.append($(`<td style="${style}"></td>`))
+                            zeroIndex++
+                        })
+                        $('#numLevelsBody').append(newRow)
+                    })
+
+                    let perLevelZeroIndex = 0
+                    $.each(model.features.individualLevelsTable.perLevel, (i, rowName) => {
+                        let newRow = $('<tr></tr>')
+                        zeroIndex = 0
+                        newRow.append($(`<th scope="row">${rowName}</th>`))
+                        $.each(headers, (j, header) => {
+                            let style = ''
+                            if (zeroIndex == 0 || headerSpanIndexes.indexOf(zeroIndex) !== -1) { // first col and new headerspans have thicker left borders
+                                style = 'border-left-width:4px;'
+                            }
+                            let newCell = $(`<td style="${style}"></td>`)
+                            if (perLevelZeroIndex >= zeroIndex) {
+                                $(newCell).css('background-color', 'rgb(221, 221, 221)')
+                                $(newCell).addClass('disabled-cell')
+                            }
+                            newRow.append(newCell)
+                            zeroIndex++
+                        })
+                        $('#numLevelsBody').append(newRow)
+                        perLevelZeroIndex++
+                    })
+                    $.each(algorithmNames, (i, name) => {
+                        zeroIndex = 0
+                        let newRow = $(`<tr ${(i === 0) ? 'style="border-top: 4px solid rgb(221, 221, 221);"' : ''}></tr>`)
+                        newRow.append(`<th scope="row">${name}</th>`)
+                        $.each(headers, (j, header) => {
+                            let style = ''
+                            if (zeroIndex == 0 || headerSpanIndexes.indexOf(zeroIndex) !== -1) { // first col and new headerspans have thicker left borders
+                                style = 'border-left-width:4px;'
+                            }
+                            newRow.append($(`<td style="${style}"></td>`))
+                            zeroIndex++
+                        })
+                        $('#numLevelsBody').append(newRow)
+                    })
+                }
+                // predictTableBody
+                if (true) {
+                    let algorithmNames = model.algorithms.individualLevelsTable
+                    let rowNames = { ...model.features.individualLevelsTable.general, ...model.features.individualLevelsTable.specific }
+                    let headers = model.columns.individualLevelsTable.headers // each one has title and href
+                    let headerSpans = model.columns.individualLevelsTable.headerSpans
+                    let headerSpanIndexes = $.map(headerSpans, (val, i) => { // array of indexes where a headerSpan starts
+                        let currentIndex = 0;
+                        for (let j = 0; j <= i-1; j++) {
+                            currentIndex += headerSpans[j].colSpan
+                        }
+                        return currentIndex
+                    })
+                    let hasHeader = Object.keys(headerSpans).length > 0
+
+                    if (hasHeader) {
+                        $('#predictTableHead tr:eq(0) th:eq(0)').attr('rowspan', 2)
+                        $('#predictTableHead tr:eq(0)').after($('<tr></tr>'))
+                    }
+
+                    $.each(headerSpans, (i, headerSpan) => {
+                        let headerSpanElement = $(`<th class="challenge-header" scope="col" colspan="${headerSpan.colSpan}">${headerSpan.title}</th>`)
+                        $('#predictTableHead tr:eq(0)').append(headerSpanElement)
+                    })
+
+                    let zeroIndex = 0
+                    $.each(headers, (i, header) => {
+                        let style = ''
+                        if (zeroIndex == 0 || headerSpanIndexes.indexOf(zeroIndex) !== -1) { // first col and new headerspans have thicker left borders
+                            style = 'border-left-width:4px;'
+                        }
+                        let headerElement = $(`<th scope="col" style="${style}"><a target="_blank" href="${header.href}">${header.title}</a></th>`)
+                        $(`#predictTableHead tr:eq(${hasHeader ? 1 : 0})`).append(headerElement)
+
+                        let percentCompleteElement = $(`<td style="${style}">- %</td>`)
+                        $(`#percentCompleteRow`).append(percentCompleteElement)
+
+                        let numSessionsElement = $(`<td style="${style}">-</td>`)
+                        $(`#predictNumSessionsRow`).append(numSessionsElement)
+                        zeroIndex++
+                    })
+                    
+                    $.each(rowNames, (i, rowName) => {
+                        let newRow = $('<tr></tr>')
+                        zeroIndex = 0
+                        newRow.append($(`<th scope="row">${rowName}</th>`))
+                        $.each(headers, (j, header) => {
+                            let style = ''
+                            if (zeroIndex == 0 || headerSpanIndexes.indexOf(zeroIndex) !== -1) { // first col and new headerspans have thicker left borders
+                                style = 'border-left-width:4px;'
+                            }
+                            newRow.append($(`<td style="${style}"></td>`))
+                            zeroIndex++
+                        })
+                        $('#predictTableBody').append(newRow)
+                    })
+
+                    let perLevelZeroIndex = 0
+                    $.each(model.features.individualLevelsTable.perLevel, (i, rowName) => {
+                        let newRow = $('<tr></tr>')
+                        zeroIndex = 0
+                        newRow.append($(`<th scope="row">${rowName}</th>`))
+                        $.each(headers, (j, header) => {
+                            let style = ''
+                            if (zeroIndex == 0 || headerSpanIndexes.indexOf(zeroIndex) !== -1) { // first col and new headerspans have thicker left borders
+                                style = 'border-left-width:4px;'
+                            }
+                            let newCell = $(`<td style="${style}"></td>`)
+                            if (perLevelZeroIndex >= zeroIndex) {
+                                $(newCell).css('background-color', 'rgb(221, 221, 221)')
+                                $(newCell).addClass('disabled-cell')
+                            }
+                            newRow.append(newCell)
+                            zeroIndex++
+                        })
+                        $('#predictTableBody').append(newRow)
+                        perLevelZeroIndex++
+                    })
+                    $.each(algorithmNames, (i, name) => {
+                        zeroIndex = 0
+                        let newRow = $(`<tr ${(i === 0) ? 'style="border-top: 4px solid rgb(221, 221, 221);"' : ''}></tr>`)
+                        newRow.append(`<th scope="row">${name}</th>`)
+                        $.each(headers, (j, header) => {
+                            let style = ''
+                            if (zeroIndex == 0 || headerSpanIndexes.indexOf(zeroIndex) !== -1) { // first col and new headerspans have thicker left borders
+                                style = 'border-left-width:4px;'
+                            }
+                            newRow.append($(`<td style="${style}"></td>`))
+                            zeroIndex++
+                        })
+                        $('#predictTableBody').append(newRow)
+                    })
+                }
+                // tableAllBody aka question answers from challenge 1
+                if (false) {
+                    let rowNames = [
+                        'Constant term',
+                        '# slider moves',
+                        '# type changes',
+                        '# levels completed',
+                        'Time',
+                        'Avg knob max-min', 
+                        'Avg % good moves',
+                        '# offset moves',
+                        '# wavelength moves',
+                        '# amplitude moves',
+                        '# failures',
+                        '% offset moves',
+                        '% wavelength moves',
+                        '% amplitude moves'
+                    ]
+                    let numQuestions = model.questionLevels.length
+                    let algorithmNames = model.algorithms.multinomialQuestionTable
+                    $(rowNames).each((i, rowName) => {
+                        $('#tableAllBody').append(`
+                        <tr>
+                            <th scope="row">${rowName}</th>
+                            ${'<td></td>'.repeat(16)}
+                        </tr>
+                        `)
+                    })
+                    $(['Log reg'].concat(algorithmNames)).each((i, value) => {
+                        $('#tableAllBody').append(
+                            $(`
+                            <tr ${(i === 0) ? 'style="border-top: 4px solid rgb(221, 221, 221);"' : ''}>
+                                <th scope="row">${value} accuracy</th>
+                                ${'<td></td>'.repeat(16)}
+                            </tr>
+                            `)
+                        )
+                    })
+                }
+                // questionPredictBody
+                if (true) {
+                    let numQuestions = model.questionLevels.length
+                    let algorithmNames = model.algorithms.binomialQuestionTable
+
+                    for (let i = 1; i <= numQuestions; i++) {
+                        ['A', 'B', 'C', 'D'].forEach(answer => {
+                            $('#questionPredictHeader tr:eq(0)').append(`<th scope="col">Q${i}/${answer}</th>`)
+                            $('#questionPredictHeader tr:eq(1)').append(`<td style="text-align:center;">-</td>`)
+                        })
+                    }
+                    for (let i = 1; i <= model.questionLevels[0]; i++) {
+                        let rowText
+                        if (i === 1) rowText = 'L1 only'
+                        else rowText = 'L1-L'+i
+
+                        let rowElement = $('<tr>').append($('<th>').attr('rowspan', algorithmNames.length + 1).css({'vertical-align':'middle', 'border-bottom-width':'4px'}).text(rowText))
+                        $('#questionPredictBody').append(rowElement)
+                    }
+                    $('#questionPredictBody tr').each((i, ival) => {
+                        for (let j = 0; j < algorithmNames.length; j++) {
+                            let rowContent = $(`<tr><td style="width:9%; ${(j === 0) ? 'border-bottom-width:4px;' : ''}">${algorithmNames[algorithmNames.length-1-j]}</td></tr>`)
+                            for (let k = 0; k < numQuestions * 4; k++) {
+                                $(rowContent).append(`<td ${(j === 0) ? 'style=\"border-bottom-width:4px;\"' : ''}></td>`)
+                            }
+                            $(ival).after($(rowContent))
+                        }
+                    })
+                }
+                // multinomial table
+                if (true) {
+                    let numQuestions = model.questionLevels.length
+                    let algorithmNames = model.algorithms.multinomialQuestionTable
+                     
+                    for (let i = 1; i <= numQuestions; i++) {
+                        $('#multinomialQuestionHeader tr:eq(0)').append(`<th scope="col">Q${i}</th>`)
+                        $('#multinomialQuestionHeader tr:eq(1)').append(`<td style="text-align:center;">-</td>`)
+                    }
+                    for (let i = 1; i <= model.questionLevels[0]; i++) {
+                        let rowText
+                        if (i === 1) rowText = 'L1 only'
+                        else rowText = 'L1-L'+i
+
+                        let rowElement = $('<tr>').append($('<th>').attr('rowspan', algorithmNames.length + 1).css({'vertical-align':'middle', 'border-bottom-width':'4px', 'width': '5%'}).text(rowText))
+                        $('#multinomialQuestionBody').append(rowElement)
+                    }
+                    $('#multinomialQuestionBody tr').each((i, ival) => {
+                        for (let j = 0; j < algorithmNames.length; j++) {
+                            let rowContent = $(`<tr><td style="width:15%; ${(j === 0) ? 'border-bottom-width:4px;' : ''}">${algorithmNames[algorithmNames.length-1-j]}</td></tr>`)
+                            for (let k = 0; k < numQuestions; k++) {
+                                $(rowContent).append(`<td ${(j === 0) ? 'style=\"border-bottom-width:4px;\"' : ''}></td>`)
+                            }
+                            $(ival).after($(rowContent))
+                        }
+                    })
+                }
+
+                let featureNames = flattenObj(model.features)
+                $(Object.keys(featureNames)).each((index, value) => {
+                    if (index > 0) $('#featuresList').append(`
+                    <li>
+                        <input type="checkbox" name="${value}" id="${value}" ${(value == 'OFFSET' || value == 'WAVELENGTH' || value == 'AMPLITUDE') ? '' : 'checked'}>
+                        <label for="${value}" style="font-weight:400;">${featureNames[value]}</label>
+                    </li>
+                    `)
+                })
+            
+                $('#mainContainer').hide().show(0) // force the page to redraw so collapsed elements don't open upwards
+            }, 'json')
         })
+        // Trigger game select change to populate tables for default value
+        $('#gameSelect').trigger('change')
     
         $(document).on('click', '#goButton', (event) => {
             event.preventDefault()
@@ -2356,5 +2342,17 @@ $(document).ready((event) => {
         function getKeyByValue(str) {
             return Object.keys(featureNames).find(key => featureNames[key] === str)
         }
-    })
-}, 'json')
+
+        function flattenObj(obj) {
+            let flattenedObj = {}
+            Object.keys(obj).forEach(key => {
+                if (typeof obj[key] === 'object') {
+                    $.extend(flattenedObj, flattenObj(obj[key]))
+                } else {
+                    flattenedObj[key] = obj[key]
+                }
+            })
+            return flattenedObj
+        }
+    }, 'json')
+})
