@@ -84,12 +84,9 @@ if (isset($_GET['gameID'])) {
     } else {
         if (isset($_GET['column'])) {
             $returned = getAndParseData($_GET['column'], $_GET['gameID'], $db, null, null);
-        } else if (isset($_GET['questionPredictColumn'])) {
-            $returned = getAndParseData($_GET['questionPredictColumn'], $_GET['gameID'], $db, null, null);
         } else {
             $returned = getAndParseData(null, $_GET['gameID'], $db, null, null);
         }
-        
     }
     //echo print_r($returned);
     $output = json_encode(replaceNans($returned));
@@ -753,7 +750,7 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
     $coefficients = array();
     $stdErrs = array();
     $significances = array();
-    if (!isset($reqSessionID) && !isset($_GET['predictTable']) && !isset($_GET['numLevelsColumn']) && !isset($_GET['multinomQuestionPredictColumn'])) {
+    if (!isset($reqSessionID) && $_GET['table'] === 'binomialQuestionTable') {
         $predictors = array();
         $predicted = array();
 
@@ -779,7 +776,7 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
         $numTrue = count(array_filter($predicted, function ($a) { return $a === 1; }));
         $numFalse = count(array_filter($predicted, function ($a) { return $a === 0; }));
         return array('predictors'=>$predictors, 'predicted'=>$predicted, 'numSessions'=>array('numTrue'=>$numTrue, 'numFalse'=>$numFalse), 'featureNames'=>array_keys($featureCols));
-    } else if (isset($_GET['predictTable'])) {
+    } else if ($_GET['table'] === 'individualLevelsTable') {
         $predictors = array();
         $predicted = array();
 
@@ -803,7 +800,7 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
         $numTrue = count(array_filter($predicted, function ($a) { return $a === 1; }));
         $numFalse = count(array_filter($predicted, function ($a) { return $a === 0; }));
         return array('predictors'=>$predictors, 'predicted'=>$predicted, 'numSessions'=>array('numTrue'=>$numTrue, 'numFalse'=>$numFalse), 'featureNames'=>array_keys($featureCols));
-    } else if (isset($_GET['numLevelsColumn'])) {
+    } else if ($_GET['table'] === 'numLevelsTable') {
         $predictors = array();
         $predicted = array();
 
@@ -824,7 +821,7 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
             $predictors[$i][] = $predicted[$i];
         }
         return array('predictors'=>$predictors, 'predicted'=>$predicted, 'numSessions'=>count($predictors), 'featureNames'=>array_keys($featureCols));
-    } else if (isset($_GET['multinomQuestionPredictColumn'])) {
+    } else if ($_GET['table'] === 'multinomialQuestionTable') {
         $predictors = array();
         $predicted = array();
 
@@ -856,7 +853,8 @@ function random() {
 
 function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
     $percentTesting = 0.5;
-    if/* binomial/binary qs */ (!isset($reqSessionID) && !isset($_GET['predictColumn']) && !isset($_GET['numLevelsColumn']) && !isset($_GET['multinomQuestionPredictColumn'])) {
+    $table = isset($_GET['table']) ? $_GET['table'] : null;
+    if/* binomial/binary qs */ (!isset($reqSessionID) && ($table === 'basic' || (isset($column) && $table === 'binomialQuestionTable'))) {
         $minMoves = $_GET['minMoves'];
         $minQuestions = $_GET['minQuestions'];
         $startDate = $_GET['startDate'];
@@ -888,7 +886,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             $paramTypes .= 'i';
         }
 
-        if (isset($column) || isset($_GET['questionPredictColumn'])) $minQuestions = 1;
+        if (isset($column)) $minQuestions = 1;
         if ($minQuestions > 0) {
             $query .= "AND a.session_id IN
             (
@@ -958,14 +956,14 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             $times[$i] = $val[0]['time'];
         }
 
-        if (!isset($column) && !isset($_GET['questionPredictColumn'])) {
+        if ($table === 'basic') {
             $sessionsAndTimes = array('sessions'=>$uniqueSessions, 'times'=>array_values($times));
             $regression = analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAttributes, $column);
             $regression['totalNumSessions'] = getTotalNumSessions($gameID, $db);
             return $regression;
         }
 
-        if (!isset($_GET['questionPredictColumn'])) {
+        if (false) {
             // Construct sessions and times array
             $sessionsAndTimes = array('sessions'=>$uniqueSessions, 'times'=>array_values($times));
             $regression = analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAttributes, $column);
@@ -1050,7 +1048,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                 'accuracies'=>$accuracies
             );
         } else {
-            $questionPredictCol = $_GET['questionPredictColumn'];
+            $questionPredictCol = $column;
             $sessionsAndTimes = array('sessions'=>$uniqueSessions, 'times'=>array_values($times));
             $returnArray = array();
             for ($predLevel = 1; $predLevel < 9; $predLevel++) { // repeat calculations for each cell, adding a level of data each iteration
@@ -1124,20 +1122,24 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                         $pValues[$values[0]] = sciToNum($values[4]);
                     }
                 }
+                $numTrue = $numPredictors['numTrue'];
+                $numFalse = $numPredictors['numFalse'];
+                $expectedAccuracy = number_format(max($numTrue, $numFalse) / ($numTrue + $numFalse), 2);
 
                 $returnArray[$predLevel] = array(
                     'coefficients'=>$coefficients,
                     'stdErrs'=>$stdErrs,
                     'pValues'=>$pValues,
                     'numSessions'=>$numPredictors,
-                    'percentCorrectR'=>$percentCorrectR,
-                    'algorithmNames'=>$algorithmNames,
-                    'accuracies'=>$accuracies
+                    'numSessionsString'=>"$numTrue / $numFalse <br>($expectedAccuracy expected)",
+                    'expectedAccuracy'=>$expectedAccuracy,
+                    'percentCorrect'=>array_merge(array('Log reg'=>$percentCorrectR), $accuracies),
+                    'algorithmNames'=>$algorithmNames
                 );
             }
             return $returnArray;
         }
-    } /* single session     */ else if (!isset($_GET['predictColumn']) && !isset($_GET['numLevelsColumn']) && !isset($_GET['questionPredictColumn']) && !isset($_GET['multinomQuestionPredictColumn'])) {
+    } /* single session     */ else if (isset($reqSessionID)) {
         $query =
         "SELECT session_id, level, event, event_custom, event_data_complex, client_time
         FROM log
@@ -1524,8 +1526,8 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
 
         // Return ALL the above information at once in a big array
         return replaceNans($output);
-    } /* level completion   */ else if (isset($_GET['predictColumn']) && !isset($_GET['questionPredictColumn']) && !isset($_GET['multinomQuestionPredictColumn'])) {
-        $predictColumn = $_GET['predictColumn'];
+    } /* level completion   */ else if (isset($column) && $table === 'individualLevelsTable') {
+        $predictColumn = $column;
         $startDate = $_GET['startDate'];
         $endDate = $_GET['endDate'];
         $maxRows = $_GET['maxRows'];
@@ -1764,21 +1766,20 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
         $trueSessions = array_unique(array_column(array_filter($completeEvents, function ($a) use ($colLvl) { return $a['level'] == $colLvl; }), 'session_id'));
         $numTrue = count($trueSessions); // number of sessions who completed every level including current col
         $numFalse = $numSessions - $numTrue; // number of sessions who completed every level up to but not current col
+        $expectedAccuracy = ($numTrue + $numFalse == 0) ? null : number_format(max($numTrue, $numFalse) / ($numTrue + $numFalse), 2);
 
         return array(
             'coefficients'=>$coefficients,
             'stdErrs'=>$stdErrs,
             'pValues'=>$pValues,
-            // 'regressionVars'=>$predictArray,
             'numSessions'=>array('numTrue'=>$numTrue, 'numFalse'=>$numFalse),
-            // 'regressionOutputs'=>$predictedArray,
-            'percentCorrectR'=>$percentCorrectR,
-            //'percentCorrectTf'=>$percentCorrectTf,
+            'numSessionsString'=>"$numTrue / $numFalse <br>($expectedAccuracy expected)",
+            'expectedAccuracy'=>$expectedAccuracy,
+            'percentCorrect'=>array_merge(array('Log reg'=>$percentCorrectR), $accuracies),
             'algorithmNames'=>$algorithmNames,
-            'accuracies'=>$accuracies
         );
-    } /* num levels         */ else if (isset($_GET['numLevelsColumn']) && !isset($_GET['questionPredictColumn']) && !isset($_GET['multinomQuestionPredictColumn'])) {
-        $numLevelsColumn = $_GET['numLevelsColumn'];
+    } /* num levels         */ else if (isset($column) && $table === 'numLevelsTable') {
+        $numLevelsColumn = $column;
         $minMoves = $_GET['minMoves'];
         $minQuestions = $_GET['minQuestions'];
         $startDate = $_GET['startDate'];
@@ -2038,15 +2039,11 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
         return array(
             'coefficients'=>$coefficients,
             'stdErrs'=>$stdErrs, 'pValues'=>$pValues,
-            // 'regressionVars'=>$predictArray,
-            'numSessions'=>array('numTrue'=>$numTrue,
-            'numFalse'=>$numFalse),
-            // 'regressionOutputs'=>$predictedArray,
-            'percentCorrectR'=>$percentCorrectR,
-            //'mae'=>$mae,
-            'percentCorrectRand'=>$percentCorrectRand
+            'numSessionsString'=>"$numTrue / $numFalse",
+            'numSessions'=>array('numTrue'=>$numTrue, 'numFalse'=>$numFalse),
+            'percentCorrect'=>array('Log reg'=>$percentCorrectR, 'Random'=>$percentCorrectRand)
         );
-    } /* multinomial ques   */ else if (isset($_GET['multinomQuestionPredictColumn'])) {
+    } /* multinomial ques   */ else if (isset($column) && $table === 'multinomialQuestionTable') {
         $minMoves = $_GET['minMoves'];
         $minQuestions = $_GET['minQuestions'];
         $startDate = $_GET['startDate'];
@@ -2146,7 +2143,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             $times[$i] = $val[0]['time'];
         }
 
-        $multinomQuestionPredictCol = $_GET['multinomQuestionPredictColumn'];
+        $multinomQuestionPredictCol = $column;
         $sessionsAndTimes = array('sessions'=>$uniqueSessions, 'times'=>array_values($times));
         $returnArray = array();
         for ($predLevel = 1; $predLevel < 9; $predLevel++) { // repeat calculations for each cell, adding a level of data each iteration
@@ -2196,16 +2193,20 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             $numB = count($ansB);
             $numC = count($ansC);
             $numD = count($ansD);
+            $numSessions = array(
+                'numA'=>$numA,
+                'numB'=>$numB,
+                'numC'=>$numC,
+                'numD'=>$numD
+            );
+            $expectedAccuracy = number_format(max(...array_values($numSessions)) / array_sum($numSessions), 2);
 
             $returnArray[$predLevel] = array(
-                'numSessions'=>array(
-                    'numA'=>$numA,
-                    'numB'=>$numB,
-                    'numC'=>$numC,
-                    'numD'=>$numD
-                ),
+                'numSessions'=>$numSessions,
+                'numSessionsString'=>"$numA / $numB / $numC / $numD <br>($expectedAccuracy expected)",
+                'expectedAccuracy'=>$expectedAccuracy,
                 'algorithmNames'=>$algorithmNames,
-                'accuracies'=>$accuracies
+                'percentCorrect'=>$accuracies
             );
         }
         return $returnArray;

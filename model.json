@@ -4,7 +4,7 @@
         "features": {
             "numLevelsTable": {
                 "general": {
-                    "(Constant)":               "Constant term",
+                    "(Intercept)":              "Constant term",
                     "numMovesPerChallenge":     "# slider moves",
                     "levelTimes":               "Time"
                 },
@@ -37,7 +37,7 @@
             },
             "individualLevelsTable": {
                 "general": {
-                    "(Constant)":               "Constant term",
+                    "(Intercept)":              "Constant term",
                     "numMovesPerChallenge":     "# slider moves",
                     "levelTimes":               "Time"
                 },
@@ -70,7 +70,7 @@
             },
             "binomialQuestionTable": {
                 "general": {
-                    "(Constant)":               "Constant term",
+                    "(Intercept)":              "Constant term",
                     "numMovesPerChallenge":     "# slider moves",
                     "levelTimes":               "Time"
                 },
@@ -85,11 +85,12 @@
                     "percentOFFSET":            "% offset moves",
                     "percentWAVELENGTH":        "% wavelength moves",
                     "percentAMPLITUDE":         "% amplitude moves"
-                }
+                },
+                "perLevel": {}
             },
             "multinomialQuestionTable": {
                 "general": {
-                    "(Constant)":               "Constant term",
+                    "(Intercept)":              "Constant term",
                     "numMovesPerChallenge":     "# slider moves",
                     "levelTimes":               "Time"
                 },
@@ -104,7 +105,8 @@
                     "percentOFFSET":            "% offset moves",
                     "percentWAVELENGTH":        "% wavelength moves",
                     "percentAMPLITUDE":         "% amplitude moves"
-                }
+                },
+                "perLevel": {}
             }
         },
         "columns": {

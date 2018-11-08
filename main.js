@@ -294,14 +294,14 @@ $(document).ready((event) => {
                         if (i === 1) rowText = 'L1 only'
                         else rowText = 'L1-L'+i
 
-                        let rowElement = $('<tr>').append($('<th>').attr('rowspan', algorithmNames.length + 1).css({'vertical-align':'middle', 'border-bottom-width':'4px'}).text(rowText))
+                        let rowElement = $('<tr>').append($('<th>').attr('rowspan', algorithmNames.length + 1).css({'width':'6%', 'vertical-align':'middle', 'border-bottom-width':'4px'}).text(rowText))
                         $('#questionPredictBody').append(rowElement)
                     }
                     $('#questionPredictBody tr').each((i, ival) => {
                         for (let j = 0; j < algorithmNames.length; j++) {
                             let rowContent = $(`<tr><td style="width:9%; ${(j === 0) ? 'border-bottom-width:4px;' : ''}">${algorithmNames[algorithmNames.length-1-j]}</td></tr>`)
                             for (let k = 0; k < numQuestions * 4; k++) {
-                                $(rowContent).append(`<td ${(j === 0) ? 'style=\"border-bottom-width:4px;\"' : ''}></td>`)
+                                $(rowContent).append(`<td style="width:${5}px;${(j === 0) ? 'border-bottom-width:4px;' : ''}"></td>`)
                             }
                             $(ival).after($(rowContent))
                         }
@@ -321,14 +321,14 @@ $(document).ready((event) => {
                         if (i === 1) rowText = 'L1 only'
                         else rowText = 'L1-L'+i
 
-                        let rowElement = $('<tr>').append($('<th>').attr('rowspan', algorithmNames.length + 1).css({'vertical-align':'middle', 'border-bottom-width':'4px', 'width': '5%'}).text(rowText))
+                        let rowElement = $('<tr>').append($('<th>').attr('rowspan', algorithmNames.length + 1).css({'vertical-align':'middle', 'border-bottom-width':'4px', 'width': '6%'}).text(rowText))
                         $('#multinomialQuestionBody').append(rowElement)
                     }
                     $('#multinomialQuestionBody tr').each((i, ival) => {
                         for (let j = 0; j < algorithmNames.length; j++) {
-                            let rowContent = $(`<tr><td style="width:15%; ${(j === 0) ? 'border-bottom-width:4px;' : ''}">${algorithmNames[algorithmNames.length-1-j]}</td></tr>`)
+                            let rowContent = $(`<tr><td style="width:9%; ${(j === 0) ? 'border-bottom-width:4px;' : ''}">${algorithmNames[algorithmNames.length-1-j]}</td></tr>`)
                             for (let k = 0; k < numQuestions; k++) {
-                                $(rowContent).append(`<td ${(j === 0) ? 'style=\"border-bottom-width:4px;\"' : ''}></td>`)
+                                $(rowContent).append(`<td style="width:${5}px;${(j === 0) ? 'border-bottom-width:4px;' : ''}"></td>`)
                             }
                             $(ival).after($(rowContent))
                         }
@@ -442,8 +442,8 @@ $(document).ready((event) => {
             let numLevelsTableChecked = $('#numLevelsTableCheckbox').is(':checked'),
                 levelCompletionTableChecked = $('#levelCompletionCheckbox').is(':checked'),
                 questionTableChecked = $('#questionsCheckbox').is(':checked'),
-                levelRangeQuestionChecked = $('#levelRangeQuestionCheckbox').is(':checked'),
-                multinomialQuestionChecked = $('#multinomialQuestionCheckbox').is(':checked'),
+                binaryQuestionTableChecked = $('#levelRangeQuestionCheckbox').is(':checked'),
+                multinomialQuestionTableChecked = $('#multinomialQuestionCheckbox').is(':checked'),
                 otherFeaturesChecked = $('#otherFeaturesCheckbox').is(':checked'),
                 shouldUseAvgs = $('#useAvgs').is(':checked')
             let featuresListParameters = {}
@@ -458,6 +458,7 @@ $(document).ready((event) => {
                 'startDate': $('#startDate').val(),
                 'endDate': $('#endDate').val(),
                 'shouldUseAvgs': shouldUseAvgs,
+                'table': 'basic',
                 'numMovesPerChallenge': $('#numMovesPerChallengeCluster').prop('checked') ? true : undefined,
                 'knobAvgs': $('#knobAvgsCluster').prop('checked') ? true : undefined,
                 'levelTimes': $('#levelTimesCluster').prop('checked') ? true : undefined,
@@ -468,841 +469,201 @@ $(document).ready((event) => {
             }
             let queue = new networkQueue(numSimultaneous)
             let numCols, numTables = 0
-    
-            if (numLevelsTableChecked) {
-                numCols = $('#numLevelsBody').find('tr:first td').length
-                $(`#${collapserNames[numTables]}Collapser`).collapse('show')
-                $('#numLevelsNumSessionsRow').children().each((key, value) => { if (key > 0) $(value).html('-') })
-                for (let i = 0; i < numCols; i++) {
-                    let columnElements = $(`#numLevelsBody tr td:nth-child(${i+2})`).not('.disabled-cell')
-                    let columnIndexes = Object.keys(columnElements.toArray())
-                    let column = Object.keys(model.columns.numLevelsTable.headers)[i]
-    
-                    let parametersLevels = {
-                        'gameID': $('#gameSelect').val(),
-                        'maxRows': $('#maxRows').val(),
-                        'minMoves': $('#minMoves').val(),
-                        'minQuestions': $('#minQuestions').val(),
-                        'minLevels': $('#minLevels').val(),
-                        'maxLevels': $('#maxLevels').val(),
-                        'startDate': $('#startDate').val(),
-                        'endDate': $('#endDate').val(),
-                        'numLevelsTable': true,
-                        'numLevelsColumn': column,
-                        'shouldUseAvgs': shouldUseAvgs,
-                    }
-                    let numAlgorithms = model.algorithms.numLevelsTable.length
-                    // find a way to map true/false values to the ids of inputs
-                    let featuresParams = $('#featuresList input').map((j, val) => {return $(val).is(':checked') && Object.keys(flattenObj(model.features.numLevelsTable)).inArray(val)})
-                    console.log(featuresParams)
-                    break
-                    let checkedFeatures = $(`#numLevelsBody tr th:gt(0):lt(${columnElements.length-numAlgorithms-1})`).toArray().map((ele, idx) => { return $.trim(ele.innerText) }).filter((ele, index) => { return $.inArray(index.toString(), columnIndexes) >= 0 && featuresListParameters[getKeyByValue(ele)] })
-                    checkedFeatures = $(checkedFeatures).map((ele, idx) => { return getKeyByValue(idx) }).toArray()
-                    checkedFeaturesParams = {}
-                    $(checkedFeatures).each((index, value) => {
-                        checkedFeaturesParams[value] = true
-                    })
-                    featuresListTemp = {}
-                    Object.keys(featuresListParameters).forEach(x => featuresListTemp[x] = false) // reset all features to false and overwrite the true ones
-                    finalFeaturesParams = {...featuresListTemp, ...checkedFeaturesParams}
-    
-                    let loadTimer, backgroundColors = [], borderBottoms = [], borderTops = []
-    
-                    columnElements.each((index, value) => {
-                        backgroundColors.push($(value).css('background-color'))
-                        borderBottoms.push($(value).css('border-bottom'))
-                        borderTops.push($(value).css('border-top'))
-                        $(value).css({
-                            'background-color': 'rgba(0, 0, 0, 0.15)',
-                            'border-top': 'none',
-                            'border-bottom': 'none'
-                        })
-                        if (index === 2) {
-                            $(value).addClass('colLoadingText')
-                            let rand = Math.random()
-                            if (rand < 0.333) {
-                                $(value).text('.')
-                            } else if (rand < 0.666) {
-                                $(value).text('. .')
-                            } else {
-                                $(value).text('. . .')
-                            }
-                            $(value).css({
-                                'vertical-align': 'middle',
-                                'text-align': 'center',
-                                'font-size': '16px'
-                            })
-                            loadTimer = setInterval(() => {
-                                let currentText = $(value).html()
-                                let newText
-                                if (currentText !== '. . . .') {
-                                    newText = currentText + ' .'
-                                } else {
-                                    newText = '.'
-                                }
-                                $(value).html(newText)
-                            }, 400 + Math.random() * 200)
-                        } else {
-                            $(value).text('')
-                        }
-                    })
-                    let callbackFunc = (data) => {
-                        clearInterval(loadTimer)
-                        localStorage.setItem(`data_numLevels_${column}`, JSON.stringify({ 'coefficients': data.coefficients, 'stdErrs': data.stdErrs }))
-                        let rowNames = []
-                        $(`#numLevelsNumSessionsRow td:nth-child(${i+2})`).html(data.numSessions.numTrue + ' / ' + data.numSessions.numFalse)
-                        $('#numLevelsBody tr th').each((j, jval) => {
-                            rowNames.push($(jval).text())
-                        })
-                        localStorage.setItem(`row_names_numLevels`, JSON.stringify(rowNames))
-                        columnElements.each((j, jval) => {
-                            $(jval).css({
-                                'vertical-align': 'middle',
-                                'background-color': backgroundColors[j],
-                                'border-top': borderTops[j],
-                                'border-bottom': borderBottoms[j]
-                            })
-                            let rowName = getKeyByValue($('#numLevelsBody tr th').eq(j).text())
-                            let innerText = $('<div>')
-                            innerText.html('No data')
-                            if (data && data.pValues) {
-                                if (j < columnElements.length - 2) {
-                                    if (typeof data.pValues[rowName] === 'number' && !isNaN(data.pValues[rowName]) && typeof data.coefficients[rowName] === 'number' && !isNaN(data.coefficients[rowName])) {
-                                        innerText.html(data.coefficients[rowName].toFixed(4) + ',<br>' + data.pValues[rowName].toFixed(4))
-                                        if (data.pValues[rowName] < 0.05) {
-                                            $(innerText).css('background-color', '#82e072')
-                                        }
-                                    }
-                                    $(jval).html(innerText)
-                                    $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=numLevels&row=${getKeyByValue(rowNames[j])}&col=${column}&i=${i}&j=${j}" target="_blank"></a>`)
-                                } else {
-                                    if (j === columnElements.length - 2) {
-                                        let percentCorrectRand = parseFloat(data.percentCorrectRand)
-                                        if (typeof percentCorrectRand === 'number' && !isNaN(percentCorrectRand)) {
-                                            innerText.html(percentCorrectRand.toFixed(5))
-                                        } else {
-                                            innerText.html('No data')
-                                        }
-                                    } else if (j === columnElements.length - 1) {
-                                        let percentCorrectR = parseFloat(data.percentCorrectR)
-                                        if (typeof percentCorrectR === 'number' && !isNaN(percentCorrectR)) {
-                                            innerText.html(percentCorrectR.toFixed(5))
-                                        } else {
-                                            innerText.html('No data')
-                                        }
-                                    }
-                                    $(jval).html(innerText)
-                                }
-                            } else {
-                                $(jval).html(innerText)
-                            }
-            
-                            $(innerText).css({'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif'})
-                        })
-                        off()
-                    }
-    
-                    req = {
-                        parameters: {...parametersLevels, 'features': finalFeaturesParams},
-                        callback: callbackFunc
-                    }
-                    queue.push(req, loadTimer, columnElements, { 'backgroundColors': backgroundColors, 'borderBottoms': borderBottoms, 'borderTops': borderTops})
+
+            let tables = {
+                'numLevels': { 
+                    'checked': numLevelsTableChecked,
+                    'table': 'numLevelsTable',
+                    'tableName': 'numLevels',
+                    'tableBody': 'numLevelsBody',
+                    'numSessions': 'numLevelsNumSessionsRow',
+                    'nthChild': true
+                },
+                'levelCompletion': { 
+                    'checked': levelCompletionTableChecked,
+                    'table': 'individualLevelsTable',
+                    'tableName': 'challenges',
+                    'tableBody': 'predictTableBody',
+                    'numSessions': 'predictNumSessionsRow',
+                    'nthChild': true
+                },
+                'binaryQuestion': { 
+                    'checked': binaryQuestionTableChecked,
+                    'table': 'binomialQuestionTable',
+                    'tableName': 'questionsPredict',
+                    'tableBody': 'questionPredictBody',
+                    'numSessions': 'binomialNumSessionsRow',
+                    'nthChild': false
+                },
+                'multinomialQuestion': { 
+                    'checked': multinomialQuestionTableChecked,
+                    'table': 'multinomialQuestionTable',
+                    'tableName': 'multinomialQuestionsPredict',
+                    'tableBody': 'multinomialQuestionBody',
+                    'numSessions': 'multinomialNumSessionsRow',
+                    'nthChild': false
                 }
             }
-            numTables++
-    
-            if (levelCompletionTableChecked) {
-                numCols = $('#predictTableBody').find('tr:first td').length
-                $(`#${collapserNames[numTables]}Collapser`).collapse('show')
-                $('#predictNumSessionsRow').children().each((key, value) => { if (key > 0) $(value).html('-') })
-                for (let i = 0; i < numCols; i++) {
-                    let parametersChallenge = {
-                        'gameID': $('#gameSelect').val(),
-                        'maxRows': $('#maxRows').val(),
-                        'minMoves': $('#minMoves').val(),
-                        'minQuestions': $('#minQuestions').val(),
-                        'minLevels': $('#minLevels').val(),
-                        'maxLevels': $('#maxLevels').val(),
-                        'startDate': $('#startDate').val(),
-                        'endDate': $('#endDate').val(),
-                        'shouldUseAvgs': shouldUseAvgs,
-                    }
-                    let columnElements = $(`#predictTableBody tr td:nth-child(${i+2})`).not('.disabled-cell')
-                    let columnIndexes = Object.keys(columnElements.toArray())
-                    let column
-                    switch (i) {
-                        case 0:
-                            column = 'lvl1'; break
-                        case 1:
-                            column = 'lvl3'; break
-                        case 2:
-                            column = 'lvl5'; break
-                        case 3:
-                            column = 'lvl7'; break
-                        case 4:
-                            column = 'lvl11'; break
-                        case 5:
-                            column = 'lvl13'; break
-                        case 6:
-                            column = 'lvl15'; break
-                        case 7:
-                            column = 'lvl19'; break
-                        case 8:
-                            column = 'lvl21'; break
-                        case 9:
-                            column = 'lvl23'; break
-                        case 10:
-                            column = 'lvl25'; break
-                        case 11:
-                            column = 'lvl27'; break
-                        case 12:
-                            column = 'lvl31'; break
-                        case 13:
-                            column = 'lvl33'; break
-                    }
-    
-                    parametersChallenge['predictTable'] = true
-                    parametersChallenge['predictColumn'] = column
-    
-                    let numAlgorithms = algorithmNames.length+1
-                    let checkedFeatures = $(`#predictTableBody tr th:gt(0):lt(${columnElements.length-numAlgorithms-1})`).toArray().map((ele, idx) => { return $.trim(ele.innerText) }).filter((ele, index) => { return $.inArray(index.toString(), columnIndexes) >= 0 && featuresListParameters[getKeyByValue(ele)] })
-                    checkedFeatures = $(checkedFeatures).map((ele, idx) => { return getKeyByValue(idx) }).toArray()
-                    checkedFeaturesParams = {}
-                    $(checkedFeatures).each((index, value) => {
-                        checkedFeaturesParams[value] = true
-                    })
-                    featuresListTemp = {}
-                    Object.keys(featuresListParameters).forEach(x => featuresListTemp[x] = false) // reset all features to false and overwrite the true ones
-                    finalFeaturesParams = {...featuresListTemp, ...checkedFeaturesParams}
-    
-                    let loadTimer, backgroundColors = [], borderBottoms = [], borderTops = []
-                    columnElements.each((index, value) => {
-                        backgroundColors.push($(value).css('background-color'))
-                        borderBottoms.push($(value).css('border-bottom'))
-                        borderTops.push($(value).css('border-top'))
-                        $(value).css({
-                            'background-color': 'rgba(0, 0, 0, 0.15)',
-                            'border-top': 'none',
-                            'border-bottom': 'none'
-                        })
-                        if (index === 2) {
-                            $(value).addClass('colLoadingText')
-                            let rand = Math.random()
-                            if (rand < 0.333) {
-                                $(value).text('.')
-                            } else if (rand < 0.666) {
-                                $(value).text('. .')
-                            } else {
-                                $(value).text('. . .')
-                            }
-                            $(value).css({
-                                'vertical-align': 'middle',
-                                'text-align': 'center',
-                                'font-size': '16px'
-                            })
-                            loadTimer = setInterval(() => {
-                                let currentText = $(value).html()
-                                let newText
-                                if (currentText !== '. . . .') {
-                                    newText = currentText + ' .'
-                                } else {
-                                    newText = '.'
-                                }
-                                $(value).html(newText)
-                            }, 400 + Math.random() * 200)
-                        } else {
-                            $(value).text('')
+
+            $.each(tables, (i, currentTable) => {
+                if (currentTable['checked']) {
+                    let table = currentTable['table']
+                    let tableName = currentTable['tableName']
+                    let tableBody = currentTable['tableBody']
+                    let tableSessionsRow = currentTable['numSessions']
+                    let nthChild = currentTable['nthChild']
+                    numCols = $(`#${tableBody}`).find(`${nthChild ? 'tr:first td' : 'tr:not(:nth-of-type(1)):first td'}`).length
+                    $(`#${collapserNames[numTables]}Collapser`).collapse('show')
+                    $(`#${tableSessionsRow}`).children().each((key, value) => { if (key > 0) $(value).html('-') })
+                    for (let i = 0; i < numCols; i++) {
+                        let columnElements = $(`#${tableBody} tr td:nth-${nthChild ? 'child('+(i+1)+')' : 'of-type('+(i+2)+')'}`).not('.disabled-cell')
+                        let column = Object.keys(model.columns[table].headers)[i]
+        
+                        let parameters = {
+                            'gameID': $('#gameSelect').val(),
+                            'maxRows': $('#maxRows').val(),
+                            'minMoves': $('#minMoves').val(),
+                            'minQuestions': $('#minQuestions').val(),
+                            'minLevels': $('#minLevels').val(),
+                            'maxLevels': $('#maxLevels').val(),
+                            'startDate': $('#startDate').val(),
+                            'endDate': $('#endDate').val(),
+                            'column': column,
+                            'table': table,
+                            'shouldUseAvgs': shouldUseAvgs,
                         }
-                    })
-    
-                    let callbackFunc = (data) => {
-                        clearInterval(loadTimer)
-                        localStorage.setItem(`data_challenges_${column}`, JSON.stringify({ 'coefficients': data.coefficients, 'stdErrs': data.stdErrs }))
-                        let rowNames = []
-                        let expectedAccuracy = Math.max(data.numSessions.numTrue, data.numSessions.numFalse) / (data.numSessions.numTrue + data.numSessions.numFalse)
-                        let expectedAccuracyStr = data.numSessions.numTrue + ' / ' + data.numSessions.numFalse
-                        if (!isNaN(expectedAccuracy)) expectedAccuracyStr += '<br>(' + (expectedAccuracy).toFixed(2) + ' accuracy of expected val)'
-                        $(`#predictNumSessionsRow td:nth-child(${i+2})`).html(expectedAccuracyStr)
-                        $('#predictTableBody tr th').each((j, jval) => {
-                            rowNames.push($(jval).text())
+                        let numAlgorithms = model.algorithms[table].length
+
+                        let featuresParams = {}
+                        $.each($('#featuresList input'), (j, val) => {
+                            let flatFeatures = Object.keys({...model.features[table].general, ...model.features[table].specific})
+                            featuresParams[val.id] = ($(val).is(':checked') && flatFeatures.indexOf(val.id) > -1)
                         })
-                        localStorage.setItem(`row_names_challenges`, JSON.stringify(rowNames))
-                        columnElements.each((j, jval) => {
-                            $(jval).css({
-                                'vertical-align': 'middle',
-                                'background-color': backgroundColors[j],
-                                'border-top': borderTops[j],
-                                'border-bottom': borderBottoms[j]
+                        // make parameters for per level inputs separately so they can 'cascade' in the table
+                        $.each(Object.keys(model.features[table].perLevel), (j, val) => {
+                            featuresParams[val] = (j < i && $(`#${val}`).is(':checked'))
+                        })
+        
+                        let loadTimer, backgroundColors = [], borderBottoms = [], borderTops = []
+        
+                        columnElements.each((index, value) => {
+                            backgroundColors.push($(value).css('background-color'))
+                            borderBottoms.push($(value).css('border-bottom'))
+                            borderTops.push($(value).css('border-top'))
+                            $(value).css({
+                                'background-color': 'rgba(0, 0, 0, 0.15)',
+                                'border-top': 'none',
+                                'border-bottom': 'none'
                             })
-                            let rowName = getKeyByValue($('#numLevelsBody tr th').eq(j).text())
-                            let innerText = $('<div>')
-                            innerText.html('No data')
-                            if (data && data.pValues) {
-                                if (j < columnElements.length - (1 + algorithmNames.length)) {
-                                    if (typeof data.pValues[rowName] === 'number' && !isNaN(data.pValues[rowName]) && typeof data.coefficients[rowName] === 'number' && !isNaN(data.coefficients[rowName])) {
-                                        innerText.html(data.coefficients[rowName].toFixed(4) + ',<br>' + data.pValues[rowName].toFixed(4))
-                                        if (data.pValues[rowName] < 0.05) {
-                                            $(innerText).css('background-color', '#82e072')
-                                        }
-                                    }
-                                    $(jval).html(innerText)
-                                    $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=challenges&row=${getKeyByValue(rowNames[j])}&col=${column}&i=${i}&j=${j}" target="_blank"></a>`)
+                            if (index === 2) {
+                                $(value).addClass('colLoadingText')
+                                let rand = Math.random()
+                                if (rand < 0.333) {
+                                    $(value).text('.')
+                                } else if (rand < 0.666) {
+                                    $(value).text('. .')
                                 } else {
-                                    if (j === columnElements.length - (1 + algorithmNames.length)) {
-                                        let percentCorrectR = parseFloat(data.percentCorrectR)
-                                        if (typeof percentCorrectR === 'number' && !isNaN(percentCorrectR)) {
-                                            innerText.html(percentCorrectR.toFixed(5) + ',<br>' + ((100 * percentCorrectR / expectedAccuracy) - 100).toFixed(4) + '%')
-                                            if (percentCorrectR > expectedAccuracy) {
-                                                $(innerText).css('background-color', '#82e072')
-                                            }
-                                        } else {
-                                            innerText.html('No data')
-                                        }
+                                    $(value).text('. . .')
+                                }
+                                $(value).css({
+                                    'vertical-align': 'middle',
+                                    'text-align': 'center',
+                                    'font-size': '16px'
+                                })
+                                loadTimer = setInterval(() => {
+                                    let currentText = $(value).html()
+                                    let newText
+                                    if (currentText !== '. . . .') {
+                                        newText = currentText + ' .'
                                     } else {
-                                        let currentAlgorithm = j - columnElements.length + algorithmNames.length
-                                        let percentCorrect = parseFloat(data.accuracies[algorithmNames[currentAlgorithm]])
-                                        // Color accuracies higher than random informed green
-                                        if (typeof percentCorrect === 'number' && !isNaN(percentCorrect)) {
-                                            if (percentCorrect > expectedAccuracy) {
-                                                $(innerText).css('background-color', '#82e072')
-                                            }
-                                            innerText.html(percentCorrect.toFixed(5) + ',<br>' + ((100 * percentCorrect / expectedAccuracy) - 100).toFixed(4) + '%')
-                                        } else {
-                                            innerText.html('No data')
-                                        }
+                                        newText = '.'
                                     }
-                                    $(jval).html(innerText)
-                                }
+                                    $(value).html(newText)
+                                }, 400 + Math.random() * 200)
                             } else {
-                                $(jval).html(innerText)
+                                $(value).text('')
                             }
-                            $(innerText).css({'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif'})
                         })
-                        off()
-                    }
-    
-                    req = {
-                        parameters: {...parametersChallenge, 'features': finalFeaturesParams},
-                        callback: callbackFunc
-                    }
-                    queue.push(req, loadTimer, columnElements, { 'backgroundColors': backgroundColors, 'borderBottoms': borderBottoms, 'borderTops': borderTops})
-                }
-            }
-            numTables++
-    
-            if (questionTableChecked) {
-                numCols = $('#tableAllBody').find('tr:first td').length
-                $(`#${collapserNames[numTables]}Collapser`).collapse('show')
-                $('#questionsNumSessionsRow').children().each((key, value) => { if (key > 0) $(value).html('-') })
-                for (let i = 0; i < numCols; i++) {
-                    let columnElements = $(`#tableAllBody tr td:nth-child(${i+2})`)
-                    let columnIndexes = Object.keys(columnElements.toArray())
-                    let column
-                    switch (i) {
-                        case 0:
-                            column = 'q00'; break
-                        case 1:
-                            column = 'q01'; break
-                        case 2:
-                            column = 'q02'; break
-                        case 3:
-                            column = 'q03'; break
-                        case 4:
-                            column = 'q10'; break
-                        case 5:
-                            column = 'q11'; break
-                        case 6:
-                            column = 'q12'; break
-                        case 7:
-                            column = 'q13'; break
-                        case 8:
-                            column = 'q20'; break
-                        case 9:
-                            column = 'q21'; break
-                        case 10:
-                            column = 'q22'; break
-                        case 11:
-                            column = 'q23'; break
-                        case 12:
-                            column = 'q30'; break
-                        case 13:
-                            column = 'q31'; break
-                        case 14:
-                            column = 'q32'; break
-                        case 15:
-                            column = 'q33'; break
-                    }
-    
-                    let parametersQues = {
-                        'gameID': $('#gameSelect').val(),
-                        'maxRows': $('#maxRows').val(),
-                        'minMoves': $('#minMoves').val(),
-                        'minQuestions': 1,
-                        'minLevels': $('#minLevels').val(),
-                        'maxLevels': $('#maxLevels').val(),
-                        'startDate': $('#startDate').val(),
-                        'endDate': $('#endDate').val(),
-                        'shouldUseAvgs': shouldUseAvgs,
-                    }
-                    parametersQues['column'] = column
-                    let loadTimer, backgroundColors = [], borderBottoms = [], borderTops = []
-    
-                    let numAlgorithms = algorithmNames.length + 1
-                    let checkedFeatures = $(`#tableAllBody tr th:gt(0):lt(${columnElements.length-numAlgorithms-1})`).toArray().map((ele, idx) => { return $.trim(ele.innerText) }).filter((ele, index) => { return $.inArray(index.toString(), columnIndexes) >= 0 && featuresListParameters[getKeyByValue(ele)] })
-                    checkedFeatures = $(checkedFeatures).map((ele, idx) => { return getKeyByValue(idx) }).toArray()
-                    checkedFeaturesParams = {}
-                    $(checkedFeatures).each((index, value) => {
-                        checkedFeaturesParams[value] = true
-                    })
-                    featuresListTemp = {}
-                    Object.keys(featuresListParameters).forEach(x => featuresListTemp[x] = false) // reset all features to false and overwrite the true ones
-                    finalFeaturesParams = {...featuresListTemp, ...checkedFeaturesParams}
-    
-                    switch (column) {
-                        case 'q00':
-                        case 'q11':
-                        case 'q20':
-                        case 'q31':
+                        let callbackFunc = (data) => {
+                            clearInterval(loadTimer)
+                            localStorage.setItem(`data_${table}_${column}`, JSON.stringify({ 'coefficients': data.coefficients, 'stdErrs': data.stdErrs }))
+                            let rowNames = []
+                            let numSessionsString = (data[1]) ? data[1].numSessionsString : data.numSessionsString
+                            $(`#${tableSessionsRow} td:nth-child(${i+2})`).html(numSessionsString)
+                            $(`#${tableBody} tr th`).each((j, jval) => {
+                                rowNames.push($(jval).text())
+                            })
+                            localStorage.setItem(`row_names_${table}`, JSON.stringify(rowNames))
                             columnElements.each((j, jval) => {
-                                // Color the correct answer for each question
-                                $(jval).addClass('success')
-                            })
-                            break
-                    }
-                    columnElements.each((index, value) => {
-                        backgroundColors.push($(value).css('background-color'))
-                        borderBottoms.push($(value).css('border-bottom'))
-                        borderTops.push($(value).css('border-top'))
-                        $(value).css({
-                            'background-color': 'rgba(0, 0, 0, 0.15)',
-                            'border-top': 'none',
-                            'border-bottom': 'none'
-                        })
-                        if (index === 2) {
-                            $(value).addClass('colLoadingText')
-                            let rand = Math.random()
-                            if (rand < 0.333) {
-                                $(value).text('.')
-                            } else if (rand < 0.666) {
-                                $(value).text('. .')
-                            } else {
-                                $(value).text('. . .')
-                            }
-                            $(value).css({
-                                'vertical-align': 'middle',
-                                'text-align': 'center',
-                                'font-size': '16px'
-                            })
-                            loadTimer = setInterval(() => {
-                                let currentText = $(value).html()
-                                let newText
-                                if (currentText !== '. . . .') {
-                                    newText = currentText + ' .'
+                                $(jval).css({
+                                    'vertical-align': 'middle',
+                                    'background-color': backgroundColors[j],
+                                    'border-top': borderTops[j],
+                                    'border-bottom': borderBottoms[j]
+                                })
+                                let innerText = $('<div>')
+                                innerText.html('No data')
+                                let rowName
+                                if (data.pValues) {
+                                    rowName = getKeyByValue($(`#${tableBody} tr th`).eq(j).text())
                                 } else {
-                                    newText = '.'
+                                    rowName = $(jval).siblings(`td:first`).text()
                                 }
-                                $(value).html(newText)
-                            }, 400 + Math.random() * 200)
-                        } else {
-                            $(value).text('')
-                        }
-                    })
-    
-                    let callbackFunc = (data) => {
-                        clearInterval(loadTimer)
-                        // Store the computation values for retrieval when the link is clicked
-                        localStorage.setItem(`data_questions_${column}`, JSON.stringify({ 'coefficients': data.coefficients, 'stdErrs': data.stdErrs }))
-                        let rowNames = []
-                        let expectedAccuracy = Math.max(data.numSessions.numTrue, data.numSessions.numFalse) / (data.numSessions.numTrue + data.numSessions.numFalse)
-                        let expectedAccuracyStr = data.numSessions.numTrue + ' / ' + data.numSessions.numFalse
-                        if (!isNaN(expectedAccuracy)) expectedAccuracyStr += '<br>(' + (expectedAccuracy).toFixed(2) + ' accuracy of expected val)'
-                        $(`#questionsNumSessionsRow td:nth-child(${i+2})`).html(expectedAccuracyStr)
-                        $('#tableAllBody tr th').each((j, jval) => {
-                            rowNames.push($(jval).text())
-                        })
-                        localStorage.setItem(`row_names_questions`, JSON.stringify(rowNames))
-                        columnElements.each((j, jval) => {
-                            $(jval).css({
-                                'vertical-align': 'middle',
-                                'background-color': backgroundColors[j],
-                                'border-top': borderTops[j],
-                                'border-bottom': borderBottoms[j]
-                            })
-                            let rowName = getKeyByValue($('#tableAllBody tr th').eq(j).text())
-                            let innerText = $('<div>')
-                            if (j < columnElements.length - (1 + algorithmNames.length)) {
-                                if (typeof data.coefficients[rowName] === 'number' && !isNaN(data.coefficients[rowName])) {
-                                    let text = data.coefficients[rowName].toFixed(4)
-                                    if (typeof data.pValues[rowName] === 'number' && !isNaN(data.pValues[rowName])) {
-                                        text += ',<br>' + data.pValues[rowName].toFixed(4)
-                                    } else {
-                                        text += ',<br>' + 'NaN'
-                                    }
-                                    innerText.html(text)
-                                    if (data.pValues[rowName] < 0.05) {
-                                        $(innerText).css('background-color', '#82e072')
-                                    }
-                                } else {
-                                    innerText.html('No data')
-                                }
-                                $(jval).html(innerText)
-                                $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=questions&row=${getKeyByValue(rowNames[j])}&col=${column}&i=${i}&j=${j}" target="_blank"></a>`)
-                            } else {
-                                if (j === columnElements.length - (1 + algorithmNames.length)) {
-                                    let percentCorrectR = parseFloat(data.percentCorrectR)
-                                    if (typeof percentCorrectR === 'number' && !isNaN(percentCorrectR)) {
-                                        innerText.html(percentCorrectR.toFixed(5) + ',<br>' + ((100 * percentCorrectR / expectedAccuracy) - 100).toFixed(4) + '%')
-                                        if (percentCorrectR > expectedAccuracy) {
-                                            $(innerText).css('background-color', '#82e072')
-                                        }
-                                    } else {
-                                        innerText.html('No data')
-                                    }
-                                } else {
-                                    let currentAlgorithm = j - columnElements.length + algorithmNames.length
-                                    let percentCorrect = parseFloat(data.accuracies[algorithmNames[currentAlgorithm]])
-                                    // Color accuracies higher than random informed green
-                                    if (typeof percentCorrect === 'number' && !isNaN(percentCorrect)) {
-                                        if (percentCorrect > expectedAccuracy) {
-                                            $(innerText).css('background-color', '#82e072')
-                                        }
-                                        innerText.html(percentCorrect.toFixed(5) + ',<br>' + ((100 * percentCorrect / expectedAccuracy) - 100).toFixed(4) + '%')
-                                    } else {
-                                        innerText.html('No data')
-                                    }
-                                }
-                                $(jval).html(innerText)
-                            }
-                            $(innerText).css({'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif'})
-                        })
-                        off()
-                    }
-    
-                    req = {
-                        parameters: {...parametersQues, 'features': finalFeaturesParams},
-                        callback: callbackFunc
-                    }
-                    queue.push(req, loadTimer, columnElements, { 'backgroundColors': backgroundColors, 'borderBottoms': borderBottoms, 'borderTops': borderTops})
-                }
-            }
-            numTables++
-    
-            if (levelRangeQuestionChecked) {
-                numCols = $('#questionPredictBody').find('tr:not(:nth-of-type(1)):first td').length
-                $(`#${collapserNames[numTables]}Collapser`).collapse('show')
-                $('#binomialNumSessionsRow').children().each((key, value) => { if (key > 0) $(value).html('-') })
-                for (let i = 1; i < numCols; i++) {
-                    let parametersQuesPredict = {
-                        'gameID': $('#gameSelect').val(),
-                        'maxRows': $('#maxRows').val(),
-                        'minMoves': $('#minMoves').val(),
-                        'minQuestions': $('#minQuestions').val(),
-                        'minLevels': $('#minLevels').val(),
-                        'maxLevels': $('#maxLevels').val(),
-                        'startDate': $('#startDate').val(),
-                        'endDate': $('#endDate').val(),
-                        'shouldUseAvgs': shouldUseAvgs,
-                    }
-                    let columnElements = $(`#questionPredictBody tr td:nth-of-type(${i + 1})`)
-                    let columnIndexes = Object.keys(columnElements.toArray())
-                    let column
-                    switch (i) {
-                        case 1:
-                            column = 'q00'; break
-                        case 2:
-                            column = 'q01'; break
-                        case 3:
-                            column = 'q02'; break
-                        case 4:
-                            column = 'q03'; break
-                        case 5:
-                            column = 'q10'; break
-                        case 6:
-                            column = 'q11'; break
-                        case 7:
-                            column = 'q12'; break
-                        case 8:
-                            column = 'q13'; break
-                        case 9:
-                            column = 'q20'; break
-                        case 10:
-                            column = 'q21'; break
-                        case 11:
-                            column = 'q22'; break
-                        case 12:
-                            column = 'q23'; break
-                        case 13:
-                            column = 'q30'; break
-                        case 14:
-                            column = 'q31'; break
-                        case 15:
-                            column = 'q32'; break
-                        case 16:
-                            column = 'q33'; break
-                    }
-    
-                    parametersQuesPredict['questionPredictTable'] = true
-                    parametersQuesPredict['questionPredictColumn'] = column
-    
-                    let numAlgorithms = algorithmNames.length + 1 // tableAllBody is intentional here, since features aren't in this table
-                    let checkedFeatures = $(`#tableAllBody tr th:gt(0):lt(${columnElements.length-numAlgorithms-1})`).toArray().map((ele, idx) => { return $.trim(ele.innerText) }).filter((ele, index) => { return $.inArray(index.toString(), columnIndexes) >= 0 && featuresListParameters[getKeyByValue(ele)] })
-                    checkedFeatures = $(checkedFeatures).map((ele, idx) => { return getKeyByValue(idx) }).toArray()
-                    checkedFeaturesParams = {}
-                    $(checkedFeatures).each((index, value) => {
-                        checkedFeaturesParams[value] = true
-                    })
-                    featuresListTemp = {}
-                    Object.keys(featuresListParameters).forEach(x => featuresListTemp[x] = false) // reset all features to false and overwrite the true ones
-                    finalFeaturesParams = {...featuresListTemp, ...checkedFeaturesParams}
-    
-                    switch (column) {
-                        case 'q00':
-                        case 'q11':
-                        case 'q20':
-                        case 'q31':
-                            columnElements.each((j, jval) => {
-                                // Color the correct answer for each question
-                                $(jval).addClass('success')
-                            })
-                            break
-                    }
-                    let loadTimer, backgroundColors = [], borderBottoms = [], borderTops = []
-                    columnElements.each((index, value) => {
-                        backgroundColors.push($(value).css('background-color'))
-                        borderBottoms.push($(value).css('border-bottom'))
-                        borderTops.push($(value).css('border-top'))
-                        $(value).css({
-                            'background-color': 'rgba(0, 0, 0, 0.15)',
-                            'border-top': 'none',
-                            'border-bottom': 'none'
-                        })
-                        if (index === 4) {
-                            $(value).addClass('colLoadingText')
-                            let rand = Math.random()
-                            if (rand < 0.333) {
-                                $(value).text('.')
-                            } else if (rand < 0.666) {
-                                $(value).text('. .')
-                            } else {
-                                $(value).text('. . .')
-                            }
-                            $(value).css({
-                                'vertical-align': 'middle',
-                                'text-align': 'center',
-                                'font-size': '16px'
-                            })
-                            loadTimer = setInterval(() => {
-                                let currentText = $(value).html()
-                                let newText
-                                if (currentText !== '. . . .') {
-                                    newText = currentText + ' .'
-                                } else {
-                                    newText = '.'
-                                }
-                                $(value).html(newText)
-                            }, 400 + Math.random() * 200)
-                        } else {
-                            $(value).text('')
-                        }
-                    })
-    
-                    let callbackFunc = (data) => {
-                        clearInterval(loadTimer)
-                        let expectedAccuracy = Math.max(data[1].numSessions.numTrue, data[1].numSessions.numFalse) / (data[1].numSessions.numTrue + data[1].numSessions.numFalse)
-                        let expectedAccuracyStr = data[1].numSessions.numTrue + ' / ' + data[1].numSessions.numFalse
-                        if (!isNaN(expectedAccuracy)) expectedAccuracyStr += '<br>(' + (expectedAccuracy).toFixed(2) + ' accuracy of expected val)'
-                        $(`#binomialNumSessionsRow td:nth-child(${i+1})`).html(expectedAccuracyStr)
-                        columnElements.each((j, jval) => {
-                            $(jval).css({
-                                'vertical-align': 'middle',
-                                'background-color': backgroundColors[j],
-                                'border-top': borderTops[j],
-                                'border-bottom': borderBottoms[j]
-                            })
-                            let innerText = $('<div>')
-                            innerText.html('No data')
-                            if (data) {
-                                if (j % (1 + algorithmNames.length) === 0) {
-                                    let percentCorrectR = parseFloat(data[Math.floor(j/(1 + algorithmNames.length))+1].percentCorrectR)
-                                    if (typeof percentCorrectR === 'number' && !isNaN(percentCorrectR)) {
-                                        innerText.html(percentCorrectR.toFixed(4) + ',<br>' + ((100 * percentCorrectR / expectedAccuracy) - 100).toFixed(4) + '%')
-                                        if (percentCorrectR > expectedAccuracy) {
-                                            $(innerText).css('background-color', '#82e072')
-                                        }
-                                    } else {
-                                        innerText.html('No data')
-                                    }
-                                } else {
-                                    let numAlgorithms = algorithmNames.length
-                                    let rowName = $(jval).siblings(`td:first`).text()
-                                    if (data[Math.floor(j / (numAlgorithms + 1)) + 1]) {
-                                        let percentCorrect = parseFloat(data[Math.floor(j / (numAlgorithms + 1)) + 1].accuracies[rowName])
-                                        // Color accuracies higher than random informed green
-                                        if (typeof percentCorrect === 'number' && !isNaN(percentCorrect)) {
-                                            if (percentCorrect > expectedAccuracy) {
+                                if (data.pValues || data[1].pValues || data[1].percentCorrect) {
+                                    if (j < columnElements.length - numAlgorithms && data.pValues) {
+                                        rowName = getKeyByValue($(`#${tableBody} tr th`).eq(j).text())
+                                        if (typeof data.pValues[rowName] === 'number' && !isNaN(data.pValues[rowName]) && typeof data.coefficients[rowName] === 'number' && !isNaN(data.coefficients[rowName])) {
+                                            innerText.html(data.coefficients[rowName].toFixed(4) + ',<br>' + data.pValues[rowName].toFixed(4))
+                                            if (data.pValues[rowName] < 0.05) {
                                                 $(innerText).css('background-color', '#82e072')
                                             }
-                                            innerText.html(percentCorrect.toFixed(4) + ',<br>' + ((100 * percentCorrect / expectedAccuracy) - 100).toFixed(4) + '%')
+                                        }
+                                        $(jval).html(innerText)
+                                        $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=${table}&row=${getKeyByValue(rowNames[j])}&col=${column}&i=${i}&j=${j}" target="_blank"></a>`)
+                                    } else {
+                                        let percentCorrect, expectedAccuracy
+                                        if (data.pValues) {
+                                            percentCorrect = parseFloat(data.percentCorrect[model.algorithms[table][j-columnElements.length+numAlgorithms]])
+                                        } else {
+                                            percentCorrect = parseFloat(data[Math.floor(j / (numAlgorithms)) + 1].percentCorrect[rowName])
+                                        }
+                                        if (typeof percentCorrect === 'number' && !isNaN(percentCorrect)) {
+                                            if ((data[1] && (expectedAccuracy = data[1].expectedAccuracy)) || (expectedAccuracy = data.expectedAccuracy)) {
+                                                if (percentCorrect > expectedAccuracy) {
+                                                    $(innerText).css('background-color', '#82e072')
+                                                }
+                                                innerText.html(percentCorrect.toFixed(4) + ',<br>' + ((100 * percentCorrect / expectedAccuracy) - 100).toFixed(4) + '%')
+                                            } else {
+                                                innerText.html(percentCorrect.toFixed(5))
+                                            }
                                         } else {
                                             innerText.html('No data')
                                         }
-                                    } else {
-                                        innerText.html('No data')
-                                    }
-                                }
-                                $(innerText).wrapInner(`<a target="_blank" href="../logger-data/questionsPredict/questionsPredictDataForR_${column}_${Math.floor(j/(1 + algorithmNames.length))+1}.txt">`)
-                                $(jval).html(innerText)
-                            }
-                            $(innerText).css({ 'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif' })
-                        })
-                        off()
-                    }
-    
-                    req = {
-                        parameters: {...parametersQuesPredict, 'features': finalFeaturesParams},
-                        callback: callbackFunc
-                    }
-                    queue.push(req, loadTimer, columnElements, { 'backgroundColors': backgroundColors, 'borderBottoms': borderBottoms, 'borderTops': borderTops})
-                }
-            }
-            numTables++
-    
-            if (multinomialQuestionChecked) {
-                numCols = $('#multinomialQuestionBody').find('tr:not(:nth-of-type(1)):first td').length
-                $(`#${collapserNames[numTables]}Collapser`).collapse('show')
-                $('#multinomialNumSessionsRow').children().each((key, value) => { if (key > 0) $(value).html('-') })
-                for (let i = 1; i < numCols; i++) {
-                    let parametersQuatQuesPredict = {
-                        'gameID': $('#gameSelect').val(),
-                        'maxRows': $('#maxRows').val(),
-                        'minMoves': $('#minMoves').val(),
-                        'minQuestions': $('#minQuestions').val(),
-                        'minLevels': $('#minLevels').val(),
-                        'maxLevels': $('#maxLevels').val(),
-                        'startDate': $('#startDate').val(),
-                        'endDate': $('#endDate').val(),
-                        'shouldUseAvgs': shouldUseAvgs,
-                    }
-                    let columnElements = $(`#multinomialQuestionBody tr td:nth-of-type(${i + 1})`)
-                    let columnIndexes = Object.keys(columnElements.toArray())
-                    let column
-                    switch (i) {
-                        case 1:
-                            column = 'q0'; break
-                        case 2:
-                            column = 'q1'; break
-                        case 3:
-                            column = 'q2'; break
-                        case 4:
-                            column = 'q3'; break
-                    }
-    
-                    parametersQuatQuesPredict['multinomQuestionPredictTable'] = true
-                    parametersQuatQuesPredict['multinomQuestionPredictColumn'] = column
-    
-                    let numAlgorithms = algorithmNames.length // tableAllBody is intentional here, since features aren't in this table
-                    let checkedFeatures = $(`#tableAllBody tr th:gt(0):lt(${columnElements.length-numAlgorithms-1})`).toArray().map((ele, idx) => { return $.trim(ele.innerText) }).filter((ele, index) => { return $.inArray(index.toString(), columnIndexes) >= 0 && featuresListParameters[getKeyByValue(ele)] })
-                    checkedFeatures = $(checkedFeatures).map((ele, idx) => { return getKeyByValue(idx) }).toArray()
-                    checkedFeaturesParams = {}
-                    $(checkedFeatures).each((index, value) => {
-                        checkedFeaturesParams[value] = true
-                    })
-                    featuresListTemp = {}
-                    Object.keys(featuresListParameters).forEach(x => featuresListTemp[x] = false) // reset all features to false and overwrite the true ones
-                    finalFeaturesParams = {...featuresListTemp, ...checkedFeaturesParams}
-    
-                    let loadTimer, backgroundColors = [], borderBottoms = [], borderTops = []
-                    columnElements.each((index, value) => {
-                        backgroundColors.push($(value).css('background-color'))
-                        borderBottoms.push($(value).css('border-bottom'))
-                        borderTops.push($(value).css('border-top'))
-                        $(value).css({
-                            'background-color': 'rgba(0, 0, 0, 0.15)',
-                            'border-top': 'none',
-                            'border-bottom': 'none'
-                        })
-                        if (index === 4) {
-                            $(value).addClass('colLoadingText')
-                            let rand = Math.random()
-                            if (rand < 0.333) {
-                                $(value).text('.')
-                            } else if (rand < 0.666) {
-                                $(value).text('. .')
-                            } else {
-                                $(value).text('. . .')
-                            }
-                            $(value).css({
-                                'vertical-align': 'middle',
-                                'text-align': 'center',
-                                'font-size': '16px'
-                            })
-                            loadTimer = setInterval(() => {
-                                let currentText = $(value).html()
-                                let newText
-                                if (currentText !== '. . . .') {
-                                    newText = currentText + ' .'
-                                } else {
-                                    newText = '.'
-                                }
-                                $(value).html(newText)
-                            }, 400 + Math.random() * 200)
-                        } else {
-                            $(value).text('')
-                        }
-                    })
-    
-                    let callbackFunc = (data) => {
-                        clearInterval(loadTimer)
-                        let rowNames = []
-                        let expectedAccuracy = Math.max(...Object.values(data[1].numSessions)) / Object.values(data[1].numSessions).reduce((sum, num) => sum + num, 0)
-                        let expectedAccuracyStr = data[1].numSessions.numA + ' / ' + data[1].numSessions.numB + ' / ' + data[1].numSessions.numC + ' / ' + data[1].numSessions.numD
-                        if (!isNaN(expectedAccuracy)) expectedAccuracyStr += '<br>(' + (expectedAccuracy).toFixed(2) + ' accuracy of expected val)'
-                        $(`#multinomialNumSessionsRow td:nth-child(${i+1})`).html(expectedAccuracyStr)
-                        $('#multinomialQuestionBody tr th').each((j, jval) => {
-                           rowNames.push($(jval).text())
-                        })
-                        columnElements.each((j, jval) => {
-                            $(jval).css({
-                                'vertical-align': 'middle',
-                                'background-color': backgroundColors[j],
-                                'border-top': borderTops[j],
-                                'border-bottom': borderBottoms[j]
-                            })
-                            let innerText = $('<div>')
-                            innerText.html('No data')
-                            if (data) {
-                                let numAlgorithms = algorithmNames.length
-                                let rowName = $(jval).siblings(`td:first`).text()
-                                if (data[Math.floor(j / numAlgorithms) + 1]) {
-                                    let percentCorrect = parseFloat(data[Math.floor(j / numAlgorithms) + 1].accuracies[rowName])
-                                    // Color accuracies higher than random informed green
-                                    if (typeof percentCorrect === 'number' && !isNaN(percentCorrect)) {
-                                        if (percentCorrect > expectedAccuracy) {
-                                            $(innerText).css('background-color', '#82e072')
+                                        if (table === 'multinomialQuestionTable') {
+                                            $(innerText).wrapInner(`<a target="_blank" href="../logger-data/${tableName}/${tableName}DataForR_${column}.txt">`)
+                                        } else if (table === 'binaryQuestionTable') {
+                                            $(innerText).wrapInner(`<a target="_blank" href="../logger-data/${tableName}/${tableName}DataForR_${column}_${Math.floor(j/(1 + numAlgorithms))+1}.txt">`)
                                         }
-                                        innerText.html(percentCorrect.toFixed(4) + ',<br>' + ((100 * percentCorrect / expectedAccuracy) - 100).toFixed(4) + '%')
-                                    } else {
-                                        innerText.html('No data')
+                                        $(jval).html(innerText)
                                     }
                                 } else {
-                                    innerText.html('No data')
+                                    $(jval).html(innerText)
                                 }
-                                $(innerText).wrapInner(`<a target="_blank" href="../logger-data/multinomQuestionsPredict/multinomQuestionsPredictDataForR_${column}.txt">`)
-                                $(jval).html(innerText)
-                            }
-                            $(innerText).css({ 'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif' })
-                        })
-                        off()
+                
+                                $(innerText).css({'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif'})
+                            })
+                            off()
+                        }
+        
+                        req = {
+                            parameters: {...parameters, 'features': featuresParams},
+                            callback: callbackFunc
+                        }
+                        queue.push(req, loadTimer, columnElements, { 'backgroundColors': backgroundColors, 'borderBottoms': borderBottoms, 'borderTops': borderTops})
                     }
-    
-                    req = {
-                        parameters: {...parametersQuatQuesPredict, 'features': finalFeaturesParams},
-                        callback: callbackFunc
-                    }
-                    queue.push(req, loadTimer, columnElements, { 'backgroundColors': backgroundColors, 'borderBottoms': borderBottoms, 'borderTops': borderTops})
                 }
-            }
-            numTables++
+                numTables++
+            })
     
             if (otherFeaturesChecked) $(`#${collapserNames[numTables]}Collapser`).collapse('show')
     
