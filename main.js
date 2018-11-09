@@ -621,27 +621,32 @@ $(document).ready((event) => {
                                         $(jval).html(innerText)
                                         $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=${table}&row=${getKeyByValue(rowNames[j])}&col=${column}&i=${i}&j=${j}" target="_blank"></a>`)
                                     } else {
-                                        let percentCorrect, expectedAccuracy
+                                        let percentsCorrect, expectedAccuracy
                                         if (data.pValues) {
-                                            percentCorrect = parseFloat(data.percentCorrect[model.algorithms[table][j-columnElements.length+numAlgorithms]])
+                                            percentsCorrect = data.percentCorrect[model.algorithms[table][j-columnElements.length+numAlgorithms]]
                                         } else {
-                                            percentCorrect = parseFloat(data[Math.floor(j / (numAlgorithms)) + 1].percentCorrect[rowName])
+                                            percentsCorrect = data[Math.floor(j / (numAlgorithms)) + 1].percentCorrect[rowName]
                                         }
-                                        if (typeof percentCorrect === 'number' && !isNaN(percentCorrect)) {
+                                        if (Array.isArray(percentsCorrect))
+                                            percentsCorrect = $.map(percentsCorrect, (val, i) => { return parseFloat(val) })
+
+                                        if (percentsCorrect && typeof percentsCorrect[0] === 'number' && !isNaN(percentsCorrect[0])) {
                                             if ((data[1] && (expectedAccuracy = data[1].expectedAccuracy)) || (expectedAccuracy = data.expectedAccuracy)) {
-                                                if (percentCorrect > expectedAccuracy) {
+                                                if (percentsCorrect[0] > expectedAccuracy) {
                                                     $(innerText).css('background-color', '#82e072')
                                                 }
-                                                innerText.html(percentCorrect.toFixed(4) + ',<br>' + ((100 * percentCorrect / expectedAccuracy) - 100).toFixed(4) + '%')
+                                                let percentsText = ''
+                                                for (let percent in percentsCorrect) {
+                                                    percentsText += percentsCorrect[percent].toFixed(4) + '<br>'
+                                                }
+                                                innerText.html(percentsText)
                                             } else {
-                                                innerText.html(percentCorrect.toFixed(5))
+                                                innerText.html(percentsCorrect[0].toFixed(5))
                                             }
                                         } else {
                                             innerText.html('No data')
                                         }
-                                        if (table === 'multinomialQuestionTable') {
-                                            $(innerText).wrapInner(`<a target="_blank" href="../logger-data/${tableName}/${tableName}DataForR_${column}.txt">`)
-                                        } else if (table === 'binaryQuestionTable') {
+                                        if (table === 'multinomialQuestionTable' || table === 'binaryQuestionTable') {
                                             $(innerText).wrapInner(`<a target="_blank" href="../logger-data/${tableName}/${tableName}DataForR_${column}_${Math.floor(j/(1 + numAlgorithms))+1}.txt">`)
                                         }
                                         $(jval).html(innerText)

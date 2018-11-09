@@ -853,6 +853,7 @@ function random() {
 
 function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
     $percentTesting = 0.5;
+    $numMetrics = 2;
     $table = isset($_GET['table']) ? $_GET['table'] : null;
     if/* binomial/binary qs */ (!isset($reqSessionID) && ($table === 'basic' || (isset($column) && $table === 'binomialQuestionTable'))) {
         $minMoves = $_GET['minMoves'];
@@ -999,9 +1000,9 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             if ($sklOutput) {
                 for ($i = 0, $lastRow = count($sklOutput); $i < $lastRow; $i++) {
                     $values = preg_split('/\ +/', $sklOutput[$i]);  // put "words" of this line into an array
-                    $algorithmName = implode(' ', array_slice($values, 0, -1));
+                    $algorithmName = implode(' ', array_slice($values, 0, -$numMetrics));
                     $algorithmNames[] = $algorithmName;
-                    $accuracies[$algorithmName] = end($values);
+                    $accuracies[$algorithmName] = array_slice($values, -$numMetrics);
                 }
             }
 
@@ -1085,15 +1086,15 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                 if ($sklOutput) {
                     for ($i = 0, $lastRow = count($sklOutput); $i < $lastRow; $i++) {
                         $values = preg_split('/\ +/', $sklOutput[$i]);  // put "words" of this line into an array
-                        $algorithmName = implode(' ', array_slice($values, 0, -1));
+                        $algorithmName = implode(' ', array_slice($values, 0, -$numMetrics));
                         $algorithmNames[] = $algorithmName;
-                        $accuracies[$algorithmName] = end($values);
+                        $accuracies[$algorithmName] = array_slice($values, -$numMetrics);
                     }
                 }
 
                 $sklName = 'LogReg (SKL)';
                 $algorithmNames[] = $sklName;
-                $accuracies[$sklName] = (isset($sklRegOutput[0])) ? $sklRegOutput[0] : null;
+                $accuracies[$sklName] = (isset($sklRegOutput[0])) ? array($sklRegOutput[0]) : array(null);
 
                 $accStart = 0;
                 $coefficients = array();
@@ -1131,9 +1132,9 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                     'stdErrs'=>$stdErrs,
                     'pValues'=>$pValues,
                     'numSessions'=>$numPredictors,
-                    'numSessionsString'=>"$numTrue / $numFalse <br>($expectedAccuracy expected)",
+                    'numSessionsString'=>"$numTrue / $numFalse<br>($expectedAccuracy expected)",
                     'expectedAccuracy'=>$expectedAccuracy,
-                    'percentCorrect'=>array_merge(array('Log reg'=>$percentCorrectR), $accuracies),
+                    'percentCorrect'=>array_merge(array('Log reg'=>array($percentCorrectR)), $accuracies),
                     'algorithmNames'=>$algorithmNames
                 );
             }
@@ -1724,9 +1725,9 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
         if ($sklOutput) {
             for ($i = 0, $lastRow = count($sklOutput); $i < $lastRow; $i++) {
                 $values = preg_split('/\ +/', $sklOutput[$i]);  // put "words" of this line into an array
-                $algorithmName = implode(' ', array_slice($values, 0, -1));
+                $algorithmName = implode(' ', array_slice($values, 0, -$numMetrics));
                 $algorithmNames[] = $algorithmName;
-                $accuracies[$algorithmName] = end($values);
+                $accuracies[$algorithmName] = array_slice($values, -$numMetrics);
             }
         }
 
@@ -1773,9 +1774,9 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             'stdErrs'=>$stdErrs,
             'pValues'=>$pValues,
             'numSessions'=>array('numTrue'=>$numTrue, 'numFalse'=>$numFalse),
-            'numSessionsString'=>"$numTrue / $numFalse <br>($expectedAccuracy expected)",
+            'numSessionsString'=>"$numTrue / $numFalse<br>($expectedAccuracy expected)",
             'expectedAccuracy'=>$expectedAccuracy,
-            'percentCorrect'=>array_merge(array('Log reg'=>$percentCorrectR), $accuracies),
+            'percentCorrect'=>array_merge(array('Log reg'=>array($percentCorrectR)), $accuracies),
             'algorithmNames'=>$algorithmNames,
         );
     } /* num levels         */ else if (isset($column) && $table === 'numLevelsTable') {
@@ -2041,7 +2042,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             'stdErrs'=>$stdErrs, 'pValues'=>$pValues,
             'numSessionsString'=>"$numTrue / $numFalse",
             'numSessions'=>array('numTrue'=>$numTrue, 'numFalse'=>$numFalse),
-            'percentCorrect'=>array('Log reg'=>$percentCorrectR, 'Random'=>$percentCorrectRand)
+            'percentCorrect'=>array('Log reg'=>array($percentCorrectR), 'Random'=>array($percentCorrectRand))
         );
     } /* multinomial ques   */ else if (isset($column) && $table === 'multinomialQuestionTable') {
         $minMoves = $_GET['minMoves'];
@@ -2175,15 +2176,15 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             if ($sklOutput) {
                 for ($i = 0, $lastRow = count($sklOutput); $i < $lastRow; $i++) {
                     $values = preg_split('/\ +/', $sklOutput[$i]);  // put "words" of this line into an array
-                    $algorithmName = implode(' ', array_slice($values, 0, -1));
+                    $algorithmName = implode(' ', array_slice($values, 0, -$numMetrics));
                     $algorithmNames[] = $algorithmName;
-                    $accuracies[$algorithmName] = end($values);
+                    $accuracies[$algorithmName] = array_slice($values, -$numMetrics);
                 }
             }
 
             $sklName = 'LogReg (SKL)';
             $algorithmNames[] = $sklName;
-            $accuracies[$sklName] = (isset($sklRegOutput[0])) ? $sklRegOutput[0] : null;
+            $accuracies[$sklName] = (isset($sklRegOutput[0])) ? array($sklRegOutput[0]) : array(null);
 
             $ansA = array_filter($predictedArray, function ($a) { return $a == 0; });
             $ansB = array_filter($predictedArray, function ($a) { return $a == 1; });
@@ -2203,7 +2204,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
 
             $returnArray[$predLevel] = array(
                 'numSessions'=>$numSessions,
-                'numSessionsString'=>"$numA / $numB / $numC / $numD <br>($expectedAccuracy expected)",
+                'numSessionsString'=>"$numA / $numB / $numC / $numD<br>($expectedAccuracy expected)",
                 'expectedAccuracy'=>$expectedAccuracy,
                 'algorithmNames'=>$algorithmNames,
                 'percentCorrect'=>$accuracies

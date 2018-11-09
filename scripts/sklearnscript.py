@@ -17,6 +17,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
+from sklearn import metrics
 
 import sys
 from sys import argv
@@ -39,8 +40,8 @@ names = ["Nearest Neighbors", "Linear SVM", "RBF SVM", "Gaussian Process",
 
 classifiers = [
     KNeighborsClassifier(3),
-    SVC(kernel="linear", C=0.025),
-    SVC(gamma=2, C=1),
+    SVC(kernel="linear", C=0.025, probability=True),
+    SVC(gamma=2, C=1, probability=True),
     GaussianProcessClassifier(1.0 * RBF(1.0)),
     DecisionTreeClassifier(max_depth=5),
     RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1),
@@ -58,5 +59,12 @@ X_train, X_test, y_train, y_test = \
 for name, clf in zip(names, classifiers):
     clf.fit(X_train, y_train)
     score = clf.score(X_test, y_test)
+    predictions = clf.predict(X_test)
+    probabilities = (clf.predict_proba(X_test))[:,1]
 
-    print name, score
+    f1 = metrics.f1_score(y_test, predictions, average='weighted')
+    #auc = metrics.roc_auc_score(y_test, probabilities, average='weighted')
+    #kappa = metrics.cohen_kappa_score(y_test, predictions)
+    #ari = metrics.adjusted_rand_score(y_test, predictions)
+
+    print name, score, f1
