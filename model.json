@@ -9,7 +9,7 @@
                     "levelTimes":               "Time"
                 },
                 "specific": {
-                    "avgStdDev":                "Avg knob std dev",
+                    "knobStdDevs":                "Avg knob std dev",
                     "moveTypeChangesPerLevel":  "# type changes",
                     "knobAvgs":                 "Avg knob max-min",
                     "OFFSET":                   "# offset moves",
@@ -43,7 +43,7 @@
                     "levelTimes":               "Time"
                 },
                 "specific": {
-                    "avgStdDev":                "Avg knob std dev",
+                    "knobStdDevs":                "Avg knob std dev",
                     "moveTypeChangesPerLevel":  "# type changes",
                     "knobAvgs":                 "Avg knob max-min", 
                     "OFFSET":                   "# offset moves",
@@ -77,7 +77,7 @@
                     "levelTimes":               "Time"
                 },
                 "specific": {
-                    "avgStdDev":                "Avg knob std dev",
+                    "knobStdDevs":                "Avg knob std dev",
                     "moveTypeChangesPerLevel":  "# type changes",
                     "avgPercentGoodMoves":      "Avg % good moves", 
                     "knobAvgs":                 "Avg knob max-min",
@@ -98,7 +98,7 @@
                     "levelTimes":               "Time"
                 },
                 "specific": {
-                    "avgStdDev":                "Avg knob std dev",
+                    "knobStdDevs":                "Avg knob std dev",
                     "moveTypeChangesPerLevel":  "# type changes",
                     "avgPercentGoodMoves":      "Avg % good moves", 
                     "knobAvgs":                 "Avg knob max-min",
