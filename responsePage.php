@@ -740,7 +740,6 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
         }
     }
     // unset features that are calculated but never actually used
-    if (isset($featureCols['knobStdDevs'])) unset($featureCols['knobStdDevs']);
     if (isset($featureCols['knobTotalAmts'])) unset($featureCols['knobTotalAmts']);
     if (isset($featureCols['percentQuestionsCorrect'])) unset($featureCols['percentQuestionsCorrect']);
 

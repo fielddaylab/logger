@@ -505,18 +505,18 @@ $(document).ready((event) => {
                 }
             }
 
-            $.each(tables, (i, currentTable) => {
+            $.each(tables, (idx, currentTable) => {
                 if (currentTable['checked']) {
                     let table = currentTable['table']
                     let tableName = currentTable['tableName']
                     let tableBody = currentTable['tableBody']
                     let tableSessionsRow = currentTable['numSessions']
                     let nthChild = currentTable['nthChild']
-                    numCols = $(`#${tableBody}`).find(`${nthChild ? 'tr:first td' : 'tr:not(:nth-of-type(1)):first td'}`).length
+                    numCols = Object.keys(model.columns[table].headers).length//$(`#${tableBody}`).find(`${nthChild ? 'tr:first td' : 'tr:not(:nth-of-type(1)):first td'}`).length
                     $(`#${collapserNames[numTables]}Collapser`).collapse('show')
                     $(`#${tableSessionsRow}`).children().each((key, value) => { if (key > 0) $(value).html('-') })
                     for (let i = 0; i < numCols; i++) {
-                        let columnElements = $(`#${tableBody} tr td:nth-${nthChild ? 'child('+(i+1)+')' : 'of-type('+(i+2)+')'}`).not('.disabled-cell')
+                        let columnElements = $(`#${tableBody} tr td:nth-${nthChild ? 'child('+(i+2)+')' : 'of-type('+(i+2)+')'}`).not('.disabled-cell')
                         let column = Object.keys(model.columns[table].headers)[i]
         
                         let parameters = {
