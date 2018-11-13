@@ -140,59 +140,59 @@
                 "headers": {
                     "lvl1": {
                         "title": "Up to lvl 1",
-                        "href": "../logger-data/numLevels/numLevelDataForR_1.txt"
+                        "href": "download.php?file=%2FnumLevels%2FnumLevelsDataForR_1.txt"
                     },
                     "lvl3": {
                         "title": "Up to lvl 3",
-                        "href": "../logger-data/numLevels/numLevelDataForR_3.txt"
+                        "href": "download.php?file=%2FnumLevels%2FnumLevelsDataForR_3.txt"
                     },
                     "lvl5": {
                         "title": "Up to lvl 5",
-                        "href": "../logger-data/numLevels/numLevelDataForR_5.txt"
+                        "href": "download.php?file=%2FnumLevels%2FnumLevelsDataForR_5.txt"
                     },
                     "lvl7": {
                         "title": "Up to lvl 7",
-                        "href": "../logger-data/numLevels/numLevelDataForR_7.txt"
+                        "href": "download.php?file=%2FnumLevels%2FnumLevelsDataForR_7.txt"
                     },
                     "lvl11": {
                         "title": "Up to lvl 11",
-                        "href": "../logger-data/numLevels/numLevelDataForR_11.txt"
+                        "href": "download.php?file=%2FnumLevels%2FnumLevelsDataForR_11.txt"
                     },
                     "lvl13": {
                         "title": "Up to lvl 13",
-                        "href": "../logger-data/numLevels/numLevelDataForR_13.txt"
+                        "href": "download.php?file=%2FnumLevels%2FnumLevelsDataForR_13.txt"
                     },
                     "lvl15": {
                         "title": "Up to lvl 15",
-                        "href": "../logger-data/numLevels/numLevelDataForR_15.txt"
+                        "href": "download.php?file=%2FnumLevels%2FnumLevelsDataForR_15.txt"
                     },
                     "lvl19": {
                         "title": "Up to lvl 19",
-                        "href": "../logger-data/numLevels/numLevelDataForR_19.txt"
+                        "href": "download.php?file=%2FnumLevels%2FnumLevelsDataForR_19.txt"
                     },
                     "lvl21": {
                         "title": "Up to lvl 21",
-                        "href": "../logger-data/numLevels/numLevelDataForR_21.txt"
+                        "href": "download.php?file=%2FnumLevels%2FnumLevelsDataForR_21.txt"
                     },
                     "lvl23": {
                         "title": "Up to lvl 23",
-                        "href": "../logger-data/numLevels/numLevelDataForR_23.txt"
+                        "href": "download.php?file=%2FnumLevels%2FnumLevelsDataForR_23.txt"
                     },
                     "lvl25": {
                         "title": "Up to lvl 25",
-                        "href": "../logger-data/numLevels/numLevelDataForR_25.txt"
+                        "href": "download.php?file=%2FnumLevels%2FnumLevelsDataForR_25.txt"
                     },
                     "lvl27": {
                         "title": "Up to lvl 27",
-                        "href": "../logger-data/numLevels/numLevelDataForR_27.txt"
+                        "href": "download.php?file=%2FnumLevels%2FnumLevelsDataForR_27.txt"
                     },
                     "lvl31": {
                         "title": "Up to lvl 31",
-                        "href": "../logger-data/numLevels/numLevelDataForR_31.txt"
+                        "href": "download.php?file=%2FnumLevels%2FnumLevelsDataForR_31.txt"
                     },
                     "lvl33": {
                         "title": "Up to lvl 33",
-                        "href": "../logger-data/numLevels/numLevelDataForR_33.txt"
+                        "href": "download.php?file=%2FnumLevels%2FnumLevelsDataForR_33.txt"
                     }
                 }
             },
@@ -222,90 +222,150 @@
                 "headers": {
                     "lvl1": {
                         "title": "Lvl 1",
-                        "href": "../logger-data/challenges/challengesDataForR_1.txt"
+                        "href": "download.php?file=%2Fchallenges%2FchallengesDataForR_1.txt"
                     },
                     "lvl3": {
                         "title": "Lvl 3",
-                        "href": "../logger-data/challenges/challengesDataForR_3.txt"
+                        "href": "download.php?file=%2Fchallenges%2FchallengesDataForR_3.txt"
                     },
                     "lvl5": {
                         "title": "Lvl 5",
-                        "href": "../logger-data/challenges/challengesDataForR_5.txt"
+                        "href": "download.php?file=%2Fchallenges%2FchallengesDataForR_5.txt"
                     },
                     "lvl7": {
                         "title": "Lvl 7",
-                        "href": "../logger-data/challenges/challengesDataForR_7.txt"
+                        "href": "download.php?file=%2Fchallenges%2FchallengesDataForR_7.txt"
                     },
                     "lvl11": {
                         "title": "Lvl 11",
-                        "href": "../logger-data/challenges/challengesDataForR_11.txt"
+                        "href": "download.php?file=%2Fchallenges%2FchallengesDataForR_11.txt"
                     },
                     "lvl13": {
                         "title": "Lvl 13",
-                        "href": "../logger-data/challenges/challengesDataForR_13.txt"
+                        "href": "download.php?file=%2Fchallenges%2FchallengesDataForR_13.txt"
                     },
                     "lvl15": {
                         "title": "Lvl 15",
-                        "href": "../logger-data/challenges/challengesDataForR_15.txt"
+                        "href": "download.php?file=%2Fchallenges%2FchallengesDataForR_15.txt"
                     },
                     "lvl19": {
                         "title": "Lvl 19",
-                        "href": "../logger-data/challenges/challengesDataForR_19.txt"
+                        "href": "download.php?file=%2Fchallenges%2FchallengesDataForR_19.txt"
                     },
                     "lvl21": {
                         "title": "Lvl 21",
-                        "href": "../logger-data/challenges/challengesDataForR_21.txt"
+                        "href": "download.php?file=%2Fchallenges%2FchallengesDataForR_21.txt"
                     },
                     "lvl23": {
                         "title": "Lvl 23",
-                        "href": "../logger-data/challenges/challengesDataForR_23.txt"
+                        "href": "download.php?file=%2Fchallenges%2FchallengesDataForR_23.txt"
                     },
                     "lvl25": {
                         "title": "Lvl 25",
-                        "href": "../logger-data/challenges/challengesDataForR_25.txt"
+                        "href": "download.php?file=%2Fchallenges%2FchallengesDataForR_25.txt"
                     },
                     "lvl27": {
                         "title": "Lvl 27",
-                        "href": "../logger-data/challenges/challengesDataForR_27.txt"
+                        "href": "download.php?file=%2Fchallenges%2FchallengesDataForR_27.txt"
                     },
                     "lvl31": {
                         "title": "Lvl 31",
-                        "href": "../logger-data/challenges/challengesDataForR_31.txt"
+                        "href": "download.php?file=%2Fchallenges%2FchallengesDataForR_31.txt"
                     },
                     "lvl33": {
                         "title": "Lvl 33",
-                        "href": "../logger-data/challenges/challengesDataForR_33.txt"
+                        "href": "download.php?file=%2Fchallenges%2FchallengesDataForR_33.txt"
                     }
                 }
             },
             "binomialQuestionTable": {
                 "headerSpans": {},
                 "headers": {
-                    "q00":    "Q1/A",
-                    "q01":    "Q1/B",
-                    "q02":    "Q1/C",
-                    "q03":    "Q1/D",
-                    "q10":    "Q2/A",
-                    "q11":    "Q2/D",
-                    "q12":    "Q2/C",
-                    "q13":    "Q2/D",
-                    "q20":    "Q3/A",
-                    "q21":    "Q3/B",
-                    "q22":    "Q3/C",
-                    "q23":    "Q3/D",
-                    "q30":    "Q4/A",
-                    "q31":    "Q4/B",
-                    "q32":    "Q4/C",
-                    "q33":    "Q4/D"
+                    "q00": {
+                        "title": "Q1/A",
+                        "href": "download.php?file=%2FquestionsPredict%2FquestionsPredictDataForR_q00_"
+                    },
+                    "q01": {
+                        "title": "Q1/B",
+                        "href": "download.php?file=%2FquestionsPredict%2FquestionsPredictDataForR_q01_"
+                    },
+                    "q02": {
+                        "title": "Q1/C",
+                        "href": "download.php?file=%2FquestionsPredict%2FquestionsPredictDataForR_q02_"
+                    },
+                    "q03": {
+                        "title": "Q1/D",
+                        "href": "download.php?file=%2FquestionsPredict%2FquestionsPredictDataForR_q03_"
+                    },
+                    "q10": {
+                        "title": "Q2/A",
+                        "href": "download.php?file=%2FquestionsPredict%2FquestionsPredictDataForR_q10_"
+                    },
+                    "q11": {
+                        "title": "Q2/B",
+                        "href": "download.php?file=%2FquestionsPredict%2FquestionsPredictDataForR_q11_"
+                    },
+                    "q12": {
+                        "title": "Q2/C",
+                        "href": "download.php?file=%2FquestionsPredict%2FquestionsPredictDataForR_q12_"
+                    },
+                    "q13": {
+                        "title": "Q2/D",
+                        "href": "download.php?file=%2FquestionsPredict%2FquestionsPredictDataForR_q13_"
+                    },
+                    "q20": {
+                        "title": "Q3/A",
+                        "href": "download.php?file=%2FquestionsPredict%2FquestionsPredictDataForR_q20_"
+                    },
+                    "q21": {
+                        "title": "Q3/B",
+                        "href": "download.php?file=%2FquestionsPredict%2FquestionsPredictDataForR_q21_"
+                    },
+                    "q22": {
+                        "title": "Q3/C",
+                        "href": "download.php?file=%2FquestionsPredict%2FquestionsPredictDataForR_q22_"
+                    },
+                    "q23": {
+                        "title": "Q3/D",
+                        "href": "download.php?file=%2FquestionsPredict%2FquestionsPredictDataForR_q23_"
+                    },
+                    "q30": {
+                        "title": "Q4/A",
+                        "href": "download.php?file=%2FquestionsPredict%2FquestionsPredictDataForR_q30_"
+                    },
+                    "q31": {
+                        "title": "Q4/B",
+                        "href": "download.php?file=%2FquestionsPredict%2FquestionsPredictDataForR_q31_"
+                    },
+                    "q32": {
+                        "title": "Q4/C",
+                        "href": "download.php?file=%2FquestionsPredict%2FquestionsPredictDataForR_q32_"
+                    },
+                    "q33": {
+                        "title": "Q4/D",
+                        "href": "download.php?file=%2FquestionsPredict%2FquestionsPredictDataForR_q33_"
+                    }
                 }
             },
             "multinomialQuestionTable": {
                 "headerSpans": {},
                 "headers": {
-                    "q0":    "Q1",
-                    "q1":    "Q2",
-                    "q2":    "Q3",
-                    "q3":    "Q4"
+                    "q0": {
+                        "title": "Q1",
+                        "href": "download.php?file=%2FmultinomQuestionsPredict%2FmultinomQuestionsPredictDataForR_q0_"
+                    },
+                    "q1": {
+                        "title": "Q2",
+                        "href": "download.php?file=%2FmultinomQuestionsPredict%2FmultinomQuestionsPredictDataForR_q1_"
+                    },
+                    "q2": {
+                        "title": "Q3",
+                        "href": "download.php?file=%2FmultinomQuestionsPredict%2FmultinomQuestionsPredictDataForR_q2_"
+                    },
+                    "q3": {
+                        "title": "Q4",
+                        "href": "download.php?file=%2FmultinomQuestionsPredict%2FmultinomQuestionsPredictDataForR_q3_"
+                    }
                 }
             }
         },

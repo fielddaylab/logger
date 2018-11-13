@@ -619,7 +619,7 @@ $(document).ready((event) => {
                                             }
                                         }
                                         $(jval).html(innerText)
-                                        $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=${table}&row=${getKeyByValue(rowNames[j])}&col=${column}&i=${i}&j=${j}" target="_blank"></a>`)
+                                        $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=${tableName}&row=${getKeyByValue(rowNames[j])}&col=${column}&i=${i}&j=${j}" target="_blank"></a>`)
                                     } else {
                                         let percentsCorrect, expectedAccuracy
                                         if (data.pValues) {
@@ -646,8 +646,10 @@ $(document).ready((event) => {
                                         } else {
                                             innerText.html('No data')
                                         }
-                                        if (table === 'multinomialQuestionTable' || table === 'binaryQuestionTable') {
-                                            $(innerText).wrapInner(`<a target="_blank" href="../logger-data/${tableName}/${tableName}DataForR_${column}_${Math.floor(j/(1 + numAlgorithms))+1}.txt">`)
+                                        if (table === 'binaryQuestionTable') {
+                                            $(innerText).wrapInner(`<a target="_blank" href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=${tableName}&row=${Math.floor(j/(1 + numAlgorithms))+1}&col=${column}&i=${i}&j=${j}"></a>`)
+                                        } else if (table === 'multinomialQuestionTable') {
+                                            $(innerText).wrapInner(`<a target="_blank" href="${model.columns.multinomialQuestionTable.headers[column].href + Math.floor(j/(numAlgorithms)+1)}.txt"></a>`)
                                         }
                                         $(jval).html(innerText)
                                     }

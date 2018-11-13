@@ -1,5 +1,6 @@
 <?php
 // Indicate JSON data type
+
 header('Content-Type: application/json');
 
 $settings = json_decode(file_get_contents("config.json"), true);
@@ -2163,7 +2164,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                 mkdir(DATA_DIR . '/multinomQuestionsPredict', 0777, true);
             }
             $numVariables = count(explode(',', $headerString)) + 1;
-            $dataFile = DATA_DIR . '/multinomQuestionsPredict/multinomQuestionsPredictDataForR_'. $multinomQuestionPredictCol .'.txt';
+            $dataFile = DATA_DIR . '/multinomQuestionsPredict/multinomQuestionsPredictDataForR_'. $multinomQuestionPredictCol .'_'. $predLevel .'.txt';
             file_put_contents($dataFile, $predictString);
             unset($sklOutput);
             unset($sklRegOutput);
