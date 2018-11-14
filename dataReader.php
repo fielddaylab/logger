@@ -10,13 +10,9 @@ define('DATA_DIR', $settings['DATA_DIR']);
 $table = $_GET['table'];
 $row = $_GET['row'];
 $col = $_GET['col'];
+$fileLoc = urldecode($_GET['file']);
 
-$dataFile = DATA_DIR . '/' . $table . '/' . $table . 'DataForR_' . $col . '.txt';
-$altFile = DATA_DIR . '/' . $table . '/' . $table . 'DataForR_' . substr($col, 3) . '.txt';
-
-if (!file_exists($dataFile)) {
-    $dataFile = $altFile;
-}
+$dataFile = DATA_DIR . $fileLoc;
 
 $csv = array_map('str_getcsv', array_slice(file($dataFile), 1));
 $header = array_shift($csv);

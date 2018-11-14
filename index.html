@@ -293,7 +293,7 @@
                                     Columns in this table will use any sessions who have <i>at least</i> the specified levels (up to but not including) completed.
                                 </div>
                                 <div style="font-size:14px; margin-bottom:6px; color:#777">
-                                    Click any p-value for the regression equation and input data of that column.
+                                    Click any cell's text for the regression equation and input data of that column.
                                 </div>
                                 <div style="font-size:14px; margin-bottom:6px; color:#777">
                                     The numbers in each cell are arranged <b>coefficient, p-value</b>.
@@ -317,23 +317,23 @@
                                 <b>Individual level completion</b></label>
                             </div>
                             <span>
-                                <table id="predictTableAll" class="table table-striped table-bordered table-hover">
-                                    <thead id="predictTableHead">
+                                <table id="levelCompletionTable" class="table table-striped table-bordered table-hover">
+                                    <thead id="levelCompletionHead">
                                         <tr>
                                             <th scope="col" style="top:0;z-index:4;background-color:rgb(221, 221, 221)"></th>
                                         </tr>
-                                        <tr id="percentCompleteRow">
+                                        <tr id="levelCompletionPercentCompleteRow">
                                             <th scope="row" style="position:initial;text-align:right">% who completed</th>
                                         </tr>
-                                        <tr id="predictNumSessionsRow">
+                                        <tr id="levelCompletionNumSessionsRow">
                                             <th scope="row" style="position:initial;text-align:right">Num sessions used</th>
                                         </tr>
                                     </thead>
-                                    <tbody id="predictTableBody">
+                                    <tbody id="levelCompletionBody">
                                     </tbody>
                                 </table>
                                 <div style="font-size:14px; margin-bottom:6px; color:#777">
-                                    Click any p-value for the regression equation and input data of that column.
+                                    Click any cell's text for the regression equation and input data of that column.
                                 </div>
                                 <div style="font-size:14px; margin-bottom:6px; color:#777">
                                     The numbers in each cell are arranged <b>coefficient, p-value</b>.
@@ -357,20 +357,20 @@
                                 <b>Binomial question answer prediction accuracy by level range</b></label>
                             </div>
                             <span>
-                                <table id="questionPredictTable" class="table table-striped table-bordered table-hover">
-                                    <thead id="questionPredictHeader">
+                                <table id="binomialQuestionTable" class="table table-striped table-bordered table-hover">
+                                    <thead id="binomialQuestionHeader">
                                         <tr>
                                             <th scope="col" colspan="2" style="top:0px;background-color:rgb(221, 221, 221);width:12;"></th>
                                         </tr>
-                                        <tr id="binomialNumSessionsRow">
+                                        <tr id="binomialQuestionNumSessionsRow">
                                             <th scope="row" colspan="2" style="position:initial;text-align:right">Num sessions used</th>
                                         </tr>
                                     </thead>
-                                    <tbody id="questionPredictBody">
+                                    <tbody id="binomialQuestionBody">
                                     </tbody>
                                 </table>
                                 <div style="font-size:14px; margin-bottom:6px; color:#777">
-                                    Click any of the accuracies to download a CSV file of the data used for that level range.
+                                    Click any of the accuracies to view its regression equation and download its input data.
                                 </div>
                                 <div style="font-size:14px; margin-bottom:6px; color:#777">
                                     The number of sessions is displayed as <b>true / false</b> for sessions who chose / didn't choose a particular answer.
@@ -403,7 +403,7 @@
                                         <tr>
                                             <th scope="col" colspan=2 style="top:0px;background-color:rgb(221, 221, 221);width:12%;"></th>
                                         </tr>
-                                        <tr id="multinomialNumSessionsRow">
+                                        <tr id="multinomialQuestionNumSessionsRow">
                                             <th scope="row" style="position:initial;text-align:right" colspan=2>Num sessions used</th>
                                         </tr>
                                     </thead>

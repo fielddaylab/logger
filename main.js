@@ -55,13 +55,15 @@ $(document).ready((event) => {
             // Send request that gets the model and populate tables and headers
             $.get('model.json', {}, data => {
                 model = data[$('#gameSelect').val()]
+                // store model in localStorage so correlationGraph.html can see it
+                localStorage.setItem('model', JSON.stringify(model))
                 allFeatures = flattenObj(model.features)
                 // numLevelsBody
                 if (true) { // this is simply so I can collapse this section of code
-                    let algorithmNames = model.algorithms.numLevelsTable
-                    let rowNames = { ...model.features.numLevelsTable.general, ...model.features.numLevelsTable.specific }
-                    let headers = model.columns.numLevelsTable.headers // each one has title and href
-                    let headerSpans = model.columns.numLevelsTable.headerSpans
+                    let algorithmNames = model.algorithms.numLevels
+                    let rowNames = { ...model.features.numLevels.general, ...model.features.numLevels.specific }
+                    let headers = model.columns.numLevels.headers // each one has title and href
+                    let headerSpans = model.columns.numLevels.headerSpans
                     let headerSpanIndexes = $.map(headerSpans, (val, i) => { // array of indexes where a headerSpan starts
                         let currentIndex = 0;
                         for (let j = 0; j <= i-1; j++) {
@@ -87,7 +89,7 @@ $(document).ready((event) => {
                         if (zeroIndex == 0 || headerSpanIndexes.indexOf(zeroIndex) !== -1) { // first col and new headerspans have thicker left borders
                             style = 'border-left-width:4px;'
                         }
-                        let headerElement = $(`<th scope="col" style="${style}"><a target="_blank" href="${header.href}">${header.title}</a></th>`)
+                        let headerElement = $(`<th scope="col" style="${style}"><a target="_blank" href="download.php?file=${header.href}">${header.title}</a></th>`)
                         $(`#numLevelsHead tr:eq(${hasHeader ? 1 : 0})`).append(headerElement)
 
                         let numSessionsElement = $(`<td style="${style}">-</td>`)
@@ -111,7 +113,7 @@ $(document).ready((event) => {
                     })
 
                     let perLevelZeroIndex = 0
-                    $.each(model.features.individualLevelsTable.perLevel, (i, rowName) => {
+                    $.each(model.features.levelCompletion.perLevel, (i, rowName) => {
                         let newRow = $('<tr></tr>')
                         zeroIndex = 0
                         newRow.append($(`<th scope="row">${rowName}</th>`))
@@ -146,12 +148,12 @@ $(document).ready((event) => {
                         $('#numLevelsBody').append(newRow)
                     })
                 }
-                // predictTableBody
+                // levelCompletionBody
                 if (true) {
-                    let algorithmNames = model.algorithms.individualLevelsTable
-                    let rowNames = { ...model.features.individualLevelsTable.general, ...model.features.individualLevelsTable.specific }
-                    let headers = model.columns.individualLevelsTable.headers // each one has title and href
-                    let headerSpans = model.columns.individualLevelsTable.headerSpans
+                    let algorithmNames = model.algorithms.levelCompletion
+                    let rowNames = { ...model.features.levelCompletion.general, ...model.features.levelCompletion.specific }
+                    let headers = model.columns.levelCompletion.headers // each one has title and href
+                    let headerSpans = model.columns.levelCompletion.headerSpans
                     let headerSpanIndexes = $.map(headerSpans, (val, i) => { // array of indexes where a headerSpan starts
                         let currentIndex = 0;
                         for (let j = 0; j <= i-1; j++) {
@@ -162,13 +164,13 @@ $(document).ready((event) => {
                     let hasHeader = Object.keys(headerSpans).length > 0
 
                     if (hasHeader) {
-                        $('#predictTableHead tr:eq(0) th:eq(0)').attr('rowspan', 2)
-                        $('#predictTableHead tr:eq(0)').after($('<tr></tr>'))
+                        $('#levelCompletionHead tr:eq(0) th:eq(0)').attr('rowspan', 2)
+                        $('#levelCompletionHead tr:eq(0)').after($('<tr></tr>'))
                     }
 
                     $.each(headerSpans, (i, headerSpan) => {
                         let headerSpanElement = $(`<th class="challenge-header" scope="col" colspan="${headerSpan.colSpan}">${headerSpan.title}</th>`)
-                        $('#predictTableHead tr:eq(0)').append(headerSpanElement)
+                        $('#levelCompletionHead tr:eq(0)').append(headerSpanElement)
                     })
 
                     let zeroIndex = 0
@@ -177,14 +179,14 @@ $(document).ready((event) => {
                         if (zeroIndex == 0 || headerSpanIndexes.indexOf(zeroIndex) !== -1) { // first col and new headerspans have thicker left borders
                             style = 'border-left-width:4px;'
                         }
-                        let headerElement = $(`<th scope="col" style="${style}"><a target="_blank" href="${header.href}">${header.title}</a></th>`)
-                        $(`#predictTableHead tr:eq(${hasHeader ? 1 : 0})`).append(headerElement)
+                        let headerElement = $(`<th scope="col" style="${style}"><a target="_blank" href="download.php?file=${header.href}">${header.title}</a></th>`)
+                        $(`#levelCompletionHead tr:eq(${hasHeader ? 1 : 0})`).append(headerElement)
 
                         let percentCompleteElement = $(`<td style="${style}">- %</td>`)
-                        $(`#percentCompleteRow`).append(percentCompleteElement)
+                        $(`#levelCompletionPercentCompleteRow`).append(percentCompleteElement)
 
                         let numSessionsElement = $(`<td style="${style}">-</td>`)
-                        $(`#predictNumSessionsRow`).append(numSessionsElement)
+                        $(`#levelCompletionNumSessionsRow`).append(numSessionsElement)
                         zeroIndex++
                     })
                     
@@ -200,11 +202,11 @@ $(document).ready((event) => {
                             newRow.append($(`<td style="${style}"></td>`))
                             zeroIndex++
                         })
-                        $('#predictTableBody').append(newRow)
+                        $('#levelCompletionBody').append(newRow)
                     })
 
                     let perLevelZeroIndex = 0
-                    $.each(model.features.individualLevelsTable.perLevel, (i, rowName) => {
+                    $.each(model.features.levelCompletion.perLevel, (i, rowName) => {
                         let newRow = $('<tr></tr>')
                         zeroIndex = 0
                         newRow.append($(`<th scope="row">${rowName}</th>`))
@@ -221,7 +223,7 @@ $(document).ready((event) => {
                             newRow.append(newCell)
                             zeroIndex++
                         })
-                        $('#predictTableBody').append(newRow)
+                        $('#levelCompletionBody').append(newRow)
                         perLevelZeroIndex++
                     })
                     $.each(algorithmNames, (i, name) => {
@@ -236,7 +238,7 @@ $(document).ready((event) => {
                             newRow.append($(`<td style="${style}"></td>`))
                             zeroIndex++
                         })
-                        $('#predictTableBody').append(newRow)
+                        $('#levelCompletionBody').append(newRow)
                     })
                 }
                 // tableAllBody aka question answers from challenge 1
@@ -278,15 +280,15 @@ $(document).ready((event) => {
                         )
                     })
                 }
-                // questionPredictBody
+                // binomialQuestionBody
                 if (true) {
                     let numQuestions = model.questionLevels.length
-                    let algorithmNames = model.algorithms.binomialQuestionTable
+                    let algorithmNames = model.algorithms.binomialQuestion
 
                     for (let i = 1; i <= numQuestions; i++) {
                         ['A', 'B', 'C', 'D'].forEach(answer => {
-                            $('#questionPredictHeader tr:eq(0)').append(`<th scope="col">Q${i}/${answer}</th>`)
-                            $('#questionPredictHeader tr:eq(1)').append(`<td style="text-align:center;">-</td>`)
+                            $('#binomialQuestionHeader tr:eq(0)').append(`<th scope="col">Q${i}/${answer}</th>`)
+                            $('#binomialQuestionHeader tr:eq(1)').append(`<td style="text-align:center;">-</td>`)
                         })
                     }
                     for (let i = 1; i <= model.questionLevels[0]; i++) {
@@ -295,9 +297,9 @@ $(document).ready((event) => {
                         else rowText = 'L1-L'+i
 
                         let rowElement = $('<tr>').append($('<th>').attr('rowspan', algorithmNames.length + 1).css({'width':'6%', 'vertical-align':'middle', 'border-bottom-width':'4px'}).text(rowText))
-                        $('#questionPredictBody').append(rowElement)
+                        $('#binomialQuestionBody').append(rowElement)
                     }
-                    $('#questionPredictBody tr').each((i, ival) => {
+                    $('#binomialQuestionBody tr').each((i, ival) => {
                         for (let j = 0; j < algorithmNames.length; j++) {
                             let rowContent = $(`<tr><td style="width:9%; ${(j === 0) ? 'border-bottom-width:4px;' : ''}">${algorithmNames[algorithmNames.length-1-j]}</td></tr>`)
                             for (let k = 0; k < numQuestions * 4; k++) {
@@ -310,7 +312,7 @@ $(document).ready((event) => {
                 // multinomial table
                 if (true) {
                     let numQuestions = model.questionLevels.length
-                    let algorithmNames = model.algorithms.multinomialQuestionTable
+                    let algorithmNames = model.algorithms.multinomialQuestion
                      
                     for (let i = 1; i <= numQuestions; i++) {
                         $('#multinomialQuestionHeader tr:eq(0)').append(`<th scope="col">Q${i}</th>`)
@@ -473,34 +475,30 @@ $(document).ready((event) => {
             let tables = {
                 'numLevels': { 
                     'checked': numLevelsTableChecked,
-                    'table': 'numLevelsTable',
-                    'tableName': 'numLevels',
+                    'table': 'numLevels',
                     'tableBody': 'numLevelsBody',
                     'numSessions': 'numLevelsNumSessionsRow',
                     'nthChild': true
                 },
                 'levelCompletion': { 
                     'checked': levelCompletionTableChecked,
-                    'table': 'individualLevelsTable',
-                    'tableName': 'challenges',
-                    'tableBody': 'predictTableBody',
-                    'numSessions': 'predictNumSessionsRow',
+                    'table': 'levelCompletion',
+                    'tableBody': 'levelCompletionBody',
+                    'numSessions': 'levelCompletionNumSessionsRow',
                     'nthChild': true
                 },
                 'binaryQuestion': { 
                     'checked': binaryQuestionTableChecked,
-                    'table': 'binomialQuestionTable',
-                    'tableName': 'questionsPredict',
-                    'tableBody': 'questionPredictBody',
-                    'numSessions': 'binomialNumSessionsRow',
+                    'table': 'binomialQuestion',
+                    'tableBody': 'binomialQuestionBody',
+                    'numSessions': 'binomialQuestionNumSessionsRow',
                     'nthChild': false
                 },
                 'multinomialQuestion': { 
                     'checked': multinomialQuestionTableChecked,
-                    'table': 'multinomialQuestionTable',
-                    'tableName': 'multinomialQuestionsPredict',
+                    'table': 'multinomialQuestion',
                     'tableBody': 'multinomialQuestionBody',
-                    'numSessions': 'multinomialNumSessionsRow',
+                    'numSessions': 'multinomialQuestionNumSessionsRow',
                     'nthChild': false
                 }
             }
@@ -508,7 +506,6 @@ $(document).ready((event) => {
             $.each(tables, (idx, currentTable) => {
                 if (currentTable['checked']) {
                     let table = currentTable['table']
-                    let tableName = currentTable['tableName']
                     let tableBody = currentTable['tableBody']
                     let tableSessionsRow = currentTable['numSessions']
                     let nthChild = currentTable['nthChild']
@@ -586,14 +583,17 @@ $(document).ready((event) => {
                         })
                         let callbackFunc = (data) => {
                             clearInterval(loadTimer)
-                            localStorage.setItem(`data_${table}_${column}`, JSON.stringify({ 'coefficients': data.coefficients, 'stdErrs': data.stdErrs }))
-                            let rowNames = []
+                            localStorage.setItem(`data_${table}_${column}`, JSON.stringify({ 'coefficients': data.coefficients||arrayColumn(data, 'coefficients'), 'stdErrs': data.stdErrs||arrayColumn(data, 'stdErrs') }))
+                            let rowNames = Object.values(flattenObj(model.features[table]))
                             let numSessionsString = (data[1]) ? data[1].numSessionsString : data.numSessionsString
                             $(`#${tableSessionsRow} td:nth-child(${i+2})`).html(numSessionsString)
-                            $(`#${tableBody} tr th`).each((j, jval) => {
-                                rowNames.push($(jval).text())
-                            })
-                            localStorage.setItem(`row_names_${table}`, JSON.stringify(rowNames))
+                            let rowNamesUsed = null
+                            if (data.coefficients)
+                                rowNamesUsed = Object.keys(data.coefficients)
+                            else if (data[1].coefficients)
+                                rowNamesUsed = Object.keys(data[1].coefficients)
+                            localStorage.setItem(`row_names_${table}`, JSON.stringify(rowNamesUsed))
+                            localStorage.setItem(`href_loc_${table}`, model.columns[table].headers[column].href)
                             columnElements.each((j, jval) => {
                                 $(jval).css({
                                     'vertical-align': 'middle',
@@ -619,7 +619,8 @@ $(document).ready((event) => {
                                             }
                                         }
                                         $(jval).html(innerText)
-                                        $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=${tableName}&row=${getKeyByValue(rowNames[j])}&col=${column}&i=${i}&j=${j}" target="_blank"></a>`)
+                                        if (data.pValues[rowName])
+                                            $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=${table}&row=${getKeyByValue(rowNames[j])}&col=${column}&i=${i}&j=${j}" target="_blank"></a>`)
                                     } else {
                                         let percentsCorrect, expectedAccuracy
                                         if (data.pValues) {
@@ -646,10 +647,10 @@ $(document).ready((event) => {
                                         } else {
                                             innerText.html('No data')
                                         }
-                                        if (table === 'binaryQuestionTable') {
-                                            $(innerText).wrapInner(`<a target="_blank" href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=${tableName}&row=${Math.floor(j/(1 + numAlgorithms))+1}&col=${column}&i=${i}&j=${j}"></a>`)
-                                        } else if (table === 'multinomialQuestionTable') {
-                                            $(innerText).wrapInner(`<a target="_blank" href="${model.columns.multinomialQuestionTable.headers[column].href + Math.floor(j/(numAlgorithms)+1)}.txt"></a>`)
+                                        if (table === 'binomialQuestion' && j % numAlgorithms === 0) {
+                                            $(innerText).wrapInner(`<a target="_blank" href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=${table}&row=${Math.floor(j/(numAlgorithms)+1)}&col=${column}&i=${i}&j=${Math.floor(j/(numAlgorithms))}"></a>`)
+                                        } else if (table === 'multinomialQuestion') {
+                                            $(innerText).wrapInner(`<a target="_blank" href="download.php?file=${model.columns.multinomialQuestion.headers[column].href + Math.floor(j/(numAlgorithms)+1)}.txt"></a>`)
                                         }
                                         $(jval).html(innerText)
                                     }
@@ -813,7 +814,7 @@ $(document).ready((event) => {
                         showNoDataHistograms()
                         off()
                     }
-                    $('#percentCompleteRow').children('td').each((index, value) => {
+                    $('#levelCompletionPercentCompleteRow').children('td').each((index, value) => {
                         if (typeof data.lvlsPercentComplete[index] === 'number') {
                             $(value).html(data.lvlsPercentComplete[index].toPrecision(4) + ' %')
                         } else {
@@ -1658,7 +1659,7 @@ $(document).ready((event) => {
         }
     
         function arrayColumn(array, columnName) {
-            return array.map(function (value, index) {
+            return $.map(array, function (value, index) {
                 return value[columnName]
             })
         }

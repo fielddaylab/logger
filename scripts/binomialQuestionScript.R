@@ -1,10 +1,10 @@
 suppressMessages(library(caret))
 args <- commandArgs(TRUE)
-table <- paste("../../logger-data/questions/questionsDataForR_", args[1], ".txt", sep="")
+table <- paste("../../logger-data/binomialQuestion/binomialQuestionData_", args[1], "_", args[2], ".txt", sep="")
 formula <- "result~"
 
 for (i in seq_along(args)) {
-    if (i > 1) {
+    if (i > 2) {
         formula <- paste(formula, args[i], sep="+")
     }
 }

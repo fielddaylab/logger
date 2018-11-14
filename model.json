@@ -2,14 +2,14 @@
     "WAVES": {
         "levels": [ 1, 3, 5, 7, 11, 13, 15, 19, 21, 23, 25, 27, 31 ],
         "features": {
-            "numLevelsTable": {
+            "numLevels": {
                 "general": {
                     "(Intercept)":              "Constant term",
                     "numMovesPerChallenge":     "# slider moves",
                     "levelTimes":               "Time"
                 },
                 "specific": {
-                    "knobStdDevs":                "Avg knob std dev",
+                    "knobStdDevs":              "Avg knob std dev",
                     "moveTypeChangesPerLevel":  "# type changes",
                     "knobAvgs":                 "Avg knob max-min",
                     "OFFSET":                   "# offset moves",
@@ -36,14 +36,14 @@
                     "pgm_31":                   "% good moves lvl 31"
                 }
             },
-            "individualLevelsTable": {
+            "levelCompletion": {
                 "general": {
                     "(Intercept)":              "Constant term",
                     "numMovesPerChallenge":     "# slider moves",
                     "levelTimes":               "Time"
                 },
                 "specific": {
-                    "knobStdDevs":                "Avg knob std dev",
+                    "knobStdDevs":              "Avg knob std dev",
                     "moveTypeChangesPerLevel":  "# type changes",
                     "knobAvgs":                 "Avg knob max-min", 
                     "OFFSET":                   "# offset moves",
@@ -70,14 +70,14 @@
                     "pgm_31":                   "% good moves lvl 31"
                 }
             },
-            "binomialQuestionTable": {
+            "binomialQuestion": {
                 "general": {
                     "(Intercept)":              "Constant term",
                     "numMovesPerChallenge":     "# slider moves",
                     "levelTimes":               "Time"
                 },
                 "specific": {
-                    "knobStdDevs":                "Avg knob std dev",
+                    "knobStdDevs":              "Avg knob std dev",
                     "moveTypeChangesPerLevel":  "# type changes",
                     "avgPercentGoodMoves":      "Avg % good moves", 
                     "knobAvgs":                 "Avg knob max-min",
@@ -91,14 +91,14 @@
                 },
                 "perLevel": {}
             },
-            "multinomialQuestionTable": {
+            "multinomialQuestion": {
                 "general": {
                     "(Intercept)":              "Constant term",
                     "numMovesPerChallenge":     "# slider moves",
                     "levelTimes":               "Time"
                 },
                 "specific": {
-                    "knobStdDevs":                "Avg knob std dev",
+                    "knobStdDevs":              "Avg knob std dev",
                     "moveTypeChangesPerLevel":  "# type changes",
                     "avgPercentGoodMoves":      "Avg % good moves", 
                     "knobAvgs":                 "Avg knob max-min",
@@ -114,7 +114,7 @@
             }
         },
         "columns": {
-            "numLevelsTable": {
+            "numLevels": {
                 "headerSpans": {
                     "0": {
                         "title": "Challenge 1",
@@ -140,63 +140,63 @@
                 "headers": {
                     "lvl1": {
                         "title": "Up to lvl 1",
-                        "href": "download.php?file=%2FnumLevels%2FnumLevelsDataForR_1.txt"
+                        "href": "%2FnumLevels%2FnumLevelsData_1.txt"
                     },
                     "lvl3": {
                         "title": "Up to lvl 3",
-                        "href": "download.php?file=%2FnumLevels%2FnumLevelsDataForR_3.txt"
+                        "href": "%2FnumLevels%2FnumLevelsData_3.txt"
                     },
                     "lvl5": {
                         "title": "Up to lvl 5",
-                        "href": "download.php?file=%2FnumLevels%2FnumLevelsDataForR_5.txt"
+                        "href": "%2FnumLevels%2FnumLevelsData_5.txt"
                     },
                     "lvl7": {
                         "title": "Up to lvl 7",
-                        "href": "download.php?file=%2FnumLevels%2FnumLevelsDataForR_7.txt"
+                        "href": "%2FnumLevels%2FnumLevelsData_7.txt"
                     },
                     "lvl11": {
                         "title": "Up to lvl 11",
-                        "href": "download.php?file=%2FnumLevels%2FnumLevelsDataForR_11.txt"
+                        "href": "%2FnumLevels%2FnumLevelsData_11.txt"
                     },
                     "lvl13": {
                         "title": "Up to lvl 13",
-                        "href": "download.php?file=%2FnumLevels%2FnumLevelsDataForR_13.txt"
+                        "href": "%2FnumLevels%2FnumLevelsData_13.txt"
                     },
                     "lvl15": {
                         "title": "Up to lvl 15",
-                        "href": "download.php?file=%2FnumLevels%2FnumLevelsDataForR_15.txt"
+                        "href": "%2FnumLevels%2FnumLevelsData_15.txt"
                     },
                     "lvl19": {
                         "title": "Up to lvl 19",
-                        "href": "download.php?file=%2FnumLevels%2FnumLevelsDataForR_19.txt"
+                        "href": "%2FnumLevels%2FnumLevelsData_19.txt"
                     },
                     "lvl21": {
                         "title": "Up to lvl 21",
-                        "href": "download.php?file=%2FnumLevels%2FnumLevelsDataForR_21.txt"
+                        "href": "%2FnumLevels%2FnumLevelsData_21.txt"
                     },
                     "lvl23": {
                         "title": "Up to lvl 23",
-                        "href": "download.php?file=%2FnumLevels%2FnumLevelsDataForR_23.txt"
+                        "href": "%2FnumLevels%2FnumLevelsData_23.txt"
                     },
                     "lvl25": {
                         "title": "Up to lvl 25",
-                        "href": "download.php?file=%2FnumLevels%2FnumLevelsDataForR_25.txt"
+                        "href": "%2FnumLevels%2FnumLevelsData_25.txt"
                     },
                     "lvl27": {
                         "title": "Up to lvl 27",
-                        "href": "download.php?file=%2FnumLevels%2FnumLevelsDataForR_27.txt"
+                        "href": "%2FnumLevels%2FnumLevelsData_27.txt"
                     },
                     "lvl31": {
                         "title": "Up to lvl 31",
-                        "href": "download.php?file=%2FnumLevels%2FnumLevelsDataForR_31.txt"
+                        "href": "%2FnumLevels%2FnumLevelsData_31.txt"
                     },
                     "lvl33": {
                         "title": "Up to lvl 33",
-                        "href": "download.php?file=%2FnumLevels%2FnumLevelsDataForR_33.txt"
+                        "href": "%2FnumLevels%2FnumLevelsData_33.txt"
                     }
                 }
             },
-            "individualLevelsTable": {
+            "levelCompletion": {
                 "headerSpans": {
                     "0": {
                         "title": "Challenge 1",
@@ -222,156 +222,156 @@
                 "headers": {
                     "lvl1": {
                         "title": "Lvl 1",
-                        "href": "download.php?file=%2Fchallenges%2FchallengesDataForR_1.txt"
+                        "href": "%2FlevelCompletion%2FlevelCompletionData_1.txt"
                     },
                     "lvl3": {
                         "title": "Lvl 3",
-                        "href": "download.php?file=%2Fchallenges%2FchallengesDataForR_3.txt"
+                        "href": "%2FlevelCompletion%2FlevelCompletionData_3.txt"
                     },
                     "lvl5": {
                         "title": "Lvl 5",
-                        "href": "download.php?file=%2Fchallenges%2FchallengesDataForR_5.txt"
+                        "href": "%2FlevelCompletion%2FlevelCompletionData_5.txt"
                     },
                     "lvl7": {
                         "title": "Lvl 7",
-                        "href": "download.php?file=%2Fchallenges%2FchallengesDataForR_7.txt"
+                        "href": "%2FlevelCompletion%2FlevelCompletionData_7.txt"
                     },
                     "lvl11": {
                         "title": "Lvl 11",
-                        "href": "download.php?file=%2Fchallenges%2FchallengesDataForR_11.txt"
+                        "href": "%2FlevelCompletion%2FlevelCompletionData_11.txt"
                     },
                     "lvl13": {
                         "title": "Lvl 13",
-                        "href": "download.php?file=%2Fchallenges%2FchallengesDataForR_13.txt"
+                        "href": "%2FlevelCompletion%2FlevelCompletionData_13.txt"
                     },
                     "lvl15": {
                         "title": "Lvl 15",
-                        "href": "download.php?file=%2Fchallenges%2FchallengesDataForR_15.txt"
+                        "href": "%2FlevelCompletion%2FlevelCompletionData_15.txt"
                     },
                     "lvl19": {
                         "title": "Lvl 19",
-                        "href": "download.php?file=%2Fchallenges%2FchallengesDataForR_19.txt"
+                        "href": "%2FlevelCompletion%2FlevelCompletionData_19.txt"
                     },
                     "lvl21": {
                         "title": "Lvl 21",
-                        "href": "download.php?file=%2Fchallenges%2FchallengesDataForR_21.txt"
+                        "href": "%2FlevelCompletion%2FlevelCompletionData_21.txt"
                     },
                     "lvl23": {
                         "title": "Lvl 23",
-                        "href": "download.php?file=%2Fchallenges%2FchallengesDataForR_23.txt"
+                        "href": "%2FlevelCompletion%2FlevelCompletionData_23.txt"
                     },
                     "lvl25": {
                         "title": "Lvl 25",
-                        "href": "download.php?file=%2Fchallenges%2FchallengesDataForR_25.txt"
+                        "href": "%2FlevelCompletion%2FlevelCompletionData_25.txt"
                     },
                     "lvl27": {
                         "title": "Lvl 27",
-                        "href": "download.php?file=%2Fchallenges%2FchallengesDataForR_27.txt"
+                        "href": "%2FlevelCompletion%2FlevelCompletionData_27.txt"
                     },
                     "lvl31": {
                         "title": "Lvl 31",
-                        "href": "download.php?file=%2Fchallenges%2FchallengesDataForR_31.txt"
+                        "href": "%2FlevelCompletion%2FlevelCompletionData_31.txt"
                     },
                     "lvl33": {
                         "title": "Lvl 33",
-                        "href": "download.php?file=%2Fchallenges%2FchallengesDataForR_33.txt"
+                        "href": "%2FlevelCompletion%2FlevelCompletionData_33.txt"
                     }
                 }
             },
-            "binomialQuestionTable": {
+            "binomialQuestion": {
                 "headerSpans": {},
                 "headers": {
                     "q00": {
                         "title": "Q1/A",
-                        "href": "download.php?file=%2FquestionsPredict%2FquestionsPredictDataForR_q00_"
+                        "href": "%2FbinomialQuestion%2FbinomialQuestionData_q00_"
                     },
                     "q01": {
                         "title": "Q1/B",
-                        "href": "download.php?file=%2FquestionsPredict%2FquestionsPredictDataForR_q01_"
+                        "href": "%2FbinomialQuestion%2FbinomialQuestionData_q01_"
                     },
                     "q02": {
                         "title": "Q1/C",
-                        "href": "download.php?file=%2FquestionsPredict%2FquestionsPredictDataForR_q02_"
+                        "href": "%2FbinomialQuestion%2FbinomialQuestionData_q02_"
                     },
                     "q03": {
                         "title": "Q1/D",
-                        "href": "download.php?file=%2FquestionsPredict%2FquestionsPredictDataForR_q03_"
+                        "href": "%2FbinomialQuestion%2FbinomialQuestionData_q03_"
                     },
                     "q10": {
                         "title": "Q2/A",
-                        "href": "download.php?file=%2FquestionsPredict%2FquestionsPredictDataForR_q10_"
+                        "href": "%2FbinomialQuestion%2FbinomialQuestionData_q10_"
                     },
                     "q11": {
                         "title": "Q2/B",
-                        "href": "download.php?file=%2FquestionsPredict%2FquestionsPredictDataForR_q11_"
+                        "href": "%2FbinomialQuestion%2FbinomialQuestionData_q11_"
                     },
                     "q12": {
                         "title": "Q2/C",
-                        "href": "download.php?file=%2FquestionsPredict%2FquestionsPredictDataForR_q12_"
+                        "href": "%2FbinomialQuestion%2FbinomialQuestionData_q12_"
                     },
                     "q13": {
                         "title": "Q2/D",
-                        "href": "download.php?file=%2FquestionsPredict%2FquestionsPredictDataForR_q13_"
+                        "href": "%2FbinomialQuestion%2FbinomialQuestionData_q13_"
                     },
                     "q20": {
                         "title": "Q3/A",
-                        "href": "download.php?file=%2FquestionsPredict%2FquestionsPredictDataForR_q20_"
+                        "href": "%2FbinomialQuestion%2FbinomialQuestionData_q20_"
                     },
                     "q21": {
                         "title": "Q3/B",
-                        "href": "download.php?file=%2FquestionsPredict%2FquestionsPredictDataForR_q21_"
+                        "href": "%2FbinomialQuestion%2FbinomialQuestionData_q21_"
                     },
                     "q22": {
                         "title": "Q3/C",
-                        "href": "download.php?file=%2FquestionsPredict%2FquestionsPredictDataForR_q22_"
+                        "href": "%2FbinomialQuestion%2FbinomialQuestionData_q22_"
                     },
                     "q23": {
                         "title": "Q3/D",
-                        "href": "download.php?file=%2FquestionsPredict%2FquestionsPredictDataForR_q23_"
+                        "href": "%2FbinomialQuestion%2FbinomialQuestionData_q23_"
                     },
                     "q30": {
                         "title": "Q4/A",
-                        "href": "download.php?file=%2FquestionsPredict%2FquestionsPredictDataForR_q30_"
+                        "href": "%2FbinomialQuestion%2FbinomialQuestionData_q30_"
                     },
                     "q31": {
                         "title": "Q4/B",
-                        "href": "download.php?file=%2FquestionsPredict%2FquestionsPredictDataForR_q31_"
+                        "href": "%2FbinomialQuestion%2FbinomialQuestionData_q31_"
                     },
                     "q32": {
                         "title": "Q4/C",
-                        "href": "download.php?file=%2FquestionsPredict%2FquestionsPredictDataForR_q32_"
+                        "href": "%2FbinomialQuestion%2FbinomialQuestionData_q32_"
                     },
                     "q33": {
                         "title": "Q4/D",
-                        "href": "download.php?file=%2FquestionsPredict%2FquestionsPredictDataForR_q33_"
+                        "href": "%2FbinomialQuestion%2FbinomialQuestionData_q33_"
                     }
                 }
             },
-            "multinomialQuestionTable": {
+            "multinomialQuestion": {
                 "headerSpans": {},
                 "headers": {
                     "q0": {
                         "title": "Q1",
-                        "href": "download.php?file=%2FmultinomQuestionsPredict%2FmultinomQuestionsPredictDataForR_q0_"
+                        "href": "%2FmultinomialQuestion%2FmultinomialQuestionData_q0_"
                     },
                     "q1": {
                         "title": "Q2",
-                        "href": "download.php?file=%2FmultinomQuestionsPredict%2FmultinomQuestionsPredictDataForR_q1_"
+                        "href": "%2FmultinomialQuestion%2FmultinomialQuestionData_q1_"
                     },
                     "q2": {
                         "title": "Q3",
-                        "href": "download.php?file=%2FmultinomQuestionsPredict%2FmultinomQuestionsPredictDataForR_q2_"
+                        "href": "%2FmultinomialQuestion%2FmultinomialQuestionData_q2_"
                     },
                     "q3": {
                         "title": "Q4",
-                        "href": "download.php?file=%2FmultinomQuestionsPredict%2FmultinomQuestionsPredictDataForR_q3_"
+                        "href": "%2FmultinomialQuestion%2FmultinomialQuestionData_q3_"
                     }
                 }
             }
         },
         "algorithms": {
-            "numLevelsTable": [ "Random", "Log reg" ],
-            "individualLevelsTable": [
+            "numLevels": [ "Random", "Log reg" ],
+            "levelCompletion": [
                 "Log reg",
                 "Nearest Neighbors",
                 "Linear SVM",
@@ -385,7 +385,7 @@
                 "QDA",
                 "LogReg (SKL)"
             ],
-            "binomialQuestionTable": [
+            "binomialQuestion": [
                 "Log reg",
                 "Nearest Neighbors",
                 "Linear SVM",
@@ -399,7 +399,7 @@
                 "QDA",
                 "LogReg (SKL)"
             ],
-            "multinomialQuestionTable": [
+            "multinomialQuestion": [
                 "Nearest Neighbors",
                 "Linear SVM",
                 "RBF SVM",
