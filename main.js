@@ -616,6 +616,10 @@ $(document).ready((event) => {
                                             if (data.pValues[rowName] < 0.05) {
                                                 $(innerText).css('background-color', '#82e072')
                                             }
+                                        } else if (typeof data.pValues[rowName] === 'string' && typeof data.coefficients[rowName] === 'string') {
+                                            innerText.html(data.coefficients[rowName] + ',<br>' + data.pValues[rowName]) // expecting "NA" so no toFixed(4)
+                                        } else if (data.pValues[rowName] === undefined || data.coefficients[rowName] === undefined) {
+                                            innerText.html('-') // row was not checked for use in regression equation
                                         }
                                         $(jval).html(innerText)
                                         if (data.pValues[rowName])

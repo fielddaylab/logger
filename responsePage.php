@@ -8,52 +8,56 @@ if ($js_debug && isset($_GET['table'])) {
     if ($_GET['table'] == 'numLevels') {
         echo '{
             "coefficients": {
-                "(Intercept)": 1.868,
-                "levelTimes": -9.155e-8,
-                "numMovesPerChallenge": 0.002808,
-                "moveTypeChangesPerLevel": 0.02019,
-                "knobStdDevs": -0.03626,
-                "knobAvgs": 0.03525,
-                "percentOFFSET": -1.404,
-                "percentWAVELENGTH": -1.215,
-                "percentAMPLITUDE": 3.085,
-                "numFailsPerLevel": 0.004785,
-                "pgm_1": 0.1175
+                "(Intercept)": 4.352,
+                "levelTimes": 0.000001776,
+                "numMovesPerChallenge": 0.004196,
+                "moveTypeChangesPerLevel": 0.02516,
+                "knobStdDevs": -0.02789,
+                "knobAvgs": 0.03265,
+                "percentOFFSET": -3.954,
+                "percentWAVELENGTH": -3.65,
+                "percentAMPLITUDE": "NA",
+                "numFailsPerLevel": 0.002195,
+                "pgm_1": 0.1792
             },
             "stdErrs": {
-                "(Intercept)": 1.617,
-                "levelTimes": 9.957e-6,
-                "numMovesPerChallenge": 0.001066,
-                "moveTypeChangesPerLevel": 0.003163,
-                "knobStdDevs": 0.009557,
-                "knobAvgs": 0.003261,
-                "percentOFFSET": 1.635,
-                "percentWAVELENGTH": 1.64,
-                "percentAMPLITUDE": 1.659,
-                "numFailsPerLevel": 0.002521,
-                "pgm_1": 0.09334
+                "(Intercept)": 0.3704,
+                "levelTimes": 0.000006987,
+                "numMovesPerChallenge": 0.001458,
+                "moveTypeChangesPerLevel": 0.003262,
+                "knobStdDevs": 0.01009,
+                "knobAvgs": 0.003438,
+                "percentOFFSET": 0.5014,
+                "percentWAVELENGTH": 0.5453,
+                "percentAMPLITUDE": "NA",
+                "numFailsPerLevel": 0.002492,
+                "pgm_1": 0.0943
             },
             "pValues": {
-                "(Intercept)": 0.248146,
-                "levelTimes": 0.992665,
-                "numMovesPerChallenge": 0.008508,
-                "moveTypeChangesPerLevel": 2.33e-10,
-                "knobStdDevs": 0.000154,
-                "knobAvgs": 2.0e-16,
-                "percentOFFSET": 0.390668,
-                "percentWAVELENGTH": 0.45871,
-                "percentAMPLITUDE": 0.063227,
-                "numFailsPerLevel": 0.057894,
-                "pgm_1": 0.208406
+                "(Intercept)": 2e-16,
+                "levelTimes": 0.79938,
+                "numMovesPerChallenge": 0.00405,
+                "moveTypeChangesPerLevel": 2.31e-14,
+                "knobStdDevs": 0.0058,
+                "knobAvgs": 2e-16,
+                "percentOFFSET": 6.15e-15,
+                "percentWAVELENGTH": 3.14e-11,
+                "percentAMPLITUDE": "NA",
+                "numFailsPerLevel": 0.37863,
+                "pgm_1": 0.05754
             },
-            "numSessionsString": "2299 \/ 673",
+            "numSessionsString": "2299 / 673",
             "numSessions": {
                 "numTrue": 2299,
                 "numFalse": 673
             },
             "percentCorrect": {
-                "Log reg": [2],
-                "Random": [0.07102468904057294]
+                "Log reg": [
+                    2
+                ],
+                "Random": [
+                    0.08020665522210536
+                ]
             }
         }'; exit;
     }
