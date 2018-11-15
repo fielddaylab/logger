@@ -601,7 +601,7 @@ $(document).ready((event) => {
                                     'border-bottom': borderBottoms[j]
                                 })
                                 let innerText = $('<div>')
-                                innerText.html('No data')
+                                innerText.html('-')
                                 let rowName
                                 if (data.pValues) {
                                     rowName = getKeyByValue($(`#${tableBody} tr th`).eq(j).text())
@@ -648,7 +648,7 @@ $(document).ready((event) => {
                                                 innerText.html(percentsCorrect[0].toFixed(5))
                                             }
                                         } else {
-                                            innerText.html('No data')
+                                            innerText.html('-')
                                         }
                                         if (table === 'binomialQuestion' && j % numAlgorithms === 0) {
                                             $(innerText).wrapInner(`<a target="_blank" href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=${table}&row=${Math.floor(j/(numAlgorithms)+1)}&col=${column}&i=${i}&j=${Math.floor(j/(numAlgorithms))}"></a>`)

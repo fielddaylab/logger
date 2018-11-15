@@ -2108,7 +2108,7 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
     foreach ($sessionIDs as $i=>$sessionID) {
         $allData[$sessionID]['features']['avgPercentGoodMoves'] = $percentGoodMovesAvgs[$i];
         foreach ($levelsForTable as $j=>$lvl) {
-            if (!$featuresToUse['pgm_'.$lvl]) break;
+            if (!isset($featuresToUse['pgm_'.$lvl]) || !$featuresToUse['pgm_'.$lvl]) continue;
             $allData[$sessionID]['features']['pgm_'.$lvl] = $percentGoodMovesAll[$lvl][$i];
         }
         $allData[$sessionID]['features']['percentQuestionsCorrect'] = ($questionsAll['numsQuestions'][$i] === 0) ? 0 : $questionsAll['numsCorrect'][$i] / $questionsAll['numsQuestions'][$i];
@@ -2469,7 +2469,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
     $percentTesting = 0.5;
     $numMetrics = 2;
     $table = isset($_GET['table']) ? $_GET['table'] : null;
-    if/* binomial/binary qs */ (!isset($reqSessionID) && ($table === 'basic' || (isset($column) && $table === 'binomialQuestion'))) {
+    if/* binomial qs        */ (!isset($reqSessionID) && ($table === 'basic' || (isset($column) && $table === 'binomialQuestion'))) {
         $minMoves = $_GET['minMoves'];
         $minQuestions = $_GET['minQuestions'];
         $startDate = $_GET['startDate'];
@@ -2578,34 +2578,35 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             return $regression;
         }
 
-        if (false) {
-            // Construct sessions and times array
-            $sessionsAndTimes = array('sessions'=>$uniqueSessions, 'times'=>array_values($times));
-            $regression = analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAttributes, $column);
+        $questionPredictCol = $column;
+        $sessionsAndTimes = array('sessions'=>$uniqueSessions, 'times'=>array_values($times));
+        $returnArray = array();
+        for ($predLevel = 1; $predLevel < 9; $predLevel++) { // repeat calculations for each cell, adding a level of data each iteration
+            $regression = analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAttributes, $questionPredictCol, $predLevel);
             $predictArray = $regression['predictors'];
             $predictedArray = $regression['predicted'];
             $numPredictors = $regression['numSessions'];
 
             $predictString = "# Generated " . date("Y-m-d H:i:s") . "\n" . $column . ",";
             $headerCols = $regression['featureNames'];
-            $headerString = implode(',', $headerCols);//"num_slider_moves,num_type_changes,num_levels,total_time,avg_knob_max_min,avg_pgm,offset,wavelength,amp,num_fails";
+            $headerString = implode(',', $headerCols);//"num_slider_moves,num_type_changes,num_levels,total_time,avg_knob_max_min,avg_pgm,offset,wavelength,amp";
             $predictString .= $headerString . ",result\n";
             foreach ($predictArray as $i=>$array) {
                 $predictString .= $column . ',' . implode(',', $array) . "\n";
             }
-            $numVariables = count(explode(',', $headerString)) + 1;
 
-            if (!is_dir(DATA_DIR . '/questions')) {
-                mkdir(DATA_DIR . '/questions', 0777, true);
+            if (!is_dir(DATA_DIR . '/binomialQuestion')) {
+                mkdir(DATA_DIR . '/binomialQuestion', 0777, true);
             }
 
-            $dataFile = DATA_DIR . '/questions/questions_'. $_GET['column'] .'.txt';
+            $numVariables = count(explode(',', $headerString)) + 1;
+
+            $dataFile = DATA_DIR . '/binomialQuestion/binomialQuestionData_'. $questionPredictCol . '_' . $predLevel .'.txt';
             file_put_contents($dataFile, $predictString);
             unset($rResults);
-
-            exec(RSCRIPT_DIR . " scripts/questionsScript.R " . $column . ' ' . str_replace(',', ' ', $headerString), $rResults);
-            unset($sklRegOutput);
+            exec(RSCRIPT_DIR . " scripts/binomialQuestionScript.R " . $column . ' ' . $predLevel . ' ' . str_replace(',', ' ', $headerString), $rResults);
             unset($sklOutput);
+            unset($sklRegOutput);
             exec(PYTHON_DIR . " -W ignore scripts/sklearnscript.py $dataFile " . implode(' ', range(1, $numVariables)), $sklOutput);
             exec(PYTHON_DIR . " -W ignore scripts/sklearnLogRegScript.py $dataFile " . implode(' ', range(1, $numVariables)), $sklRegOutput);
     
@@ -2620,6 +2621,10 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                 }
             }
 
+            $sklName = 'LogReg (SKL)';
+            $algorithmNames[] = $sklName;
+            $accuracies[$sklName] = (isset($sklRegOutput[0])) ? array($sklRegOutput[0]) : array(null);
+
             $accStart = 0;
             $coefficients = array();
             $stdErrs = array();
@@ -2631,13 +2636,13 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                 }
                 if (stristr($string, 'Estimate')) {
                     $coefStart = $key;
-                    break;
+                    break; // estimate comes after accuracy in the output
                 }
             }
-            $accuracy = null;
+            $percentCorrectR = null;
             if (isset($rResults[$accStart+1])) {
                 $accuracyLine = preg_split('/\ +/', $rResults[$accStart+1]);
-                if (isset($accuracyLine[2])) $accuracy = $accuracyLine[2];
+                if (isset($accuracyLine[2])) $percentCorrectR = $accuracyLine[2];
             }
             if ($coefStart !== 0) {
                 for ($i = $coefStart+1, $lastRow = $numVariables+$coefStart; $i <= $lastRow; $i++) {
@@ -2647,113 +2652,22 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                     $pValues[$values[0]] = sciToNum($values[4]);
                 }
             }
-            $percentCorrectR = $accuracy;
+            $numTrue = $numPredictors['numTrue'];
+            $numFalse = $numPredictors['numFalse'];
+            $expectedAccuracy = ($numTrue + $numFalse == 0) ? 'NaN' : number_format(max($numTrue, $numFalse) / ($numTrue + $numFalse), 2);
 
-            $sklName = 'LogReg (SKL)';
-            $algorithmNames[] = $sklName;
-            $accuracies[$sklName] = (isset($sklRegOutput[0])) ? $sklRegOutput[0] : null;
-
-            return array(
+            $returnArray[$predLevel] = array(
                 'coefficients'=>$coefficients,
                 'stdErrs'=>$stdErrs,
                 'pValues'=>$pValues,
                 'numSessions'=>$numPredictors,
-                'percentCorrectR'=>$percentCorrectR,
-                'algorithmNames'=>$algorithmNames,
-                'accuracies'=>$accuracies
+                'numSessionsString'=>"$numTrue / $numFalse<br>($expectedAccuracy expected)",
+                'expectedAccuracy'=>$expectedAccuracy,
+                'percentCorrect'=>array_merge(array('Log reg'=>array($percentCorrectR)), $accuracies),
+                'algorithmNames'=>$algorithmNames
             );
-        } else {
-            $questionPredictCol = $column;
-            $sessionsAndTimes = array('sessions'=>$uniqueSessions, 'times'=>array_values($times));
-            $returnArray = array();
-            for ($predLevel = 1; $predLevel < 9; $predLevel++) { // repeat calculations for each cell, adding a level of data each iteration
-                $regression = analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAttributes, $questionPredictCol, $predLevel);
-                $predictArray = $regression['predictors'];
-                $predictedArray = $regression['predicted'];
-                $numPredictors = $regression['numSessions'];
-
-                $predictString = "# Generated " . date("Y-m-d H:i:s") . "\n" . $column . ",";
-                $headerCols = $regression['featureNames'];
-                $headerString = implode(',', $headerCols);//"num_slider_moves,num_type_changes,num_levels,total_time,avg_knob_max_min,avg_pgm,offset,wavelength,amp";
-                $predictString .= $headerString . ",result\n";
-                foreach ($predictArray as $i=>$array) {
-                    $predictString .= $column . ',' . implode(',', $array) . "\n";
-                }
-
-                if (!is_dir(DATA_DIR . '/binomialQuestion')) {
-                    mkdir(DATA_DIR . '/binomialQuestion', 0777, true);
-                }
-
-                $numVariables = count(explode(',', $headerString)) + 1;
-
-                $dataFile = DATA_DIR . '/binomialQuestion/binomialQuestionData_'. $questionPredictCol . '_' . $predLevel .'.txt';
-                file_put_contents($dataFile, $predictString);
-                unset($rResults);
-                exec(RSCRIPT_DIR . " scripts/binomialQuestionScript.R " . $column . ' ' . $predLevel . ' ' . str_replace(',', ' ', $headerString), $rResults);
-                unset($sklOutput);
-                unset($sklRegOutput);
-                exec(PYTHON_DIR . " -W ignore scripts/sklearnscript.py $dataFile " . implode(' ', range(1, $numVariables)), $sklOutput);
-                exec(PYTHON_DIR . " -W ignore scripts/sklearnLogRegScript.py $dataFile " . implode(' ', range(1, $numVariables)), $sklRegOutput);
-        
-                $algorithmNames = array();
-                $accuracies = array();
-                if ($sklOutput) {
-                    for ($i = 0, $lastRow = count($sklOutput); $i < $lastRow; $i++) {
-                        $values = preg_split('/\ +/', $sklOutput[$i]);  // put "words" of this line into an array
-                        $algorithmName = implode(' ', array_slice($values, 0, -$numMetrics));
-                        $algorithmNames[] = $algorithmName;
-                        $accuracies[$algorithmName] = array_slice($values, -$numMetrics);
-                    }
-                }
-
-                $sklName = 'LogReg (SKL)';
-                $algorithmNames[] = $sklName;
-                $accuracies[$sklName] = (isset($sklRegOutput[0])) ? array($sklRegOutput[0]) : array(null);
-
-                $accStart = 0;
-                $coefficients = array();
-                $stdErrs = array();
-                $pValues = array();
-                $coefStart = 0;
-                foreach ($rResults as $key=>$string) {
-                    if (stristr($string, 'Accuracy')) {
-                        $accStart = $key;
-                    }
-                    if (stristr($string, 'Estimate')) {
-                        $coefStart = $key;
-                        break; // estimate comes after accuracy in the output
-                    }
-                }
-                $percentCorrectR = null;
-                if (isset($rResults[$accStart+1])) {
-                    $accuracyLine = preg_split('/\ +/', $rResults[$accStart+1]);
-                    if (isset($accuracyLine[2])) $percentCorrectR = $accuracyLine[2];
-                }
-                if ($coefStart !== 0) {
-                    for ($i = $coefStart+1, $lastRow = $numVariables+$coefStart; $i <= $lastRow; $i++) {
-                        $values = preg_split('/\ +/', str_replace(['<', '>'], '', $rResults[$i]));  // put "words" of this line into an array
-                        $coefficients[$values[0]] = sciToNum($values[1]);
-                        $stdErrs[$values[0]] = sciToNum($values[2]);
-                        $pValues[$values[0]] = sciToNum($values[4]);
-                    }
-                }
-                $numTrue = $numPredictors['numTrue'];
-                $numFalse = $numPredictors['numFalse'];
-                $expectedAccuracy = number_format(max($numTrue, $numFalse) / ($numTrue + $numFalse), 2);
-
-                $returnArray[$predLevel] = array(
-                    'coefficients'=>$coefficients,
-                    'stdErrs'=>$stdErrs,
-                    'pValues'=>$pValues,
-                    'numSessions'=>$numPredictors,
-                    'numSessionsString'=>"$numTrue / $numFalse<br>($expectedAccuracy expected)",
-                    'expectedAccuracy'=>$expectedAccuracy,
-                    'percentCorrect'=>array_merge(array('Log reg'=>array($percentCorrectR)), $accuracies),
-                    'algorithmNames'=>$algorithmNames
-                );
-            }
-            return $returnArray;
         }
+        return $returnArray;
     } /* single session     */ else if (isset($reqSessionID)) {
         $query =
         "SELECT session_id, level, event, event_custom, event_data_complex, client_time
@@ -3153,7 +3067,6 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
         $lvlsToUse = array_filter($levelsForTable, function ($a) use($colLvl) { return $a < $colLvl; });
         $isLvl1 = empty($lvlsToUse);
 
-        $prevColLvl = $isLvl1 ? null : $levelsForTable[$lvlIndex-1];
         $params = array();
         $paramTypes = '';
         $query = 
@@ -3381,7 +3294,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
         $trueSessions = array_unique(array_column(array_filter($completeEvents, function ($a) use ($colLvl) { return $a['level'] == $colLvl; }), 'session_id'));
         $numTrue = count($trueSessions); // number of sessions who completed every level including current col
         $numFalse = $numSessions - $numTrue; // number of sessions who completed every level up to but not current col
-        $expectedAccuracy = ($numTrue + $numFalse == 0) ? null : number_format(max($numTrue, $numFalse) / ($numTrue + $numFalse), 2);
+        $expectedAccuracy = ($numTrue + $numFalse == 0) ? 'NaN' : number_format(max($numTrue, $numFalse) / ($numTrue + $numFalse), 2);
 
         return array(
             'coefficients'=>$coefficients,
@@ -3407,7 +3320,6 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
         $lvlsToUse = array_filter($levelsForTable, function ($a) use($colLvl) { return $a < $colLvl; });
         $isLvl1 = empty($lvlsToUse);
 
-        $prevColLvl = $isLvl1 ? null : $levelsForTable[$lvlIndex-1];
         $params = array();
         $paramTypes = '';
         $query = 
@@ -3427,87 +3339,41 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                 (
                     SELECT session_id
                     FROM log
-                    WHERE event_custom=1 AND app_id=? AND session_id IN";
+                    WHERE event_custom=1 AND app_id=?";
         array_push($params, $startDate, $endDate, $gameID);
         $paramTypes .= 'sss';
         if (!$isLvl1) {
             $query .= "
+                    AND session_id IN
                     (
                         SELECT c.session_id FROM log c
-                        WHERE c.app_id=? AND c.event='COMPLETE' AND c.level IN (" . implode(",", array_map('intval', $lvlsToUse)) . ") AND NOT EXISTS
-                        (
-                            SELECT * FROM log d WHERE level >= ? AND d.event='COMPLETE' AND d.session_id = c.session_id AND app_id=?
-                        ) 
+                        WHERE c.app_id=? AND c.event='COMPLETE' AND c.level IN (" . implode(",", array_map('intval', $lvlsToUse)) . ")
                         GROUP BY c.session_id
                         HAVING COUNT(DISTINCT c.level) = ?
                     )";
 
-            array_push($params, $gameID, $colLvl, $gameID, count($lvlsToUse));
-            $paramTypes .= 'sisi';
+            array_push($params, $gameID, count($lvlsToUse));
+            $paramTypes .= 'si';
 
             $query .= "
                     GROUP BY session_id
                     HAVING COUNT(*) >= ?
                     LIMIT ?
                 ) a
-            ) OR a.session_id IN
-            (
-                SELECT * FROM 
-                (
-                    SELECT session_id
-                    FROM log
-                    WHERE event_custom=1 AND app_id=? AND session_id IN
-                    (
-                        SELECT session_id FROM log WHERE app_id=? AND event='COMPLETE'
-                        AND level IN (" . implode(",", array_map('intval', array_merge($lvlsToUse, [$colLvl]))) . ")
-                        GROUP BY session_id
-                        HAVING COUNT(DISTINCT level) = ?
-                    )
-                    GROUP BY session_id
-                    HAVING COUNT(*) >= ?
-                    LIMIT ?
-                ) b
             )
             ORDER BY a.client_time";
-            array_push($params, $minMoves, $maxRows, $gameID, $gameID, count($lvlsToUse)+1, $minMoves, $maxRows);
-            $paramTypes .= 'iissiii';
+            array_push($params, $minMoves, $maxRows);
+            $paramTypes .= 'ii';
         } else {
             $query .= "
-                    (
-                        SELECT c.session_id FROM log c
-                        WHERE c.app_id=? AND NOT EXISTS
-                        (
-                            SELECT * FROM log d WHERE level >= ? AND d.event='COMPLETE' AND d.session_id = c.session_id AND app_id=?
-                        ) 
-                    )";
-            array_push($params, $gameID, $colLvl, $gameID);
-            $paramTypes .= 'sis';
-
-            $query .= "
                     GROUP BY session_id
                     HAVING COUNT(*) >= ?
                     LIMIT ?
                 ) a
-            ) OR a.session_id IN
-            (
-            	SELECT * FROM 
-                (
-                    SELECT session_id
-                    FROM log
-                    WHERE event_custom=1 AND app_id=? AND session_id IN
-                    (
-                        SELECT session_id FROM log WHERE app_id=? AND event='COMPLETE' AND level=1
-                        GROUP BY session_id
-                        HAVING COUNT(DISTINCT level) = ?
-                    )
-                    GROUP BY session_id
-                    HAVING COUNT(*) >= ?
-                    LIMIT ?
-                ) b
             )
             ORDER BY a.client_time";
-            array_push($params, $minMoves, $maxRows, $gameID, $gameID, count($lvlsToUse) + 1, $minMoves, $maxRows);
-            $paramTypes .= 'iissiii';
+            array_push($params, $minMoves, $maxRows);
+            $paramTypes .= 'ii';
         }
 
         $stmt = queryMultiParam($db, $query, $paramTypes, $params);
@@ -3625,7 +3491,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                     $percentError = ($actual == 0 && $prediction == 0) ? 0 : 2 * ($actual - $prediction) / (abs($actual) + abs($prediction));
                     $totalPercentError += $percentError;
 
-                    $predictionRand = array_rand($levelsForTable);
+                    $predictionRand = mt_rand(min(...$levelsForTable), max(...$levelsForTable));
                     $percentErrorRand = ($actual == 0 && $predictionRand == 0) ? 0 : 2 * ($actual - $predictionRand) / (abs($actual) + abs($predictionRand));
                     $totalPercentErrorRand += $percentErrorRand;
                 }
@@ -3647,15 +3513,12 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
         } else {
             $percentCorrectRand = null;
         }
-        $trueSessions = array_unique(array_column(array_filter($completeEvents, function ($a) use ($colLvl) { return $a['level'] == $colLvl; }), 'session_id'));
-        $numTrue = count($trueSessions); // number of sessions who completed every level including current col
-        $numFalse = $numSessions - $numTrue; // number of sessions who completed every level up to but not current col
 
         return array(
             'coefficients'=>$coefficients,
             'stdErrs'=>$stdErrs, 'pValues'=>$pValues,
-            'numSessionsString'=>"$numTrue / $numFalse",
-            'numSessions'=>array('numTrue'=>$numTrue, 'numFalse'=>$numFalse),
+            'numSessionsString'=>"$numPredictors",
+            'numSessions'=>$numPredictors,
             'percentCorrect'=>array('Log reg'=>array($percentCorrectR), 'Random'=>array($percentCorrectRand))
         );
     } /* multinomial ques   */ else if (isset($column) && $table === 'multinomialQuestion') {

@@ -302,7 +302,7 @@
                                     Significant values (at α = 0.05) are highlighted in <span style="background-color: #82e072">green</span>.
                                 </div>
                                 <div style="font-size:14px; margin-bottom:6px; color:#777">
-                                    Mean absolute errors are calculated as 2 * (actual - prediction) / (|actual| + |prediction|).
+                                    Mean absolute errors are calculated as <b>2 * (actual - prediction) / (|actual| + |prediction|)</b>. Note then that a MAE of 2.00 means the prediction was 0, probably because one or more coefficients are undefined.
                                 </div>
                             </span>
                         </div>
@@ -343,6 +343,9 @@
                                 </div>
                                 <div style="font-size:14px; margin-bottom:6px; color:#777">
                                     Algorithm accuracies greater than the accuracy of expected value (i.e. the percentage of the most common outcome) are highlighted in <span style="background-color: #82e072">green</span>.
+                                </div>
+                                <div style="font-size:14px; margin-bottom:6px; color:#777">
+                                    Accuracies are listed in order of <b>percent correct, F1 score</b>. Note that the logistic regression does not have an F1 score.
                                 </div>
                             </span>
                         </div>
