@@ -13,7 +13,7 @@ $(document).ready(() => {
     let allFeatures = flattenObj(model.features[table])
 
     let dataLocal = JSON.parse(localStorage.getItem(`data_${table}_${col}`))
-    let inputTexts = JSON.parse(localStorage.getItem(`row_names_${table}`))
+    let inputTexts = JSON.parse(localStorage.getItem(`row_names_${table}_${col}`))
     allFeatures = filter(allFeatures, (k) => { return inputTexts.indexOf(k) > -1 })
 
     let coefficients = dataLocal['coefficients']
@@ -48,6 +48,11 @@ $(document).ready(() => {
                 yVals = regressionOutputs
             let xTitle = allFeatures[reqRow]
             let yTitle = model.columns[table].headers[col].title
+            if (table === 'levelCompletion') {
+                yTitle = 'completion of ' + yTitle.toLowerCase() // this is a little more clear
+            } else if (table === 'numLevels') {
+                yTitle = 'number of levels completed at the boundary of ' + yTitle.toLowerCase()
+            }
             let equation = ''
             if (coefficients && stdErrs) {
                 equation = `<span id="yTooltip" href=# data-toggle="tooltip" data-placement="bottom" title="Predicted output of ${yTitle}">Y\'</span> = `
@@ -59,7 +64,7 @@ $(document).ready(() => {
                         equation += ' + '
                     }
                     if (iNum == coefIndex || i === coefIndex) {
-                        equation += `<b><span id="xTooltip${iNum}" href=# data-toggle="tooltip" data-placement="bottom" title="Measured input of ${allFeatures[inputTexts[iNum]].toLowerCase()} (this graph)">(` + 
+                        equation += `<b><span id="xTooltip${iNum}" href=# data-toggle="tooltip" data-placement="bottom" title="Measured input of ${xTitle.toLowerCase()} (this graph)">(` + 
                         new Number(coefficients[i]).toFixed(2) + '<span style="font-size:14px">±' + new Number(stdErrs[i]).toFixed(2) + 
                         `</span>)` + xTerm + '</span></b>'
                     } else {
@@ -110,7 +115,7 @@ $(document).ready(() => {
                 margin: { t: 35 },
                 plot_bgcolor: '#F6F6F3',
                 paper_bgcolor: '#F6F6F3',
-                title: 'Data points for correlation between ' + xTitle.toLowerCase() + ' and ' + yTitle.toLowerCase(),
+                title: 'Data points for correlation between <b>' + xTitle.toLowerCase() + '</b> and <b>' + yTitle.toLowerCase() + '</b>',
                 yaxis: {
                     title: xTitle,
                     titlefont: {
@@ -134,7 +139,7 @@ $(document).ready(() => {
                     }
                 },
                 yaxis: {
-                    title: yTitle,
+                    title: (table === 'numLevels' ? 'Num levels completed' : yTitle),
                     titlefont: {
                         family: 'Courier New, monospace',
                         size: 12,

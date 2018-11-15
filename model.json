@@ -139,59 +139,59 @@
                 },
                 "headers": {
                     "lvl1": {
-                        "title": "Up to lvl 1",
+                        "title": "Lvl 1",
                         "href": "%2FnumLevels%2FnumLevelsData_1.txt"
                     },
                     "lvl3": {
-                        "title": "Up to lvl 3",
+                        "title": "Lvl 3",
                         "href": "%2FnumLevels%2FnumLevelsData_3.txt"
                     },
                     "lvl5": {
-                        "title": "Up to lvl 5",
+                        "title": "Lvl 5",
                         "href": "%2FnumLevels%2FnumLevelsData_5.txt"
                     },
                     "lvl7": {
-                        "title": "Up to lvl 7",
+                        "title": "Lvl 7",
                         "href": "%2FnumLevels%2FnumLevelsData_7.txt"
                     },
                     "lvl11": {
-                        "title": "Up to lvl 11",
+                        "title": "Lvl 11",
                         "href": "%2FnumLevels%2FnumLevelsData_11.txt"
                     },
                     "lvl13": {
-                        "title": "Up to lvl 13",
+                        "title": "Lvl 13",
                         "href": "%2FnumLevels%2FnumLevelsData_13.txt"
                     },
                     "lvl15": {
-                        "title": "Up to lvl 15",
+                        "title": "Lvl 15",
                         "href": "%2FnumLevels%2FnumLevelsData_15.txt"
                     },
                     "lvl19": {
-                        "title": "Up to lvl 19",
+                        "title": "Lvl 19",
                         "href": "%2FnumLevels%2FnumLevelsData_19.txt"
                     },
                     "lvl21": {
-                        "title": "Up to lvl 21",
+                        "title": "Lvl 21",
                         "href": "%2FnumLevels%2FnumLevelsData_21.txt"
                     },
                     "lvl23": {
-                        "title": "Up to lvl 23",
+                        "title": "Lvl 23",
                         "href": "%2FnumLevels%2FnumLevelsData_23.txt"
                     },
                     "lvl25": {
-                        "title": "Up to lvl 25",
+                        "title": "Lvl 25",
                         "href": "%2FnumLevels%2FnumLevelsData_25.txt"
                     },
                     "lvl27": {
-                        "title": "Up to lvl 27",
+                        "title": "Lvl 27",
                         "href": "%2FnumLevels%2FnumLevelsData_27.txt"
                     },
                     "lvl31": {
-                        "title": "Up to lvl 31",
+                        "title": "Lvl 31",
                         "href": "%2FnumLevels%2FnumLevelsData_31.txt"
                     },
                     "lvl33": {
-                        "title": "Up to lvl 33",
+                        "title": "Lvl 33",
                         "href": "%2FnumLevels%2FnumLevelsData_33.txt"
                     }
                 }

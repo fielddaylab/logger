@@ -592,8 +592,7 @@ $(document).ready((event) => {
                                 rowNamesUsed = Object.keys(data.coefficients)
                             else if (data[1].coefficients)
                                 rowNamesUsed = Object.keys(data[1].coefficients)
-                            localStorage.setItem(`row_names_${table}`, JSON.stringify(rowNamesUsed))
-                            localStorage.setItem(`href_loc_${table}`, model.columns[table].headers[column].href)
+                            localStorage.setItem(`row_names_${table}_${column}`, JSON.stringify(rowNamesUsed))
                             columnElements.each((j, jval) => {
                                 $(jval).css({
                                     'vertical-align': 'middle',
