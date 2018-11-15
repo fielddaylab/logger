@@ -26,8 +26,8 @@ $(document).ready(() => {
         file += row
         file += '.txt'
         rowNum = 1
-        coefficients = coefficients[row] // done once (for this level of data anyway)
-        stdErrs = stdErrs[row] // also done once
+        coefficients = coefficients[rowNum] // done once (for this level of data anyway)
+        stdErrs = stdErrs[rowNum] // also done once
     }
     
     function getDataAndGraphs(coefIndex) { // the only thing that actually changes is 'j', aka the coefficient index
