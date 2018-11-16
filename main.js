@@ -622,7 +622,7 @@ $(document).ready((event) => {
                                             innerText.html('-') // row was not checked for use in regression equation
                                         }
                                         $(jval).html(innerText)
-                                        if (data.pValues[rowName])
+                                        if (data.pValues[rowName] && rowName !== '(Intercept)')
                                             $(jval).wrapInner(`<a href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=${table}&row=${getKeyByValue(rowNames[j])}&col=${column}&i=${i}&j=${j}" target="_blank"></a>`)
                                     } else {
                                         let percentsCorrect, expectedAccuracy

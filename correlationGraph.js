@@ -73,7 +73,7 @@ $(document).ready(() => {
                     iNum++
                 }
             } else {
-                equation = 'One or more coefficients are NaN'
+                equation = 'Error retrieving data'
             }
             $('#equationDiv').html($(equation))
             $('#infoDiv').html('Hover over any variable for an explanation of what it is.<br>Click any variable to see its graphs.')
@@ -90,27 +90,41 @@ $(document).ready(() => {
                 mode: 'markers',
                 type: 'scatter'
             }
+            let traces = []
             let xValsFalse, xValsTrue
             if (table === 'numLevels') {
-                let column = col.substr(3)
-                xValsFalse = xVals.filter((value, i, arr) => { return (yVals[i] < column) })
-                xValsTrue = xVals.filter((value, i, arr) => { return (yVals[i] >= column) })
+                let categories = arrayUnique(yVals) // an array of all the numbers of levels that have been completed
+                for (let i in categories) {
+                    let xValsThisNum = xVals.filter(function (value, index, arr) { // The input values for sessions with this many number of levels
+                        return yVals[index] === categories[i]
+                    })
+                    traces[categories[i]] = {
+                        x: xValsThisNum,
+                        boxpoints: false,
+                        type: 'box',
+                        name: categories[i] + ' lvls'
+                    }
+                }
+                traces = traces.filter(function (value, index, arr) { // get rid of holes in the array
+                    return value !== undefined
+                })
             } else {
                 xValsFalse = xVals.filter((value, i, arr) => { return (yVals[i] == 0) })
                 xValsTrue = xVals.filter((value, i, arr) => { return (yVals[i] == 1) })
+                traces[0] = {
+                    y: xValsFalse,
+                    boxpoints: false,
+                    type: 'box',
+                    name: yTitle + ' FALSE'
+                }
+                traces[1] = {
+                    y: xValsTrue,
+                    boxpoints: false,
+                    type: 'box',
+                    name: yTitle + ' TRUE'
+                }
             }
-            let trace0 = {
-                y: xValsFalse,
-                boxpoints: 'all',
-                type: 'box',
-                name: yTitle + ' FALSE'
-            }
-            let trace1 = {
-                y: xValsTrue,
-                boxpoints: 'all',
-                type: 'box',
-                name: yTitle + ' TRUE'
-            }
+
             let layout = {
                 margin: { t: 35 },
                 plot_bgcolor: '#F6F6F3',
@@ -148,7 +162,7 @@ $(document).ready(() => {
                 },
                 showlegend: false
             }
-            Plotly.newPlot(graphDiv, [trace0, trace1], layout)
+            Plotly.newPlot(graphDiv, traces, layout)
             Plotly.newPlot(graphDiv2, [trace], layout2)
         })
     }
@@ -185,8 +199,14 @@ function getParameterByName(name, url) {
 }
 
 function arrayColumn(array, columnName) {
-    return array.map(function(value,index) {
+    return array.map(function(value, index) {
         return value[columnName];
+    })
+}
+
+function arrayUnique(array) {
+    return array.filter(function(el, index, arr) {
+        return index == arr.indexOf(el)
     })
 }
 
