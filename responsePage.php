@@ -1616,6 +1616,7 @@ if ($js_debug && isset($_GET['table'])) {
     }
 }
 
+// Set ini settings and constants from the config file
 $settings = json_decode(file_get_contents("config.json"), true);
 ini_set('memory_limit', $settings['memory_limit']);
 ini_set('max_execution_time', $settings['max_execution_time']);
@@ -1623,6 +1624,15 @@ ini_set('max_input_vars', $settings['max_input_vars']);
 define('DATA_DIR', $settings['DATA_DIR']);
 define('PYTHON_DIR', $settings['PYTHON_DIR']);
 define('RSCRIPT_DIR', $settings['RSCRIPT_DIR']);
+
+// Get the model file and set some constants
+if (isset($_GET['gameID'])) {
+    $model = json_decode(file_get_contents("model.json"), true)[$_GET['gameID']];
+    define('ALL_LEVELS', $model['levels']);
+    define('SQL_QUESTION_CUSTOM', $model['sqlEventCustoms']['question']);
+    define('SQL_MOVE_CUSTOM', $model['sqlEventCustoms']['move']);
+    define('SQL_OTHER_CUSTOMS', $model['sqlEventCustoms']['other']);
+}
 
 // Establish the database connection
 include "database.php";
@@ -1749,7 +1759,6 @@ function array_sum2($arr) {
 function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAttributes, $column, $maxLevel = 100) {
     $sessionIDs = $sessionsAndTimes['sessions'];
     $sliderTypes = ['OFFSET', 'WAVELENGTH', 'AMPLITUDE'];
-    $levelsForTable = array(1, 3, 5, 7, 11, 13, 15, 19, 21, 23, 25, 27, 31, 33);
     $shouldUseAvgs = false;
     if (isset($_GET['shouldUseAvgs'])) {
         $shouldUseAvgs = ($_GET['shouldUseAvgs'] === 'true');
@@ -2107,7 +2116,7 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
     // Add features that were just calculated above to every session
     foreach ($sessionIDs as $i=>$sessionID) {
         $allData[$sessionID]['features']['avgPercentGoodMoves'] = $percentGoodMovesAvgs[$i];
-        foreach ($levelsForTable as $j=>$lvl) {
+        foreach (ALL_LEVELS as $j=>$lvl) {
             if (!isset($featuresToUse['pgm_'.$lvl]) || !$featuresToUse['pgm_'.$lvl]) continue;
             $allData[$sessionID]['features']['pgm_'.$lvl] = $percentGoodMovesAll[$lvl][$i];
         }
@@ -2171,9 +2180,8 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
 
     if (!isset($column)) {
         $lvlsPercentComplete = array();
-        $levelsForTable = array(1, 3, 5, 7, 11, 13, 15, 19, 21, 23, 25, 27, 31, 33);
 
-        foreach ($levelsForTable as $index=>$lvl) {
+        foreach (ALL_LEVELS as $index=>$lvl) {
             $numComplete = 0;
             $numTotal = 0;
             foreach ($levelsCompleteAll as $j=>$session) {
@@ -2490,12 +2498,13 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                     SELECT * FROM (
                         SELECT session_id, event_custom
                         FROM log
-                        WHERE event_custom=1
+                        WHERE event_custom=?
                         GROUP BY session_id
                         HAVING COUNT(*) >= ?
                     ) temp
                 ) AS moves
             ) ";
+            $params[] = SQL_MOVE_CUSTOM;
             $params[] = $minMoves;
             //$params[] = $maxRows;
             $paramTypes .= 'i';
@@ -2510,15 +2519,16 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                     SELECT * FROM (
                         SELECT session_id, event_custom
                         FROM log
-                        WHERE event_custom=3
+                        WHERE event_custom=?
                         GROUP BY session_id
                         HAVING COUNT(*) >= ?
                     LIMIT ?) temp
                 ) AS questions
             ) ";
+            $params[] = SQL_QUESTION_CUSTOM;
             $params[] = $minQuestions;
             $params[] = $maxRows;
-            $paramTypes .= 'ii';
+            $paramTypes .= 'iii';
         }
 
         $query .= "ORDER BY a.client_time";
@@ -3061,10 +3071,9 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
         $endDate = $_GET['endDate'];
         $maxRows = $_GET['maxRows'];
         $minMoves = $_GET['minMoves'];
-        $levelsForTable = array(1, 3, 5, 7, 11, 13, 15, 19, 21, 23, 25, 27, 31, 33);
         $colLvl = intval(substr($predictColumn, 3));
-        $lvlIndex = array_search($colLvl, $levelsForTable);
-        $lvlsToUse = array_filter($levelsForTable, function ($a) use($colLvl) { return $a < $colLvl; });
+        $lvlIndex = array_search($colLvl, ALL_LEVELS);
+        $lvlsToUse = array_filter(ALL_LEVELS, function ($a) use($colLvl) { return $a < $colLvl; });
         $isLvl1 = empty($lvlsToUse);
 
         $params = array();
@@ -3086,9 +3095,9 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                 (
                     SELECT session_id
                     FROM log
-                    WHERE event_custom=1 AND app_id=? AND session_id IN";
-        array_push($params, $startDate, $endDate, $gameID);
-        $paramTypes .= 'sss';
+                    WHERE event_custom=? AND app_id=? AND session_id IN";
+        array_push($params, $startDate, $endDate, SQL_MOVE_CUSTOM, $gameID);
+        $paramTypes .= 'ssis';
         if (!$isLvl1) {
             $query .= "
                     (
@@ -3115,7 +3124,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                 (
                     SELECT session_id
                     FROM log
-                    WHERE event_custom=1 AND app_id=? AND session_id IN
+                    WHERE event_custom=? AND app_id=? AND session_id IN
                     (
                         SELECT session_id FROM log WHERE app_id=? AND event='COMPLETE'
                         AND level IN (" . implode(",", array_map('intval', array_merge($lvlsToUse, [$colLvl]))) . ")
@@ -3128,8 +3137,8 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                 ) b
             )
             ORDER BY a.client_time";
-            array_push($params, $minMoves, $maxRows, $gameID, $gameID, count($lvlsToUse)+1, $minMoves, $maxRows);
-            $paramTypes .= 'iissiii';
+            array_push($params, $minMoves, $maxRows, SQL_MOVE_CUSTOM, $gameID, $gameID, count($lvlsToUse)+1, $minMoves, $maxRows);
+            $paramTypes .= 'iiissiii';
         } else {
             $query .= "
                     (
@@ -3153,7 +3162,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                 (
                     SELECT session_id
                     FROM log
-                    WHERE event_custom=1 AND app_id=? AND session_id IN
+                    WHERE event_custom=? AND app_id=? AND session_id IN
                     (
                         SELECT session_id FROM log WHERE app_id=? AND event='COMPLETE' AND level=1
                         GROUP BY session_id
@@ -3165,8 +3174,8 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                 ) b
             )
             ORDER BY a.client_time";
-            array_push($params, $minMoves, $maxRows, $gameID, $gameID, count($lvlsToUse) + 1, $minMoves, $maxRows);
-            $paramTypes .= 'iissiii';
+            array_push($params, $minMoves, $maxRows, SQL_MOVE_CUSTOM, $gameID, $gameID, count($lvlsToUse) + 1, $minMoves, $maxRows);
+            $paramTypes .= 'iiissiii';
         }
 
         $stmt = queryMultiParam($db, $query, $paramTypes, $params);
@@ -3313,11 +3322,10 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
         $startDate = $_GET['startDate'];
         $endDate = $_GET['endDate'];
 
-        $levelsForTable = array(1, 3, 5, 7, 11, 13, 15, 19, 21, 23, 25, 27, 31, 33);
         $colLvl = intval(substr($numLevelsColumn, 3));
-        $lvlIndex = array_search($colLvl, $levelsForTable);
+        $lvlIndex = array_search($colLvl, ALL_LEVELS);
         $maxRows = $_GET['maxRows'];
-        $lvlsToUse = array_filter($levelsForTable, function ($a) use($colLvl) { return $a < $colLvl; });
+        $lvlsToUse = array_filter(ALL_LEVELS, function ($a) use($colLvl) { return $a < $colLvl; });
         $isLvl1 = empty($lvlsToUse);
 
         $params = array();
@@ -3339,7 +3347,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                 (
                     SELECT session_id
                     FROM log
-                    WHERE event_custom=1 AND app_id=?";
+                    WHERE event_custom=? AND app_id=?";
         array_push($params, $startDate, $endDate, $gameID);
         $paramTypes .= 'sss';
         if (!$isLvl1) {
@@ -3352,8 +3360,8 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                         HAVING COUNT(DISTINCT c.level) = ?
                     )";
 
-            array_push($params, $gameID, count($lvlsToUse));
-            $paramTypes .= 'si';
+            array_push($params, SQL_MOVE_CUSTOM, $gameID, count($lvlsToUse));
+            $paramTypes .= 'isi';
 
             $query .= "
                     GROUP BY session_id
@@ -3491,7 +3499,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                     $percentError = ($actual == 0 && $prediction == 0) ? 0 : 2 * ($actual - $prediction) / (abs($actual) + abs($prediction));
                     $totalPercentError += $percentError;
 
-                    $predictionRand = mt_rand(min(...$levelsForTable), max(...$levelsForTable));
+                    $predictionRand = mt_rand(min(...ALL_LEVELS), max(...ALL_LEVELS));
                     $percentErrorRand = ($actual == 0 && $predictionRand == 0) ? 0 : 2 * ($actual - $predictionRand) / (abs($actual) + abs($predictionRand));
                     $totalPercentErrorRand += $percentErrorRand;
                 }
@@ -3542,14 +3550,15 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                     SELECT * FROM (
                         SELECT session_id, event_custom
                         FROM log
-                        WHERE event_custom=1
+                        WHERE event_custom=?
                         GROUP BY session_id
                         HAVING COUNT(*) >= ?
                     ) temp
                 ) AS moves
             ) ";
+            $params[] = SQL_MOVE_CUSTOM;
             $params[] = $minMoves;
-            $paramTypes .= 'i';
+            $paramTypes .= 'ii';
         }
         if ($minQuestions == 0) $minQuestions = 1;
         if ($minQuestions > 0) {
@@ -3560,12 +3569,13 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                     SELECT * FROM (
                         SELECT session_id, event_custom
                         FROM log
-                        WHERE event_custom=3
+                        WHERE event_custom=?
                         GROUP BY session_id
                         HAVING COUNT(*) >= ?
                     LIMIT ?) temp
                 ) AS questions
             ) ";
+            $params[] = SQL_QUESTION_CUSTOM;
             $params[] = $minQuestions;
             $params[] = $maxRows;
             $paramTypes .= 'ii';
