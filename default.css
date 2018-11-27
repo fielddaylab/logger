@@ -111,6 +111,6 @@ thead tr th {
     border-left-width: 4px !important; 
 }
 
-#numLevelsNumSessionsRow td, #percentCompleteRow td, #predictNumSessionsRow td {
+#numLevelsNumSessionsRow td, #levelCompletionPercentCompleteRow td, #levelCompletionNumSessionsRow td, #percentCompleteRow td, #predictNumSessionsRow td {
     text-align: center
 }
