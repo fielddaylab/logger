@@ -44,16 +44,26 @@ $(document).ready((event) => {
         let queueExists = false
         let model
         let allFeatures
+
         window.onerror = () => {
             errorTracker = 0
             off()
             $('#errorMessage').css('visibility', 'visible').html('A JavaScript error has occurred. See console for details.') 
         }
+
+        let defaultStates = $('.defaultState').clone(true).toArray()
         
         $(document).on('change', '#gameSelect', (event) => {
             event.preventDefault()
+
             // Send request that gets the model and populate tables and headers
             $.get('model.json', {}, data => {
+                // Reset all the tables and filters so they're not just appended to infinitely
+                fastClear($('#featuresList'))
+                $.each($('.defaultState'), function (i, element) {
+                    $(this).html(defaultStates[i].innerHTML)
+                })
+
                 model = data[$('#gameSelect').val()]
                 // store model in localStorage so correlationGraph.html can see it
                 localStorage.setItem('model', JSON.stringify(model))

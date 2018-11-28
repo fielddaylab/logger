@@ -23,11 +23,11 @@
                 <select id="gameSelect" class="js-example-basic-single">
                     <option value="BACTERIA" disabled>Bacteria</option>
                     <option value="BALLOON" disabled>Balloon</option>
-                    <option value="CRYSTAL" disabled>Crystal</option>
+                    <option value="CRYSTAL" selected>Crystal</option>
                     <option value="CYCLE" disabled>Cycle</option>
                     <option value="EARTHQUAKE" disabled>Earthquake</option>
                     <option value="MAGNET" disabled>Magnet</option>
-                    <option value="WAVES" selected>Waves</option>
+                    <option value="WAVES">Waves</option>
                     <option value="WIND" disabled>Wind</option>
                 </select>
             </div>
@@ -276,7 +276,7 @@
                                     <b>Number of levels complete</b>
                                 </label>
                             </div>
-                            <span>
+                            <span class="defaultState">
                                 <table id="numLevelsTable" class="table table-striped table-bordered table-hover" style="table-layout:fixed">
                                     <thead id="numLevelsHead">
                                         <tr>
@@ -286,7 +286,7 @@
                                             <th scope="row" style="position:initial;text-align:right">Num sessions used</th>
                                         </tr>
                                     </thead>
-                                    <tbody id="numLevelsBody">
+                                    <tbody id="numLevelsBody" class="tableBody">
                                     </tbody>
                                 </table>
                                 <div style="font-size:14px; margin-bottom:6px; color:#777">
@@ -316,7 +316,7 @@
                                 <label><input type="checkbox" id="levelCompletionCheckbox" style="transform:scale(1.21);">
                                 <b>Individual level completion</b></label>
                             </div>
-                            <span>
+                            <span class="defaultState">
                                 <table id="levelCompletionTable" class="table table-striped table-bordered table-hover">
                                     <thead id="levelCompletionHead">
                                         <tr>
@@ -329,7 +329,7 @@
                                             <th scope="row" style="position:initial;text-align:right">Num sessions used</th>
                                         </tr>
                                     </thead>
-                                    <tbody id="levelCompletionBody">
+                                    <tbody id="levelCompletionBody" class="tableBody">
                                     </tbody>
                                 </table>
                                 <div style="font-size:14px; margin-bottom:6px; color:#777">
@@ -359,7 +359,7 @@
                                 <label><input type="checkbox" id="levelRangeQuestionCheckbox" style="transform:scale(1.21);">
                                 <b>Binomial question answer prediction accuracy by level range</b></label>
                             </div>
-                            <span>
+                            <span class="defaultState">
                                 <table id="binomialQuestionTable" class="table table-striped table-bordered table-hover">
                                     <thead id="binomialQuestionHeader">
                                         <tr>
@@ -369,7 +369,7 @@
                                             <th scope="row" colspan="2" style="position:initial;text-align:right">Num sessions used</th>
                                         </tr>
                                     </thead>
-                                    <tbody id="binomialQuestionBody">
+                                    <tbody id="binomialQuestionBody" class="tableBody">
                                     </tbody>
                                 </table>
                                 <div style="font-size:14px; margin-bottom:6px; color:#777">
@@ -400,7 +400,7 @@
                                 <label><input type="checkbox" id="multinomialQuestionCheckbox" style="transform:scale(1.21);">
                                 <b>Multinomial question answer prediction accuracy by level range</b></label>
                             </div>
-                            <span>
+                            <span class="defaultState">
                                 <table id="multinomialQuestionTable" class="table table-striped table-bordered table-hover">
                                     <thead id="multinomialQuestionHeader">
                                         <tr>
@@ -410,7 +410,7 @@
                                             <th scope="row" style="position:initial;text-align:right" colspan=2>Num sessions used</th>
                                         </tr>
                                     </thead>
-                                    <tbody id="multinomialQuestionBody">
+                                    <tbody id="multinomialQuestionBody" class="tableBody">
                                     </tbody>
                                 </table>
                                 <div style="font-size:14px; margin-bottom:6px; color:#777">
@@ -436,7 +436,7 @@
                             <label><input type="checkbox" id="otherFeaturesCheckbox" style="transform:scale(1.21);">
                             <b>Other features</b></label>
                         </div>
-                        <span>
+                        <span class="defaultState">
                             <div class="col-xs-4">
                                 <div class="box" style="white-space:nowrap;background-color:#F6F6F3;">
                                     <div style="margin-left:20px;margin-top:20px;margin-bottom:5px;font-size:20px;">Basic features:</div>

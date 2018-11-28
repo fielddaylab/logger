@@ -431,11 +431,11 @@
             "knobTotalAmts": "Total knob max-min"
         },
         "otherFeatures": {
-            
+
         }
     },
     "CRYSTAL": {
-        "levels": [ 1, 3, 5, 7, 11, 13, 15, 19, 21, 23, 25, 27, 31 ],
+        "levels": [ 0, 1, 2, 3, 4, 5, 6, 7, 8 ],
         "features": {
             "numLevels": {
                 "general": {
@@ -444,31 +444,10 @@
                     "levelTimes":               "Time"
                 },
                 "specific": {
-                    "knobStdDevs":              "Avg knob std dev",
-                    "moveTypeChangesPerLevel":  "# type changes",
-                    "knobAvgs":                 "Avg knob max-min",
-                    "OFFSET":                   "# offset moves",
-                    "WAVELENGTH":               "# wavelength moves",
-                    "AMPLITUDE":                "# amplitude moves",
-                    "numFailsPerLevel":         "# failures",
-                    "percentOFFSET":            "% offset moves",
-                    "percentWAVELENGTH":        "% wavelength moves",
-                    "percentAMPLITUDE":         "% amplitude moves"
+
                 },
                 "perLevel": {
-                    "pgm_1":                    "% good moves lvl 1",
-                    "pgm_3":                    "% good moves lvl 3",
-                    "pgm_5":                    "% good moves lvl 5",
-                    "pgm_7":                    "% good moves lvl 7",
-                    "pgm_11":                   "% good moves lvl 11",
-                    "pgm_13":                   "% good moves lvl 13",
-                    "pgm_15":                   "% good moves lvl 15",
-                    "pgm_19":                   "% good moves lvl 19",
-                    "pgm_21":                   "% good moves lvl 21",
-                    "pgm_23":                   "% good moves lvl 23",
-                    "pgm_25":                   "% good moves lvl 25",
-                    "pgm_27":                   "% good moves lvl 27",
-                    "pgm_31":                   "% good moves lvl 31"
+
                 }
             },
             "levelCompletion": {
@@ -478,31 +457,10 @@
                     "levelTimes":               "Time"
                 },
                 "specific": {
-                    "knobStdDevs":              "Avg knob std dev",
-                    "moveTypeChangesPerLevel":  "# type changes",
-                    "knobAvgs":                 "Avg knob max-min", 
-                    "OFFSET":                   "# offset moves",
-                    "WAVELENGTH":               "# wavelength moves",
-                    "AMPLITUDE":                "# amplitude moves",
-                    "numFailsPerLevel":         "# failures",
-                    "percentOFFSET":            "% offset moves",
-                    "percentWAVELENGTH":        "% wavelength moves",
-                    "percentAMPLITUDE":         "% amplitude moves"
+
                 },
                 "perLevel": {
-                    "pgm_1":                    "% good moves lvl 1",
-                    "pgm_3":                    "% good moves lvl 3",
-                    "pgm_5":                    "% good moves lvl 5",
-                    "pgm_7":                    "% good moves lvl 7",
-                    "pgm_11":                   "% good moves lvl 11",
-                    "pgm_13":                   "% good moves lvl 13",
-                    "pgm_15":                   "% good moves lvl 15",
-                    "pgm_19":                   "% good moves lvl 19",
-                    "pgm_21":                   "% good moves lvl 21",
-                    "pgm_23":                   "% good moves lvl 23",
-                    "pgm_25":                   "% good moves lvl 25",
-                    "pgm_27":                   "% good moves lvl 27",
-                    "pgm_31":                   "% good moves lvl 31"
+
                 }
             },
             "binomialQuestion": {
@@ -512,17 +470,7 @@
                     "levelTimes":               "Time"
                 },
                 "specific": {
-                    "knobStdDevs":              "Avg knob std dev",
-                    "moveTypeChangesPerLevel":  "# type changes",
-                    "avgPercentGoodMoves":      "Avg % good moves", 
-                    "knobAvgs":                 "Avg knob max-min",
-                    "OFFSET":                   "# offset moves",
-                    "WAVELENGTH":               "# wavelength moves",
-                    "AMPLITUDE":                "# amplitude moves",
-                    "numFailsPerLevel":         "# failures",
-                    "percentOFFSET":            "% offset moves",
-                    "percentWAVELENGTH":        "% wavelength moves",
-                    "percentAMPLITUDE":         "% amplitude moves"
+
                 },
                 "perLevel": {}
             },
@@ -533,183 +481,91 @@
                     "levelTimes":               "Time"
                 },
                 "specific": {
-                    "knobStdDevs":              "Avg knob std dev",
-                    "moveTypeChangesPerLevel":  "# type changes",
-                    "avgPercentGoodMoves":      "Avg % good moves", 
-                    "knobAvgs":                 "Avg knob max-min",
-                    "OFFSET":                   "# offset moves",
-                    "WAVELENGTH":               "# wavelength moves",
-                    "AMPLITUDE":                "# amplitude moves",
-                    "numFailsPerLevel":         "# failures",
-                    "percentOFFSET":            "% offset moves",
-                    "percentWAVELENGTH":        "% wavelength moves",
-                    "percentAMPLITUDE":         "% amplitude moves"
+
                 },
                 "perLevel": {}
             }
         },
         "columns": {
             "numLevels": {
-                "headerSpans": {
-                    "0": {
-                        "title": "Challenge 1",
-                        "colSpan": 4
-                    },
-                    "1": {
-                        "title": "Challenge 2",
-                        "colSpan": 3
-                    },
-                    "2": {
-                        "title": "Challenge 3",
-                        "colSpan": 5
-                    },
-                    "3": {
-                        "title": "Challenge 4",
-                        "colSpan": 1
-                    },
-                    "4": {
-                        "title": "Challenge 5",
-                        "colSpan": 1
-                    }
-                },
+                "headerSpans": {},
                 "headers": {
+                    "lvl0": {
+                        "title": "Lvl 0",
+                        "href": "%2FnumLevels%2FnumLevelsData_1.txt"
+                    },
                     "lvl1": {
                         "title": "Lvl 1",
-                        "href": "%2FnumLevels%2FnumLevelsData_1.txt"
+                        "href": "%2FnumLevels%2FnumLevelsData_3.txt"
+                    },
+                    "lvl2": {
+                        "title": "Lvl 2",
+                        "href": "%2FnumLevels%2FnumLevelsData_5.txt"
                     },
                     "lvl3": {
                         "title": "Lvl 3",
-                        "href": "%2FnumLevels%2FnumLevelsData_3.txt"
+                        "href": "%2FnumLevels%2FnumLevelsData_7.txt"
+                    },
+                    "lvl4": {
+                        "title": "Lvl 4",
+                        "href": "%2FnumLevels%2FnumLevelsData_11.txt"
                     },
                     "lvl5": {
                         "title": "Lvl 5",
-                        "href": "%2FnumLevels%2FnumLevelsData_5.txt"
+                        "href": "%2FnumLevels%2FnumLevelsData_13.txt"
+                    },
+                    "lvl6": {
+                        "title": "Lvl 6",
+                        "href": "%2FnumLevels%2FnumLevelsData_15.txt"
                     },
                     "lvl7": {
                         "title": "Lvl 7",
-                        "href": "%2FnumLevels%2FnumLevelsData_7.txt"
-                    },
-                    "lvl11": {
-                        "title": "Lvl 11",
-                        "href": "%2FnumLevels%2FnumLevelsData_11.txt"
-                    },
-                    "lvl13": {
-                        "title": "Lvl 13",
-                        "href": "%2FnumLevels%2FnumLevelsData_13.txt"
-                    },
-                    "lvl15": {
-                        "title": "Lvl 15",
-                        "href": "%2FnumLevels%2FnumLevelsData_15.txt"
-                    },
-                    "lvl19": {
-                        "title": "Lvl 19",
                         "href": "%2FnumLevels%2FnumLevelsData_19.txt"
                     },
-                    "lvl21": {
-                        "title": "Lvl 21",
+                    "lvl8": {
+                        "title": "Lvl 8",
                         "href": "%2FnumLevels%2FnumLevelsData_21.txt"
-                    },
-                    "lvl23": {
-                        "title": "Lvl 23",
-                        "href": "%2FnumLevels%2FnumLevelsData_23.txt"
-                    },
-                    "lvl25": {
-                        "title": "Lvl 25",
-                        "href": "%2FnumLevels%2FnumLevelsData_25.txt"
-                    },
-                    "lvl27": {
-                        "title": "Lvl 27",
-                        "href": "%2FnumLevels%2FnumLevelsData_27.txt"
-                    },
-                    "lvl31": {
-                        "title": "Lvl 31",
-                        "href": "%2FnumLevels%2FnumLevelsData_31.txt"
-                    },
-                    "lvl33": {
-                        "title": "Lvl 33",
-                        "href": "%2FnumLevels%2FnumLevelsData_33.txt"
                     }
                 }
             },
             "levelCompletion": {
-                "headerSpans": {
-                    "0": {
-                        "title": "Challenge 1",
-                        "colSpan": 4
-                    },
-                    "1": {
-                        "title": "Challenge 2",
-                        "colSpan": 3
-                    },
-                    "2": {
-                        "title": "Challenge 3",
-                        "colSpan": 5
-                    },
-                    "3": {
-                        "title": "Challenge 4",
-                        "colSpan": 1
-                    },
-                    "4": {
-                        "title": "Challenge 5",
-                        "colSpan": 1
-                    }
-                },
+                "headerSpans": {},
                 "headers": {
+                    "lvl0": {
+                        "title": "Lvl 0",
+                        "href": "%2FlevelCompletion%2FlevelCompletionData_1.txt"
+                    },
                     "lvl1": {
                         "title": "Lvl 1",
-                        "href": "%2FlevelCompletion%2FlevelCompletionData_1.txt"
+                        "href": "%2FlevelCompletion%2FlevelCompletionData_3.txt"
+                    },
+                    "lvl2": {
+                        "title": "Lvl 2",
+                        "href": "%2FlevelCompletion%2FlevelCompletionData_5.txt"
                     },
                     "lvl3": {
                         "title": "Lvl 3",
-                        "href": "%2FlevelCompletion%2FlevelCompletionData_3.txt"
+                        "href": "%2FlevelCompletion%2FlevelCompletionData_7.txt"
+                    },
+                    "lvl4": {
+                        "title": "Lvl 4",
+                        "href": "%2FlevelCompletion%2FlevelCompletionData_11.txt"
                     },
                     "lvl5": {
                         "title": "Lvl 5",
-                        "href": "%2FlevelCompletion%2FlevelCompletionData_5.txt"
+                        "href": "%2FlevelCompletion%2FlevelCompletionData_13.txt"
+                    },
+                    "lvl6": {
+                        "title": "Lvl 6",
+                        "href": "%2FlevelCompletion%2FlevelCompletionData_15.txt"
                     },
                     "lvl7": {
                         "title": "Lvl 7",
-                        "href": "%2FlevelCompletion%2FlevelCompletionData_7.txt"
-                    },
-                    "lvl11": {
-                        "title": "Lvl 11",
-                        "href": "%2FlevelCompletion%2FlevelCompletionData_11.txt"
-                    },
-                    "lvl13": {
-                        "title": "Lvl 13",
-                        "href": "%2FlevelCompletion%2FlevelCompletionData_13.txt"
-                    },
-                    "lvl15": {
-                        "title": "Lvl 15",
-                        "href": "%2FlevelCompletion%2FlevelCompletionData_15.txt"
-                    },
-                    "lvl19": {
-                        "title": "Lvl 19",
                         "href": "%2FlevelCompletion%2FlevelCompletionData_19.txt"
                     },
-                    "lvl21": {
-                        "title": "Lvl 21",
+                    "lvl8": {
+                        "title": "Lvl 8",
                         "href": "%2FlevelCompletion%2FlevelCompletionData_21.txt"
-                    },
-                    "lvl23": {
-                        "title": "Lvl 23",
-                        "href": "%2FlevelCompletion%2FlevelCompletionData_23.txt"
-                    },
-                    "lvl25": {
-                        "title": "Lvl 25",
-                        "href": "%2FlevelCompletion%2FlevelCompletionData_25.txt"
-                    },
-                    "lvl27": {
-                        "title": "Lvl 27",
-                        "href": "%2FlevelCompletion%2FlevelCompletionData_27.txt"
-                    },
-                    "lvl31": {
-                        "title": "Lvl 31",
-                        "href": "%2FlevelCompletion%2FlevelCompletionData_31.txt"
-                    },
-                    "lvl33": {
-                        "title": "Lvl 33",
-                        "href": "%2FlevelCompletion%2FlevelCompletionData_33.txt"
                     }
                 }
             },
@@ -850,11 +706,13 @@
         },
         "sqlEventCustoms": {
             "question": 3,
-            "move": [ 1 ],
+            "move": [ 1, 2 ],
             "other": {
-                "reset": 4
+                "clear": 6,
+                "grow": 4,
+                "museumClose": 5
             }
         },
-        "questionLevels": [ 8, 8, 33, 33 ]
+        "questionLevels": [ 0, 1, 2 ]
     }
 }

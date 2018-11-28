@@ -2538,7 +2538,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                         SELECT * FROM (
                             SELECT session_id, event_custom
                             FROM log
-                            WHERE event_custom=?
+                            WHERE event_custom in (?)
                             GROUP BY session_id
                             HAVING COUNT(*) >= ?
                         ) temp
@@ -3125,7 +3125,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                     (
                         SELECT session_id
                         FROM log
-                        WHERE event_custom=? AND app_id=? AND session_id IN";
+                        WHERE event_custom in (?) AND app_id=? AND session_id IN";
             array_push($params, $startDate, $endDate, SQL_MOVE_CUSTOM, $gameID);
             $paramTypes .= 'ssis';
             if (!$isLvl1) {
@@ -3154,7 +3154,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                     (
                         SELECT session_id
                         FROM log
-                        WHERE event_custom=? AND app_id=? AND session_id IN
+                        WHERE event_custom in (?) AND app_id=? AND session_id IN
                         (
                             SELECT session_id FROM log WHERE app_id=? AND event='COMPLETE'
                             AND level IN (" . implode(",", array_map('intval', array_merge($lvlsToUse, [$colLvl]))) . ")
@@ -3192,7 +3192,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                     (
                         SELECT session_id
                         FROM log
-                        WHERE event_custom=? AND app_id=? AND session_id IN
+                        WHERE event_custom in (?) AND app_id=? AND session_id IN
                         (
                             SELECT session_id FROM log WHERE app_id=? AND event='COMPLETE' AND level=1
                             GROUP BY session_id
@@ -3374,7 +3374,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                     (
                         SELECT session_id
                         FROM log
-                        WHERE event_custom=? AND app_id=?";
+                        WHERE event_custom in (?) AND app_id=?";
             array_push($params, $startDate, $endDate, SQL_MOVE_CUSTOM, $gameID);
             $paramTypes .= 'ssis';
             if (!$isLvl1) {
@@ -3573,7 +3573,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                         SELECT * FROM (
                             SELECT session_id, event_custom
                             FROM log
-                            WHERE event_custom=?
+                            WHERE event_custom in (?)
                             GROUP BY session_id
                             HAVING COUNT(*) >= ?
                         ) temp
