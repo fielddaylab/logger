@@ -1662,6 +1662,7 @@ $(document).ready((event) => {
         }
     
         function arrayColumn(array, columnName) {
+            if (typeof array === 'string') array = JSON.parse(array)
             return $.map(array, function (value, index) {
                 return value[columnName]
             })
