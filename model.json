@@ -705,11 +705,10 @@
             ]
         },
         "sqlEventCustoms": {
-            "question": 3,
+            "question": 33456,
             "move": [ 1, 2 ],
             "other": {
                 "clear": 6,
-                "grow": 4,
                 "museumClose": 5
             }
         },

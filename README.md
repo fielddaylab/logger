@@ -9,19 +9,9 @@ Required software:
 - Chrome 68
 - Python 2.7
 
-Installing TensorFlow:
-1. Create logger/tensorflow folder
-2. Open terminal
-3. sudo easy_install pip
-4. pip install --upgrade virtualenv
-	This command may need to be run with sudo 
-5. virtualenv --system-site-packages <tensorflow directory>
-6. cd <tensorflow directory>
-7. source ./bin/activate
-8. pip install --upgrade tensorflow
-9. Verify installation by issuing "python" command and paste in
-	import tensorflow as tf
-	hello = tf.constant('Hello, TensorFlow!')
-	sess = tf.Session()
-	print(sess.run(hello))
-10. pip install -U scikit-learn
+Newer versions of any of these software (except Python 3 may be different) should work.
+
+Adding a new game to this project checklist:
+- Add model entry to model.json
+- Ctrl+F "if ($game ===" in responsePage.php and fill in extraction of features
+- Have functional logging in the game itself (ensuring the bug with logger scope is fixed)
