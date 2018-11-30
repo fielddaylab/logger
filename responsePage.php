@@ -3083,7 +3083,9 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
     $numMetrics = 2;
     $table = isset($_GET['table']) ? $_GET['table'] : null;
     $useCache = isset($_GET['useCache']) ? ($_GET['useCache'] === 'true') : true;
+    $insertIntoCache = isset($_GET['insertIntoCache']) ? ($_GET['insertIntoCache'] === 'true') : true;
     unset($_GET['useCache']); // unset in $_GET because it's not an actual parameter to the calculations
+    unset($_GET['insertIntoCache']);
 
     // Check if there's a cache entry for this data
     if ($useCache) {
@@ -4309,7 +4311,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
         }
 
         // Insert this result into the database and then return it
-        if ($useCache) { // If not using cache, don't insert (probably bad test data) either
+        if ($insertIntoCache) {
             $cacheQuery = "INSERT INTO cache VALUES (?, ?)";
             $cacheQueryParams = array(json_encode($_GET), json_encode($returnArray));
             $cacheQueryParamTypes = 'ss';

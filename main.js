@@ -459,6 +459,7 @@ $(document).ready((event) => {
                 otherFeaturesChecked = $('#otherFeaturesCheckbox').is(':checked'),
                 shouldUseAvgs = $('#useAvgs').is(':checked')
             let useCache = $('#useCache').is(':checked')
+            let insertIntoCache = $('#insertIntoCache').is(':checked')
             let featuresListParameters = {}
             $(Object.keys(allFeatures)).each((index, value) => {
                 if (index > 0) featuresListParameters[value] = $(`#${value}`).is(':checked')
@@ -472,6 +473,7 @@ $(document).ready((event) => {
                 'endDate': $('#endDate').val(),
                 'shouldUseAvgs': shouldUseAvgs,
                 'useCache': useCache,
+                'insertIntoCache': insertIntoCache,
                 'table': 'basic',
                 'numMovesPerChallenge': $('#numMovesPerChallengeCluster').prop('checked') ? true : undefined,
                 'knobAvgs': $('#knobAvgsCluster').prop('checked') ? true : undefined,
@@ -540,7 +542,8 @@ $(document).ready((event) => {
                             'column': column,
                             'table': table,
                             'shouldUseAvgs': shouldUseAvgs,
-                            'useCache': useCache
+                            'useCache': useCache,
+                            'insertIntoCache': insertIntoCache
                         }
                         let numAlgorithms = model.algorithms[table].length
 
