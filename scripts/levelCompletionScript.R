@@ -1,10 +1,10 @@
 suppressMessages(library(caret))
 args <- commandArgs(TRUE)
-table <- paste("../../logger-data/levelCompletion/levelCompletionData_", args[1], ".txt", sep="")
+table <- paste(fromJSON(file="config.json", method="C")$DATA_DIR, "/", args[2], "/levelCompletion/levelCompletionData_", args[1], ".txt", sep="")
 formula <- "result~"
 
 for (i in seq_along(args)) {
-    if (i > 1) {
+    if (i > 2) {
         formula <- paste(formula, args[i], sep="+")
     }
 }

@@ -1621,7 +1621,7 @@ $settings = json_decode(file_get_contents("config.json"), true);
 ini_set('memory_limit', $settings['memory_limit']);
 ini_set('max_execution_time', $settings['max_execution_time']);
 ini_set('max_input_vars', $settings['max_input_vars']);
-define('DATA_DIR', $settings['DATA_DIR']);
+define('DATA_DIR', $settings['DATA_DIR'] . '/' . $_GET['gameID']);
 define('PYTHON_DIR', $settings['PYTHON_DIR']);
 define('RSCRIPT_DIR', $settings['RSCRIPT_DIR']);
 
@@ -2526,7 +2526,7 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
                             if (!isset($startIndices[$dataObj['levels'][$i]])) { // check this space isn't filled by a previous attempt on the same level
                                 $startIndices[$dataObj['levels'][$i]] = $i;
                             }
-                        } else if ($dataObj['events'][$i] === 'CUSTOM' && $dataJson['event_custom'][$i] === 'GROW_BTN_PRESS') { // TODO: change later to COMPLETE
+                        } else if ($dataObj['events'][$i] === 'CUSTOM' && $dataJson['event_custom'] === 'GROW_BTN_PRESS') { // TODO: change later to COMPLETE
                             if (!isset($endIndices[$dataObj['levels'][$i]])) {
                                 $endIndices[$dataObj['levels'][$i]] = $i;
                             }
@@ -2960,7 +2960,7 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
 
         // filter features by what should be used for regressions
         foreach ($featureCols as $colName=>$feature) {
-            if (isset($featuresToUse[$colName]) && !$featuresToUse[$colName]) {
+            if ((isset($featuresToUse[$colName]) && !$featuresToUse[$colName]) || !isset($featuresToUse[$colName])) {
                 unset($featureCols[$colName]);
             }
         }
@@ -3127,16 +3127,17 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                         SELECT * FROM (
                             SELECT session_id, event_custom
                             FROM log
-                            WHERE event_custom in (?)
+                            WHERE event_custom in (" . implode(', ', array_fill(0, count(SQL_MOVE_CUSTOM), '?')) . ")
                             GROUP BY session_id
                             HAVING COUNT(*) >= ?
                         ) temp
                     ) AS moves
                 ) ";
-                $params[] = SQL_MOVE_CUSTOM;
+                array_push($params, ...SQL_MOVE_CUSTOM);
+                $paramTypes .= str_repeat('i', count(SQL_MOVE_CUSTOM));
                 $params[] = $minMoves;
                 //$params[] = $maxRows;
-                $paramTypes .= 'ii';
+                $paramTypes .= 'i';
             }
 
             if (isset($column)) $minQuestions = 1;
@@ -3196,7 +3197,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             $numSessions = count($uniqueSessions);
 
             $numEvents = count($allEvents);
-            $completeEvents = array_filter($allEvents, function($a) { return $a['event'] === 'COMPLETE'; });
+            $completeEvents = array_filter($allEvents, function($a) { return $a['event'] === 'COMPLETE' || json_decode($a['event_data_complex'])['event_custom'] === 'GROW_BTN_PRESS'; });
             $completeLevels = array_column($completeEvents, 'level');
             $levels = array_filter(array_unique(array_column($allEvents, 'level')), function($a) use($completeLevels) { return in_array($a, $completeLevels); });
             sort($levels);
@@ -3239,7 +3240,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                     $dataFile = DATA_DIR . '/binomialQuestion/binomialQuestionData_'. $questionPredictCol . '_' . $predLevel .'.txt';
                     file_put_contents($dataFile, $predictString);
                     unset($rResults);
-                    exec(RSCRIPT_DIR . " scripts/binomialQuestionScript.R " . $column . ' ' . $predLevel . ' ' . str_replace(',', ' ', $headerString), $rResults);
+                    exec(RSCRIPT_DIR . " scripts/binomialQuestionScript.R " . $column . ' ' . $predLevel . ' ' . $gameID . ' ' . str_replace(',', ' ', $headerString), $rResults);
                     unset($sklOutput);
                     unset($sklRegOutput);
                     exec(PYTHON_DIR . " -W ignore scripts/sklearnscript.py $dataFile " . implode(' ', range(1, $numVariables)), $sklOutput);
@@ -3714,9 +3715,13 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                     (
                         SELECT session_id
                         FROM log
-                        WHERE event_custom in (?) AND app_id=? AND session_id IN";
-            array_push($params, $startDate, $endDate, SQL_MOVE_CUSTOM, $gameID);
-            $paramTypes .= 'ssis';
+                        WHERE event_custom in (" . implode(', ', array_fill(0, count(SQL_MOVE_CUSTOM), '?')) . ") AND app_id=? AND session_id IN";
+            array_push($params, $startDate, $endDate);
+            array_push($params, ...SQL_MOVE_CUSTOM);
+            array_push($params, $gameID);
+            $paramTypes .= 'ss';
+            $paramTypes .= str_repeat('i', count(SQL_MOVE_CUSTOM));
+            $paramTypes .= 's';
             if (!$isLvl1) {
                 $query .= "
                         (
@@ -3743,7 +3748,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                     (
                         SELECT session_id
                         FROM log
-                        WHERE event_custom in (?) AND app_id=? AND session_id IN
+                        WHERE event_custom in (" . implode(', ', array_fill(0, count(SQL_MOVE_CUSTOM), '?')) . ") AND app_id=? AND session_id IN
                         (
                             SELECT session_id FROM log WHERE app_id=? AND event='COMPLETE'
                             AND level IN (" . implode(",", array_map('intval', array_merge($lvlsToUse, [$colLvl]))) . ")
@@ -3756,8 +3761,12 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                     ) b
                 )
                 ORDER BY a.client_time";
-                array_push($params, $minMoves, $maxRows, SQL_MOVE_CUSTOM, $gameID, $gameID, count($lvlsToUse)+1, $minMoves, $maxRows);
-                $paramTypes .= 'iiissiii';
+                array_push($params, $minMoves, $maxRows);
+                array_push($params, ...SQL_MOVE_CUSTOM);
+                array_push($params, $gameID, $gameID, count($lvlsToUse)+1, $minMoves, $maxRows);
+                $paramTypes .= 'ii';
+                $paramTypes .= str_repeat('i', count(SQL_MOVE_CUSTOM));
+                $paramTypes .= 'ssiii';
             } else {
                 $query .= "
                         (
@@ -3781,7 +3790,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                     (
                         SELECT session_id
                         FROM log
-                        WHERE event_custom in (?) AND app_id=? AND session_id IN
+                        WHERE event_custom in (" . implode(', ', array_fill(0, count(SQL_MOVE_CUSTOM), '?')) . ") AND app_id=? AND session_id IN
                         (
                             SELECT session_id FROM log WHERE app_id=? AND event='COMPLETE' AND level=1
                             GROUP BY session_id
@@ -3793,8 +3802,12 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                     ) b
                 )
                 ORDER BY a.client_time";
-                array_push($params, $minMoves, $maxRows, SQL_MOVE_CUSTOM, $gameID, $gameID, count($lvlsToUse) + 1, $minMoves, $maxRows);
-                $paramTypes .= 'iiissiii';
+                array_push($params, $minMoves, $maxRows);
+                array_push($params, ...SQL_MOVE_CUSTOM);
+                array_push($gameID, $gameID, count($lvlsToUse) + 1, $minMoves, $maxRows);
+                $paramTypes .= 'ii';
+                $paramTypes .= str_repeat('i', count(SQL_MOVE_CUSTOM));
+                $paramTypes .= 'ssiii';
             }
 
             $stmt = queryMultiParam($db, $query, $paramTypes, $params);
@@ -3866,7 +3879,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             file_put_contents($dataFile, $predictString);
             unset($rResults);
             $numVariables = count(explode(',', $headerString)) + 1;
-            exec(RSCRIPT_DIR . " scripts/levelCompletionScript.R " . $colLvl . ' ' . str_replace(',', ' ', $headerString), $rResults);
+            exec(RSCRIPT_DIR . " scripts/levelCompletionScript.R " . $colLvl . ' ' . $gameID . ' ' . str_replace(',', ' ', $headerString), $rResults);
             unset($sklOutput);
             unset($sklRegOutput);
             exec(PYTHON_DIR . " -W ignore scripts/sklearnscript.py $dataFile " . implode(' ', range(1, $numVariables)), $sklOutput);
@@ -3963,9 +3976,13 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                     (
                         SELECT session_id
                         FROM log
-                        WHERE event_custom in (?) AND app_id=?";
-            array_push($params, $startDate, $endDate, SQL_MOVE_CUSTOM, $gameID);
-            $paramTypes .= 'ssis';
+                        WHERE event_custom in (" . implode(', ', array_fill(0, count(SQL_MOVE_CUSTOM), '?')) . ") AND app_id=?";
+            array_push($params, $startDate, $endDate);
+            array_push($params, ...SQL_MOVE_CUSTOM);
+            array_push($params, $gameID);
+            $paramTypes .= 'ss';
+            $paramTypes .= str_repeat('i', count(SQL_MOVE_CUSTOM));
+            $paramTypes .= 's';
             if (!$isLvl1) {
                 $query .= "
                         AND session_id IN
@@ -4016,6 +4033,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                 // Also make one big array of every event for easier extraction of unique attributes
                 $allEvents[] = $tuple;
             }
+            
             $stmt->close();
 
             foreach ($sessionAttributes as $i=>$val) {
@@ -4079,7 +4097,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                 $dataFile = DATA_DIR . '/numLevels/numLevelsData_'. $colLvl .'.txt';
                 file_put_contents($dataFile, $predictString);
                 unset($rResults);
-                exec(RSCRIPT_DIR . " scripts/numLevelsScript.R " . $colLvl . ' ' . str_replace(',', ' ', $headerString), $rResults);
+                exec(RSCRIPT_DIR . " scripts/numLevelsScript.R " . $colLvl . ' ' . $gameID . ' ' . str_replace(',', ' ', $headerString), $rResults);
                 file_put_contents($dataFile, $predictString10Percent, FILE_APPEND);
                 $coefficients = array();
                 $stdErrs = array();
@@ -4162,15 +4180,16 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                         SELECT * FROM (
                             SELECT session_id, event_custom
                             FROM log
-                            WHERE event_custom in (?)
+                            WHERE event_custom in (" . implode(', ', array_fill(0, count(SQL_MOVE_CUSTOM), '?')) . ")
                             GROUP BY session_id
                             HAVING COUNT(*) >= ?
                         ) temp
                     ) AS moves
                 ) ";
-                $params[] = SQL_MOVE_CUSTOM;
+                array_push($params, ...SQL_MOVE_CUSTOM);
                 $params[] = $minMoves;
-                $paramTypes .= 'ii';
+                $paramTypes .= str_repeat('i', count(SQL_MOVE_CUSTOM));
+                $paramTypes .= 'i';
             }
             if ($minQuestions == 0) $minQuestions = 1;
             if ($minQuestions > 0) {
