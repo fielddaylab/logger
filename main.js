@@ -364,7 +364,7 @@ $(document).ready((event) => {
     
         $(document).on('click', '#goButton', (event) => {
             event.preventDefault()
-            if ($('#gameSelect').val() !== 'WAVES' || !($('#numLevelsTableCheckbox').is(':checked') || $('#levelCompletionCheckbox').is(':checked') ||
+            if (($('#gameSelect').val() !== 'WAVES' && $('#gameSelect').val() !== 'CRYSTAL') || !($('#numLevelsTableCheckbox').is(':checked') || $('#levelCompletionCheckbox').is(':checked') ||
                 $('#questionsCheckbox').is(':checked') || $('#levelRangeQuestionCheckbox').is(':checked') || $('#otherFeaturesCheckbox').is(':checked') ||
                 $('#multinomialQuestionCheckbox').is(':checked'))) {
                 $('#invalidGame').fadeIn(100)
@@ -616,6 +616,7 @@ $(document).ready((event) => {
                                     'border-top': borderTops[j],
                                     'border-bottom': borderBottoms[j]
                                 })
+                                $(jval).removeClass('activeLoadingElement')
                                 let innerText = $('<div>')
                                 innerText.html('-')
                                 let rowName
@@ -684,9 +685,23 @@ $(document).ready((event) => {
         
                         req = {
                             parameters: {...parameters, 'features': featuresParams},
-                            callback: callbackFunc
+                            callback: callbackFunc,
+                            failCallback: function(jqXHR, textStatus, errorThrown) {
+                                showError(errorThrown)
+                                columnElements.each((j, jval) => {
+                                    $(jval).text('')
+                                    $(jval).css({
+                                        'vertical-align': 'middle',
+                                        'background-color': 'rgba(255, 128, 128, 0.15)',
+                                        'border-top': borderTops[j],
+                                        'border-bottom': borderBottoms[j]
+                                    })
+                                    clearInterval(loadTimer)
+                                    $(jval).removeClass('activeLoadingElement')
+                                })
+                            }
                         }
-                        queue.push(req, loadTimer, columnElements, { 'backgroundColors': backgroundColors, 'borderBottoms': borderBottoms, 'borderTops': borderTops})
+                        queue.push(req, loadTimer, columnElements.slice(), { 'backgroundColors': backgroundColors.slice(), 'borderBottoms': borderBottoms.slice(), 'borderTops': borderTops.slice() })
                     }
                 }
                 numTables++
@@ -1610,6 +1625,9 @@ $(document).ready((event) => {
             self.loadTimers = [] // Used for aborting to reset columns
             self.columnElements = []
             self.columnStyles = []
+            self.activeColElements = [] // Columns the server is actually working on, not waiting to send
+            self.activeColStyles = []
+            self.activeColTimers = []
             self.push = function(call, loadTimer, colElements, colStyles) {
                 self.loadTimers.push(loadTimer)
                 self.columnElements.push(colElements)
@@ -1629,7 +1647,14 @@ $(document).ready((event) => {
                 }
                 self.numActiveCalls++
                 let call = self.queue.shift()
-                let jqXHR = $.get('responsePage.php', call.parameters, (data, status, jqXHR) => { call.callback(data); }, 'json')
+                let currentCol = self.columnElements.shift()
+                self.activeColElements.push(currentCol)
+                self.activeColStyles.push(self.columnStyles.shift())
+                self.activeColTimers.push(self.loadTimers.shift())
+                $(currentCol).each((cellIndex, element) => {
+                    $(element).addClass('activeLoadingElement')
+                })
+                let jqXHR = $.get('responsePage.php', call.parameters, (data, status, jqXHR) => { call.callback(data) }, 'json')
                 self.jqXHRs.push(jqXHR)
                 self.promises.push(
                     jqXHR.fail((jqXHR, textStatus, errorThrown) => {
@@ -1638,7 +1663,8 @@ $(document).ready((event) => {
                     }).then(() => {
                         self.numActiveCalls--
                         self.execute()
-                    }, () => { // handler of fail, still say this request is done and execute another one
+                    }, (jqXHR, textStatus, errorThrown) => { // handler of fail, still say this request is done and execute another one
+                        call.failCallback(jqXHR, textStatus, errorThrown)
                         self.numActiveCalls--
                         self.execute()
                     })
@@ -1658,6 +1684,9 @@ $(document).ready((event) => {
                 $(self.loadTimers).each((index, timer) => {
                     clearInterval(timer)
                 })
+                $(self.activeColTimers).each((index, timer) => {
+                    clearInterval(timer)
+                })
                 $(self.columnElements).each((index, colElements) => {
                     $(colElements).each((cellIndex, element) => {
                         let text = $(element).text()
@@ -1667,6 +1696,17 @@ $(document).ready((event) => {
                             'background-color': self.columnStyles[index].backgroundColors[cellIndex],
                             'border-top': self.columnStyles[index].borderTops[cellIndex],
                             'border-bottom': self.columnStyles[index].borderBottoms[cellIndex]
+                        })
+                    })
+                })
+                $(self.activeColElements).each((index, colElements) => {
+                    $(colElements).each((cellIndex, element) => {
+                        $(element).text('')
+                        $(element).css({
+                            'vertical-align': 'middle',
+                            'background-color': self.activeColStyles[index].backgroundColors[cellIndex],
+                            'border-top': self.activeColStyles[index].borderTops[cellIndex],
+                            'border-bottom': self.activeColStyles[index].borderBottoms[cellIndex]
                         })
                     })
                 })

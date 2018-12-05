@@ -114,3 +114,7 @@ thead tr th {
 #numLevelsNumSessionsRow td, #levelCompletionPercentCompleteRow td, #levelCompletionNumSessionsRow td, #percentCompleteRow td, #predictNumSessionsRow td {
     text-align: center
 }
+
+.activeLoadingElement {
+    background-color: rgba(0, 128, 255, 0.15) !important;
+}

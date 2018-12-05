@@ -1615,6 +1615,7 @@ if ($js_debug && isset($_GET['table'])) {
         }'; exit;
     }
 }
+if ($_GET['column'] === 'lvl1') return 'asdf';
 
 // Set ini settings and constants from the config file
 $settings = json_decode(file_get_contents("config.json"), true);
@@ -3197,7 +3198,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             $numSessions = count($uniqueSessions);
 
             $numEvents = count($allEvents);
-            $completeEvents = array_filter($allEvents, function($a) { return $a['event'] === 'COMPLETE' || json_decode($a['event_data_complex'])['event_custom'] === 'GROW_BTN_PRESS'; });
+            $completeEvents = array_filter($allEvents, function($a) { return $a['event'] === 'COMPLETE' || json_decode($a['event_data_complex'], true)['event_custom'] === 'GROW_BTN_PRESS'; });
             $completeLevels = array_column($completeEvents, 'level');
             $levels = array_filter(array_unique(array_column($allEvents, 'level')), function($a) use($completeLevels) { return in_array($a, $completeLevels); });
             sort($levels);
@@ -3347,7 +3348,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             $numSessions = count($uniqueSessions);
 
             $numEvents = count($allEvents);
-            $completeEvents = array_filter($allEvents, function($a) { return $a['event'] === 'COMPLETE'; });
+            $completeEvents = array_filter($allEvents, function($a) { return $a['event'] === 'COMPLETE' || json_decode($a['event_data_complex'], true)['event_custom'] === 'GROW_BTN_PRESS'; });
             $completeLevels = array_column($completeEvents, 'level');
             $levels = array_filter(array_unique(array_column($allEvents, 'level')), function($a) use($completeLevels) { return in_array($a, $completeLevels); });
             sort($levels);
@@ -3804,7 +3805,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                 ORDER BY a.client_time";
                 array_push($params, $minMoves, $maxRows);
                 array_push($params, ...SQL_MOVE_CUSTOM);
-                array_push($gameID, $gameID, count($lvlsToUse) + 1, $minMoves, $maxRows);
+                array_push($params, $gameID, $gameID, count($lvlsToUse) + 1, $minMoves, $maxRows);
                 $paramTypes .= 'ii';
                 $paramTypes .= str_repeat('i', count(SQL_MOVE_CUSTOM));
                 $paramTypes .= 'ssiii';
@@ -3844,7 +3845,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             $numSessions = count($uniqueSessions);
 
             $numEvents = count($allEvents);
-            $completeEvents = array_filter($allEvents, function($a) { return $a['event'] === 'COMPLETE'; });
+            $completeEvents = array_filter($allEvents, function($a) { return $a['event'] === 'COMPLETE' || json_decode($a['event_data_complex'], true)['event_custom'] === 'GROW_BTN_PRESS'; });
             $completeLevels = array_column($completeEvents, 'level');
             $levels = array_filter(array_unique(array_column($allEvents, 'level')), function($a) use($completeLevels) { return in_array($a, $completeLevels); });
             sort($levels);
@@ -4052,7 +4053,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             $numSessions = count($uniqueSessions);
 
             $numEvents = count($allEvents);
-            $completeEvents = array_filter($allEvents, function($a) { return $a['event'] === 'COMPLETE'; });
+            $completeEvents = array_filter($allEvents, function($a) { return $a['event'] === 'COMPLETE' || json_decode($a['event_data_complex'], true)['event_custom'] === 'GROW_BTN_PRESS'; });
             $completeLevels = array_column($completeEvents, 'level');
             $levels = array_filter(array_unique(array_column($allEvents, 'level')), function($a) use($completeLevels) { return in_array($a, $completeLevels); });
             sort($levels);
@@ -4248,7 +4249,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             $numSessions = count($uniqueSessions);
 
             $numEvents = count($allEvents);
-            $completeEvents = array_filter($allEvents, function($a) { return $a['event'] === 'COMPLETE'; });
+            $completeEvents = array_filter($allEvents, function($a) { return $a['event'] === 'COMPLETE' || json_decode($a['event_data_complex'], true)['event_custom'] === 'GROW_BTN_PRESS'; });
             $completeLevels = array_column($completeEvents, 'level');
             $levels = array_filter(array_unique(array_column($allEvents, 'level')), function($a) use($completeLevels) { return in_array($a, $completeLevels); });
             sort($levels);
