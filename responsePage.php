@@ -4331,7 +4331,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
 
         // Insert this result into the database and then return it
         if ($insertIntoCache) {
-            $cacheQuery = "INSERT INTO cache VALUES (?, ?)";
+            $cacheQuery = "REPLACE INTO cache VALUES (?, ?)";
             $cacheQueryParams = array(json_encode($_GET), json_encode($returnArray));
             $cacheQueryParamTypes = 'ss';
             $stmt = queryMultiParam($db, $cacheQuery, $cacheQueryParamTypes, $cacheQueryParams);
