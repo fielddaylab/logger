@@ -1615,7 +1615,6 @@ if ($js_debug && isset($_GET['table'])) {
         }'; exit;
     }
 }
-if ($_GET['column'] === 'lvl1') return 'asdf';
 
 // Set ini settings and constants from the config file
 $settings = json_decode(file_get_contents("config.json"), true);
