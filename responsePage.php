@@ -4052,7 +4052,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             $numSessions = count($uniqueSessions);
 
             $numEvents = count($allEvents);
-            $completeEvents = array_filter($allEvents, function($a) { return $a['event'] === 'COMPLETE' || json_decode($a['event_data_complex'], true)['event_custom'] === 'GROW_BTN_PRESS'; });
+            $completeEvents = array_filter($allEvents, function($a) { return $a['event'] === 'COMPLETE' || ($evtCstm = json_decode($a['event_data_complex'], true) && isset($evtCstm['event_custom']) === 'GROW_BTN_PRESS'); });
             $completeLevels = array_column($completeEvents, 'level');
             $levels = array_filter(array_unique(array_column($allEvents, 'level')), function($a) use($completeLevels) { return in_array($a, $completeLevels); });
             sort($levels);

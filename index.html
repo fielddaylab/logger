@@ -261,7 +261,12 @@
                     <div class="col-xs-8" style="padding-right:0px;">
                         <button id="goButton" class="btn btn-default btn-primary" style="width:115px; height:40px; margin-right:15px; margin-top:20px; font-size:18px;">Go!</button>
                         <span style="font-size:16px; display:inline-flex; max-width:325px;">Check the boxes of the tables you want to run calculations on and then hit "Go!".</span><br>
-                        <button id="abortButton" class="btn btn-default btn-danger" style="width:80px; height:35px; margin-right:50px; margin-top:10px; font-size:16px;">Abort</button><br>
+                        <button id="abortButton" class="btn btn-default btn-danger" style="width:80px; height:35px; margin-right:50px; margin-top:20px; font-size:16px;">Abort</button>
+                        <span style="font-size:16px; display:inline-table;">Column color indicates request status:<br>
+                            <span style="background-color:rgba(0,128,255,0.15); margin-right:10px">Working</span>
+                            <span style="background-color:rgba(255,128,128,0.15); margin-right:10px;">Failed</span>
+                            <span style="background-color:rgba(0,0,0,0.15); margin-right:10px;">Waiting</span>
+                        </span><br>
                         <span id="doneDiv" style="min-width:125px; display:none; color:blue; margin-top:8px; font-size:18px;">Working</span>
                         <span id="timerDiv" style="display:none; font-size:18px; color:blue; margin-top:8px;">(0s)</span>
                     </div>
