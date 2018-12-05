@@ -1,4 +1,5 @@
 suppressMessages(library(caret))
+library(rjson)
 args <- commandArgs(TRUE)
 table <- paste(fromJSON(file="config.json", method="C")$DATA_DIR, "/", args[2], "/levelCompletion/levelCompletionData_", args[1], ".txt", sep="")
 formula <- "result~"

@@ -1664,7 +1664,7 @@ $(document).ready((event) => {
                         self.numActiveCalls--
                         self.execute()
                     }, (jqXHR, textStatus, errorThrown) => { // handler of fail, still say this request is done and execute another one
-                        call.failCallback(jqXHR, textStatus, errorThrown)
+                        if (call.failCallback) call.failCallback(jqXHR, textStatus, errorThrown)
                         self.numActiveCalls--
                         self.execute()
                     })

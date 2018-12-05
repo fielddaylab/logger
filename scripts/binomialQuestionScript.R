@@ -1,4 +1,5 @@
 suppressMessages(library(caret))
+library(rjson)
 args <- commandArgs(TRUE)
 table <- paste(fromJSON(file="config.json", method="C")$DATA_DIR, "/", args[3], "/binomialQuestion/binomialQuestionData_", args[1], "_", args[2], ".txt", sep="")
 formula <- "result~"
