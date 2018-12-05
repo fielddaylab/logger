@@ -374,7 +374,9 @@ $(document).ready((event) => {
                     queueExists = true
                     requestStartTime = new Date()
                     $('#doneDiv').html('Working')
-                    $('#doneDiv').show()
+                    $('#doneDiv').css('display', 'inline-block')
+                    $('#timerDiv').html('(0s)')
+                    $('#timerDiv').css('display', 'inline')
                     let workingTimer = setInterval(() => {
                         let currentText = $('#doneDiv').html()
                         let newText
@@ -384,17 +386,25 @@ $(document).ready((event) => {
                             newText = 'Working'
                         }
                         $('#doneDiv').html(newText).css('color', 'blue')
+                        $('#timerDiv').css('color', 'blue')
+
+                        let timeString = ''
+                        let reqTime = Math.round((new Date() - requestStartTime) / 1000)
+                        if (reqTime >= 60) timeString = `(${Math.floor(reqTime / 60)}m ${reqTime % 60}s)`
+                        else timeString = '(' + reqTime + 's)'
+                        $('#timerDiv').html(timeString)
                     }, 500)
                     theQueue = getAllData(true)
                     theQueue.emptyFunc = () => {
                         clearInterval(workingTimer)
                         queueExists = false
-                        let timeString = ''
-                        let reqTime = Math.round((new Date() - requestStartTime) / 1000)
-                        if (reqTime >= 60) timeString = `${Math.round(reqTime / 60)}m ${reqTime % 60}s`
-                        else timeString = reqTime + 's'
-                        if (!theQueue.aborted) $('#doneDiv').html(`Done. (${timeString})`).css('color', 'green')
-                        else $('#doneDiv').html('Aborted.').css('color', 'red')
+                        if (!theQueue.aborted) { 
+                            $('#doneDiv').html(`Done.`).css('color', 'green')
+                            $('#timerDiv').css('color', 'green')
+                        } else { 
+                            $('#doneDiv').html('Aborted.').css('color', 'red')
+                            $('#timerDiv').css('color', 'red')
+                        }
                     }
                 }
             }
