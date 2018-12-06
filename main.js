@@ -60,6 +60,7 @@ $(document).ready((event) => {
             $.get('model.json', {}, data => {
                 // Reset all the tables and filters so they're not just appended to infinitely
                 fastClear($('#featuresList'))
+                fastClear($('#clusterInputsList'))
                 $.each($('.defaultState'), function (i, element) {
                     $(this).html(defaultStates[i].innerHTML)
                 })
@@ -346,6 +347,19 @@ $(document).ready((event) => {
                         }
                     })
                 }
+                // cluster graph inputs
+                if (true) {
+                    $(Object.keys(model.clusterInputs)).each((i, inputKey) => {
+                        let newInput = $(
+                            `<li>
+                                <input id="${inputKey}Cluster" name="${inputKey}Cluster" type="checkbox" checked>
+                                <label for="${inputKey}Cluster" style="font-weight:400;">${model.clusterInputs[inputKey]}</label>
+                            </li>
+                            `
+                        )
+                        $('#clusterInputsList').append(newInput)
+                    })
+                }
 
                 $(Object.keys(allFeatures)).each((index, value) => {
                     if (index > 0) $('#featuresList').append(`
@@ -463,7 +477,6 @@ $(document).ready((event) => {
         function getAllData(isFirstTime = false) {
             let numLevelsTableChecked = $('#numLevelsTableCheckbox').is(':checked'),
                 levelCompletionTableChecked = $('#levelCompletionCheckbox').is(':checked'),
-                questionTableChecked = $('#questionsCheckbox').is(':checked'),
                 binaryQuestionTableChecked = $('#levelRangeQuestionCheckbox').is(':checked'),
                 multinomialQuestionTableChecked = $('#multinomialQuestionCheckbox').is(':checked'),
                 otherFeaturesChecked = $('#otherFeaturesCheckbox').is(':checked'),
@@ -493,6 +506,9 @@ $(document).ready((event) => {
                 'knobStdDevs': $('#knobStdDevsCluster').prop('checked') ? true : undefined,
                 'knobTotalAmts': $('#knobTotalAmtsCluster').prop('checked') ? true : undefined,
             }
+            $(Object.keys(model.clusterInputs)).each((i, featureKey) => {
+                parametersBasic[featureKey] = $(`#${featureKey}Cluster`).is(':checked')
+            })
             let queue = new networkQueue(numSimultaneous)
             let numCols, numTables = 0
 

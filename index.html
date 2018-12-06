@@ -99,49 +99,14 @@
                             </div>
                         </div>
                         <div class="col-xs-4">
-                            <div style="text-align:center; font-size:22px; margin-bottom:5px;"><b>Cluster graph inputs</b></div>
-                            <div class="col-xs-6">
-                                <div class="form-group">
-                                    <label style="font-weight:400;">
-                                        <input name="numMovesPerChallengeCluster" id="numMovesPerChallengeCluster" type="checkbox">
-                                        numMovesPerChallenge
-                                    </label>
-                                    <br>
-                                    <label style="font-weight:400;">
-                                        <input name="knobAvgsCluster" id="knobAvgsCluster" type="checkbox">
-                                        knobAvgs
-                                    </label>
-                                    <br>
-                                    <label style="font-weight:400;">
-                                        <input name="levelTimesCluster" id="levelTimesCluster" type="checkbox">
-                                        levelTimes
-                                    </label>
-                                    <br>
-                                    <label style="font-weight:400;">
-                                        <input name="percentGoodMovesAllCluster" id="percentGoodMovesAllCluster" type="checkbox">
-                                        percentGoodMovesAll
-                                    </label>
-                                    <br>
+                            <div class="defaultState" style="text-align:center; font-size:22px; margin-bottom:5px;"><b>Cluster graph inputs</b></div>
+                            <form id="clusterInputsForm" role="form">
+                                <div style="text-align:center;">
+                                    <div style="column-count:2; text-align:left;">
+                                        <ul id="clusterInputsList" style="list-style:none;"></ul>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="col-xs-6">
-                                <div class="form-group">
-                                    <label style="font-weight:400;">
-                                        <input name="moveTypeChangesPerLevelCluster" id="moveTypeChangesPerLevelCluster" type="checkbox">
-                                        moveTypeChangesPerLevel
-                                    </label>
-                                    <br>
-                                    <label style="font-weight:400;">
-                                        <input name="knobStdDevsCluster" id="knobStdDevsCluster" type="checkbox">
-                                        knobStdDevs
-                                    </label>
-                                    <br>
-                                    <label style="font-weight:400;">
-                                        <input name="knobTotalAmtsCluster" id="knobTotalAmtsCluster" type="checkbox">
-                                        knobTotalAmts
-                                    </label>
-                                </div>
-                            </div>
+                            </form>
                         </div>
                     </div>
                 </form>
@@ -156,7 +121,7 @@
                 </div>
                 <form id="featuresForm" role="form">
                     <div style="column-count:5">
-                        <ul id="featuresList" style="list-style:none; padding:0; margin:0;"></ul>
+                        <ul id="featuresList" style="list-style:none;"></ul>
                     </div>
                 </form>
             </div>

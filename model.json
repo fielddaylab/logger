@@ -429,9 +429,6 @@
             "moveTypeChangesPerLevel": "# type changes",
             "knobStdDevs": "Avg knob std dev",
             "knobTotalAmts": "Total knob max-min"
-        },
-        "otherFeatures": {
-
         }
     },
     "CRYSTAL": {
@@ -712,6 +709,10 @@
                 "museumClose": 5
             }
         },
-        "questionLevels": [ 0, 1, 2 ]
+        "questionLevels": [ 0, 1, 2 ],
+        "clusterInputs": {
+            "numMovesPerChallenge": "# moves",
+            "levelTimes": "Time"
+        }
     }
 }
