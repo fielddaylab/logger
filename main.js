@@ -622,7 +622,7 @@ $(document).ready((event) => {
                             columnElements.each((j, jval) => {
                                 $(jval).css({
                                     'vertical-align': 'middle',
-                                    'background-color': backgroundColors[j],
+                                    'background-color': '',
                                     'border-top': borderTops[j],
                                     'border-bottom': borderBottoms[j]
                                 })

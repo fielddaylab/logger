@@ -2665,7 +2665,8 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
         foreach ($sessionIDs as $i=>$session) {
             $levelsCompleted = array();
             foreach ($sessionAttributes[$session] as $j=>$val) {
-                if ($val['event'] === 'COMPLETE') {
+                $json = json_decode($val['event_data_complex'], true);
+                if ($val['event'] === 'COMPLETE' || (isset($json['event_custom']) && $json['event_custom'] === 'GROW_BTN_PRESS')) { // TODO: change later to be COMPLETE for crystal
                     $levelsCompleted[$val['level']] = true;
                 }
             }
@@ -3347,7 +3348,8 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             $numSessions = count($uniqueSessions);
 
             $numEvents = count($allEvents);
-            $completeEvents = array_filter($allEvents, function($a) { return $a['event'] === 'COMPLETE' || json_decode($a['event_data_complex'], true)['event_custom'] === 'GROW_BTN_PRESS'; });
+            $dataComplex = json_decode($a['event_data_complex'], true);
+            $completeEvents = array_filter($allEvents, function($a) { return $a['event'] === 'COMPLETE' || (isset($dataComplex['event_custom']) && $dataComplex['event_custom'] === 'GROW_BTN_PRESS'); });
             $completeLevels = array_column($completeEvents, 'level');
             $levels = array_filter(array_unique(array_column($allEvents, 'level')), function($a) use($completeLevels) { return in_array($a, $completeLevels); });
             sort($levels);
@@ -4017,24 +4019,34 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                 $paramTypes .= 'ii';
             }
 
-            $stmt = queryMultiParam($db, $query, $paramTypes, $params);
-            if ($stmt === NULL || !$stmt->bind_result($session_id, $level, $event, $event_custom, $event_data_complex, $client_time, $app_id)) {
-                http_response_code(500);
-                die();
+            if (file_exists(DATA_DIR.'/cache/numLevels/numLevels_'.$column.'.php') && $settings['enableSqlCache'] === 'true') {
+                $varImport = include('numLevels_'.$column.'.php');
+                $sessionAttributes = $varImport['sessionAttributes'];
+                $allEvents = $varImport['allEvents'];
+            } else {
+                $stmt = queryMultiParam($db, $query, $paramTypes, $params);
+                if ($stmt === NULL || !$stmt->bind_result($session_id, $level, $event, $event_custom, $event_data_complex, $client_time, $app_id)) {
+                    http_response_code(500);
+                    die();
+                }
+                $sessionAttributes = array(); // the master array of all sessions that will be built with attributes
+                $allEvents = array();
+                
+                while($stmt->fetch()) {
+                    $tuple = array('session_id'=>$session_id, 'level'=>$level, 'event'=>$event, 'event_custom'=>$event_custom,
+                    'event_data_complex'=>$event_data_complex, 'time'=>$client_time);
+                    // Group the variables into their sessionIDs in a big associative array
+                    $sessionAttributes[$session_id][] = $tuple;
+                    // Also make one big array of every event for easier extraction of unique attributes
+                    $allEvents[] = $tuple;
+                }
+                if ($settings['enableSqlCache'] === 'true') {
+                    $varExport = array('sessionAttributes'=>$sessionAttributes, 'allEvents'=>$allEvents);
+                    file_put_contents(DATA_DIR.'/cache/numLevels/numLevels_'.$column.'.php', '<?php return '.var_export($varExport, true).';?>');
+                }
+
+                $stmt->close();
             }
-            $sessionAttributes = array(); // the master array of all sessions that will be built with attributes
-            $allEvents = array();
-            
-            while($stmt->fetch()) {
-                $tuple = array('session_id'=>$session_id, 'level'=>$level, 'event'=>$event, 'event_custom'=>$event_custom,
-                'event_data_complex'=>$event_data_complex, 'time'=>$client_time);
-                // Group the variables into their sessionIDs in a big associative array
-                $sessionAttributes[$session_id][] = $tuple;
-                // Also make one big array of every event for easier extraction of unique attributes
-                $allEvents[] = $tuple;
-            }
-            
-            $stmt->close();
 
             foreach ($sessionAttributes as $i=>$val) {
                 uasort($sessionAttributes[$i], function($a, $b) {
@@ -4052,7 +4064,16 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             $numSessions = count($uniqueSessions);
 
             $numEvents = count($allEvents);
-            $completeEvents = array_filter($allEvents, function($a) { return $a['event'] === 'COMPLETE' || ($evtCstm = json_decode($a['event_data_complex'], true) && isset($evtCstm['event_custom']) === 'GROW_BTN_PRESS'); });
+            $completeEvents = array_filter($allEvents, function($a) {
+                if ($a['event'] === 'COMPLETE') {
+                    return true;
+                }
+                $eventComplex = json_decode($a['event_data_complex'], true);
+                if (isset($eventComplex['event_custom'])) {
+                    return $eventComplex['event_custom'] === 'GROW_BTN_PRESS';
+                }
+                return false;
+            });
             $completeLevels = array_column($completeEvents, 'level');
             $levels = array_filter(array_unique(array_column($allEvents, 'level')), function($a) use($completeLevels) { return in_array($a, $completeLevels); });
             sort($levels);

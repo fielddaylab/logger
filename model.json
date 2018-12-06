@@ -440,7 +440,7 @@
             "numLevels": {
                 "general": {
                     "(Intercept)":              "Constant term",
-                    "numMovesPerChallenge":     "# slider moves",
+                    "numMovesPerChallenge":     "# moves",
                     "levelTimes":               "Time"
                 },
                 "specific": {
@@ -453,7 +453,7 @@
             "levelCompletion": {
                 "general": {
                     "(Intercept)":              "Constant term",
-                    "numMovesPerChallenge":     "# slider moves",
+                    "numMovesPerChallenge":     "# moves",
                     "levelTimes":               "Time"
                 },
                 "specific": {
@@ -466,7 +466,7 @@
             "binomialQuestion": {
                 "general": {
                     "(Intercept)":              "Constant term",
-                    "numMovesPerChallenge":     "# slider moves",
+                    "numMovesPerChallenge":     "# moves",
                     "levelTimes":               "Time"
                 },
                 "specific": {
@@ -477,7 +477,7 @@
             "multinomialQuestion": {
                 "general": {
                     "(Intercept)":              "Constant term",
-                    "numMovesPerChallenge":     "# slider moves",
+                    "numMovesPerChallenge":     "# moves",
                     "levelTimes":               "Time"
                 },
                 "specific": {
