@@ -429,6 +429,12 @@
             "moveTypeChangesPerLevel": "# type changes",
             "knobStdDevs": "Avg knob std dev",
             "knobTotalAmts": "Total knob max-min"
+        },
+        "histogramFeatures": {
+            "numMovesPerChallenge": "# slider moves",
+            "levelTimes": "Time",
+            "moveTypeChangesPerLevel": "# type changes",
+            "numLevels": "# levels completed"
         }
     },
     "CRYSTAL": {

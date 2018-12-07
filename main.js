@@ -14,10 +14,6 @@ $(document).ready((event) => {
         let goalsGraph1 = $('#goalsGraph1')[0]
         let goalsGraph2 = $('#goalsGraph2')[0]
     
-        let histogramAll1 = $('#goalsGraph1All')[0]
-        let histogramAll2 = $('#goalsGraph2All')[0]
-        let histogramAll3 = $('#goalsGraph3All')[0]
-        let histogramAll8 = $('#goalsGraph8All')[0]
         let clusterGraph = $('#clusterGraph')[0]
     
         let requestStartTime
@@ -61,6 +57,8 @@ $(document).ready((event) => {
                 // Reset all the tables and filters so they're not just appended to infinitely
                 fastClear($('#featuresList'))
                 fastClear($('#clusterInputsList'))
+                fastClear($('#basicFeaturesAll'))
+                fastClear($('#histogramParentDiv'))
                 $.each($('.defaultState'), function (i, element) {
                     $(this).html(defaultStates[i].innerHTML)
                 })
@@ -252,45 +250,6 @@ $(document).ready((event) => {
                         $('#levelCompletionBody').append(newRow)
                     })
                 }
-                // tableAllBody aka question answers from challenge 1
-                if (false) {
-                    let rowNames = [
-                        'Constant term',
-                        '# slider moves',
-                        '# type changes',
-                        '# levels completed',
-                        'Time',
-                        'Avg knob max-min', 
-                        'Avg % good moves',
-                        '# offset moves',
-                        '# wavelength moves',
-                        '# amplitude moves',
-                        '# failures',
-                        '% offset moves',
-                        '% wavelength moves',
-                        '% amplitude moves'
-                    ]
-                    let numQuestions = model.questionLevels.length
-                    let algorithmNames = model.algorithms.multinomialQuestionTable
-                    $(rowNames).each((i, rowName) => {
-                        $('#tableAllBody').append(`
-                        <tr>
-                            <th scope="row">${rowName}</th>
-                            ${'<td></td>'.repeat(16)}
-                        </tr>
-                        `)
-                    })
-                    $(['Log reg'].concat(algorithmNames)).each((i, value) => {
-                        $('#tableAllBody').append(
-                            $(`
-                            <tr ${(i === 0) ? 'style="border-top: 4px solid rgb(221, 221, 221);"' : ''}>
-                                <th scope="row">${value} accuracy</th>
-                                ${'<td></td>'.repeat(16)}
-                            </tr>
-                            `)
-                        )
-                    })
-                }
                 // binomialQuestionBody
                 if (true) {
                     let numQuestions = model.questionLevels.length
@@ -347,18 +306,39 @@ $(document).ready((event) => {
                         }
                     })
                 }
-                // cluster graph inputs
+                // other features and cluster graph inputs
                 if (true) {
+                    let histogramNum = 1
                     $(Object.keys(model.clusterInputs)).each((i, inputKey) => {
                         let newInput = $(
                             `<li>
                                 <input id="${inputKey}Cluster" name="${inputKey}Cluster" type="checkbox" checked>
                                 <label for="${inputKey}Cluster" style="font-weight:400;">${model.clusterInputs[inputKey]}</label>
-                            </li>
-                            `
+                            </li>`
                         )
                         $('#clusterInputsList').append(newInput)
+
+                        let newFeatureList = $('<ul></ul>').attr('id', inputKey+'List').addClass('collapse').css('font-size', '18px')
+                        $('#basicFeaturesAll').append($(`<span><li>${model.clusterInputs[inputKey]}: <a href='#${inputKey}List' data-toggle='collapse' id='${inputKey}CollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(newFeatureList)
+                            .on('hide.bs.collapse', () => { $(`#${inputKey}CollapseBtnAll`).html('[+]') })
+                            .on('show.bs.collapse', () => { $(`#${inputKey}CollapseBtnAll`).html('[−]') }))
+                        
+                        let newHistogram = $(
+                            `<div id="${inputKey}HistogramTitle" style="margin-left:20px;margin-top:20px;margin-bottom:20px;font-size:20px;">Histogram ${histogramNum}: ${model.clusterInputs[inputKey]}</div>
+                            <div id="${inputKey}Histogram"></div>`
+                        )
+                        histogramNum++
+                        $('#histogramParentDiv').append(newHistogram)
                     })
+                    // Also make histograms for each question
+                    for (let ques = 1; ques <= model.questionLevels.length; ques++) {
+                        let newHistogram = $(
+                            `<div id="question${ques}HistogramTitle" style="margin-left:20px;margin-top:20px;margin-bottom:20px;font-size:20px;">Histogram ${histogramNum}: Question ${ques} answers</div>
+                            <div id="question${ques}Histogram"></div>`
+                        )
+                        histogramNum++
+                        $('#histogramParentDiv').append(newHistogram)
+                    }
                 }
 
                 $(Object.keys(allFeatures)).each((index, value) => {
@@ -497,15 +477,9 @@ $(document).ready((event) => {
                 'shouldUseAvgs': shouldUseAvgs,
                 'useCache': useCache,
                 'insertIntoCache': insertIntoCache,
-                'table': 'basic',
-                'numMovesPerChallenge': $('#numMovesPerChallengeCluster').prop('checked') ? true : undefined,
-                'knobAvgs': $('#knobAvgsCluster').prop('checked') ? true : undefined,
-                'levelTimes': $('#levelTimesCluster').prop('checked') ? true : undefined,
-                'percentGoodMovesAll': $('#percentGoodMovesAllCluster').prop('checked') ? true : undefined,
-                'moveTypeChangesPerLevel': $('#moveTypeChangesPerLevelCluster').prop('checked') ? true : undefined,
-                'knobStdDevs': $('#knobStdDevsCluster').prop('checked') ? true : undefined,
-                'knobTotalAmts': $('#knobTotalAmtsCluster').prop('checked') ? true : undefined,
+                'table': 'basic'
             }
+            // Add cluster inputs to parametersBasic
             $(Object.keys(model.clusterInputs)).each((i, featureKey) => {
                 parametersBasic[featureKey] = $(`#${featureKey}Cluster`).is(':checked')
             })
@@ -794,76 +768,46 @@ $(document).ready((event) => {
                     // All page basic info
                     fastClear($('#basicFeaturesAll'))
                     let dataHistogram
-                    if (otherFeaturesChecked) {
-                        let timesList = $('<ul></ul>').attr('id', 'timesAll').addClass('collapse').css('font-size', '18px')
-                        $('#basicFeaturesAll').append($(`<span><li>Times: <a href='#timesAll' data-toggle='collapse' id='timesCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(timesList)
-                            .on('hide.bs.collapse', () => { $('#timesCollapseBtnAll').html('[+]') })
-                            .on('show.bs.collapse', () => { $('#timesCollapseBtnAll').html('[−]') }))
-                        let movesList = $('<ul></ul>').attr('id', 'movesAll').addClass('collapse').css({ 'font-size': '18px' })
-                        $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Number of slider moves: <a href='#movesAll' data-toggle='collapse' id='movesCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(movesList)
-                            .on('hide.bs.collapse', () => { $('#movesCollapseBtnAll').html('[+]') })
-                            .on('show.bs.collapse', () => { $('#movesCollapseBtnAll').html('[−]') }))
-                        let typesList = $('<ul></ul>').attr('id', 'typesAll').addClass('collapse').css({ 'font-size': '18px' })
-                        $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Move type changes: <a href='#typesAll' data-toggle='collapse' id='typesCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(typesList)
-                            .on('hide.bs.collapse', () => { $('#typesCollapseBtnAll').html('[+]') })
-                            .on('show.bs.collapse', () => { $('#typesCollapseBtnAll').html('[−]') }))
-                        let stdDevList = $('<ul></ul>').attr('id', 'stdDevsAll').addClass('collapse').css({ 'font-size': '18px' })
-                        $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Knob std devs (avg): <a href='#stdDevsAll' data-toggle='collapse' id='stdDevsCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(stdDevList)
-                            .on('hide.bs.collapse', () => { $('#stdDevsCollapseBtnAll').html('[+]') })
-                            .on('show.bs.collapse', () => { $('#stdDevsCollapseBtnAll').html('[−]') }))
-                        let amtsList = $('<ul></ul>').attr('id', 'amtsAll').addClass('collapse').css({ 'font-size': '18px' })
-                        $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Knob max-min (avg): <a href='#amtsAll' data-toggle='collapse' id='amtsCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(amtsList)
-                            .on('hide.bs.collapse', () => { $('#amtsCollapseBtnAll').html('[+]') })
-                            .on('show.bs.collapse', () => { $('#amtsCollapseBtnAll').html('[−]') }))
-                        let amtsTotalList = $('<ul></ul>').attr('id', 'amtsTotalAll').addClass('collapse').css({ 'font-size': '18px' })
-                        $('#basicFeaturesAll').append($(`<span><li style='margin-top:5px'>Knob max-min (total): <a href='#amtsTotalAll' data-toggle='collapse' id='amtsTotalCollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(amtsTotalList)
-                            .on('hide.bs.collapse', () => { $('#amtsTotalCollapseBtnAll').html('[+]') })
-                            .on('show.bs.collapse', () => { $('#amtsTotalCollapseBtnAll').html('[−]') }))
-    
-                        for (let i = Object.keys(data.basicInfoAll.times)[0]; i <= Object.keys(data.basicInfoAll.times)[Object.keys(data.basicInfoAll.times).length - 1]; i++) {
-                            if (data.basicInfoAll.times[i] === 'NaN') continue;
-                            // append times
-                            $('#timesAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.times[i].toFixed(2)} sec</div>`).css({ 'font-size': '14px', 'float': 'right', 'padding-right': '100px' })))
-    
-                            // append moves
-                            $('#movesAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.numMoves[i].toFixed(2)}</div>`).css({ 'font-size': '14px', 'float': 'right', 'padding-right': '100px' })))
-    
-                            // append types
-                            $('#typesAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.moveTypeChanges[i].toFixed(2)}</div>`).css({ 'font-size': '14px', 'float': 'right', 'padding-right': '100px' })))
-    
-                            // append std devs
-                            $('#stdDevsAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.knobStdDevs[i].toFixed(2)}</div>`).css({ 'font-size': '14px', 'float': 'right', 'padding-right': '100px' })))
-    
-                            // append knob amounts
-                            $('#amtsAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.avgMaxMin[i].toFixed(2)}</div>`).css({ 'font-size': '14px', 'float': 'right', 'padding-right': '100px' })))
-    
-                            // append knob total amounts
-                            $('#amtsTotalAll').append($(`<li>Level ${i}: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.totalMaxMin[i].toFixed(2)}</div>`).css({ 'font-size': '14px', 'float': 'right', 'padding-right': '100px' })))
+                    if (otherFeaturesChecked) {   
+                        for (let i = 0; i < Math.max(...model.levels); i++) {
+                            $(Object.keys(data.basicInfoAll.perLevel)).each((j, featureKey) => {
+                                $(`#${featureKey}List`).append(
+                                    $(`<li>Level ${i}: </li>`).css('font-size', '14px')
+                                        .append(
+                                            $(`<div>${data.basicInfoAll.perLevel[featureKey][i].toFixed(2)}</div>`)
+                                                .css({ 'font-size': '14px', 'float': 'right', 'padding-right': '100px' })
+                                        )
+                                )
+                            })
                         }
+
+                        $(Object.keys(data.basicInfoAll.perLevel)).each((j, featureKey) => {
+                            // append a horizontal line
+                            $(`#${featureKey}List`).append($('<hr>').css({ 'margin-bottom': '3px', 'margin-top': '3px' }))
+                            // append the sum across all levels
+                            $(`#${featureKey}List`).append(
+                                $(`<li>Total: </li>`).css('font-size', '14px')
+                                    .append(
+                                        $(`<div>${data.basicInfoAll.totals[featureKey].toFixed(2)}</div>`)
+                                            .css({ 'font-size': '14px', 'float': 'right', 'padding-right': '100px' })
+                                    )
+                            )
+                            // append the average across all levels
+                            $(`#${featureKey}List`).append(
+                                $(`<li>Avg: </li>`).css('font-size', '14px')
+                                    .append(
+                                        $(`<div>${data.basicInfoAll.averages[featureKey].toFixed(2)}</div>`)
+                                            .css({ 'font-size': '14px', 'float': 'right', 'padding-right': '100px' })
+                                    )
+                            )
+                        })
     
-                        $('#timesAll').append($('<hr>').css({ 'margin-bottom': '3px', 'margin-top': '3px' }))
-                        $('#timesAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.totalTime.toFixed(2)} sec</div>`).css({ 'font-size': '14px', 'float': 'right', 'padding-right': '100px' })))
-                        $('#timesAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.avgTime.toFixed(2)} sec</div>`).css({ 'font-size': '14px', 'float': 'right', 'padding-right': '100px' })))
-    
-                        $('#movesAll').append($('<hr>').css({ 'margin-bottom': '3px', 'margin-top': '3px' }))
-                        $('#movesAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.totalMoves.toFixed(2)}</div>`).css({ 'font-size': '14px', 'float': 'right', 'padding-right': '100px' })))
-                        $('#movesAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.avgMoves.toFixed(2)}</div>`).css({ 'font-size': '14px', 'float': 'right', 'padding-right': '100px' })))
-    
-                        $('#typesAll').append($('<hr>').css({ 'margin-bottom': '3px', 'margin-top': '3px' }))
-                        $('#typesAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.totalMoveChanges.toFixed(2)}</div>`).css({ 'font-size': '14px', 'float': 'right', 'padding-right': '100px' })))
-                        $('#typesAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.avgMoveChanges.toFixed(2)}</div>`).css({ 'font-size': '14px', 'float': 'right', 'padding-right': '100px' })))
-    
-                        $('#amtsAll').append($('<hr>').css({ 'margin-bottom': '3px', 'margin-top': '3px' }))
-                        $('#amtsAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.totalKnobAvgs.toFixed(2)}</div>`).css({ 'font-size': '14px', 'float': 'right', 'padding-right': '100px' })))
-                        $('#amtsAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.avgKnobAvgs.toFixed(2)}</div>`).css({ 'font-size': '14px', 'float': 'right', 'padding-right': '100px' })))
-    
-                        $('#amtsTotalAll').append($('<hr>').css({ 'margin-bottom': '3px', 'margin-top': '3px' }))
-                        $('#amtsTotalAll').append($(`<li>Total: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.totalKnobTotals.toFixed(2)}</div>`).css({ 'font-size': '14px', 'float': 'right', 'padding-right': '100px' })))
-                        $('#amtsTotalAll').append($(`<li>Avg: </li>`).css('font-size', '14px').append($(`<div>${data.basicInfoAll.avgKnobTotals.toFixed(2)}</div>`).css({ 'font-size': '14px', 'float': 'right', 'padding-right': '100px' })))
                         dataHistogram = {
-                            'questionAnswereds': data.questionAnswereds, 'numsQuestions': data.questionsAll.numsQuestions, 'numMoves': data.numMovesAll,
-                            'numLevels': data.numLevelsAll, 'numTypeChanges': data.numTypeChangesAll, 'clusters': data.clusters
+                            'questionAnswereds': data.questionAnswereds, 'numsQuestions': data.questionsAll.numsQuestions, 'clusters': data.clusters
                         }
+                        $(Object.keys(model.histogramFeatures)).each((j, histFeatureKey) => {
+                            dataHistogram[histFeatureKey] = data[histFeatureKey]
+                        })
                     }
     
                     if ($('#sessionSelect option').length > 0) {

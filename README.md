@@ -9,9 +9,10 @@ Required software:
 - Chrome 68
 - Python 2.7
 
-Newer versions of any of these software (except Python 3 may be different) should work.
+Newer versions (or slightly older) of any of these software (except Python 3 may be different) should work.
 
 Adding a new game to this project checklist:
-- Add model entry to model.json
+- Add model entry to model.json, following structure of other games
 - Ctrl+F "if ($game ===" in responsePage.php and fill in extraction of features
+- Ensure $basicInfoAll keys match model
 - Have functional logging in the game itself (ensuring the bug with logger scope is fixed)
