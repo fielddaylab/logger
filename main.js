@@ -14,8 +14,6 @@ $(document).ready((event) => {
         let goalsGraph1 = $('#goalsGraph1')[0]
         let goalsGraph2 = $('#goalsGraph2')[0]
     
-        let clusterGraph = $('#clusterGraph')[0]
-    
         let requestStartTime
     
         // Minimize each table
@@ -322,14 +320,15 @@ $(document).ready((event) => {
                         $('#basicFeaturesAll').append($(`<span><li>${model.clusterInputs[inputKey]}: <a href='#${inputKey}List' data-toggle='collapse' id='${inputKey}CollapseBtnAll' class='collapseBtn'>[+]</a></li></span>`).append(newFeatureList)
                             .on('hide.bs.collapse', () => { $(`#${inputKey}CollapseBtnAll`).html('[+]') })
                             .on('show.bs.collapse', () => { $(`#${inputKey}CollapseBtnAll`).html('[−]') }))
-                        
+                    })
+                    $(Object.keys(model.histogramFeatures)).each((i, histFeatureKey) => {
                         let newHistogram = $(
-                            `<div id="${inputKey}HistogramTitle" style="margin-left:20px;margin-top:20px;margin-bottom:20px;font-size:20px;">Histogram ${histogramNum}: ${model.clusterInputs[inputKey]}</div>
-                            <div id="${inputKey}Histogram"></div>`
+                            `<div id="${histFeatureKey}HistogramTitle" style="margin-left:20px;margin-top:20px;margin-bottom:20px;font-size:20px;">Histogram ${histogramNum}: ${model.histogramFeatures[histFeatureKey]}</div>
+                            <div id="${histFeatureKey}Histogram"></div>`
                         )
                         histogramNum++
                         $('#histogramParentDiv').append(newHistogram)
-                    })
+                    }) 
                     // Also make histograms for each question
                     for (let ques = 1; ques <= model.questionLevels.length; ques++) {
                         let newHistogram = $(
@@ -339,6 +338,13 @@ $(document).ready((event) => {
                         histogramNum++
                         $('#histogramParentDiv').append(newHistogram)
                     }
+
+                    // Append cluster graphs to the end
+                    $(`#histogramParentDiv`).append($(
+                        `<div id="clusterDiv" style="margin-left:20px;margin-top:20px;margin-bottom:20px;font-size:20px;display:none;"></div>
+                        <div id="clusterGraph"></div>
+                        <div id="goalsEigen4All" style="margin-left:20px;margin-top:20px;margin-bottom:20px;font-size:20px;display:none;"></div>`
+                    ))
                 }
 
                 $(Object.keys(allFeatures)).each((index, value) => {
@@ -766,47 +772,64 @@ $(document).ready((event) => {
                         getSingleData(false, true)
                     }
                     // All page basic info
-                    fastClear($('#basicFeaturesAll'))
+                    $(Object.keys(model.clusterInputs)).each((j, featureKey) => {
+                        fastClear($(`#${featureKey}List`))
+                    })
                     let dataHistogram
-                    if (otherFeaturesChecked) {   
+                    if (otherFeaturesChecked) {
+                        console.log(data)
                         for (let i = 0; i < Math.max(...model.levels); i++) {
-                            $(Object.keys(data.basicInfoAll.perLevel)).each((j, featureKey) => {
+                            $(Object.keys(model.clusterInputs)).each((j, featureKey) => {
+                                let featureVal = data.basicInfoAll.perLevel[featureKey][i]
+                                if (featureVal && typeof featureVal === 'number' && !isNaN(featureVal)) {
+                                    featureVal = featureVal.toFixed(2)
+                                }
                                 $(`#${featureKey}List`).append(
                                     $(`<li>Level ${i}: </li>`).css('font-size', '14px')
                                         .append(
-                                            $(`<div>${data.basicInfoAll.perLevel[featureKey][i].toFixed(2)}</div>`)
+                                            $(`<div>${featureVal}</div>`)
                                                 .css({ 'font-size': '14px', 'float': 'right', 'padding-right': '100px' })
                                         )
                                 )
                             })
                         }
 
-                        $(Object.keys(data.basicInfoAll.perLevel)).each((j, featureKey) => {
+                        $(Object.keys(model.clusterInputs)).each((j, featureKey) => {
                             // append a horizontal line
                             $(`#${featureKey}List`).append($('<hr>').css({ 'margin-bottom': '3px', 'margin-top': '3px' }))
+                            let list = $(`#${featureKey}List`)
+                            console.log(featureKey)
                             // append the sum across all levels
+                            let featureVal = data.basicInfoAll.totals[featureKey]
+                            if (featureVal && typeof featureVal === 'number' && !isNaN(featureVal)) {
+                                featureVal = featureVal.toFixed(2)
+                            }
                             $(`#${featureKey}List`).append(
                                 $(`<li>Total: </li>`).css('font-size', '14px')
                                     .append(
-                                        $(`<div>${data.basicInfoAll.totals[featureKey].toFixed(2)}</div>`)
+                                        $(`<div>${featureVal}</div>`)
                                             .css({ 'font-size': '14px', 'float': 'right', 'padding-right': '100px' })
                                     )
                             )
                             // append the average across all levels
+                            featureVal = data.basicInfoAll.averages[featureKey]
+                            if (featureVal && typeof featureVal === 'number' && !isNaN(featureVal)) {
+                                featureVal = featureVal.toFixed(2)
+                            }
                             $(`#${featureKey}List`).append(
                                 $(`<li>Avg: </li>`).css('font-size', '14px')
                                     .append(
-                                        $(`<div>${data.basicInfoAll.averages[featureKey].toFixed(2)}</div>`)
+                                        $(`<div>${featureVal}</div>`)
                                             .css({ 'font-size': '14px', 'float': 'right', 'padding-right': '100px' })
                                     )
                             )
                         })
     
                         dataHistogram = {
-                            'questionAnswereds': data.questionAnswereds, 'numsQuestions': data.questionsAll.numsQuestions, 'clusters': data.clusters
+                            'questionAnswereds': data.histogramFeatures.questionAnswereds, 'clusters': data.clusters, 'histogramFeatures': {}
                         }
                         $(Object.keys(model.histogramFeatures)).each((j, histFeatureKey) => {
-                            dataHistogram[histFeatureKey] = data[histFeatureKey]
+                            dataHistogram.histogramFeatures[histFeatureKey] = data.histogramFeatures[histFeatureKey]
                         })
                     }
     
@@ -941,7 +964,7 @@ $(document).ready((event) => {
     
         function drawWavesHistograms(data) {
             let questions = []
-            for (let i = 0; i < 4; i++) {
+            for (let i = 0; i < model.questionLevels.length; i++) {
                 questions[i] = arrayColumn(Object.values(data.questionAnswereds), i).map((val) => {
                     switch (val) {
                         case 0:
@@ -955,116 +978,38 @@ $(document).ready((event) => {
                     }
                 }).sort()
             }
-            // console.time('drawWavesHistograms')
-            $('#goalsDiv1All').html('Histogram 1: Questions answered')
-            let trace = {
-                x: data.numsQuestions,
-                type: 'histogram'
-            }
-            let layout1 = {
-                margin: { t: 35 },
-                plot_bgcolor: '#F6F6F3',
-                paper_bgcolor: '#F6F6F3',
-                height: 200,
-                xaxis: {
-                    autotick: false,
-                    dtick: 1,
-                    title: 'Number of questions answered',
-                    titlefont: {
-                        family: 'Courier New, monospace',
-                        size: 12,
-                        color: '#7f7f7f'
-                    }
-                },
-                yaxis: {
-                    title: 'Number of sessions',
-                    titlefont: {
-                        family: 'Courier New, monospace',
-                        size: 12,
-                        color: '#7f7f7f'
-                    }
-                },
-                showlegend: false
-            }
-            Plotly.newPlot(histogramAll1, [trace], layout1)
-    
-            $('#goalsDiv2All').html('Histogram 2: Total Number of slider moves')
-            $('#goalsDiv2All').css('display', 'block')
-            $('#goalsGraph2All').css('display', 'block')
-            let trace2 = {
-                x: data.numMoves,
-                autobinx: false,
-                xbins: {
-                    start: 0,
-                    end: data.numMoves.length-1,
-                    size: 25
-                },
-                type: 'histogram'
-            }
-            let layout2 = {
-                margin: { t: 35 },
-                height: 200,
-                plot_bgcolor: '#F6F6F3',
-                paper_bgcolor: '#F6F6F3',
-                xaxis: {
-                    title: 'Total Number of slider moves',
-                    titlefont: {
-                        family: 'Courier New, monospace',
-                        size: 12,
-                        color: '#7f7f7f'
-                    }
-                },
-                yaxis: {
-                    title: 'Number of sessions',
-                    titlefont: {
-                        family: 'Courier New, monospace',
-                        size: 12,
-                        color: '#7f7f7f'
-                    }
-                },
-                showlegend: false
-            }
-    
-            Plotly.newPlot(histogramAll2, [trace2], layout2)
-    
-            $('#goalsDiv3All').html('Histogram 3: Number of levels completed')
-            $('#goalsDiv3All').css('display', 'block')
-            $('#goalsGraph3All').css('display', 'block')
-            let trace3 = {
-                x: data.numLevels,
-                type: 'histogram'
-            }
-            let layout3 = {
-                margin: { t: 35 },
-                height: 200,
-                plot_bgcolor: '#F6F6F3',
-                paper_bgcolor: '#F6F6F3',
-                xaxis: {
-                    title: 'Number of levels completed',
-                    titlefont: {
-                        family: 'Courier New, monospace',
-                        size: 12,
-                        color: '#7f7f7f'
-                    }
-                },
-                yaxis: {
-                    title: 'Number of sessions',
-                    titlefont: {
-                        family: 'Courier New, monospace',
-                        size: 12,
-                        color: '#7f7f7f'
-                    }
-                },
-                showlegend: false
-            }
-    
-            Plotly.newPlot(histogramAll3, [trace3], layout3)
-            // console.timeEnd('drawWavesHistograms')
-    
-            for (let i = 0; i < 4; i++) {
-                $(`#goalsDiv${i + 4}All`).html(`Histogram ${i + 4}: Question ${i + 1} answers`)
-                $(`#goalsDiv${i + 4}All`).css(`display`, `block`)
-                $(`#goalsGraph${i + 4}All`).css(`display`, `block`)
+            $(Object.keys(model.histogramFeatures)).each((i, histFeatureKey) => {
+                let trace = {
+                    x: data.histogramFeatures[histFeatureKey],
+                    type: 'histogram'
+                }
+                let layout = {
+                    margin: { t: 35 },
+                    plot_bgcolor: '#F6F6F3',
+                    paper_bgcolor: '#F6F6F3',
+                    height: 200,
+                    xaxis: {
+                        title: model.histogramFeatures[histFeatureKey],
+                        titlefont: {
+                            family: 'Courier New, monospace',
+                            size: 12,
+                            color: '#7f7f7f'
+                        }
+                    },
+                    yaxis: {
+                        title: 'Number of sessions',
+                        titlefont: {
+                            family: 'Courier New, monospace',
+                            size: 12,
+                            color: '#7f7f7f'
+                        }
+                    },
+                    showlegend: false
+                }
+                Plotly.newPlot($(`#${histFeatureKey}Histogram`)[0], [trace], layout)
+            })
+            
+            for (let i = 0; i < model.questionLevels.length; i++) {
                 let trace = {
                     x: questions[i],
                     type: 'histogram'
@@ -1093,41 +1038,8 @@ $(document).ready((event) => {
                     showlegend: false
                 }
     
-                Plotly.newPlot($(`#goalsGraph${i+4}All`)[0], [trace], layout)
+                Plotly.newPlot($(`#question${i + 1}Histogram`)[0], [trace], layout)
             }
-    
-            $(`#goalsDiv8All`).html(`Histogram 8: Type changes`)
-            $(`#goalsDiv8All`).css(`display`, `block`)
-            $(`#goalsGraph8All`).css(`display`, `block`)
-            let trace8 = {
-                x: data.numTypeChanges,
-                type: 'histogram'
-            }
-            let layout8 = {
-                margin: { t: 35 },
-                height: 200,
-                plot_bgcolor: '#F6F6F3',
-                paper_bgcolor: '#F6F6F3',
-                xaxis: {
-                    title: 'Number of type changes',
-                    titlefont: {
-                        family: 'Courier New, monospace',
-                        size: 12,
-                        color: '#7f7f7f'
-                    }
-                },
-                yaxis: {
-                    title: 'Number of sessions',
-                    titlefont: {
-                        family: 'Courier New, monospace',
-                        size: 12,
-                        color: '#7f7f7f'
-                    }
-                },
-                showlegend: false
-            }
-    
-            Plotly.newPlot(histogramAll8, [trace8], layout8)
     
             $('#clusterGraph').html('Cluster graph, dunn = ' + data.clusters.dunn)
             $('#clusterGraph').css('display', 'block')
@@ -1176,7 +1088,7 @@ $(document).ready((event) => {
                 showlegend: false
             }
     
-            Plotly.newPlot(clusterGraph, trace5, layout5)
+            Plotly.newPlot($('#clusterGraph')[0], trace5, layout5)
             // console.timeEnd('drawWavesHistograms')
         }
     

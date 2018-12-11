@@ -431,8 +431,8 @@
             "knobTotalAmts": "Total knob max-min"
         },
         "histogramFeatures": {
+            "numQuestions": "# questions answered",
             "numMovesPerChallenge": "# slider moves",
-            "levelTimes": "Time",
             "moveTypeChangesPerLevel": "# type changes",
             "numLevels": "# levels completed"
         }
@@ -719,6 +719,11 @@
         "clusterInputs": {
             "numMovesPerChallenge": "# moves",
             "levelTimes": "Time"
+        },
+        "histogramFeatures": {
+            "numMovesPerChallenge": "# moves",
+            "levelTimes": "Time",
+            "numLevels": "# levels completed"
         }
     }
 }

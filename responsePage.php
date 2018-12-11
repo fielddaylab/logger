@@ -2147,7 +2147,7 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
                 'knobStdDevs'=>$avgStdDevsPerLevelAll,
                 'knobTotalAmts'=>$avgKnobTotalsPerLevelAll,
                 'knobAvgs'=>$avgKnobAvgsPerLevelAll,
-                'percentGoodMovesAll'=>$avgPgmPerLevelAll[$i]
+                'percentGoodMovesAll'=>$avgPgmPerLevelAll
             ),
             'totals'=>array(
                 'levelTimes'=>$totalTimeAll,
@@ -2342,25 +2342,19 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
 
             return array(
                 'histogramFeatures'=>array( // IMPORTANT: these keys must match the model's histogramFeatures
-                    'levelTimes'=>$numLevelsAll,
                     'numMovesPerChallenge'=>$numMovesAll,
                     'moveTypeChangesPerLevel'=>$numTypeChangesPerSession,
-                    'knobStdDevs'=>,
-                    'knobTotalAmts'=>,
-                    'knobAvgs'=>,
-                    'percentGoodMovesAll'=>
-                )
-                'numLevelsAll'=>$,
-                'numMovesAll'=>,
+                    'questionAnswereds'=>$questionAnswereds,
+                    'numQuestions'=>$questionsAll['numsQuestions'],
+                    'numLevels'=>$numLevelsAll
+                ),
                 'questionsAll'=>$questionsAll,
-                'questionAnswereds'=>$questionAnswereds,
                 'basicInfoAll'=>$basicInfoAll,
                 'sessionsAndTimes'=>$sessionsAndTimes,
                 'levels'=>$levels,
                 'numSessions'=>count($sessionsAndTimes['sessions']),
                 'questionsTotal'=>$questionsTotal,
                 'lvlsPercentComplete'=>$lvlsPercentComplete,
-                'numTypeChangesAll'=>,
                 'clusters'=>array(
                     'col1'=>$bestColumn1,
                     'col2'=>$bestColumn2,
@@ -3084,7 +3078,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
 
     // Check if there's a cache entry for this data
     if ($useCache) {
-        $cacheQuery = "SELECT output FROM cache WHERE filter=? LIMIT 1";
+        $cacheQuery = "SELECT output FROM cache WHERE filter=? ORDER BY time DESC LIMIT 1";
         $filter = json_encode($_GET);     // these variables are just for clarity
         $cacheQueryParams = array($filter);
         $cacheQueryParamTypes = 's';
@@ -3192,7 +3186,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             $numSessions = count($uniqueSessions);
 
             $numEvents = count($allEvents);
-            $completeEvents = array_filter($allEvents, function($a) { return $a['event'] === 'COMPLETE' || json_decode($a['event_data_complex'], true)['event_custom'] === 'GROW_BTN_PRESS'; });
+            $completeEvents = array_filter($allEvents, function($a) { return $a['event'] === 'COMPLETE' || (isset(json_decode($a['event_data_complex'], true)['event_custom']) && json_decode($a['event_data_complex'], true)['event_custom'] === 'GROW_BTN_PRESS'); });
             $completeLevels = array_column($completeEvents, 'level');
             $levels = array_filter(array_unique(array_column($allEvents, 'level')), function($a) use($completeLevels) { return in_array($a, $completeLevels); });
             sort($levels);
@@ -4346,7 +4340,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
 
         // Insert this result into the database and then return it
         if ($insertIntoCache) {
-            $cacheQuery = "REPLACE INTO cache VALUES (?, ?)";
+            $cacheQuery = "INSERT INTO cache (filter, output) VALUES (?, ?)";
             $cacheQueryParams = array(json_encode($_GET), json_encode($returnArray));
             $cacheQueryParamTypes = 'ss';
             $stmt = queryMultiParam($db, $cacheQuery, $cacheQueryParamTypes, $cacheQueryParams);
