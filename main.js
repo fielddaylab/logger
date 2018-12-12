@@ -447,14 +447,12 @@ $(document).ready((event) => {
         })
     
         $(document).on('change', '#levelSelect', (event) => {
-            // console.time('levelSelect')
             event.preventDefault()
             if ($('#levelSelect').val() !== $('#levelSelectAll').val()) {
                 on()
                 if ($('#gameSelect').val() === "WAVES") {
                     getSingleData(false, true)
                 }
-                // console.timeEnd('levelSelect')
                 off()
                 hideError()
             }
@@ -777,7 +775,6 @@ $(document).ready((event) => {
                     })
                     let dataHistogram
                     if (otherFeaturesChecked) {
-                        console.log(data)
                         for (let i = 0; i < Math.max(...model.levels); i++) {
                             $(Object.keys(model.clusterInputs)).each((j, featureKey) => {
                                 let featureVal = data.basicInfoAll.perLevel[featureKey][i]
@@ -797,8 +794,6 @@ $(document).ready((event) => {
                         $(Object.keys(model.clusterInputs)).each((j, featureKey) => {
                             // append a horizontal line
                             $(`#${featureKey}List`).append($('<hr>').css({ 'margin-bottom': '3px', 'margin-top': '3px' }))
-                            let list = $(`#${featureKey}List`)
-                            console.log(featureKey)
                             // append the sum across all levels
                             let featureVal = data.basicInfoAll.totals[featureKey]
                             if (featureVal && typeof featureVal === 'number' && !isNaN(featureVal)) {
@@ -950,7 +945,6 @@ $(document).ready((event) => {
                     drawWavesChart(dataObj)
                     drawWavesGoals(data)
                 }
-                // console.timeEnd('getWavesData')
     
                 off()
                 hideError()
@@ -1089,12 +1083,10 @@ $(document).ready((event) => {
             }
     
             Plotly.newPlot($('#clusterGraph')[0], trace5, layout5)
-            // console.timeEnd('drawWavesHistograms')
         }
     
         function drawWavesGoals(data) {
             // Goals stuff
-            // console.time('drawWavesGoals')
             $('#goalsDiv1').html('Goal 1: Completing the challenge')
     
             let goalSlope1 = data.goalsSingle.goalSlope1
@@ -1188,11 +1180,9 @@ $(document).ready((event) => {
                 $('#slopeDiv2').html('Net good moves slope: ' + goalSlope2.toFixed(2))
                 Plotly.newPlot(goalsGraph2, graphData2, layout)
             }
-            // console.timeEnd('drawWavesGoals')
         }
     
         function drawWavesChart(inData) {
-            // console.time('drawWavesChart')
             let xSucceed = []
             let xAmpLeft = [], xAmpRight = []
             let xFreqLeft = [], xFreqRight = []
@@ -1378,7 +1368,6 @@ $(document).ready((event) => {
     
             Plotly.newPlot(graphLeft, wavesDataLeft, layoutLeft)
             Plotly.newPlot(graphRight, wavesDataRight, layoutRight)
-            // console.timeEnd('drawWavesChart')
         }
         
         function on() {

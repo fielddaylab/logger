@@ -1680,6 +1680,14 @@ function sciToNum($sciStr) {
     else return $sciStr;
 }
 
+function log_file($str, $append = false, $jsonEncode = false) {
+    if ($jsonEncode) $str = json_encode($str);
+
+    $settings = json_decode(file_get_contents("config.json"), true);
+    if ($append) file_put_contents($settings['DATA_DIR'].'/log/log.log', $str, FILE_APPEND);
+    else file_put_contents($settings['DATA_DIR'].'/log/log.log', $str);
+}
+
 function predict($coefficients, $inputs, $isLinear = false) {
     if (!isset($coefficients) || !isset($inputs)) return null;
     if (count($coefficients) !== count($inputs)) return null;
@@ -2202,7 +2210,7 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
             }
             $sourceColumns = [];
             foreach ($allColumns as $col) {
-                if (isset($_GET[$col[1]])) {
+                if (isset($_GET[$col[1]]) && $_GET[$col[1]] === 'true') {
                     $sourceColumns[] = $col;
                 }
             }
@@ -2378,13 +2386,110 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
         if (isset($featureCols['knobTotalAmts'])) unset($featureCols['knobTotalAmts']);
         if (isset($featureCols['percentQuestionsCorrect'])) unset($featureCols['percentQuestionsCorrect']);
         if (isset($featureCols['numLevels'])) unset($featureCols['numLevels']);
+
+        // Linear regression stuff
+        $regressionVars = array();
+        $intercepts = array();
+        $coefficients = array();
+        $stdErrs = array();
+        $significances = array();
+        if (!isset($reqSessionID) && $_GET['table'] === 'binomialQuestion') {
+            $predictors = array();
+            $predicted = array();
+
+            $quesIndex = intval(substr($column, 1, 1));
+            $ansIndex = intval(substr($column, 2, 1));
+            foreach ($questionAnswereds as $i=>$val) {
+                if (isset($val[$quesIndex])) {
+                    $predictor = array();
+                    foreach ($featureCols as $j=>$feature) {
+                        if ($shouldUseAvgs) {
+                            $predictor[$j] = average($feature[$i]); 
+                        } else {
+                            $predictor[$j] = array_sum2($feature[$i]);
+                        }
+                    }
+                    $predictors[] = $predictor;
+                    $predicted[] = ($val[$quesIndex] === $ansIndex) ? 1 : 0;
+                }
+            }
+            foreach ($predictors as $i=>$predictor) {
+                $predictors[$i][] = $predicted[$i];
+            }
+            $numTrue = count(array_filter($predicted, function ($a) { return $a === 1; }));
+            $numFalse = count(array_filter($predicted, function ($a) { return $a === 0; }));
+            return array('predictors'=>$predictors, 'predicted'=>$predicted, 'numSessions'=>array('numTrue'=>$numTrue, 'numFalse'=>$numFalse), 'featureNames'=>array_keys($featureCols));
+        } else if ($_GET['table'] === 'levelCompletion') {
+            $predictors = array();
+            $predicted = array();
+
+            foreach ($sessionIDs as $i=>$val) {
+                $predictor = array();
+                foreach ($featureCols as $j=>$feature) {
+                    if ($shouldUseAvgs) {
+                        $predictor[$j] = average($feature[$i]); 
+                    } else {
+                        $predictor[$j] = array_sum2($feature[$i]);
+                    }
+                }
+                $colLvl = intval(substr($column, 3));
+                $predicted[] = (isset($levelsCompleteAll[$val][$colLvl]) && $levelsCompleteAll[$val][$colLvl]) ? 1 : 0;
+
+                $predictors[] = $predictor;
+            }
+            foreach ($predictors as $i=>$predictor) {
+                $predictors[$i][] = $predicted[$i];
+            }
+            $numTrue = count(array_filter($predicted, function ($a) { return $a === 1; }));
+            $numFalse = count(array_filter($predicted, function ($a) { return $a === 0; }));
+            return array('predictors'=>$predictors, 'predicted'=>$predicted, 'numSessions'=>array('numTrue'=>$numTrue, 'numFalse'=>$numFalse), 'featureNames'=>array_keys($featureCols));
+        } else if ($_GET['table'] === 'numLevels') {
+            $predictors = array();
+            $predicted = array();
+
+            foreach ($sessionIDs as $i=>$val) {
+                $predictor = array();
+                foreach ($featureCols as $j=>$feature) {
+                    if ($shouldUseAvgs) {
+                        $predictor[$j] = average($feature[$i]); 
+                    } else {
+                        $predictor[$j] = array_sum2($feature[$i]);
+                    }
+                }
+                $predicted[] = $numLevelsAll[$i];
+
+                $predictors[] = $predictor;
+            }
+            foreach ($predictors as $i=>$predictor) {
+                $predictors[$i][] = $predicted[$i];
+            }
+            return array('predictors'=>$predictors, 'predicted'=>$predicted, 'numSessions'=>count($predictors), 'featureNames'=>array_keys($featureCols));
+        } else if ($_GET['table'] === 'multinomialQuestion') {
+            $predictors = array();
+            $predicted = array();
+
+            $quesIndex = intval(substr($column, 1, 1));
+            foreach ($questionAnswereds as $i=>$val) {
+                if (isset($val[$quesIndex])) {                
+                    $predictor = array();
+                    foreach ($featureCols as $j=>$feature) {
+                        if ($shouldUseAvgs) {
+                            $predictor[$j] = average($feature[$i]); 
+                        } else {
+                            $predictor[$j] = array_sum2($feature[$i]);
+                        }
+                    }
+                    $predictors[] = $predictor;
+                    $predicted[] = $val[$quesIndex];
+                }
+            }
+            foreach ($predictors as $i=>$predictor) {
+                $predictors[$i][] = $predicted[$i];
+            }
+            return array('predictors'=>$predictors, 'predicted'=>$predicted, 'numSessions'=>count($predictors), 'featureNames'=>array_keys($featureCols));
+        }
     } else if ($game === 'CRYSTAL') {
         $sessionIDs = $sessionsAndTimes['sessions'];
-        $moveTypes = ['MOLECULE_ROTATE', 'MOLECULE_RELEASE'];
-        $shouldUseAvgs = false;
-        if (isset($_GET['shouldUseAvgs'])) {
-            $shouldUseAvgs = ($_GET['shouldUseAvgs'] === 'true');
-        }
         $featuresToUse = null;
         if (isset($_GET['features'])) {
             $featuresToUse = $_GET['features'];
@@ -2395,55 +2500,41 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
         }
 
         $allData = array();
-        // arrays of arrays (temp)
-        $levelTimesPerLevelAll = array();
-        $numMovesPerLevelAll = array();
-        $moveTypeChangesPerLevelAll = array();
-        $knobStdDevsPerLevelAll = array();
-        $knobTotalAmtsPerLevelAll = array();
-        $knobAvgsPerLevelAll = array();
 
-        // arrays of totals of above arrays (temp)
-        $totalTimesPerLevelAll = array();
-        $totalMovesPerLevelArray = array();
-        $totalMoveTypeChangesPerLevelAll = array();
-        $totalStdDevsPerLevelAll = array();
-        $totalKnobTotalsPerLevelAll = array();
-        $totalKnobAvgsPerLevelAll = array();
+    // This section of variables is for 1D arrays of *scalar* calculated features for each session
+    // It will be used for histograms and input as each session's set of scalar features in the regression
+    // Any array's structure is something like [session1:featureValue, session2:featureValue, ...]
+    // Note: any per session average implies average of average of all attempts of all challenges (e.g. avg(avg(lvl1_attempt1,lvl1_attempt2),avg(...lvl2),...))
+        // arrays of totals per session, across all their attempts for all levels (1D arrays)
+        $totalStampRotatesPerSession = array(); // these long variable names are kind of necessary
+        $totalSingleRotatesPerSession = array();
+        $totalMoleculesMovedPerSession = array();
+        // arrays of averages per challenge (of all attempts at a challenge) across all sessions (1D)
+        $avgStampRotatesPerSession = array();
+        $avgSingleRotatesPerSession = array();
+        $avgMoleculesMovedPerSession = array();
+        $avgClearBtnPressesPerSession = array();
+        // arrays of total/avg across all challenges for each session (1D arrays)
+        $totalLevelTimesPerSession = array();
+        $avgLevelTimesPerSession = array();
+        $avgMoleculeDragTimePerSession = array();
+        $avgScorePerSession = array(); // a little tricky, this is averaged at the attempt level (avgLvl1=avg(att1,att2,...)) and then at the level level (avgSession1=avg(avgLvl1,avgLvl2,...))
+        $avgCompletesPerSession = array();
+        $avgPgmPerSession = array(); // same as avgScorePerSession
+    
+    // This section of variables is for 1D arrays of *per-challenge* data for "basic info summary"
+    // Data at this level has been averaged from attempts per level of each session, then those averages averaged across all sessions that completed that level
+    // Scalar per session data (like clear button presses) are not displayed in the summary, this is per challenge only
+        $totalStampRotatesPerLevel = array();
+        $totalSingleRotatesPerLevel = array();
+        $totalMoleculesMovedPerLevel = array();
+        $avgStampRotatesPerLevel = array();
+        $avgMoleculesMovedPerLevel = array();
+        $totalLevelTimesPerLevel = array(); // meaning total time of all attempts, i.e. "time spent in level X"
+        $avgCompletesPerLevel = array();
 
-        // scalar totals of totals arrays (temp)
-        $totalTimeAll = 0;
-        $totalMovesAll = 0;
-        $totalMoveTypeChangesAll = 0;
-        $totalStdDevsAll = 0;
-        $totalKnobTotalsAll = 0;
-        $totalKnobAvgsAll = 0;
+        // to avoid confusion, global scalar sums and averages (for the basic summary) will be calculated where they're actually used at the end
 
-        // arrays of averages per level (display)
-        $avgLevelTimesAll = array();
-        $avgMovesArray = array();
-        $avgMoveTypeChangesPerLevelAll = array();
-        $avgStdDevsPerLevelAll = array();
-        $avgKnobTotalsPerLevelAll = array();
-        $avgKnobAvgsPerLevelAll = array();
-
-        // scalar averages of averages arrays (display)
-        $avgTimeAll = 0;
-        $avgMovesAll = 0;
-        $avgMoveTypeChangesAll = 0;
-        $avgStdDevAll = 0;
-        $avgKnobTotalsAll = 0;
-        $avgKnobAvgsAll = 0;
-
-        foreach ($levels as $i) {
-            if ($i > $maxLevel) break;
-            $levelTimesPerLevelAll[$i] = array();
-            $moveTypeChangesPerLevelAll[$i] = array();
-            $numMovesPerLevelAll[$i] = array();
-            $knobStdDevsPerLevelAll[$i] = array();
-            $knobTotalAmtsPerLevelAll[$i] = array();
-            $knobAvgsPerLevelAll[$i] = array();
-        }
         foreach ($sessionIDs as $s=>$sessionID) {
             $infoTimes = array();
             $infoEventData = array();
@@ -2459,6 +2550,17 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
                 $infoEventCustoms[] = $val['event_custom'];
             }
             $dataObj = array('data'=>$infoEventData, 'times'=>$infoTimes, 'events'=>$infoEvents, 'levels'=>$infoLevels, 'event_customs'=>$infoEventCustoms);
+
+            // arrays specific to this session that hold per challenge, per attempt information (2D)
+            $numStampRotatesPerChallengePerAttemptThisSession = array(); // these names just keep getting longer
+            $numSingleRotatesPerChallengePerAttemptThisSession = array();
+            $numMoleculesMovedPerChallengePerAttemptThisSession = array();
+            // arrays specific to this session that hold avg per challenge (that is, average of all attempts) info (1D)
+            $avgStampRotatesPerChallenge = array();
+            $avgSingleRotatesPerChallenge = array();
+            $avgMoleculesMovedPerChallenge = array();
+            $avgClearBtnPressesPerChallenge = array();
+
             $avgTime;
             $totalTime = 0;
             $numMovesPerChallenge;
@@ -2487,8 +2589,10 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
                 $knobNumStdDevs = array();
                 $knobAmts = array();
                 $numMovesPerChallenge = array();
-                $moveTypeChangesPerLevel = array();
                 $knobStdDevs = array();
+                $knobNumStdDevs = array();
+                $startIndices = array();
+                $endIndices = array();
                 $indicesToSplice = array();
                 $levelTimes = array();
                 $avgKnobStdDevs = array();
@@ -2595,15 +2699,6 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
             $sessionData['features']['levelTimes'] = $levelTimes;
             $sessionData['features']['numMovesPerChallenge'] = $numMoves;
             $sessionData['features']['numLevels'] = count($levelTimes);
-            foreach ($moveTypes as $i=>$type) {
-                $sessionData['features'][$type] = $numMovesPerSliderCols[$type];
-                $movesScalar = array_sum($numMoves);
-                if ($movesScalar > 0) {
-                    $sessionData['features']['percent'.$type] = array_sum($numMovesPerSliderCols[$type]) / $movesScalar;
-                } else {
-                    $sessionData['features']['percent'.$type] = 0;
-                }
-            }
             $sessionData['features']['numFailsPerLevel'] = $numFailsPerLevel;
 
             $allData[$sessionID] = $sessionData;
@@ -2644,7 +2739,7 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
         foreach ($sessionIDs as $i=>$session) {
             $numMoves = 0;
             foreach ($sessionAttributes[$session] as $j=>$val) {
-                if ($val['event_custom'] === 1) {
+                if (in_array($val['event_custom'], SQL_MOVE_CUSTOM)) {
                     $numMoves++;
                 }
             }
@@ -2659,7 +2754,8 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
             foreach ($sessionAttributes[$session] as $j=>$val) {
                 $json = json_decode($val['event_data_complex'], true);
                 if ($val['event'] === 'COMPLETE' || (isset($json['event_custom']) && $json['event_custom'] === 'GROW_BTN_PRESS')) {
-                    $levelsCompleted[$val['level']] = true;
+                    if (!isset($levelsCompleted[$val['level']])) $levelsCompleted[$val['level']] = 0;
+                    $levelsCompleted[$val['level']]++;
                 }
             }
             $numLevelsAll[] = count($levelsCompleted);
@@ -2741,8 +2837,8 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
 
         // All this stuff depends on the columns
         foreach ($levels as $i) {
-            $totalTimesPerLevelAll[$i] = average(array_column($featureCols['levelTimes'], $i));
-            $totalMovesPerLevelArray[$i] = average(array_column($featureCols['numMovesPerChallenge'], $i));
+            $avgTimesPerLevelAll[$i] = average(array_column($featureCols['levelTimes'], $i));
+            $avgMovesPerLevelArray[$i] = average(array_column($featureCols['numMovesPerChallenge'], $i));
         }
         $totalTimeAll = array_sum($totalTimesPerLevelAll);
         $totalMovesAll = array_sum($totalMovesPerLevelArray);
@@ -2751,12 +2847,18 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
         $avgMovesAll = average($totalMovesPerLevelArray);
 
         $basicInfoAll = array(
-            'times'=>$totalTimesPerLevelAll,
-            'numMoves'=>$totalMovesPerLevelArray,
-            'totalTime'=>$totalTimeAll,
-            'totalMoves'=>$totalMovesAll,
-            'avgTime'=>$avgTimeAll,
-            'avgMoves'=>$avgMovesAll,
+            'perLevel'=>array(
+                'levelTimes'=>$avgTimesPerLevelAll,
+                'numMovesPerChallenge'=>$avgMovesPerLevelArray
+            ),
+            'totals'=>array(
+                'levelTimes'=>$totalTimeAll,
+                'numMovesPerChallenge'=>$totalMovesAll
+            ),
+            'averages'=>array(
+                'levelTimes'=>$avgTimeAll,
+                'numMovesPerChallenge'=>$avgMovesAll
+            )
         );
 
         if ($_GET['table'] === 'basic') {
@@ -2924,10 +3026,14 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
             }
 
             return array(
-                'numLevelsAll'=>$numLevelsAll,
-                'numMovesAll'=>$numMovesAll,
+                'histogramFeatures'=>array( // IMPORTANT: these keys must match the model's histogramFeatures
+                    'numMovesPerChallenge'=>$numMovesAll,
+                    'moveTypeChangesPerLevel'=>$numTypeChangesPerSession,
+                    'questionAnswereds'=>$questionAnswereds,
+                    'numQuestions'=>$questionsAll['numsQuestions'],
+                    'numLevels'=>$numLevelsAll
+                ),
                 'questionsAll'=>$questionsAll,
-                'questionAnswereds'=>$questionAnswereds,
                 'basicInfoAll'=>$basicInfoAll,
                 'sessionsAndTimes'=>$sessionsAndTimes,
                 'levels'=>$levels,
@@ -2956,110 +3062,110 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
         // unset features that are calculated but never actually used
         if (isset($featureCols['percentQuestionsCorrect'])) unset($featureCols['percentQuestionsCorrect']);
         if (isset($featureCols['numLevels'])) unset($featureCols['numLevels']);
+
+        // Linear regression stuff
+        $regressionVars = array();
+        $intercepts = array();
+        $coefficients = array();
+        $stdErrs = array();
+        $significances = array();
+        if (!isset($reqSessionID) && $_GET['table'] === 'binomialQuestion') {
+            $predictors = array();
+            $predicted = array();
+
+            $quesIndex = intval(substr($column, 1, 1));
+            $ansIndex = intval(substr($column, 2, 1));
+            foreach ($questionAnswereds as $i=>$val) {
+                if (isset($val[$quesIndex])) {
+                    $predictor = array();
+                    foreach ($featureCols as $j=>$feature) {
+                        if ($shouldUseAvgs) {
+                            $predictor[$j] = average($feature[$i]); 
+                        } else {
+                            $predictor[$j] = array_sum2($feature[$i]);
+                        }
+                    }
+                    $predictors[] = $predictor;
+                    $predicted[] = ($val[$quesIndex] === $ansIndex) ? 1 : 0;
+                }
+            }
+            foreach ($predictors as $i=>$predictor) {
+                $predictors[$i][] = $predicted[$i];
+            }
+            $numTrue = count(array_filter($predicted, function ($a) { return $a === 1; }));
+            $numFalse = count(array_filter($predicted, function ($a) { return $a === 0; }));
+            return array('predictors'=>$predictors, 'predicted'=>$predicted, 'numSessions'=>array('numTrue'=>$numTrue, 'numFalse'=>$numFalse), 'featureNames'=>array_keys($featureCols));
+        } else if ($_GET['table'] === 'levelCompletion') {
+            $predictors = array();
+            $predicted = array();
+
+            foreach ($sessionIDs as $i=>$val) {
+                $predictor = array();
+                foreach ($featureCols as $j=>$feature) {
+                    if ($shouldUseAvgs) {
+                        $predictor[$j] = average($feature[$i]); 
+                    } else {
+                        $predictor[$j] = array_sum2($feature[$i]);
+                    }
+                }
+                $colLvl = intval(substr($column, 3));
+                $predicted[] = (isset($levelsCompleteAll[$val][$colLvl]) && $levelsCompleteAll[$val][$colLvl]) ? 1 : 0;
+
+                $predictors[] = $predictor;
+            }
+            foreach ($predictors as $i=>$predictor) {
+                $predictors[$i][] = $predicted[$i];
+            }
+            $numTrue = count(array_filter($predicted, function ($a) { return $a === 1; }));
+            $numFalse = count(array_filter($predicted, function ($a) { return $a === 0; }));
+            return array('predictors'=>$predictors, 'predicted'=>$predicted, 'numSessions'=>array('numTrue'=>$numTrue, 'numFalse'=>$numFalse), 'featureNames'=>array_keys($featureCols));
+        } else if ($_GET['table'] === 'numLevels') {
+            $predictors = array();
+            $predicted = array();
+
+            foreach ($sessionIDs as $i=>$val) {
+                $predictor = array();
+                foreach ($featureCols as $j=>$feature) {
+                    if ($shouldUseAvgs) {
+                        $predictor[$j] = average($feature[$i]); 
+                    } else {
+                        $predictor[$j] = array_sum2($feature[$i]);
+                    }
+                }
+                $predicted[] = $numLevelsAll[$i];
+
+                $predictors[] = $predictor;
+            }
+            foreach ($predictors as $i=>$predictor) {
+                $predictors[$i][] = $predicted[$i];
+            }
+            return array('predictors'=>$predictors, 'predicted'=>$predicted, 'numSessions'=>count($predictors), 'featureNames'=>array_keys($featureCols));
+        } else if ($_GET['table'] === 'multinomialQuestion') {
+            $predictors = array();
+            $predicted = array();
+
+            $quesIndex = intval(substr($column, 1, 1));
+            foreach ($questionAnswereds as $i=>$val) {
+                if (isset($val[$quesIndex])) {                
+                    $predictor = array();
+                    foreach ($featureCols as $j=>$feature) {
+                        if ($shouldUseAvgs) {
+                            $predictor[$j] = average($feature[$i]); 
+                        } else {
+                            $predictor[$j] = array_sum2($feature[$i]);
+                        }
+                    }
+                    $predictors[] = $predictor;
+                    $predicted[] = $val[$quesIndex];
+                }
+            }
+            foreach ($predictors as $i=>$predictor) {
+                $predictors[$i][] = $predicted[$i];
+            }
+            return array('predictors'=>$predictors, 'predicted'=>$predicted, 'numSessions'=>count($predictors), 'featureNames'=>array_keys($featureCols));
+        }
     } else {
         // do other games here
-    }
-
-    // Linear regression stuff
-    $regressionVars = array();
-    $intercepts = array();
-    $coefficients = array();
-    $stdErrs = array();
-    $significances = array();
-    if (!isset($reqSessionID) && $_GET['table'] === 'binomialQuestion') {
-        $predictors = array();
-        $predicted = array();
-
-        $quesIndex = intval(substr($column, 1, 1));
-        $ansIndex = intval(substr($column, 2, 1));
-        foreach ($questionAnswereds as $i=>$val) {
-            if (isset($val[$quesIndex])) {
-                $predictor = array();
-                foreach ($featureCols as $j=>$feature) {
-                    if ($shouldUseAvgs) {
-                        $predictor[$j] = average($feature[$i]); 
-                    } else {
-                        $predictor[$j] = array_sum2($feature[$i]);
-                    }
-                }
-                $predictors[] = $predictor;
-                $predicted[] = ($val[$quesIndex] === $ansIndex) ? 1 : 0;
-            }
-        }
-        foreach ($predictors as $i=>$predictor) {
-            $predictors[$i][] = $predicted[$i];
-        }
-        $numTrue = count(array_filter($predicted, function ($a) { return $a === 1; }));
-        $numFalse = count(array_filter($predicted, function ($a) { return $a === 0; }));
-        return array('predictors'=>$predictors, 'predicted'=>$predicted, 'numSessions'=>array('numTrue'=>$numTrue, 'numFalse'=>$numFalse), 'featureNames'=>array_keys($featureCols));
-    } else if ($_GET['table'] === 'levelCompletion') {
-        $predictors = array();
-        $predicted = array();
-
-        foreach ($sessionIDs as $i=>$val) {
-            $predictor = array();
-            foreach ($featureCols as $j=>$feature) {
-                if ($shouldUseAvgs) {
-                    $predictor[$j] = average($feature[$i]); 
-                } else {
-                    $predictor[$j] = array_sum2($feature[$i]);
-                }
-            }
-            $colLvl = intval(substr($column, 3));
-            $predicted[] = (isset($levelsCompleteAll[$val][$colLvl]) && $levelsCompleteAll[$val][$colLvl]) ? 1 : 0;
-
-            $predictors[] = $predictor;
-        }
-        foreach ($predictors as $i=>$predictor) {
-            $predictors[$i][] = $predicted[$i];
-        }
-        $numTrue = count(array_filter($predicted, function ($a) { return $a === 1; }));
-        $numFalse = count(array_filter($predicted, function ($a) { return $a === 0; }));
-        return array('predictors'=>$predictors, 'predicted'=>$predicted, 'numSessions'=>array('numTrue'=>$numTrue, 'numFalse'=>$numFalse), 'featureNames'=>array_keys($featureCols));
-    } else if ($_GET['table'] === 'numLevels') {
-        $predictors = array();
-        $predicted = array();
-
-        foreach ($sessionIDs as $i=>$val) {
-            $predictor = array();
-            foreach ($featureCols as $j=>$feature) {
-                if ($shouldUseAvgs) {
-                    $predictor[$j] = average($feature[$i]); 
-                } else {
-                    $predictor[$j] = array_sum2($feature[$i]);
-                }
-            }
-            $predicted[] = $numLevelsAll[$i];
-
-            $predictors[] = $predictor;
-        }
-        foreach ($predictors as $i=>$predictor) {
-            $predictors[$i][] = $predicted[$i];
-        }
-        return array('predictors'=>$predictors, 'predicted'=>$predicted, 'numSessions'=>count($predictors), 'featureNames'=>array_keys($featureCols));
-    } else if ($_GET['table'] === 'multinomialQuestion') {
-        $predictors = array();
-        $predicted = array();
-
-        $quesIndex = intval(substr($column, 1, 1));
-        foreach ($questionAnswereds as $i=>$val) {
-            if (isset($val[$quesIndex])) {                
-                $predictor = array();
-                foreach ($featureCols as $j=>$feature) {
-                    if ($shouldUseAvgs) {
-                        $predictor[$j] = average($feature[$i]); 
-                    } else {
-                        $predictor[$j] = array_sum2($feature[$i]);
-                    }
-                }
-                $predictors[] = $predictor;
-                $predicted[] = $val[$quesIndex];
-            }
-        }
-        foreach ($predictors as $i=>$predictor) {
-            $predictors[$i][] = $predicted[$i];
-        }
-        return array('predictors'=>$predictors, 'predicted'=>$predicted, 'numSessions'=>count($predictors), 'featureNames'=>array_keys($featureCols));
     }
 }
 

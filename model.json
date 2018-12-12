@@ -438,53 +438,105 @@
         }
     },
     "CRYSTAL": {
-        "levels": [ 0, 1, 2, 3, 4, 5, 6, 7, 8 ],
+        "levels": [ 0, 1, 2, 3, 4, 5, 6, 7],
         "features": {
             "numLevels": {
                 "general": {
-                    "(Intercept)":              "Constant term",
-                    "numMovesPerChallenge":     "# moves",
-                    "levelTimes":               "Time"
+                    "(Intercept)":              "Constant term"
                 },
                 "specific": {
-
+                    "totalStampRotates":        "Total # of stamp rotates",
+                    "totalSingleRotates":       "Total # of single rotates",
+                    "totalMoleculesMoved":      "Total # of molecules moved",
+                    "avgStampRotates":          "Avg stamp rotates per challenge",
+                    "avgSingleRotates":         "Avg single rotates per challenge",
+                    "avgMoleculesMoved":        "Avg molecules moved per challenge",
+                    "avgClearBtnPresses":       "Avg # of clear button presses",
+                    "totalLevelTimes":          "Total time",
+                    "avgLevelTimes":            "Avg time per level",
+                    "avgMoleculeDragTime":      "Avg molecule drag time per move",
+                    "avgScorePerChallenge":     "Avg score per challenge",
+                    "avgCompletesPerLevel":     "Avg complete events per challenge"
                 },
                 "perLevel": {
-
+                    "pgm_0":                   "% good moves lvl 0",
+                    "pgm_1":                   "% good moves lvl 1",
+                    "pgm_2":                   "% good moves lvl 2",
+                    "pgm_3":                   "% good moves lvl 3",
+                    "pgm_4":                   "% good moves lvl 4",
+                    "pgm_5":                   "% good moves lvl 5",
+                    "pgm_6":                   "% good moves lvl 6",
+                    "pgm_7":                   "% good moves lvl 7"
                 }
             },
             "levelCompletion": {
                 "general": {
-                    "(Intercept)":              "Constant term",
-                    "numMovesPerChallenge":     "# moves",
-                    "levelTimes":               "Time"
+                    "(Intercept)":              "Constant term"
                 },
                 "specific": {
-
+                    "totalStampRotates":        "Total # of stamp rotates",
+                    "totalSingleRotates":       "Total # of single rotates",
+                    "totalMoleculesMoved":      "Total # of molecules moved",
+                    "avgStampRotates":          "Avg stamp rotates per challenge",
+                    "avgSingleRotates":         "Avg single rotates per challenge",
+                    "avgMoleculesMoved":        "Avg molecules moved per challenge",
+                    "avgClearBtnPresses":       "Avg # of clear button presses",
+                    "totalLevelTimes":          "Total time",
+                    "avgLevelTimes":            "Avg time per level",
+                    "avgMoleculeDragTime":      "Avg molecule drag time per move",
+                    "avgScorePerChallenge":     "Avg score per challenge",
+                    "avgCompletesPerLevel":     "Avg complete events per challenge"
                 },
                 "perLevel": {
-
+                    "pgm_0":                   "% good moves lvl 0",
+                    "pgm_1":                   "% good moves lvl 1",
+                    "pgm_2":                   "% good moves lvl 2",
+                    "pgm_3":                   "% good moves lvl 3",
+                    "pgm_4":                   "% good moves lvl 4",
+                    "pgm_5":                   "% good moves lvl 5",
+                    "pgm_6":                   "% good moves lvl 6",
+                    "pgm_7":                   "% good moves lvl 7"
                 }
             },
             "binomialQuestion": {
                 "general": {
-                    "(Intercept)":              "Constant term",
-                    "numMovesPerChallenge":     "# moves",
-                    "levelTimes":               "Time"
+                    "(Intercept)":              "Constant term"
                 },
                 "specific": {
-
+                    "totalStampRotates":        "Total # of stamp rotates",
+                    "totalSingleRotates":       "Total # of single rotates",
+                    "totalMoleculesMoved":      "Total # of molecules moved",
+                    "avgStampRotates":          "Avg stamp rotates per challenge",
+                    "avgSingleRotates":         "Avg single rotates per challenge",
+                    "avgMoleculesMoved":        "Avg molecules moved per challenge",
+                    "avgClearBtnPresses":       "Avg # of clear button presses",
+                    "totalLevelTimes":          "Total time",
+                    "avgLevelTimes":            "Avg time per level",
+                    "avgMoleculeDragTime":      "Avg molecule drag time per move",
+                    "avgScorePerChallenge":     "Avg score per challenge",
+                    "avgCompletesPerLevel":     "Avg complete events per challenge",
+                    "avgPercentGoodMoves":      "Avg % good moves"
                 },
                 "perLevel": {}
             },
             "multinomialQuestion": {
                 "general": {
-                    "(Intercept)":              "Constant term",
-                    "numMovesPerChallenge":     "# moves",
-                    "levelTimes":               "Time"
+                    "(Intercept)":              "Constant term"
                 },
                 "specific": {
-
+                    "totalStampRotates":        "Total # of stamp rotates",
+                    "totalSingleRotates":       "Total # of single rotates",
+                    "totalMoleculesMoved":      "Total # of molecules moved",
+                    "avgStampRotates":          "Avg stamp rotates per challenge",
+                    "avgSingleRotates":         "Avg single rotates per challenge",
+                    "avgMoleculesMoved":        "Avg molecules moved per challenge",
+                    "avgClearBtnPresses":       "Avg # of clear button presses",
+                    "totalLevelTimes":          "Total time",
+                    "avgLevelTimes":            "Avg time per level",
+                    "avgMoleculeDragTime":      "Avg molecule drag time per move",
+                    "avgScorePerChallenge":     "Avg score per challenge",
+                    "avgCompletesPerLevel":     "Avg complete events per challenge",
+                    "avgPercentGoodMoves":      "Avg % good moves"
                 },
                 "perLevel": {}
             }
@@ -495,39 +547,35 @@
                 "headers": {
                     "lvl0": {
                         "title": "Lvl 0",
-                        "href": "%2FnumLevels%2FnumLevelsData_1.txt"
+                        "href": "%2FnumLevels%2FnumLevelsData_0.txt"
                     },
                     "lvl1": {
                         "title": "Lvl 1",
-                        "href": "%2FnumLevels%2FnumLevelsData_3.txt"
+                        "href": "%2FnumLevels%2FnumLevelsData_1.txt"
                     },
                     "lvl2": {
                         "title": "Lvl 2",
-                        "href": "%2FnumLevels%2FnumLevelsData_5.txt"
+                        "href": "%2FnumLevels%2FnumLevelsData_2.txt"
                     },
                     "lvl3": {
                         "title": "Lvl 3",
-                        "href": "%2FnumLevels%2FnumLevelsData_7.txt"
+                        "href": "%2FnumLevels%2FnumLevelsData_3.txt"
                     },
                     "lvl4": {
                         "title": "Lvl 4",
-                        "href": "%2FnumLevels%2FnumLevelsData_11.txt"
+                        "href": "%2FnumLevels%2FnumLevelsData_4.txt"
                     },
                     "lvl5": {
                         "title": "Lvl 5",
-                        "href": "%2FnumLevels%2FnumLevelsData_13.txt"
+                        "href": "%2FnumLevels%2FnumLevelsData_5.txt"
                     },
                     "lvl6": {
                         "title": "Lvl 6",
-                        "href": "%2FnumLevels%2FnumLevelsData_15.txt"
+                        "href": "%2FnumLevels%2FnumLevelsData_6.txt"
                     },
                     "lvl7": {
                         "title": "Lvl 7",
-                        "href": "%2FnumLevels%2FnumLevelsData_19.txt"
-                    },
-                    "lvl8": {
-                        "title": "Lvl 8",
-                        "href": "%2FnumLevels%2FnumLevelsData_21.txt"
+                        "href": "%2FnumLevels%2FnumLevelsData_7.txt"
                     }
                 }
             },
@@ -536,39 +584,35 @@
                 "headers": {
                     "lvl0": {
                         "title": "Lvl 0",
-                        "href": "%2FlevelCompletion%2FlevelCompletionData_1.txt"
+                        "href": "%2FlevelCompletion%2FlevelCompletionData_0.txt"
                     },
                     "lvl1": {
                         "title": "Lvl 1",
-                        "href": "%2FlevelCompletion%2FlevelCompletionData_3.txt"
+                        "href": "%2FlevelCompletion%2FlevelCompletionData_1.txt"
                     },
                     "lvl2": {
                         "title": "Lvl 2",
-                        "href": "%2FlevelCompletion%2FlevelCompletionData_5.txt"
+                        "href": "%2FlevelCompletion%2FlevelCompletionData_2.txt"
                     },
                     "lvl3": {
                         "title": "Lvl 3",
-                        "href": "%2FlevelCompletion%2FlevelCompletionData_7.txt"
+                        "href": "%2FlevelCompletion%2FlevelCompletionData_3.txt"
                     },
                     "lvl4": {
                         "title": "Lvl 4",
-                        "href": "%2FlevelCompletion%2FlevelCompletionData_11.txt"
+                        "href": "%2FlevelCompletion%2FlevelCompletionData_4.txt"
                     },
                     "lvl5": {
                         "title": "Lvl 5",
-                        "href": "%2FlevelCompletion%2FlevelCompletionData_13.txt"
+                        "href": "%2FlevelCompletion%2FlevelCompletionData_5.txt"
                     },
                     "lvl6": {
                         "title": "Lvl 6",
-                        "href": "%2FlevelCompletion%2FlevelCompletionData_15.txt"
+                        "href": "%2FlevelCompletion%2FlevelCompletionData_6.txt"
                     },
                     "lvl7": {
                         "title": "Lvl 7",
-                        "href": "%2FlevelCompletion%2FlevelCompletionData_19.txt"
-                    },
-                    "lvl8": {
-                        "title": "Lvl 8",
-                        "href": "%2FlevelCompletion%2FlevelCompletionData_21.txt"
+                        "href": "%2FlevelCompletion%2FlevelCompletionData_7.txt"
                     }
                 }
             },
@@ -622,22 +666,6 @@
                     "q23": {
                         "title": "Q3/D",
                         "href": "%2FbinomialQuestion%2FbinomialQuestionData_q23_"
-                    },
-                    "q30": {
-                        "title": "Q4/A",
-                        "href": "%2FbinomialQuestion%2FbinomialQuestionData_q30_"
-                    },
-                    "q31": {
-                        "title": "Q4/B",
-                        "href": "%2FbinomialQuestion%2FbinomialQuestionData_q31_"
-                    },
-                    "q32": {
-                        "title": "Q4/C",
-                        "href": "%2FbinomialQuestion%2FbinomialQuestionData_q32_"
-                    },
-                    "q33": {
-                        "title": "Q4/D",
-                        "href": "%2FbinomialQuestion%2FbinomialQuestionData_q33_"
                     }
                 }
             },
@@ -655,10 +683,6 @@
                     "q2": {
                         "title": "Q3",
                         "href": "%2FmultinomialQuestion%2FmultinomialQuestionData_q2_"
-                    },
-                    "q3": {
-                        "title": "Q4",
-                        "href": "%2FmultinomialQuestion%2FmultinomialQuestionData_q3_"
                     }
                 }
             }
@@ -715,15 +739,24 @@
                 "museumClose": 5
             }
         },
-        "questionLevels": [ 0, 1, 2 ],
+        "questionLevels": [ 3, 3, 8 ],
         "clusterInputs": {
             "numMovesPerChallenge": "# moves",
             "levelTimes": "Time"
         },
         "histogramFeatures": {
-            "numMovesPerChallenge": "# moves",
-            "levelTimes": "Time",
-            "numLevels": "# levels completed"
+            "totalStampRotates":        "Total # of stamp rotates",
+            "totalSingleRotates":       "Total # of single rotates",
+            "totalMoleculesMoved":      "Total # of molecules moved",
+            "avgStampRotates":          "Avg stamp rotates per challenge",
+            "avgSingleRotates":         "Avg single rotates per challenge",
+            "avgMoleculesMoved":        "Avg molecules moved per challenge",
+            "avgClearBtnPresses":       "Avg # of clear button presses",
+            "totalLevelTimes":          "Total time",
+            "avgLevelTimes":            "Avg time per level",
+            "avgMoleculeDragTime":      "Avg molecule drag time per move",
+            "avgScorePerChallenge":     "Avg score per challenge",
+            "avgCompletesPerLevel":     "Avg complete events per challenge"
         }
     }
 }
