@@ -775,7 +775,7 @@ $(document).ready((event) => {
                     })
                     let dataHistogram
                     if (otherFeaturesChecked) {
-                        for (let i = 0; i < Math.max(...model.levels); i++) {
+                        for (let i = 0; i <= Math.max(...model.levels); i++) {
                             $(Object.keys(model.clusterInputs)).each((j, featureKey) => {
                                 let featureVal = data.basicInfoAll.perLevel[featureKey][i]
                                 if (featureVal && typeof featureVal === 'number' && !isNaN(featureVal)) {

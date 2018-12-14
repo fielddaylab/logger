@@ -456,7 +456,8 @@
                     "avgLevelTimes":            "Avg time per level",
                     "avgMoleculeDragTime":      "Avg molecule drag time per move",
                     "avgScorePerChallenge":     "Avg score per challenge",
-                    "avgCompletesPerLevel":     "Avg complete events per challenge"
+                    "avgCompletesPerLevel":     "Avg complete events per challenge",
+                    "timeSpentInMuseum":        "Total time spent in crystal museum"
                 },
                 "perLevel": {
                     "pgm_0":                   "% good moves lvl 0",
@@ -485,7 +486,8 @@
                     "avgLevelTimes":            "Avg time per level",
                     "avgMoleculeDragTime":      "Avg molecule drag time per move",
                     "avgScorePerChallenge":     "Avg score per challenge",
-                    "avgCompletesPerLevel":     "Avg complete events per challenge"
+                    "avgCompletesPerLevel":     "Avg complete events per challenge",
+                    "timeSpentInMuseum":        "Total time spent in crystal museum"
                 },
                 "perLevel": {
                     "pgm_0":                   "% good moves lvl 0",
@@ -515,7 +517,8 @@
                     "avgMoleculeDragTime":      "Avg molecule drag time per move",
                     "avgScorePerChallenge":     "Avg score per challenge",
                     "avgCompletesPerLevel":     "Avg complete events per challenge",
-                    "avgPercentGoodMoves":      "Avg % good moves"
+                    "avgPercentGoodMoves":      "Avg % good moves",
+                    "timeSpentInMuseum":        "Total time spent in crystal museum"
                 },
                 "perLevel": {}
             },
@@ -536,7 +539,8 @@
                     "avgMoleculeDragTime":      "Avg molecule drag time per move",
                     "avgScorePerChallenge":     "Avg score per challenge",
                     "avgCompletesPerLevel":     "Avg complete events per challenge",
-                    "avgPercentGoodMoves":      "Avg % good moves"
+                    "avgPercentGoodMoves":      "Avg % good moves",
+                    "timeSpentInMuseum":        "Total time spent in crystal museum"
                 },
                 "perLevel": {}
             }
@@ -732,7 +736,7 @@
             ]
         },
         "sqlEventCustoms": {
-            "question": 33456,
+            "question": 3,
             "move": [ 1, 2 ],
             "other": {
                 "clear": 6,
@@ -741,8 +745,17 @@
         },
         "questionLevels": [ 3, 3, 8 ],
         "clusterInputs": {
-            "numMovesPerChallenge": "# moves",
-            "levelTimes": "Time"
+            "totalStampRotates":        "Total # of stamp rotates",
+            "totalSingleRotates":       "Total # of single rotates",
+            "totalMoleculesMoved":      "Total # of molecules moved",
+            "avgStampRotates":          "Avg stamp rotates per challenge",
+            "avgSingleRotates":         "Avg single rotates per challenge",
+            "avgMoleculesMoved":        "Avg molecules moved per challenge",
+            "totalLevelTimes":          "Total time",
+            "avgLevelTimes":            "Avg time per level",
+            "avgMoleculeDragTime":      "Avg molecule drag time per move",
+            "avgScorePerChallenge":     "Avg score per challenge",
+            "avgCompletesPerLevel":     "Avg complete events per challenge"
         },
         "histogramFeatures": {
             "totalStampRotates":        "Total # of stamp rotates",
@@ -756,7 +769,8 @@
             "avgLevelTimes":            "Avg time per level",
             "avgMoleculeDragTime":      "Avg molecule drag time per move",
             "avgScorePerChallenge":     "Avg score per challenge",
-            "avgCompletesPerLevel":     "Avg complete events per challenge"
+            "avgCompletesPerLevel":     "Avg complete events per challenge",
+            "timeSpentInMuseum":        "Total time spent in crystal museum"
         }
     }
 }

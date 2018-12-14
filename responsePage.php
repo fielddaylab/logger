@@ -1762,6 +1762,10 @@ function array_sum2($arr) {
     return $arr;
 }
 
+function increment(&$var, $amount = 1) {
+    $var = ($var ?? 0) + $amount;
+}
+
 function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAttributes, $column, $maxLevel = 100) {
     $game = $_GET['gameID'];
     if ($game === 'WAVES') {
@@ -2499,29 +2503,7 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
             }
         }
 
-        $allData = array();
-
-    // This section of variables is for 1D arrays of *scalar* calculated features for each session
-    // It will be used for histograms and input as each session's set of scalar features in the regression
-    // Any array's structure is something like [session1:featureValue, session2:featureValue, ...]
-    // Note: any per session average implies average of average of all attempts of all challenges (e.g. avg(avg(lvl1_attempt1,lvl1_attempt2),avg(...lvl2),...))
-        // arrays of totals per session, across all their attempts for all levels (1D arrays)
-        $totalStampRotatesPerSession = array(); // these long variable names are kind of necessary
-        $totalSingleRotatesPerSession = array();
-        $totalMoleculesMovedPerSession = array();
-        // arrays of averages per challenge (of all attempts at a challenge) across all sessions (1D)
-        $avgStampRotatesPerSession = array();
-        $avgSingleRotatesPerSession = array();
-        $avgMoleculesMovedPerSession = array();
-        $avgClearBtnPressesPerSession = array();
-        // arrays of total/avg across all challenges for each session (1D arrays)
-        $totalLevelTimesPerSession = array();
-        $avgLevelTimesPerSession = array();
-        $avgMoleculeDragTimePerSession = array();
-        $avgScorePerSession = array(); // a little tricky, this is averaged at the attempt level (avgLvl1=avg(att1,att2,...)) and then at the level level (avgSession1=avg(avgLvl1,avgLvl2,...))
-        $avgCompletesPerSession = array();
-        $avgPgmPerSession = array(); // same as avgScorePerSession
-    
+        $allData = array();    
     // This section of variables is for 1D arrays of *per-challenge* data for "basic info summary"
     // Data at this level has been averaged from attempts per level of each session, then those averages averaged across all sessions that completed that level
     // Scalar per session data (like clear button presses) are not displayed in the summary, this is per challenge only
@@ -2529,11 +2511,16 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
         $totalSingleRotatesPerLevel = array();
         $totalMoleculesMovedPerLevel = array();
         $avgStampRotatesPerLevel = array();
+        $avgSingleRotatesPerLevel = array();
         $avgMoleculesMovedPerLevel = array();
         $totalLevelTimesPerLevel = array(); // meaning total time of all attempts, i.e. "time spent in level X"
+        $avgLevelTimesPerLevel = array();
+        $avgMoleculeDragTimePerLevel = array();
+        $avgScorePerLevel = array();
         $avgCompletesPerLevel = array();
 
-        // to avoid confusion, global scalar sums and averages (for the basic summary) will be calculated where they're actually used at the end
+        // To avoid confusion, global scalar sums and averages (for the basic summary) will be calculated where they're actually used at the end
+        // Session-level data is calculated below and not kept afterwards
 
         foreach ($sessionIDs as $s=>$sessionID) {
             $infoTimes = array();
@@ -2552,156 +2539,164 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
             $dataObj = array('data'=>$infoEventData, 'times'=>$infoTimes, 'events'=>$infoEvents, 'levels'=>$infoLevels, 'event_customs'=>$infoEventCustoms);
 
             // arrays specific to this session that hold per challenge, per attempt information (2D)
-            $numStampRotatesPerChallengePerAttemptThisSession = array(); // these names just keep getting longer
-            $numSingleRotatesPerChallengePerAttemptThisSession = array();
-            $numMoleculesMovedPerChallengePerAttemptThisSession = array();
+            $totalMoleculesMovedPerChallenge = array();
+
             // arrays specific to this session that hold avg per challenge (that is, average of all attempts) info (1D)
             $avgStampRotatesPerChallenge = array();
             $avgSingleRotatesPerChallenge = array();
             $avgMoleculesMovedPerChallenge = array();
             $avgClearBtnPressesPerChallenge = array();
+            $pgmPerChallenge = array();
+            
+            // scalars that hold running totals/averages for this session
+            $totalLevelTime = 0; // total time this session spent in ALL attempts of ALL levels
+            $totalTimeInMuseum = 0;
 
-            $avgTime;
-            $totalTime = 0;
-            $numMovesPerChallenge;
-            $totalMoves = 0;
-            $avgMoves;
-            $moveTypeChangesPerLevel;
-            $moveTypeChangesTotal = 0;
-            $moveTypeChangesAvg;
-            $knobStdDevs;
-            $knobNumStdDevs;
-            $knobAmtsTotal = 0;
-            $knobAmtsAvg;
-            $knobSumTotal = 0;
-            $knobSumAvg;
             $numLevelsThisSession2 = count(array_unique($dataObj['levels']));
-            $numFailsPerLevel;
             if (isset($dataObj['times'])) {
-                // Basic features stuff
-                $levelStartTime;
-                $levelEndTime;
-                $lastType = null;
-                $startIndices = array();
-                $endIndices = array();
-                $moveTypeChangesPerLevel = array();
-                $knobStdDevs = array();
-                $knobNumStdDevs = array();
-                $knobAmts = array();
-                $numMovesPerChallenge = array();
-                $knobStdDevs = array();
-                $knobNumStdDevs = array();
-                $startIndices = array();
-                $endIndices = array();
-                $indicesToSplice = array();
-                $levelTimes = array();
-                $avgKnobStdDevs = array();
-                $knobAvgs = array();
-                $numMovesPerChallengePerType = array();
-                $numFailsPerLevel = array();
-                foreach ($dataObj['levels'] as $i) {
-                    $numMovesPerChallenge[$i] = array();
-                    $numMovesPerChallengePerType[$i] = array_fill_keys($moveTypes, 0);
-                    $indicesToSplice[$i] = array();
+                // Temp variables
+                $startIndices = array(); // these will be 2D arrays because of multiple attempts within a challenge
+                $endIndices = array();   // ^
+                $numAttemptsPerChallenge = array();
+                $totalClearBtnPressesPerChallenge = array();
+                $totalDragTimePerChallenge = array();
+                $totalNumMoleculesMovedPerChallenge = array();
+                $totalStampRotatesPerChallenge = array();
+                $totalSingleRotatesPerChallenge = array();
+                $avgScorePerChallenge = array();
+                $totalTimePerChallenge = array();
+                $avgTimePerChallenge = array();
 
-                    $startIndices[$i] = null;
-                    $endIndices[$i] = null;
-                    $moveTypeChangesPerLevel[$i] = 0;
-                    $knobStdDevs[$i] = 0;
-                    $knobNumStdDevs[$i] = 0;
-                    $knobAmts[$i] = 0;
-                    $knobAvgs[$i] = 0;
-                    $avgKnobStdDevs[$i] = 0;
-                    $numFailsPerLevel[$i] = 0;
+                // Initialize anything that has challenges in it
+                foreach ($dataObj['levels'] as $i) {
+                    $startIndices[$i] = array();
+                    $endIndices[$i] = array();
+                    $totalMoleculesMovedPerChallenge[$i] = 0;
+                    $totalClearBtnPressesPerChallenge[$i] = 0;
+                    $totalTimePerChallenge[$i] = 0;
+                    $totalScorePerChallenge[$i] = 0;
+                    $totalSingleRotatesPerChallenge[$i] = 0;
+                    $totalStampRotatesPerChallenge[$i] = 0;
+                    $totalDragTimePerChallenge[$i] = 0;
+                    $totalNumMoleculesMovedPerChallenge[$i] = 0;
+                    $numAttemptsPerChallenge[$i] = 0;
+                    $avgTimePerChallenge[$i] = 0;
+                    $avgStampRotatesPerChallenge[$i] = 0;
+                    $avgSingleRotatesPerChallenge[$i] = 0;
+                    $avgMoleculesMovedPerChallenge[$i] = 0;
+                    $avgScorePerChallenge[$i] = 0;
+                    $avgCompletesPerChallenge[$i] = 0;
                 }
 
                 for ($i = 0; $i < count($dataObj['times']); $i++) {
-                    if (!isset($endIndices[$dataObj['levels'][$i]])) {
-                        $dataJson = json_decode($dataObj['data'][$i], true);
-                        if ($dataObj['events'][$i] === 'BEGIN') {
-                            if (!isset($startIndices[$dataObj['levels'][$i]])) { // check this space isn't filled by a previous attempt on the same level
-                                $startIndices[$dataObj['levels'][$i]] = $i;
+                    // Variables that are just for conciseness and clarity
+                    $dataJson = json_decode($dataObj['data'][$i], true);
+                    $level = $dataObj['levels'][$i];
+                    $event = $dataObj['events'][$i];
+                    $event_custom = $dataObj['event_customs'][$i];
+                    $event_name = $dataJson['event_custom'] ?? null;
+
+                    if ($numAttemptsPerChallenge[$level] == 0) {
+                        increment($numAttemptsPerChallenge[$level]);
+                    }
+                    if ($event === 'BEGIN') {
+                        $startIndices[$level][] = $i;
+                    } else if ($event === 'COMPLETE' || $event_name === 'GROW_BTN_PRESS') {
+                        increment($totalScorePerChallenge[$level], array_sum($dataJson['stability']));
+                        $endIndices[$level][] = $i;
+                    } else if ($event === 'CUSTOM' && in_array($event_name, ['MOLECULE_RELEASE', "MOLECULE_ROTATE"])) {
+                        // Moves can be either drag, or rotate (of either the stamp or a single molecule)
+                        // Attempt indexes are kept based on the count of numAttemptsPerChallenge at this point
+                        if ($event_name === 'MOLECULE_RELEASE') {
+                            increment($totalDragTimePerChallenge[$level], $dataJson['time']);
+                            increment($totalNumMoleculesMovedPerChallenge[$level]);
+                        } else {
+                            // Check which rotate
+                            if ($dataJson['isStamp'] == 'true') {
+                                increment($totalStampRotatesPerChallenge[$level]);
+                            } else {
+                                increment($totalSingleRotatesPerChallenge[$level]);
                             }
-                        } else if ($dataObj['events'][$i] === 'CUSTOM' && $dataJson['event_custom'] === 'GROW_BTN_PRESS') { // TODO: change later to COMPLETE
-                            if (!isset($endIndices[$dataObj['levels'][$i]])) {
-                                $endIndices[$dataObj['levels'][$i]] = $i;
-                            }
-                        } else if ($dataObj['events'][$i] === 'CUSTOM' && in_array($dataObj['event_customs'][$i], SQL_MOVE_CUSTOM)) {
-                            if ($lastType !== $dataJson['event_custom']) {
-                                $moveTypeChangesPerLevel[$dataObj['levels'][$i]]++;
-                            }
-                            $lastType = $dataJson['event_custom'];
-                            $numMovesPerChallenge[$dataObj['levels'][$i]][] = $i;
-                            if (!isset($numMovesPerChallengePerType[$dataObj['levels'][$i]][$lastType])) $numMovesPerChallengePerType[$dataObj['levels'][$i]][$lastType] = 0;
-                            $numMovesPerChallengePerType[$dataObj['levels'][$i]][$lastType]++;
-                        } else if ($dataObj['events'][$i] === 'FAIL') {
-                            $numFailsPerLevel[$dataObj['levels'][$i]]++;
                         }
+                    } else if ($event === 'CUSTOM' && $event_name === 'CLEAR_BTN_PRESS') {
+                        increment($totalClearBtnPressesPerChallenge[$level]);
+                    } else if ($event === 'CUSTOM' && $event_name === 'MUSEUM_CLOSE') {
+                        $totalTimeInMuseum = $dataJson['timeOpen']; // This is intentionally overwritten because timeOpen is already the total up to that point
                     }
                 }
 
-                foreach ($endIndices as $i=>$value) {
-                    if (isset($endIndices[$i], $dataObj['times'][$endIndices[$i]], $dataObj['times'][$startIndices[$i]])) {
-                        $levelStartTime = new DateTime($dataObj['times'][$startIndices[$i]]);
-                        $levelEndTime = new DateTime($dataObj['times'][$endIndices[$i]]);
-                        $levelTime = $levelEndTime->getTimestamp() - $levelStartTime->getTimestamp();
-                        $totalTime += $levelTime;
-                        $levelTimes[$i] = $levelTime;
-
-                        $totalMoves += count($numMovesPerChallenge[$i]);
-                        $moveTypeChangesTotal += $moveTypeChangesPerLevel[$i];
-
-                        $knobAvgAmt = 0;
-                        $knobAvgStdDev = 0;
-                        if ($knobNumStdDevs[$i] != 0) {
-                            $temp = $knobAmts[$i]/$knobNumStdDevs[$i];
-                            $knobAmtsTotal += $temp;
-                            $knobAvgAmt = $temp;
-                            $knobAvgStdDev = ($knobStdDevs[$i]/$knobNumStdDevs[$i]);
-                        }
-                        $knobAvgs[$i] = $knobAvgAmt;
-                        $avgKnobStdDevs[$i] = $knobAvgStdDev;
-
-                        if ($knobAmts[$i] != 0) {
-                            $knobSumTotal += $knobAmts[$i];
+                foreach ($endIndices as $i=>$attemptIndices) {
+                    foreach ($attemptIndices as $j=>$index) { // "index" meaning the attempt index, not zero-based index j
+                        if (isset($index, $dataObj['times'][$index], $startIndices[$i], $startIndices[$i][$j], $dataObj['times'][$startIndices[$i][$j]])) {
+                            $attemptStartTime = new DateTime($dataObj['times'][$startIndices[$i][$j]]);
+                            $attemptEndTime = new DateTime($dataObj['times'][$index]);
+                            $attemptTime = $attemptEndTime->getTimestamp() - $attemptStartTime->getTimestamp();
+                            $totalLevelTime += $attemptTime;
+                            $totalTimePerChallenge[$i] += $attemptTime;
                         }
                     }
+                    // Find averages across attempts by dividing totals by number of attempts
+                    $avgStampRotatesPerChallenge[$i] = $totalStampRotatesPerChallenge[$i] / $numAttemptsPerChallenge[$i];
+                    $avgSingleRotatesPerChallenge[$i] = $totalSingleRotatesPerChallenge[$i] / $numAttemptsPerChallenge[$i];
+                    $avgMoleculesMovedPerChallenge[$i] = $totalNumMoleculesMovedPerChallenge[$i] / $numAttemptsPerChallenge[$i];
+                    $avgClearBtnPressesPerChallenge[$i] = $totalClearBtnPressesPerChallenge[$i] / $numAttemptsPerChallenge[$i];
+                    $avgScorePerChallenge[$i] = $totalScorePerChallenge[$i] / $numAttemptsPerChallenge[$i];
                 }
-                $avgTime = $totalTime / $numLevelsThisSession2;
-                $avgMoves = $totalMoves / $numLevelsThisSession2;
-                $moveTypeChangesAvg = $moveTypeChangesTotal / $numLevelsThisSession2;
-                $knobAmtsAvg = $knobAmtsTotal / $numLevelsThisSession2;
-                $knobSumAvg = $knobSumTotal / $numLevelsThisSession2;
-            }
-            $numMoves = array();
-            $filteredNumMoves = array_filter($numMovesPerChallenge, function ($value) { return isset($value); });
-            foreach ($filteredNumMoves as $j=>$value) {
-                $numMoves[$j] = count($numMovesPerChallenge[$j]);
-            }
-            $numMovesPerSliderCols = array();
-            foreach ($moveTypes as $i=>$type) {
-                $numMovesPerSliderCols[$type] = array_column($numMovesPerChallengePerType, $type);
-            }
-            $numFailsPerLevel = array_filter($numFailsPerLevel, function ($index) use ($endIndices) { return in_array($index, array_keys($endIndices)); }, ARRAY_FILTER_USE_KEY);
-            $numMoves = array_filter($numMoves, function ($index) use ($endIndices) { return in_array($index, array_keys($endIndices)); }, ARRAY_FILTER_USE_KEY);
 
+                $totalNumMoleculesMoved = array_sum($totalNumMoleculesMovedPerChallenge);
+                if ($totalNumMoleculesMoved === 0) $avgMoleculeDragTime = 0;
+                else $avgMoleculeDragTime = array_sum($totalDragTimePerChallenge) / $totalNumMoleculesMoved;
+                $avgLevelTime = $totalLevelTime / $numLevelsThisSession2;
+            }
+            
             $sessionData = array(
-                'avgTime'=>$avgTime,
-                'totalTime'=>$totalTime,
-                'numMovesPerChallengeArray'=>$numMovesPerChallenge,
-                'totalMoves'=>$totalMoves,
-                'avgMoves'=>$avgMoves,
-                'dataObj'=>$dataObj,
+                'perLevel'=>array(
+                    'totalStampRotates'=>$totalStampRotatesPerChallenge,
+                    'totalSingleRotates'=>$totalSingleRotatesPerChallenge,
+                    'totalMoleculesMoved'=>$totalNumMoleculesMovedPerChallenge,
+                    'avgStampRotates'=>$avgStampRotatesPerChallenge,
+                    'avgSingleRotates'=>$avgSingleRotatesPerChallenge,
+                    'avgMoleculesMoved'=>$avgMoleculesMovedPerChallenge,
+                    'totalLevelTimes'=>$totalTimePerChallenge,
+                    'avgLevelTimes'=>$avgTimePerChallenge,
+                    'avgMoleculeDragTime'=>$avgMoleculeDragTime,
+                    'avgScorePerChallenge'=>$avgScorePerChallenge,
+                    'avgCompletesPerLevel'=>$numAttemptsPerChallenge
+                ),
                 'features'=>array()
             );
 
             // add/change features here
-            $sessionData['features']['levelTimes'] = $levelTimes;
-            $sessionData['features']['numMovesPerChallenge'] = $numMoves;
-            $sessionData['features']['numLevels'] = count($levelTimes);
-            $sessionData['features']['numFailsPerLevel'] = $numFailsPerLevel;
+            $sessionData['features']['totalStampRotates'] = array_sum($totalStampRotatesPerChallenge);
+            $sessionData['features']['totalSingleRotates'] = array_sum($totalSingleRotatesPerChallenge);
+            $sessionData['features']['totalMoleculesMoved'] = array_sum($totalNumMoleculesMovedPerChallenge);
+            $sessionData['features']['avgStampRotates'] = average($avgStampRotatesPerChallenge);
+            $sessionData['features']['avgSingleRotates'] = average($avgSingleRotatesPerChallenge);
+            $sessionData['features']['avgMoleculesMoved'] = average($avgMoleculesMovedPerChallenge);
+            $sessionData['features']['avgClearBtnPresses'] = average($avgClearBtnPressesPerChallenge);
+            $sessionData['features']['totalLevelTimes'] = $totalLevelTime;
+            $sessionData['features']['avgLevelTimes'] = $avgLevelTime;
+            $sessionData['features']['avgMoleculeDragTime'] = $avgMoleculeDragTime;
+            $sessionData['features']['avgScorePerChallenge'] = average($avgScorePerChallenge);
+            $sessionData['features']['avgCompletesPerLevel'] = average($numAttemptsPerChallenge);
+            $sessionData['features']['timeSpentInMuseum'] = $totalTimeInMuseum;
 
             $allData[$sessionID] = $sessionData;
+        }
+
+        $allPerLevel = array_column($allData, 'perLevel');
+        foreach (ALL_LEVELS as $index=>$level) {
+            $totalStampRotatesPerLevel[$level] = average(array_column(array_column($allPerLevel, 'totalStampRotates'), $level));
+            $totalSingleRotatesPerLevel[$level] = average(array_column(array_column($allPerLevel, 'totalSingleRotates'), $level));
+            $totalMoleculesMovedPerLevel[$level] = average(array_column(array_column($allPerLevel, 'totalMoleculesMoved'), $level));
+            $avgStampRotatesPerLevel[$level] = average(array_column(array_column($allPerLevel, 'avgStampRotates'), $level));
+            $avgSingleRotatesPerLevel[$level] = average(array_column(array_column($allPerLevel, 'avgSingleRotates'), $level));
+            $avgMoleculesMovedPerLevel[$level] = average(array_column(array_column($allPerLevel, 'avgMoleculesMoved'), $level));
+            $totalLevelTimesPerLevel[$level] = average(array_column(array_column($allPerLevel, 'totalLevelTimes'), $level));
+            $avgLevelTimesPerLevel[$level] = average(array_column(array_column($allPerLevel, 'avgLevelTimes'), $level));
+            $avgMoleculeDragTimePerLevel[$level] = average(array_column(array_column($allPerLevel, 'avgMoleculeDragTime'), $level));
+            $avgScorePerLevel[$level] = average(array_column(array_column($allPerLevel, 'avgScorePerChallenge'), $level));
+            $avgCompletesPerLevel[$level] = average(array_column(array_column($allPerLevel, 'avgCompletesPerLevel'), $level));
         }
         
         // Get questions histogram data
@@ -2711,19 +2706,17 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
         $totalCorrect = 0;
         $totalAnswered = 0;
         foreach ($sessionIDs as $i=>$val) {
-            $questionEvents = array();
-            foreach ($sessionAttributes[$val] as $j=>$jval) {
-                if ($jval['event_custom'] === SQL_QUESTION_CUSTOM) {
-                    $questionEvents[] = $jval;
-                }
-            }
             $numCorrect = 0;
-            $numQuestions = count($questionEvents);
-            for ($j = 0; $j < $numQuestions; $j++) {
-                $jsonData = json_decode($questionEvents[$j]['event_data_complex'], true);
-                $questionAnswereds[$i][$j] = $jsonData['answered'];
-                if ($jsonData['answer'] === $jsonData['answered']) {
-                    $numCorrect++;
+            $numQuestions = 0;
+            foreach ($sessionAttributes[$val] as $j=>$jval) {
+                $json = json_decode($jval['event_data_complex'], true);
+                if ($jval['event_custom'] === SQL_QUESTION_CUSTOM && $json['event_custom'] === 'QUESTION_ANSWER') {
+                    $numQuestions++;
+                    $question = $json['question'];
+                    $questionAnswereds[$i][$question] = $json['answered'];
+                    if ($json['answer'] === $json['answered']) {
+                        $numCorrect++;
+                    }
                 }
             }
             $totalCorrect += $numCorrect;
@@ -2733,18 +2726,6 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
         }
         $questionsAll = array('numsCorrect'=>$questionsCorrect, 'numsQuestions'=>$questionsAnswered);
         $questionsTotal = array('totalNumCorrect'=>$totalCorrect, 'totalNumQuestions'=>$totalAnswered);
-
-        // Get moves histogram data
-        $numMovesAll = array();
-        foreach ($sessionIDs as $i=>$session) {
-            $numMoves = 0;
-            foreach ($sessionAttributes[$session] as $j=>$val) {
-                if (in_array($val['event_custom'], SQL_MOVE_CUSTOM)) {
-                    $numMoves++;
-                }
-            }
-            $numMovesAll[] = $numMoves;
-        }
 
         // Get levels histogram data
         $numLevelsAll = array();
@@ -2763,8 +2744,8 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
         }
 
         $percentGoodMovesAvgs = array();
-        /*
-        foreach ($sessionIDs as $index=>$session) {
+        
+        /*foreach ($sessionIDs as $index=>$session) {
             $data = $allData[$session];
             $dataObj = $data['dataObj'];
             $sessionLevels = array_keys($data['features']['numMovesPerChallenge']);
@@ -2813,18 +2794,17 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
             } else {
                 $percentGoodMovesAvgs[$index] = 1;
             }
-        }
+        }*/
 
         // Add features that were just calculated above to every session
         foreach ($sessionIDs as $i=>$sessionID) {
-            $allData[$sessionID]['features']['avgPercentGoodMoves'] = $percentGoodMovesAvgs[$i];
+            /*$allData[$sessionID]['features']['avgPercentGoodMoves'] = $percentGoodMovesAvgs[$i];
             foreach (ALL_LEVELS as $j=>$lvl) {
                 if (!isset($featuresToUse['pgm_'.$lvl]) || !$featuresToUse['pgm_'.$lvl]) continue;
                 $allData[$sessionID]['features']['pgm_'.$lvl] = $percentGoodMovesAll[$lvl][$i];
-            }
+            }*/
             $allData[$sessionID]['features']['percentQuestionsCorrect'] = ($questionsAll['numsQuestions'][$i] === 0) ? 0 : $questionsAll['numsCorrect'][$i] / $questionsAll['numsQuestions'][$i];
         }
-        */
 
         // Put features into columns
         $featureCols = array();
@@ -2835,29 +2815,45 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
             }
         }
 
-        // All this stuff depends on the columns
-        foreach ($levels as $i) {
-            $avgTimesPerLevelAll[$i] = average(array_column($featureCols['levelTimes'], $i));
-            $avgMovesPerLevelArray[$i] = average(array_column($featureCols['numMovesPerChallenge'], $i));
-        }
-        $totalTimeAll = array_sum($totalTimesPerLevelAll);
-        $totalMovesAll = array_sum($totalMovesPerLevelArray);
-
-        $avgTimeAll = average($totalTimesPerLevelAll);
-        $avgMovesAll = average($totalMovesPerLevelArray);
-
         $basicInfoAll = array(
             'perLevel'=>array(
-                'levelTimes'=>$avgTimesPerLevelAll,
-                'numMovesPerChallenge'=>$avgMovesPerLevelArray
+                'totalStampRotates'=>$totalStampRotatesPerLevel,
+                'totalSingleRotates'=>$totalSingleRotatesPerLevel,
+                'totalMoleculesMoved'=>$totalMoleculesMovedPerLevel,
+                'avgStampRotates'=>$avgStampRotatesPerLevel,
+                'avgSingleRotates'=>$avgSingleRotatesPerLevel,
+                'avgMoleculesMoved'=>$avgMoleculesMovedPerLevel,
+                'totalLevelTimes'=>$totalLevelTimesPerLevel,
+                'avgLevelTimes'=>$avgLevelTimesPerLevel,
+                'avgMoleculeDragTime'=>$avgMoleculeDragTimePerLevel,
+                'avgScorePerChallenge'=>$avgScorePerLevel,
+                'avgCompletesPerLevel'=>$avgCompletesPerLevel
             ),
             'totals'=>array(
-                'levelTimes'=>$totalTimeAll,
-                'numMovesPerChallenge'=>$totalMovesAll
+                'totalStampRotates'=>array_sum($totalStampRotatesPerLevel),
+                'totalSingleRotates'=>array_sum($totalSingleRotatesPerLevel),
+                'totalMoleculesMoved'=>array_sum($totalMoleculesMovedPerLevel),
+                'avgStampRotates'=>array_sum($avgStampRotatesPerLevel),
+                'avgSingleRotates'=>array_sum($avgSingleRotatesPerLevel),
+                'avgMoleculesMoved'=>array_sum($avgMoleculesMovedPerLevel),
+                'totalLevelTimes'=>array_sum($totalLevelTimesPerLevel),
+                'avgLevelTimes'=>array_sum($avgLevelTimesPerLevel),
+                'avgMoleculeDragTime'=>array_sum($avgMoleculeDragTimePerLevel),
+                'avgScorePerChallenge'=>array_sum($avgScorePerLevel),
+                'avgCompletesPerLevel'=>array_sum($avgCompletesPerLevel)
             ),
             'averages'=>array(
-                'levelTimes'=>$avgTimeAll,
-                'numMovesPerChallenge'=>$avgMovesAll
+                'totalStampRotates'=>average($totalStampRotatesPerLevel),
+                'totalSingleRotates'=>average($totalSingleRotatesPerLevel),
+                'totalMoleculesMoved'=>average($totalMoleculesMovedPerLevel),
+                'avgStampRotates'=>average($avgStampRotatesPerLevel),
+                'avgSingleRotates'=>average($avgSingleRotatesPerLevel),
+                'avgMoleculesMoved'=>average($avgMoleculesMovedPerLevel),
+                'totalLevelTimes'=>average($totalLevelTimesPerLevel),
+                'avgLevelTimes'=>average($avgLevelTimesPerLevel),
+                'avgMoleculeDragTime'=>average($avgMoleculeDragTimePerLevel),
+                'avgScorePerChallenge'=>average($avgScorePerLevel),
+                'avgCompletesPerLevel'=>average($avgCompletesPerLevel)
             )
         );
 
@@ -2879,159 +2875,24 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
             // Cluster stuff
             $sourceColumns = [];
             $allColumns = [];
-            $startLevel = 1;
-            $endLevel = 8;
-            for ($lvl = intval($startLevel); $lvl <= intval($endLevel); $lvl++) {
-                $allColumns = array_merge($allColumns, [
-                    [array_column_fixed($featureCols['numMovesPerChallenge'], $lvl), 'numMovesPerChallenge', [216], $lvl],
-                    [array_column_fixed($featureCols['levelTimes'], $lvl), 'levelTimes', [999999], $lvl],
-                ]);
-            }
-            $sourceColumns = [];
-            foreach ($allColumns as $col) {
-                if (isset($_GET[$col[1]])) {
-                    $sourceColumns[] = $col;
-                }
-            }
-            if (count($sourceColumns) < 2) {
-                $sourceColumns = $allColumns;
-            }
-            $pcaData = [];
-            for ($i = 0; $i < count($sourceColumns); $i++) $pcaData[] = [];
-            foreach (array_keys($sourceColumns[0][0]) as $i) {
-                $good = true;
-                for ($j = 0; $j < count($sourceColumns); $j++) {
-                    if (isset($sourceColumns[$j][0][$i])) {
-                        $val = $sourceColumns[$j][0][$i];
-                        if (!is_numeric($val) || in_array($val, $sourceColumns[$j][2])) {
-                            $good = false;
-                            break;
-                        }
-                    } else {
-                        $good = false;
-                    }
-                }
-                if ($good) {
-                    for ($j = 0; $j < count($sourceColumns); $j++) {
-                        $pcaData[$j][] = $sourceColumns[$j][0][$i];
-                    }
-                }
-            }
-            // scale to 0..1
-            $pcaDataScaled = [];
-            for ($i = 0; $i < count($pcaData); $i++) {
-                $pcaDataScaled[] = [];
-                $min_val = null;
-                $max_val = null;
-                for ($j = 0; $j < count($pcaData[$i]); $j++) {
-                    $val = $pcaData[$i][$j];
-                    if (is_null($min_val) || $val < $min_val) $min_val = $val;
-                    if (is_null($max_val) || $val > $max_val) $max_val = $val;
-                }
-                $range = $max_val - $min_val;
-                for ($j = 0; $j < count($pcaData[$i]); $j++) {
-                    if ($range > 0) {
-                        $pcaDataScaled[$i][] = ($pcaData[$i][$j] - $min_val) / $range;
-                    } else {
-                        // this is a hack because when the whole column is the same
-                        // value it breaks PCA for some reason
-                        $pcaDataScaled[$i][] = 0.5 + $j * 0.00001;
-                    }
-                }
-            }
-            if (count($pcaDataScaled[0]) > 1) {
-                $pca = new PCA\PCA($pcaDataScaled);
-                $pca->changeDimension(2);
-                $pca->applayingPca();
-                $columns = $pca->getNewData();
-                $bestDunn = 0;
-                $bestColumn1 = 'pca1';
-                $bestColumn2 = 'pca2';
-                $bestSpace = null;
-                $bestClusters = [];
-                for ($k = 2; $k < 5; $k++) {
-                    $space = new KMeans\Space(2);
-                    $xs = $columns[0];
-                    $ys = $columns[1];
-                    foreach ($xs as $xi => $x) {
-                        $y = $ys[$xi];
-                        $labels = [];
-                        foreach (array_column($pcaData, $xi) as $colIndex => $val) {
-                            $prop = $sourceColumns[$colIndex][1];
-                            $v = number_format($val, 3);
-                            if (isset($labels[$prop])) {
-                                $labels[$prop][] = $v;
-                            } else {
-                                $labels[$prop] = [$v];
-                            }
-                        }
-                        $label = '';
-                        foreach ($labels as $key => $vals) {
-                            $label .= $key . ': [' . implode(',', $vals) . ']<br>';
-                        }
-                        $space->addPoint([$x, $y], $label);
-                    }
-                    $clusters = $space->solve($k);
-                    $minInterDist = null;
-                    $maxIntraDist = null;
-                    for ($ci = 0; $ci < count($clusters); $ci++) {
-                        for ($cj = $ci + 1; $cj < count($clusters); $cj++) {
-                            // use distance between centers for simplicity
-                            $interDist = sqrt
-                                ( (pow(($clusters[$ci][0] - $clusters[$cj][0]), 2))
-                                + (pow(($clusters[$ci][1] - $clusters[$cj][1]),  2))
-                                );
-                            if (is_null($minInterDist) || $interDist < $minInterDist) {
-                                $minInterDist = $interDist;
-                            }
-                        }
-                    }
-                    for ($ci = 0; $ci < count($clusters); $ci++) {
-                        $cluster = $clusters[$ci];
-                        $intraDist = null;
-                        // fudge intracluster distance by finding max distance from center to a point
-                        foreach ($cluster as $point) {
-                            $pointDist = sqrt
-                                ( (pow(($point[0] - $cluster[0]), 2))
-                                + (pow(($point[1] - $cluster[1]), 2))
-                                );
-                            if (is_null($intraDist) || $pointDist > $intraDist) {
-                                $intraDist = $pointDist;
-                            }
-                        }
-                        if (is_null($maxIntraDist) || $intraDist > $maxIntraDist) {
-                            $maxIntraDist = $intraDist;
-                        }
-                    }
-                    $thisDunn = $minInterDist / $maxIntraDist;
-                    if ($thisDunn > $bestDunn) {
-                        $bestDunn = $thisDunn;
-                        $bestSpace = $space;
-                        $bestClusters = $clusters;
-                    }
-                }
-                $clusterPoints = [];
-                foreach ($bestClusters as $cluster) {
-                    $points = [];
-                    foreach ($cluster->getIterator() as $point) {
-                        $points[] = [$point[0], $point[1], $bestSpace[$point]];
-                    }
-                    $clusterPoints[] = $points;
-                }
-                $usedColumns = [];
-                foreach ($sourceColumns as $col) {
-                    $usedColumns[] = $col[3] . ' ' . $col[1];
-                }
-                $eigenvectors = $pca->getEigenvectors();
-            }
 
             return array(
                 'histogramFeatures'=>array( // IMPORTANT: these keys must match the model's histogramFeatures
-                    'numMovesPerChallenge'=>$numMovesAll,
-                    'moveTypeChangesPerLevel'=>$numTypeChangesPerSession,
+                    'totalStampRotates'=>array_column($allFeatures, 'totalStampRotates'),
+                    'totalSingleRotates'=>array_column($allFeatures, 'totalSingleRotates'),
+                    'totalMoleculesMoved'=>array_column($allFeatures, 'totalMoleculesMoved'),
+                    'avgStampRotates'=>array_column($allFeatures, 'avgStampRotates'),
+                    'avgSingleRotates'=>array_column($allFeatures, 'avgSingleRotates'),
+                    'avgMoleculesMoved'=>array_column($allFeatures, 'avgMoleculesMoved'),
+                    'avgClearBtnPresses'=>array_column($allFeatures, 'avgClearBtnPresses'),
+                    'totalLevelTimes'=>array_column($allFeatures, 'totalLevelTimes'),
+                    'avgLevelTimes'=>array_column($allFeatures, 'avgLevelTimes'),
+                    'avgMoleculeDragTime'=>array_column($allFeatures, 'avgMoleculeDragTime'),
+                    'avgScorePerChallenge'=>array_column($allFeatures, 'avgScorePerChallenge'),
+                    'avgCompletesPerLevel'=>array_column($allFeatures, 'avgCompletesPerLevel'),
+                    'timeSpentInMuseum'=>array_column($allFeatures, 'timeSpentInMuseum'),
                     'questionAnswereds'=>$questionAnswereds,
-                    'numQuestions'=>$questionsAll['numsQuestions'],
-                    'numLevels'=>$numLevelsAll
+                    'numQuestions'=>$questionsAll['numsQuestions']
                 ),
                 'questionsAll'=>$questionsAll,
                 'basicInfoAll'=>$basicInfoAll,
@@ -3041,12 +2902,12 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
                 'questionsTotal'=>$questionsTotal,
                 'lvlsPercentComplete'=>$lvlsPercentComplete,
                 'clusters'=>array(
-                    'col1'=>$bestColumn1,
-                    'col2'=>$bestColumn2,
-                    'clusters'=>$clusterPoints,
-                    'dunn'=>$bestDunn,
-                    'sourceColumns'=>$usedColumns,
-                    'eigenvectors'=>$eigenvectors
+                    'col1'=>null,
+                    'col2'=>null,
+                    'clusters'=>null,
+                    'dunn'=>null,
+                    'sourceColumns'=>null,
+                    'eigenvectors'=>null
                 ),
                 'predictors'=>null,
                 'predicted'=>null
@@ -3079,11 +2940,7 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
                 if (isset($val[$quesIndex])) {
                     $predictor = array();
                     foreach ($featureCols as $j=>$feature) {
-                        if ($shouldUseAvgs) {
-                            $predictor[$j] = average($feature[$i]); 
-                        } else {
-                            $predictor[$j] = array_sum2($feature[$i]);
-                        }
+                        $predictor[$j] = $feature[$i];
                     }
                     $predictors[] = $predictor;
                     $predicted[] = ($val[$quesIndex] === $ansIndex) ? 1 : 0;
@@ -3102,11 +2959,7 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
             foreach ($sessionIDs as $i=>$val) {
                 $predictor = array();
                 foreach ($featureCols as $j=>$feature) {
-                    if ($shouldUseAvgs) {
-                        $predictor[$j] = average($feature[$i]); 
-                    } else {
-                        $predictor[$j] = array_sum2($feature[$i]);
-                    }
+                    $predictor[$j] = array_sum2($feature[$i]);
                 }
                 $colLvl = intval(substr($column, 3));
                 $predicted[] = (isset($levelsCompleteAll[$val][$colLvl]) && $levelsCompleteAll[$val][$colLvl]) ? 1 : 0;
@@ -3126,11 +2979,7 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
             foreach ($sessionIDs as $i=>$val) {
                 $predictor = array();
                 foreach ($featureCols as $j=>$feature) {
-                    if ($shouldUseAvgs) {
-                        $predictor[$j] = average($feature[$i]); 
-                    } else {
-                        $predictor[$j] = array_sum2($feature[$i]);
-                    }
+                    $predictor[$j] = $feature[$i];
                 }
                 $predicted[] = $numLevelsAll[$i];
 
@@ -3149,11 +2998,7 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
                 if (isset($val[$quesIndex])) {                
                     $predictor = array();
                     foreach ($featureCols as $j=>$feature) {
-                        if ($shouldUseAvgs) {
-                            $predictor[$j] = average($feature[$i]); 
-                        } else {
-                            $predictor[$j] = array_sum2($feature[$i]);
-                        }
+                        $predictor[$j] = $feature[$i]; 
                     }
                     $predictors[] = $predictor;
                     $predicted[] = $val[$quesIndex];
@@ -3174,6 +3019,7 @@ function random() {
 }
 
 function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
+    global $settings, $model;
     $percentTesting = 0.5;
     $numMetrics = 2;
     $table = isset($_GET['table']) ? $_GET['table'] : null;
@@ -4114,7 +3960,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             }
 
             if (file_exists(DATA_DIR.'/cache/numLevels/numLevels_'.$column.'.php') && $settings['enableSqlCache'] === 'true') {
-                $varImport = include('numLevels_'.$column.'.php');
+                $varImport = include(DATA_DIR.'/cache/numLevels/numLevels_'.$column.'.php');
                 $sessionAttributes = $varImport['sessionAttributes'];
                 $allEvents = $varImport['allEvents'];
             } else {
