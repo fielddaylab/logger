@@ -435,6 +435,10 @@
             "numMovesPerChallenge": "# slider moves",
             "moveTypeChangesPerLevel": "# type changes",
             "numLevels": "# levels completed"
+        },
+        "defaultDates": {
+            "start": "2018-09-01",
+            "end": "2018-09-30"
         }
     },
     "CRYSTAL": {
@@ -771,6 +775,10 @@
             "avgScorePerChallenge":     "Avg score per challenge",
             "avgCompletesPerLevel":     "Avg complete events per challenge",
             "timeSpentInMuseum":        "Total time spent in crystal museum"
+        },
+        "defaultDates": {
+            "start": "2018-12-13",
+            "end": "2018-12-31"
         }
     }
 }

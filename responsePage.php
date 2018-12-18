@@ -2504,9 +2504,9 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
         }
 
         $allData = array();    
-    // This section of variables is for 1D arrays of *per-challenge* data for "basic info summary"
-    // Data at this level has been averaged from attempts per level of each session, then those averages averaged across all sessions that completed that level
-    // Scalar per session data (like clear button presses) are not displayed in the summary, this is per challenge only
+        // This section of variables is for 1D arrays of *per-challenge* data for "basic info summary"
+        // Data at this level has been averaged from attempts per level of each session, then those averages averaged across all sessions that completed that level
+        // Scalar per session data (like clear button presses) are not displayed in the summary, this is per challenge only
         $totalStampRotatesPerLevel = array();
         $totalSingleRotatesPerLevel = array();
         $totalMoleculesMovedPerLevel = array();
@@ -2566,11 +2566,13 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
                 $avgScorePerChallenge = array();
                 $totalTimePerChallenge = array();
                 $avgTimePerChallenge = array();
+                $moveEventsPerChallenge = array(); // for % good moves later, just puts all the molecule drag events into an array per challenge
 
                 // Initialize anything that has challenges in it
                 foreach ($dataObj['levels'] as $i) {
                     $startIndices[$i] = array();
                     $endIndices[$i] = array();
+                    $moveEvents[$i] = array();
                     $totalMoleculesMovedPerChallenge[$i] = 0;
                     $totalClearBtnPressesPerChallenge[$i] = 0;
                     $totalTimePerChallenge[$i] = 0;
@@ -2596,13 +2598,11 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
                     $event_custom = $dataObj['event_customs'][$i];
                     $event_name = $dataJson['event_custom'] ?? null;
 
-                    if ($numAttemptsPerChallenge[$level] == 0) {
-                        increment($numAttemptsPerChallenge[$level]);
-                    }
                     if ($event === 'BEGIN') {
                         $startIndices[$level][] = $i;
                     } else if ($event === 'COMPLETE' || $event_name === 'GROW_BTN_PRESS') {
                         increment($totalScorePerChallenge[$level], array_sum($dataJson['stability']));
+                        increment($numAttemptsPerChallenge[$level]);
                         $endIndices[$level][] = $i;
                     } else if ($event === 'CUSTOM' && in_array($event_name, ['MOLECULE_RELEASE', "MOLECULE_ROTATE"])) {
                         // Moves can be either drag, or rotate (of either the stamp or a single molecule)
@@ -2610,6 +2610,7 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
                         if ($event_name === 'MOLECULE_RELEASE') {
                             increment($totalDragTimePerChallenge[$level], $dataJson['time']);
                             increment($totalNumMoleculesMovedPerChallenge[$level]);
+                            $moveEventsPerChallenge[$level][] = array('event'=>$event, 'event_custom'=>$event_custom, 'event_name'=>$event_name, 'dataJson'=>$dataJson);
                         } else {
                             // Check which rotate
                             if ($dataJson['isStamp'] == 'true') {
@@ -2636,20 +2637,21 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
                         }
                     }
                     // Find averages across attempts by dividing totals by number of attempts
+                    if ($numAttemptsPerChallenge[$i] == 0) {
+                        increment($numAttemptsPerChallenge[$i]);
+                    }
                     $avgStampRotatesPerChallenge[$i] = $totalStampRotatesPerChallenge[$i] / $numAttemptsPerChallenge[$i];
                     $avgSingleRotatesPerChallenge[$i] = $totalSingleRotatesPerChallenge[$i] / $numAttemptsPerChallenge[$i];
                     $avgMoleculesMovedPerChallenge[$i] = $totalNumMoleculesMovedPerChallenge[$i] / $numAttemptsPerChallenge[$i];
                     $avgClearBtnPressesPerChallenge[$i] = $totalClearBtnPressesPerChallenge[$i] / $numAttemptsPerChallenge[$i];
                     $avgScorePerChallenge[$i] = $totalScorePerChallenge[$i] / $numAttemptsPerChallenge[$i];
+                    $avgTimePerChallenge[$i] = $totalTimePerChallenge[$i] / $numAttemptsPerChallenge[$i];
+                    $avgMoleculeDragTimePerChallenge[$i] = $totalDragTimePerChallenge[$i] / $numAttemptsPerChallenge[$i];
                 }
-
-                $totalNumMoleculesMoved = array_sum($totalNumMoleculesMovedPerChallenge);
-                if ($totalNumMoleculesMoved === 0) $avgMoleculeDragTime = 0;
-                else $avgMoleculeDragTime = array_sum($totalDragTimePerChallenge) / $totalNumMoleculesMoved;
-                $avgLevelTime = $totalLevelTime / $numLevelsThisSession2;
             }
             
             $sessionData = array(
+                'moveEventsPerChallenge'=>$moveEventsPerChallenge,
                 'perLevel'=>array(
                     'totalStampRotates'=>$totalStampRotatesPerChallenge,
                     'totalSingleRotates'=>$totalSingleRotatesPerChallenge,
@@ -2659,7 +2661,7 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
                     'avgMoleculesMoved'=>$avgMoleculesMovedPerChallenge,
                     'totalLevelTimes'=>$totalTimePerChallenge,
                     'avgLevelTimes'=>$avgTimePerChallenge,
-                    'avgMoleculeDragTime'=>$avgMoleculeDragTime,
+                    'avgMoleculeDragTime'=>$avgMoleculeDragTimePerChallenge,
                     'avgScorePerChallenge'=>$avgScorePerChallenge,
                     'avgCompletesPerLevel'=>$numAttemptsPerChallenge
                 ),
@@ -2674,9 +2676,9 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
             $sessionData['features']['avgSingleRotates'] = average($avgSingleRotatesPerChallenge);
             $sessionData['features']['avgMoleculesMoved'] = average($avgMoleculesMovedPerChallenge);
             $sessionData['features']['avgClearBtnPresses'] = average($avgClearBtnPressesPerChallenge);
-            $sessionData['features']['totalLevelTimes'] = $totalLevelTime;
-            $sessionData['features']['avgLevelTimes'] = $avgLevelTime;
-            $sessionData['features']['avgMoleculeDragTime'] = $avgMoleculeDragTime;
+            $sessionData['features']['totalLevelTimes'] = array_sum($totalTimePerChallenge);
+            $sessionData['features']['avgLevelTimes'] = average($avgTimePerChallenge);
+            $sessionData['features']['avgMoleculeDragTime'] = average($avgMoleculeDragTimePerChallenge);
             $sessionData['features']['avgScorePerChallenge'] = average($avgScorePerChallenge);
             $sessionData['features']['avgCompletesPerLevel'] = average($numAttemptsPerChallenge);
             $sessionData['features']['timeSpentInMuseum'] = $totalTimeInMuseum;
@@ -2745,47 +2747,32 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
 
         $percentGoodMovesAvgs = array();
         
-        /*foreach ($sessionIDs as $index=>$session) {
+        foreach ($sessionIDs as $index=>$session) {
             $data = $allData[$session];
-            $dataObj = $data['dataObj'];
-            $sessionLevels = array_keys($data['features']['numMovesPerChallenge']);
+            $sessionLevels = array_keys($data['moveEventsPerChallenge']);
 
             $totalGoodMoves = 0;
             $totalMoves = 0;
             foreach ($sessionLevels as $j=>$level) {
-                $numMovesPerChallenge = $data['numMovesPerChallengeArray'][$level];
-                $numMoves = $data['features']['numMovesPerChallenge'][$level];
+                $moveEvents = $data['moveEventsPerChallenge'][$level];
+                $moveGoodness = array_fill(0, count($moveEvents), 0); // an array of 0s
 
-                $distanceToGoal1;
-                $moveGoodness1;
-                $absDistanceToGoal1;
-                if (isset($numMovesPerChallenge)) {
-                    $absDistanceToGoal1 = array_fill(0, count($numMovesPerChallenge), 0);
-                    $distanceToGoal1 = array_fill(0, count($numMovesPerChallenge), 0); // this one is just -1/0/1
-                    $moveGoodness1 = array_fill(0, count($numMovesPerChallenge), 0); // an array of 0s
-                }
-                $moveNumbers = array();
-                $cumulativeDistance1 = 0;
-
-                foreach ($numMovesPerChallenge as $i=>$val) {
-                    $dataJson = json_decode($dataObj['data'][$i], true);
-                    if ($dataObj['events'][$i] === 'CUSTOM' && ($dataJson['event_custom'] === 'SLIDER_MOVE_RELEASE')) {
-                        if ($dataJson['end_closeness'] < $dataJson['begin_closeness']) $moveGoodness1[$i] = 1;
-                        else if ($dataJson['end_closeness'] > $dataJson['begin_closeness']) $moveGoodness1[$i] = -1;
-                    }
-                    $moveNumbers[$i] = $i;
-                    $cumulativeDistance1 += $moveGoodness1[$i];
-                    $distanceToGoal1[$i] = $cumulativeDistance1;
+                foreach ($moveEvents as $i=>$val) {
+                    $startStability = array_sum($val['dataJson']['startStability']);
+                    $endStability = array_sum($val['dataJson']['endStability']);
+                    if ($startStability < $endStability) $moveGoodness[$i] = 1;
+                    else if ($startStability > $endStability) $moveGoodness[$i] = -1;
                 }
 
                 // Find % good moves by filtering moveGoodness array for 1s, aka good moves
-                $numGoodMoves = count(array_filter($moveGoodness1, function($val) { return $val === 1; }));
+                $numGoodMoves = count(array_filter($moveGoodness, function($val) { return $val === 1; }));
+                $numMoves = count($moveEvents);
                 $totalGoodMoves += $numGoodMoves;
                 $totalMoves += $numMoves;
-                if ($numMoves > 1) {
+                if ($numMoves > 0) {
                     $percentGoodMoves = $numGoodMoves / $numMoves;
                 } else {
-                    $percentGoodMoves = 1; // if they only had 1 move or somehow beat the level with 0, give them 100% good moves
+                    $percentGoodMoves = 1;
                 }
                 $percentGoodMovesAll[$level][$index] = $percentGoodMoves;
             }
@@ -2794,15 +2781,15 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
             } else {
                 $percentGoodMovesAvgs[$index] = 1;
             }
-        }*/
+        }
 
         // Add features that were just calculated above to every session
         foreach ($sessionIDs as $i=>$sessionID) {
-            /*$allData[$sessionID]['features']['avgPercentGoodMoves'] = $percentGoodMovesAvgs[$i];
+            $allData[$sessionID]['features']['avgPercentGoodMoves'] = $percentGoodMovesAvgs[$i];
             foreach (ALL_LEVELS as $j=>$lvl) {
                 if (!isset($featuresToUse['pgm_'.$lvl]) || !$featuresToUse['pgm_'.$lvl]) continue;
                 $allData[$sessionID]['features']['pgm_'.$lvl] = $percentGoodMovesAll[$lvl][$i];
-            }*/
+            }
             $allData[$sessionID]['features']['percentQuestionsCorrect'] = ($questionsAll['numsQuestions'][$i] === 0) ? 0 : $questionsAll['numsCorrect'][$i] / $questionsAll['numsQuestions'][$i];
         }
 
@@ -3786,7 +3773,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             $numSessions = count($uniqueSessions);
 
             $numEvents = count($allEvents);
-            $completeEvents = array_filter($allEvents, function($a) { return $a['event'] === 'COMPLETE' || json_decode($a['event_data_complex'], true)['event_custom'] === 'GROW_BTN_PRESS'; });
+            $completeEvents = array_filter($allEvents, function($a) { return $a['event'] === 'COMPLETE'; });
             $completeLevels = array_column($completeEvents, 'level');
             $levels = array_filter(array_unique(array_column($allEvents, 'level')), function($a) use($completeLevels) { return in_array($a, $completeLevels); });
             sort($levels);
@@ -3800,7 +3787,9 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
             // Construct sessions and times array
             $sessionsAndTimes = array('sessions'=>$uniqueSessions, 'times'=>array_values($times));
 
-            $regression = analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAttributes, $predictColumn);
+            $maxLevel = 100;
+            if ($lvlIndex-1 >= 0) $maxLevel = ALL_LEVELS[$lvlIndex-1];
+            $regression = analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAttributes, $predictColumn, $maxLevel);
             $predictArray = $regression['predictors'];
             $predictedArray = $regression['predicted'];
             $numPredictors = $regression['numSessions'];
@@ -3930,7 +3919,7 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                         AND session_id IN
                         (
                             SELECT c.session_id FROM log c
-                            WHERE c.app_id=? AND (c.event='COMPLETE' OR c.event_custom=3) AND c.level IN (" . implode(",", array_map('intval', $lvlsToUse)) . ")
+                            WHERE c.app_id=? AND c.event='COMPLETE' AND c.level IN (" . implode(",", array_map('intval', $lvlsToUse)) . ")
                             GROUP BY c.session_id
                             HAVING COUNT(DISTINCT c.level) = ?
                         )";

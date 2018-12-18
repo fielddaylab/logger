@@ -64,6 +64,9 @@ $(document).ready((event) => {
                 model = data[$('#gameSelect').val()]
                 // store model in localStorage so correlationGraph.html can see it
                 localStorage.setItem('model', JSON.stringify(model))
+                // Set the default date range from model
+                $('#startDate').val(model.defaultDates.start)
+                $('#endDate').val(model.defaultDates.end)
                 allFeatures = flattenObj(model.features)
                 // numLevelsBody
                 if (true) { // this is simply so I can collapse this section of code
@@ -259,10 +262,10 @@ $(document).ready((event) => {
                             $('#binomialQuestionHeader tr:eq(1)').append(`<td style="text-align:center;">-</td>`)
                         })
                     }
-                    for (let i = 1; i <= model.questionLevels[0]; i++) {
+                    for (let i = model.levels[0]; i <= model.questionLevels[0]; i++) {
                         let rowText
-                        if (i === 1) rowText = 'L1 only'
-                        else rowText = 'L1-L'+i
+                        if (i === model.levels[0]) rowText = `L${model.levels[0]} only`
+                        else rowText = `L${model.levels[0]}-L`+i
 
                         let rowElement = $('<tr>').append($('<th>').attr('rowspan', algorithmNames.length + 1).css({'width':'6%', 'vertical-align':'middle', 'border-bottom-width':'4px'}).text(rowText))
                         $('#binomialQuestionBody').append(rowElement)
@@ -286,10 +289,10 @@ $(document).ready((event) => {
                         $('#multinomialQuestionHeader tr:eq(0)').append(`<th scope="col">Q${i}</th>`)
                         $('#multinomialQuestionHeader tr:eq(1)').append(`<td style="text-align:center;">-</td>`)
                     }
-                    for (let i = 1; i <= model.questionLevels[0]; i++) {
+                    for (let i = model.levels[0]; i <= model.questionLevels[0]; i++) {
                         let rowText
-                        if (i === 1) rowText = 'L1 only'
-                        else rowText = 'L1-L'+i
+                        if (i === model.levels[0]) rowText = `L${model.levels[0]} only`
+                        else rowText = `L${model.levels[0]}-L`+i
 
                         let rowElement = $('<tr>').append($('<th>').attr('rowspan', algorithmNames.length + 1).css({'vertical-align':'middle', 'border-bottom-width':'4px', 'width': '6%'}).text(rowText))
                         $('#multinomialQuestionBody').append(rowElement)
