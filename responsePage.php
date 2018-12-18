@@ -1820,7 +1820,7 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
             $infoEvents = array();
             $infoEventCustoms = array();
             foreach ($sessionAttributes[$sessionID] as $i=>$val) {
-                if ($val['level'] > $maxLevel) break;
+                if ($val['level'] > $maxLevel) continue;
                 $infoTimes[] = $val['time'];
                 $infoEventData[] = $val['event_data_complex'];
                 $infoLevels[] = $val['level'];

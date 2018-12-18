@@ -466,8 +466,7 @@ $(document).ready((event) => {
                 levelCompletionTableChecked = $('#levelCompletionCheckbox').is(':checked'),
                 binaryQuestionTableChecked = $('#levelRangeQuestionCheckbox').is(':checked'),
                 multinomialQuestionTableChecked = $('#multinomialQuestionCheckbox').is(':checked'),
-                otherFeaturesChecked = $('#otherFeaturesCheckbox').is(':checked'),
-                shouldUseAvgs = $('#useAvgs').is(':checked')
+                otherFeaturesChecked = $('#otherFeaturesCheckbox').is(':checked')
             let useCache = $('#useCache').is(':checked')
             let insertIntoCache = $('#insertIntoCache').is(':checked')
             let featuresListParameters = {}
@@ -481,7 +480,6 @@ $(document).ready((event) => {
                 'minQuestions': $('#minQuestions').val(),
                 'startDate': $('#startDate').val(),
                 'endDate': $('#endDate').val(),
-                'shouldUseAvgs': shouldUseAvgs,
                 'useCache': useCache,
                 'insertIntoCache': insertIntoCache,
                 'table': 'basic'
@@ -548,7 +546,6 @@ $(document).ready((event) => {
                             'endDate': $('#endDate').val(),
                             'column': column,
                             'table': table,
-                            'shouldUseAvgs': shouldUseAvgs,
                             'useCache': useCache,
                             'insertIntoCache': insertIntoCache
                         }
