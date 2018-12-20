@@ -5,20 +5,31 @@
             "numLevels": {
                 "general": {
                     "(Intercept)":              "Constant term",
-                    "numMovesPerChallenge":     "# slider moves",
-                    "levelTimes":               "Time"
+                    "avgPercentOffset":         "Avg % offset moves",
+                    "avgPercentWavelength":     "Avg % wavelength moves",
+                    "avgPercentAmplitude":      "Avg % amplitude moves"
                 },
-                "specific": {
-                    "knobStdDevs":              "Avg knob std dev",
-                    "moveTypeChangesPerLevel":  "# type changes",
-                    "knobAvgs":                 "Avg knob max-min",
-                    "OFFSET":                   "# offset moves",
-                    "WAVELENGTH":               "# wavelength moves",
-                    "AMPLITUDE":                "# amplitude moves",
-                    "numFailsPerLevel":         "# failures",
-                    "percentOFFSET":            "% offset moves",
-                    "percentWAVELENGTH":        "% wavelength moves",
-                    "percentAMPLITUDE":         "% amplitude moves"
+                "totals": {
+                    "totalSliderMoves":         "Total # of slider moves",
+                    "totalLevelTime":           "Total time",
+                    "totalKnobStdDevs":         "Total avg knob std dev",
+                    "totalMoveTypeChanges":     "Total # of type changes",
+                    "totalKnobAvgMaxMin":       "Total avg knob max-min",
+                    "totalOffsetMoves":         "Total # of offset moves",
+                    "totalWavelengthMoves":     "Total # of wavelength moves",
+                    "totalAmplitudeMoves":      "Total # of amplitude moves",
+                    "totalFails":               "Total # of failures"
+                },
+                "averages": {
+                    "avgSliderMoves":           "Avg # of slider moves/level",
+                    "avgLevelTime":             "Avg time per level",
+                    "avgKnobStdDevs":           "Avg avg knob std dev/level",
+                    "avgMoveTypeChanges":       "Avg # of type changes/level",
+                    "avgKnobAvgMaxMin":         "Avg avg knob max-min/level",
+                    "avgOffsetMoves":           "Avg # of offset moves/level",
+                    "avgWavelengthMoves":       "Avg # of wavelength moves/level",
+                    "avgAmplitudeMoves":        "Avg # of amplitude moves/level",
+                    "avgFails":                 "Avg # of failures/level"
                 },
                 "perLevel": {
                     "pgm_1":                    "% good moves lvl 1",
@@ -39,20 +50,31 @@
             "levelCompletion": {
                 "general": {
                     "(Intercept)":              "Constant term",
-                    "numMovesPerChallenge":     "# slider moves",
-                    "levelTimes":               "Time"
+                    "avgPercentOffset":         "Avg % offset moves",
+                    "avgPercentWavelength":     "Avg % wavelength moves",
+                    "avgPercentAmplitude":      "Avg % amplitude moves"
                 },
-                "specific": {
-                    "knobStdDevs":              "Avg knob std dev",
-                    "moveTypeChangesPerLevel":  "# type changes",
-                    "knobAvgs":                 "Avg knob max-min", 
-                    "OFFSET":                   "# offset moves",
-                    "WAVELENGTH":               "# wavelength moves",
-                    "AMPLITUDE":                "# amplitude moves",
-                    "numFailsPerLevel":         "# failures",
-                    "percentOFFSET":            "% offset moves",
-                    "percentWAVELENGTH":        "% wavelength moves",
-                    "percentAMPLITUDE":         "% amplitude moves"
+                "totals": {
+                    "totalSliderMoves":         "Total # of slider moves",
+                    "totalLevelTime":           "Total time",
+                    "totalKnobStdDevs":         "Total avg knob std dev",
+                    "totalMoveTypeChanges":     "Total # of type changes",
+                    "totalKnobAvgMaxMin":       "Total avg knob max-min",
+                    "totalOffsetMoves":         "Total # of offset moves",
+                    "totalWavelengthMoves":     "Total # of wavelength moves",
+                    "totalAmplitudeMoves":      "Total # of amplitude moves",
+                    "totalFails":               "Total # of failures"
+                },
+                "averages": {
+                    "avgSliderMoves":           "Avg # of slider moves/level",
+                    "avgLevelTime":             "Avg time per level",
+                    "avgKnobStdDevs":           "Avg avg knob std dev/level",
+                    "avgMoveTypeChanges":       "Avg # of type changes/level",
+                    "avgKnobAvgMaxMin":         "Avg avg knob max-min/level",
+                    "avgOffsetMoves":           "Avg # of offset moves/level",
+                    "avgWavelengthMoves":       "Avg # of wavelength moves/level",
+                    "avgAmplitudeMoves":        "Avg # of amplitude moves/level",
+                    "avgFails":                 "Avg # of failures/level"
                 },
                 "perLevel": {
                     "pgm_1":                    "% good moves lvl 1",
@@ -73,42 +95,64 @@
             "binomialQuestion": {
                 "general": {
                     "(Intercept)":              "Constant term",
-                    "numMovesPerChallenge":     "# slider moves",
-                    "levelTimes":               "Time"
+                    "avgPercentOffset":         "Avg % offset moves",
+                    "avgPercentWavelength":     "Avg % wavelength moves",
+                    "avgPercentAmplitude":      "Avg % amplitude moves",
+                    "avgPercentGoodMoves":      "Avg % good moves"
                 },
-                "specific": {
-                    "knobStdDevs":              "Avg knob std dev",
-                    "moveTypeChangesPerLevel":  "# type changes",
-                    "avgPercentGoodMoves":      "Avg % good moves", 
-                    "knobAvgs":                 "Avg knob max-min",
-                    "OFFSET":                   "# offset moves",
-                    "WAVELENGTH":               "# wavelength moves",
-                    "AMPLITUDE":                "# amplitude moves",
-                    "numFailsPerLevel":         "# failures",
-                    "percentOFFSET":            "% offset moves",
-                    "percentWAVELENGTH":        "% wavelength moves",
-                    "percentAMPLITUDE":         "% amplitude moves"
+                "totals": {
+                    "totalSliderMoves":         "Total # of slider moves",
+                    "totalLevelTime":           "Total time",
+                    "totalKnobStdDevs":         "Total avg knob std dev",
+                    "totalMoveTypeChanges":     "Total # of type changes",
+                    "totalKnobAvgMaxMin":       "Total avg knob max-min",
+                    "totalOffsetMoves":         "Total # of offset moves",
+                    "totalWavelengthMoves":     "Total # of wavelength moves",
+                    "totalAmplitudeMoves":      "Total # of amplitude moves",
+                    "totalFails":               "Total # of failures"
+                },
+                "averages": {
+                    "avgSliderMoves":           "Avg # of slider moves/level",
+                    "avgLevelTime":             "Avg time per level",
+                    "avgKnobStdDevs":           "Avg avg knob std dev/level",
+                    "avgMoveTypeChanges":       "Avg # of type changes/level",
+                    "avgKnobAvgMaxMin":         "Avg avg knob max-min/level",
+                    "avgOffsetMoves":           "Avg # of offset moves/level",
+                    "avgWavelengthMoves":       "Avg # of wavelength moves/level",
+                    "avgAmplitudeMoves":        "Avg # of amplitude moves/level",
+                    "avgFails":                 "Avg # of failures/level"
                 },
                 "perLevel": {}
             },
             "multinomialQuestion": {
                 "general": {
                     "(Intercept)":              "Constant term",
-                    "numMovesPerChallenge":     "# slider moves",
-                    "levelTimes":               "Time"
+                    "avgPercentOffset":         "Avg % offset moves",
+                    "avgPercentWavelength":     "Avg % wavelength moves",
+                    "avgPercentAmplitude":      "Avg % amplitude moves",
+                    "avgPercentGoodMoves":      "Avg % good moves"
                 },
-                "specific": {
-                    "knobStdDevs":              "Avg knob std dev",
-                    "moveTypeChangesPerLevel":  "# type changes",
-                    "avgPercentGoodMoves":      "Avg % good moves", 
-                    "knobAvgs":                 "Avg knob max-min",
-                    "OFFSET":                   "# offset moves",
-                    "WAVELENGTH":               "# wavelength moves",
-                    "AMPLITUDE":                "# amplitude moves",
-                    "numFailsPerLevel":         "# failures",
-                    "percentOFFSET":            "% offset moves",
-                    "percentWAVELENGTH":        "% wavelength moves",
-                    "percentAMPLITUDE":         "% amplitude moves"
+                "totals": {
+                    "totalSliderMoves":         "Total # of slider moves",
+                    "totalLevelTime":           "Total time",
+                    "totalKnobStdDevs":         "Total avg knob std dev",
+                    "totalMoveTypeChanges":     "Total # of type changes",
+                    "totalKnobAvgMaxMin":       "Total avg knob max-min",
+                    "totalOffsetMoves":         "Total # of offset moves",
+                    "totalWavelengthMoves":     "Total # of wavelength moves",
+                    "totalAmplitudeMoves":      "Total # of amplitude moves",
+                    "totalFails":               "Total # of failures"
+                },
+                "averages": {
+                    "avgSliderMoves":           "Avg # of slider moves/level",
+                    "avgLevelTime":             "Avg time per level",
+                    "avgKnobStdDevs":           "Avg avg knob std dev/level",
+                    "avgMoveTypeChanges":       "Avg # of type changes/level",
+                    "avgKnobAvgMaxMin":         "Avg avg knob max-min/level",
+                    "avgOffsetMoves":           "Avg # of offset moves/level",
+                    "avgWavelengthMoves":       "Avg # of wavelength moves/level",
+                    "avgAmplitudeMoves":        "Avg # of amplitude moves/level",
+                    "avgFails":                 "Avg # of failures/level"
                 },
                 "perLevel": {}
             }
@@ -422,23 +466,41 @@
         },
         "questionLevels": [ 8, 8, 33, 33 ],
         "clusterInputs": {
-            "numMovesPerChallenge": "# slider moves",
-            "knobAvgs": "Avg knob max-min",
-            "levelTimes": "Time",
-            "percentGoodMovesAll": "Avg % good moves",
-            "moveTypeChangesPerLevel": "# type changes",
-            "knobStdDevs": "Avg knob std dev",
-            "knobTotalAmts": "Total knob max-min"
+            "totalSliderMoves": "Total # slider moves",
+            "totalLevelTime": "Total time",
+            "totalKnobStdDevs": "Total knob std dev",
+            "totalMoveTypeChanges": "Total # type changes",
+            "totalKnobAvgMaxMin": "Total avg knob max-min",
+            "totalOffsetMoves": "Total # offset moves",
+            "totalWavelengthMoves": "Total # wavelength moves",
+            "totalAmplitudeMoves": "Total # amplitude moves",
+            "totalFails": "Total # fails"
         },
         "histogramFeatures": {
             "numQuestions": "# questions answered",
-            "numMovesPerChallenge": "# slider moves",
-            "moveTypeChangesPerLevel": "# type changes",
-            "numLevels": "# levels completed"
+            "numLevels": "# levels completed",
+            "totalSliderMoves": "Total # slider moves",
+            "totalLevelTime": "Total time",
+            "totalKnobStdDevs": "Total knob std dev",
+            "totalMoveTypeChanges": "Total # type changes",
+            "totalKnobAvgMaxMin": "Total avg knob max-min",
+            "totalOffsetMoves": "Total # offset moves",
+            "totalWavelengthMoves": "Total # wavelength moves",
+            "totalAmplitudeMoves": "Total # amplitude moves",
+            "totalFails": "Total # fails",
+            "avgSliderMoves": "Avg # slider moves per level",
+            "avgLevelTime": "Avg time per level",
+            "avgKnobStdDevs": "Avg knob std dev per level",
+            "avgMoveTypeChanges": "Avg # type changes per level",
+            "avgKnobAvgMaxMin": "Avg avg knob max-min per level",
+            "avgOffsetMoves": "Avg # offset moves per level",
+            "avgWavelengthMoves": "Avg # wavelength moves per level",
+            "avgAmplitudeMoves": "Avg # amplitude moves per level",
+            "avgFails": "Avg # fails per level"
         },
         "defaultDates": {
-            "start": "2018-09-01",
-            "end": "2018-09-30"
+            "start": "2018-12-01",
+            "end": "2018-12-31"
         }
     },
     "CRYSTAL": {
@@ -446,22 +508,24 @@
         "features": {
             "numLevels": {
                 "general": {
-                    "(Intercept)":              "Constant term"
-                },
-                "specific": {
-                    "totalStampRotates":        "Total # of stamp rotates",
-                    "totalSingleRotates":       "Total # of single rotates",
-                    "totalMoleculesMoved":      "Total # of molecules moved",
-                    "avgStampRotates":          "Avg stamp rotates per challenge",
-                    "avgSingleRotates":         "Avg single rotates per challenge",
-                    "avgMoleculesMoved":        "Avg molecules moved per challenge",
-                    "avgClearBtnPresses":       "Avg # of clear button presses",
-                    "totalLevelTimes":          "Total time",
-                    "avgLevelTimes":            "Avg time per level",
+                    "(Intercept)":              "Constant term",
+                    "timeSpentInMuseum":        "Total time spent in crystal museum",
                     "avgMoleculeDragTime":      "Avg molecule drag time per move",
                     "avgScorePerChallenge":     "Avg score per challenge",
                     "avgCompletesPerLevel":     "Avg complete events per challenge",
-                    "timeSpentInMuseum":        "Total time spent in crystal museum"
+                    "avgClearBtnPresses":       "Avg # of clear button presses"
+                },
+                "totals": {
+                    "totalStampRotates":        "Total # of stamp rotates",
+                    "totalSingleRotates":       "Total # of single rotates",
+                    "totalMoleculesMoved":      "Total # of molecules moved",
+                    "totalLevelTimes":          "Total time"  
+                },
+                "averages": {
+                    "avgStampRotates":          "Avg stamp rotates per challenge",
+                    "avgSingleRotates":         "Avg single rotates per challenge",
+                    "avgMoleculesMoved":        "Avg molecules moved per challenge",
+                    "avgLevelTimes":            "Avg time per level"
                 },
                 "perLevel": {
                     "pgm_0":                   "% good moves lvl 0",
@@ -476,22 +540,24 @@
             },
             "levelCompletion": {
                 "general": {
-                    "(Intercept)":              "Constant term"
-                },
-                "specific": {
-                    "totalStampRotates":        "Total # of stamp rotates",
-                    "totalSingleRotates":       "Total # of single rotates",
-                    "totalMoleculesMoved":      "Total # of molecules moved",
-                    "avgStampRotates":          "Avg stamp rotates per challenge",
-                    "avgSingleRotates":         "Avg single rotates per challenge",
-                    "avgMoleculesMoved":        "Avg molecules moved per challenge",
-                    "avgClearBtnPresses":       "Avg # of clear button presses",
-                    "totalLevelTimes":          "Total time",
-                    "avgLevelTimes":            "Avg time per level",
+                    "(Intercept)":              "Constant term",
+                    "timeSpentInMuseum":        "Total time spent in crystal museum",
                     "avgMoleculeDragTime":      "Avg molecule drag time per move",
                     "avgScorePerChallenge":     "Avg score per challenge",
                     "avgCompletesPerLevel":     "Avg complete events per challenge",
-                    "timeSpentInMuseum":        "Total time spent in crystal museum"
+                    "avgClearBtnPresses":       "Avg # of clear button presses"
+                },
+                "totals": {
+                    "totalStampRotates":        "Total # of stamp rotates",
+                    "totalSingleRotates":       "Total # of single rotates",
+                    "totalMoleculesMoved":      "Total # of molecules moved",
+                    "totalLevelTimes":          "Total time"  
+                },
+                "averages": {
+                    "avgStampRotates":          "Avg stamp rotates per challenge",
+                    "avgSingleRotates":         "Avg single rotates per challenge",
+                    "avgMoleculesMoved":        "Avg molecules moved per challenge",
+                    "avgLevelTimes":            "Avg time per level"
                 },
                 "perLevel": {
                     "pgm_0":                   "% good moves lvl 0",
@@ -506,45 +572,49 @@
             },
             "binomialQuestion": {
                 "general": {
-                    "(Intercept)":              "Constant term"
-                },
-                "specific": {
-                    "totalStampRotates":        "Total # of stamp rotates",
-                    "totalSingleRotates":       "Total # of single rotates",
-                    "totalMoleculesMoved":      "Total # of molecules moved",
-                    "avgStampRotates":          "Avg stamp rotates per challenge",
-                    "avgSingleRotates":         "Avg single rotates per challenge",
-                    "avgMoleculesMoved":        "Avg molecules moved per challenge",
-                    "avgClearBtnPresses":       "Avg # of clear button presses",
-                    "totalLevelTimes":          "Total time",
-                    "avgLevelTimes":            "Avg time per level",
+                    "(Intercept)":              "Constant term",
+                    "timeSpentInMuseum":        "Total time spent in crystal museum",
                     "avgMoleculeDragTime":      "Avg molecule drag time per move",
                     "avgScorePerChallenge":     "Avg score per challenge",
                     "avgCompletesPerLevel":     "Avg complete events per challenge",
-                    "avgPercentGoodMoves":      "Avg % good moves",
-                    "timeSpentInMuseum":        "Total time spent in crystal museum"
+                    "avgClearBtnPresses":       "Avg # of clear button presses",
+                    "avgPercentGoodMoves":      "Avg % good moves"
+                },
+                "totals": {
+                    "totalStampRotates":        "Total # of stamp rotates",
+                    "totalSingleRotates":       "Total # of single rotates",
+                    "totalMoleculesMoved":      "Total # of molecules moved",
+                    "totalLevelTimes":          "Total time"  
+                },
+                "averages": {
+                    "avgStampRotates":          "Avg stamp rotates per challenge",
+                    "avgSingleRotates":         "Avg single rotates per challenge",
+                    "avgMoleculesMoved":        "Avg molecules moved per challenge",
+                    "avgLevelTimes":            "Avg time per level"
                 },
                 "perLevel": {}
             },
             "multinomialQuestion": {
                 "general": {
-                    "(Intercept)":              "Constant term"
-                },
-                "specific": {
-                    "totalStampRotates":        "Total # of stamp rotates",
-                    "totalSingleRotates":       "Total # of single rotates",
-                    "totalMoleculesMoved":      "Total # of molecules moved",
-                    "avgStampRotates":          "Avg stamp rotates per challenge",
-                    "avgSingleRotates":         "Avg single rotates per challenge",
-                    "avgMoleculesMoved":        "Avg molecules moved per challenge",
-                    "avgClearBtnPresses":       "Avg # of clear button presses",
-                    "totalLevelTimes":          "Total time",
-                    "avgLevelTimes":            "Avg time per level",
+                    "(Intercept)":              "Constant term",
+                    "timeSpentInMuseum":        "Total time spent in crystal museum",
                     "avgMoleculeDragTime":      "Avg molecule drag time per move",
                     "avgScorePerChallenge":     "Avg score per challenge",
                     "avgCompletesPerLevel":     "Avg complete events per challenge",
-                    "avgPercentGoodMoves":      "Avg % good moves",
-                    "timeSpentInMuseum":        "Total time spent in crystal museum"
+                    "avgClearBtnPresses":       "Avg # of clear button presses",
+                    "avgPercentGoodMoves":      "Avg % good moves"
+                },
+                "totals": {
+                    "totalStampRotates":        "Total # of stamp rotates",
+                    "totalSingleRotates":       "Total # of single rotates",
+                    "totalMoleculesMoved":      "Total # of molecules moved",
+                    "totalLevelTimes":          "Total time"  
+                },
+                "averages": {
+                    "avgStampRotates":          "Avg stamp rotates per challenge",
+                    "avgSingleRotates":         "Avg single rotates per challenge",
+                    "avgMoleculesMoved":        "Avg molecules moved per challenge",
+                    "avgLevelTimes":            "Avg time per level"
                 },
                 "perLevel": {}
             }
@@ -777,7 +847,7 @@
             "timeSpentInMuseum":        "Total time spent in crystal museum"
         },
         "defaultDates": {
-            "start": "2018-12-13",
+            "start": "2018-12-01",
             "end": "2018-12-31"
         }
     }

@@ -1770,11 +1770,6 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
     $game = $_GET['gameID'];
     if ($game === 'WAVES') {
         $sessionIDs = $sessionsAndTimes['sessions'];
-        $moveTypes = ['OFFSET', 'WAVELENGTH', 'AMPLITUDE'];
-        $shouldUseAvgs = false;
-        if (isset($_GET['shouldUseAvgs'])) {
-            $shouldUseAvgs = ($_GET['shouldUseAvgs'] === 'true');
-        }
         $featuresToUse = null;
         if (isset($_GET['features'])) {
             $featuresToUse = $_GET['features'];
@@ -1784,34 +1779,32 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
             }
         }
 
-        $allData = array();
+        $allData = array();    
+        // This section of variables is for 2D arrays of *per-challenge* scalar data for "basic info summary"
+        $totalSliderMovesPerLevelAll = array();
+        $totalKnobStdDevsPerLevelAll = array();
+        $totalKnobAvgMaxMinPerLevelAll = array();
+        $totalOffsetMovesPerLevelAll = array();
+        $totalWavelengthMovesPerLevelAll = array();
+        $totalAmplitudeMovesPerLevelAll = array();
+        $totalFailsPerLevelAll = array();
+        $totalLevelTimeAll = array();
 
-        // arrays of scalar averages per level across all sessions (display)
-        $avgTimesPerLevelAll = array();
-        $avgMovesPerLevelArray = array();
-        $avgMoveTypeChangesPerLevelAll = array();
-        $avgStdDevsPerLevelAll = array();
-        $avgKnobTotalsPerLevelAll = array();
-        $avgKnobAvgsPerLevelAll = array();
-        $avgPgmPerLevelAll = array(); // this is redundant but is a little clearer later on
+        $avgSliderMovesPerLevelAll = array();
+        $avgKnobStdDevsPerLevelAll = array();
+        $avgKnobAvgMaxMinPerLevelAll = array();
+        $avgOffsetMovesPerLevelAll = array();
+        $avgWavelengthMovesPerLevelAll = array();
+        $avgAmplitudeMovesPerLevelAll = array();
+        $avgFailsPerLevelAll = array();
+        $avgLevelTimeAll = array();
 
-        // scalar totals for avgs of all levels and sessions, i.e. sum of above arrays (display, mostly for verification of overall average)
-        $totalTimeAll = 0;
-        $totalMovesAll = 0;
-        $totalMoveTypeChangesAll = 0;
-        $totalStdDevsAll = 0;
-        $totalKnobTotalsAll = 0;
-        $totalKnobAvgsAll = 0;
-        $totalPgmAll = 0;
+        $avgPercentWavelengthAll = array();
+        $avgPercentOffsetAll = array();
+        $avgPercentAmplitudeAll = array();
 
-        // scalar averages of averages arrays, i.e. average of above arrays (display)
-        $avgTimeAll = 0;
-        $avgMovesAll = 0;
-        $avgMoveTypeChangesAll = 0;
-        $avgStdDevAll = 0;
-        $avgKnobTotalsAll = 0;
-        $avgKnobAvgsAll = 0;
-        $avgPgmAll = 0;
+        // To avoid confusion, global scalar sums and averages (for the basic summary) will be calculated where they're actually used at the end
+        // Session-level data is calculated below and not kept afterwards
 
         foreach ($sessionIDs as $s=>$sessionID) {
             $infoTimes = array();
@@ -1828,174 +1821,139 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
                 $infoEventCustoms[] = $val['event_custom'];
             }
             $dataObj = array('data'=>$infoEventData, 'times'=>$infoTimes, 'events'=>$infoEvents, 'levels'=>$infoLevels, 'event_customs'=>$infoEventCustoms);
-            $avgTime;
-            $totalTime = 0;
-            $numMovesPerChallenge;
-            $totalMoves = 0;
-            $avgMoves;
-            $moveTypeChangesPerLevel;
-            $moveTypeChangesTotal = 0;
-            $moveTypeChangesAvg;
-            $knobStdDevs;
-            $knobNumStdDevs;
-            $knobAmtsTotal = 0;
-            $knobAmtsAvg;
-            $knobSumTotal = 0;
-            $knobSumAvg;
+
             $numLevelsThisSession2 = count(array_unique($dataObj['levels']));
-            $numFailsPerLevel;
             if (isset($dataObj['times'])) {
                 // Basic features stuff
-                $levelStartTime;
-                $levelEndTime;
                 $lastType = null;
                 $startIndices = array();
                 $endIndices = array();
-                $moveTypeChangesPerLevel = array();
-                $knobStdDevs = array();
-                $knobNumStdDevs = array();
-                $knobAmts = array();
-                $numMovesPerChallenge = array();
-                $moveTypeChangesPerLevel = array();
-                $knobStdDevs = array();
-                $knobNumStdDevs = array();
-                $startIndices = array();
-                $endIndices = array();
-                $indicesToSplice = array();
-                $levelTimes = array();
-                $avgKnobStdDevs = array();
-                $knobAvgs = array();
-                $numMovesPerChallengePerType = array();
+                $numMovesPerLevel = array();
+                $totalOffsetMovesPerLevel = array();
+                $totalWavelengthMovesPerLevel = array();
+                $totalAmplitudeMovesPerLevel = array();
                 $numFailsPerLevel = array();
+                $moveTypeChangesPerLevel = array();
+                $totalKnobMaxMinPerLevel = array();
+                $totalKnobStdDevPerLevel = array();
+                $totalTimePerLevel = array();
+                $moveEventsPerLevel = array();
                 foreach ($dataObj['levels'] as $i) {
-                    $numMovesPerChallenge[$i] = array();
-                    $numMovesPerChallengePerType[$i] = array_fill_keys($moveTypes, 0);
-                    $indicesToSplice[$i] = array();
-
-                    $startIndices[$i] = null;
-                    $endIndices[$i] = null;
-                    $moveTypeChangesPerLevel[$i] = 0;
-                    $knobStdDevs[$i] = 0;
-                    $knobNumStdDevs[$i] = 0;
-                    $knobAmts[$i] = 0;
-                    $knobAvgs[$i] = 0;
-                    $avgKnobStdDevs[$i] = 0;
+                    $totalSliderMovesPerLevel[$i] = 0;
+                    $totalOffsetMovesPerLevel[$i] = 0;
+                    $totalWavelengthMovesPerLevel[$i] = 0;
+                    $totalAmplitudeMovesPerLevel[$i] = 0;
                     $numFailsPerLevel[$i] = 0;
+                    $moveTypeChangesPerLevel[$i] = 0;
+                    $totalKnobStdDevPerLevel[$i] = 0;
+                    $totalKnobMaxMinPerLevel[$i] = 0;
+                    $totalTimePerLevel[$i] = 0;
+                    $moveEventsPerLevel[$i] = array();
                 }
 
                 for ($i = 0; $i < count($dataObj['times']); $i++) {
                     if (!isset($endIndices[$dataObj['levels'][$i]])) {
                         $dataJson = json_decode($dataObj['data'][$i], true);
-                        if ($dataObj['events'][$i] === 'BEGIN') {
-                            if (!isset($startIndices[$dataObj['levels'][$i]])) { // check this space isn't filled by a previous attempt on the same level
-                                $startIndices[$dataObj['levels'][$i]] = $i;
+                        $level = $dataObj['levels'][$i];
+                        $event = $dataObj['events'][$i];
+                        $event_custom = $dataObj['event_customs'][$i];
+                        $event_name = $dataJson['event_custom'] ?? null;
+                        if ($event === 'BEGIN') {
+                            if (!isset($startIndices[$level])) { // check this space isn't filled by a previous attempt on the same level
+                                $startIndices[$level] = $i;
                             }
-                        } else if ($dataObj['events'][$i] === 'COMPLETE') {
-                            if (!isset($endIndices[$dataObj['levels'][$i]])) {
-                                $endIndices[$dataObj['levels'][$i]] = $i;
+                        } else if ($event === 'COMPLETE') {
+                            if (!isset($endIndices[$level])) {
+                                $endIndices[$level] = $i;
                             }
-                        } else if ($dataObj['events'][$i] === 'CUSTOM' && in_array($dataObj['event_customs'][$i], SQL_MOVE_CUSTOM)) {
-                            if ($lastType !== $dataJson['slider']) {
-                                $moveTypeChangesPerLevel[$dataObj['levels'][$i]]++;
-                            }
+                        } else if ($event === 'CUSTOM' && in_array($event_custom, SQL_MOVE_CUSTOM)) {
+                            if ($lastType !== $dataJson['slider']) { increment($moveTypeChangesPerLevel[$level]); }
                             $lastType = $dataJson['slider']; // possible slider values: "AMPLITUDE", "OFFSET", "WAVELENGTH"
-                            $numMovesPerChallenge[$dataObj['levels'][$i]][] = $i;
-                            if (!isset($numMovesPerChallengePerType[$dataObj['levels'][$i]][$lastType])) $numMovesPerChallengePerType[$dataObj['levels'][$i]][$lastType] = 0;
-                            $numMovesPerChallengePerType[$dataObj['levels'][$i]][$lastType]++;
-                            //if (!isset($knobNumStdDevs[$dataObj['levels'][$i]])) $knobNumStdDevs[$dataObj['levels'][$i]] = 0;
-                            $knobNumStdDevs[$dataObj['levels'][$i]]++;
-                            //if (!isset($knobStdDevs[$dataObj['levels'][$i]])) $knobStdDevs[$dataObj['levels'][$i]] = 0;
-                            $knobStdDevs[$dataObj['levels'][$i]] += $dataJson['stdev_val'];
-                            //if (!isset($knobAmts[$dataObj['levels'][$i]])) $knobAmts[$dataObj['levels'][$i]] = 0;
-                            $knobAmts[$dataObj['levels'][$i]] += ($dataJson['max_val']-$dataJson['min_val']);
-                        } else if ($dataObj['events'][$i] === 'FAIL') {
-                            $numFailsPerLevel[$dataObj['levels'][$i]]++;
+                            $moveEventsPerLevel[$level][] = array('event'=>$event, 'event_custom'=>$event_custom, 'event_name'=>$event_name, 'dataJson'=>$dataJson);;
+                            increment($totalKnobStdDevPerLevel[$level], $dataJson['stdev_val']);
+                            increment($totalKnobMaxMinPerLevel[$level], ($dataJson['max_val']-$dataJson['min_val']));
+                            increment($totalSliderMovesPerLevel[$level]);
+
+                            // increment appropriate slider type variable
+                            if ($dataJson['slider'] === 'AMPLITUDE') {
+                                increment($totalAmplitudeMovesPerLevel[$level]);
+                            } else if ($dataJson['slider'] === 'OFFSET') {
+                                increment($totalOffsetMovesPerLevel[$level]);
+                            } else { // WAVELENGTH
+                                increment($totalWavelengthMovesPerLevel[$level]);
+                            }
+                        } else if ($event === 'FAIL') {
+                            increment($numFailsPerLevel[$level]);
                         }
                     }
                 }
 
                 foreach ($endIndices as $i=>$value) {
-                    if (isset($endIndices[$i], $dataObj['times'][$endIndices[$i]], $dataObj['times'][$startIndices[$i]])) {
+                    if (isset($endIndices[$i], $startIndices[$i], $dataObj['times'][$endIndices[$i]], $dataObj['times'][$startIndices[$i]])) {
                         $levelStartTime = new DateTime($dataObj['times'][$startIndices[$i]]);
                         $levelEndTime = new DateTime($dataObj['times'][$endIndices[$i]]);
                         $levelTime = $levelEndTime->getTimestamp() - $levelStartTime->getTimestamp();
-                        $totalTime += $levelTime;
-                        $levelTimes[$i] = $levelTime;
-
-                        $totalMoves += count($numMovesPerChallenge[$i]);
-                        $moveTypeChangesTotal += $moveTypeChangesPerLevel[$i];
-
-                        $knobAvgAmt = 0;
-                        $knobAvgStdDev = 0;
-                        if ($knobNumStdDevs[$i] != 0) {
-                            $temp = $knobAmts[$i]/$knobNumStdDevs[$i];
-                            $knobAmtsTotal += $temp;
-                            $knobAvgAmt = $temp;
-                            $knobAvgStdDev = ($knobStdDevs[$i]/$knobNumStdDevs[$i]);
-                        }
-                        $knobAvgs[$i] = $knobAvgAmt;
-                        $avgKnobStdDevs[$i] = $knobAvgStdDev;
-
-                        if ($knobAmts[$i] != 0) {
-                            $knobSumTotal += $knobAmts[$i];
-                        }
+                        $totalTimePerLevel[$i] = $levelTime;
                     }
                 }
-                $avgTime = $totalTime / $numLevelsThisSession2;
-                $avgMoves = $totalMoves / $numLevelsThisSession2;
-                $moveTypeChangesAvg = $moveTypeChangesTotal / $numLevelsThisSession2;
-                $knobAmtsAvg = $knobAmtsTotal / $numLevelsThisSession2;
-                $knobSumAvg = $knobSumTotal / $numLevelsThisSession2;
             }
-            $numMoves = array();
-            $filteredNumMoves = array_filter($numMovesPerChallenge, function ($value) { return isset($value); });
-            foreach ($filteredNumMoves as $j=>$value) {
-                $numMoves[$j] = count($numMovesPerChallenge[$j]);
-            }
-            $numMovesPerSliderCols = array();
-            foreach ($moveTypes as $i=>$type) {
-                $numMovesPerSliderCols[$type] = array_column($numMovesPerChallengePerType, $type);
-            }
-            $numFailsPerLevel = array_filter($numFailsPerLevel, function ($index) use ($endIndices) { return in_array($index, array_keys($endIndices)); }, ARRAY_FILTER_USE_KEY);
-            $numMoves = array_filter($numMoves, function ($index) use ($endIndices) { return in_array($index, array_keys($endIndices)); }, ARRAY_FILTER_USE_KEY);
 
             $sessionData = array(
-                'avgTime'=>$avgTime,
-                'totalTime'=>$totalTime,
-                'numMovesPerChallengeArray'=>$numMovesPerChallenge,
-                'totalMoves'=>$totalMoves,
-                'avgMoves'=>$avgMoves,
-                'moveTypeChangesTotal'=>$moveTypeChangesTotal,
-                'moveTypeChangesAvg'=>$moveTypeChangesAvg,
-                'knobStdDevs'=>$avgKnobStdDevs,
-                'knobAmtsTotalAvg'=>$knobAmtsTotal,
-                'knobAmtsAvgAvg'=>$knobAmtsAvg,
-                'knobSumTotal'=>$knobSumTotal,
-                'knobTotalAvg'=>$knobSumAvg,
-                'numLevels'=>count($levelTimes),
-                'dataObj'=>$dataObj,
+                'moveEventsPerLevel'=>$moveEventsPerLevel,
+                'perLevel'=>array(
+                    'totalSliderMoves'=>$totalSliderMovesPerLevel,
+                    'totalLevelTime'=>$totalTimePerLevel,
+                    'totalKnobStdDevs'=>$totalKnobStdDevPerLevel,
+                    'totalMoveTypeChanges'=>$moveTypeChangesPerLevel,
+                    'totalKnobAvgMaxMin'=>$totalKnobMaxMinPerLevel,
+                    'totalOffsetMoves'=>$totalOffsetMovesPerLevel,
+                    'totalWavelengthMoves'=>$totalWavelengthMovesPerLevel,
+                    'totalAmplitudeMoves'=>$totalAmplitudeMovesPerLevel,
+                    'totalFails'=>$numFailsPerLevel
+                ),
+                'numLevels'=>$numLevelsThisSession2,
                 'features'=>array()
             );
 
             // add/change features here
-            $sessionData['features']['levelTimes'] = $levelTimes;
-            $sessionData['features']['numMovesPerChallenge'] = $numMoves;
-            $sessionData['features']['moveTypeChangesPerLevel'] = $moveTypeChangesPerLevel;
-            $sessionData['features']['knobStdDevs'] = $avgKnobStdDevs;
-            $sessionData['features']['knobTotalAmts'] = $knobAmts;
-            $sessionData['features']['knobAvgs'] = $knobAvgs;
-            foreach ($moveTypes as $i=>$type) {
-                $sessionData['features'][$type] = $numMovesPerSliderCols[$type];
-                $movesScalar = array_sum($numMoves);
-                if ($movesScalar > 0) {
-                    $sessionData['features']['percent'.$type] = array_sum($numMovesPerSliderCols[$type]) / $movesScalar;
-                } else {
-                    $sessionData['features']['percent'.$type] = 0;
-                }
-            }
-            $sessionData['features']['numFailsPerLevel'] = $numFailsPerLevel;
+            $sessionData['features']['totalSliderMoves'] = array_sum($totalSliderMovesPerLevel);
+            $sessionData['features']['totalLevelTime'] = array_sum($totalTimePerLevel);
+            $sessionData['features']['totalKnobStdDevs'] = array_sum($totalKnobStdDevPerLevel);
+            $sessionData['features']['totalMoveTypeChanges'] = array_sum($moveTypeChangesPerLevel);
+            $sessionData['features']['totalKnobAvgMaxMin'] = array_sum($totalKnobMaxMinPerLevel);
+            $sessionData['features']['totalOffsetMoves'] = array_sum($totalOffsetMovesPerLevel);
+            $sessionData['features']['totalWavelengthMoves'] = array_sum($totalWavelengthMovesPerLevel);
+            $sessionData['features']['totalAmplitudeMoves'] = array_sum($totalAmplitudeMovesPerLevel);
+            $sessionData['features']['totalFails'] = array_sum($numFailsPerLevel);
+
+            $sessionData['features']['avgSliderMoves'] = average($totalSliderMovesPerLevel);
+            $sessionData['features']['avgLevelTime'] = average($totalTimePerLevel);
+            $sessionData['features']['avgKnobStdDevs'] = average($totalKnobStdDevPerLevel);
+            $sessionData['features']['avgMoveTypeChanges'] = average($moveTypeChangesPerLevel);
+            $sessionData['features']['avgKnobAvgMaxMin'] = average($totalKnobMaxMinPerLevel);
+            $sessionData['features']['avgOffsetMoves'] = average($totalOffsetMovesPerLevel);
+            $sessionData['features']['avgWavelengthMoves'] = average($totalWavelengthMovesPerLevel);
+            $sessionData['features']['avgAmplitudeMoves'] = average($totalAmplitudeMovesPerLevel);
+            $sessionData['features']['avgFails'] = average($numFailsPerLevel);
+
+            $sessionData['features']['avgPercentOffset'] = $sessionData['features']['totalOffsetMoves'] / $sessionData['features']['totalSliderMoves'];
+            $sessionData['features']['avgPercentAmplitude'] = $sessionData['features']['totalAmplitudeMoves'] / $sessionData['features']['totalSliderMoves'];
+            $sessionData['features']['avgPercentWavelength'] = $sessionData['features']['totalWavelengthMoves'] / $sessionData['features']['totalSliderMoves'];
 
             $allData[$sessionID] = $sessionData;
+        }
+
+        $allPerLevel = array_column($allData, 'perLevel');
+        foreach(ALL_LEVELS as $index=>$level) {
+            $totalSliderMovesPerLevelAll[$level] = average(array_column(array_column($allPerLevel, 'totalSliderMoves'), $level));
+            $totalKnobStdDevsPerLevelAll[$level] = average(array_column(array_column($allPerLevel, 'totalKnobStdDevs'), $level));
+            $totalKnobAvgMaxMinPerLevelAll[$level] = average(array_column(array_column($allPerLevel, 'totalKnobAvgMaxMin'), $level));
+            $totalOffsetMovesPerLevelAll[$level] = average(array_column(array_column($allPerLevel, 'totalOffsetMoves'), $level));
+            $totalWavelengthMovesPerLevelAll[$level] = average(array_column(array_column($allPerLevel, 'totalWavelengthMoves'), $level));
+            $totalAmplitudeMovesPerLevelAll[$level] = average(array_column(array_column($allPerLevel, 'totalAmplitudeMoves'), $level));
+            $totalFailsPerLevelAll[$level] = average(array_column(array_column($allPerLevel, 'totalFails'), $level));
+            $totalMoveTypeChangesPerLevelAll[$level] = average(array_column(array_column($allPerLevel, 'totalMoveTypeChanges'), $level));
+            $totalLevelTimeAll[$level] = average(array_column(array_column($allPerLevel, 'totalLevelTime'), $level));
         }
         
         // Get questions histogram data
@@ -2005,19 +1963,17 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
         $totalCorrect = 0;
         $totalAnswered = 0;
         foreach ($sessionIDs as $i=>$val) {
-            $questionEvents = array();
-            foreach ($sessionAttributes[$val] as $j=>$jval) {
-                if ($jval['event_custom'] === SQL_QUESTION_CUSTOM) {
-                    $questionEvents[] = $jval;
-                }
-            }
             $numCorrect = 0;
-            $numQuestions = count($questionEvents);
-            for ($j = 0; $j < $numQuestions; $j++) {
-                $jsonData = json_decode($questionEvents[$j]['event_data_complex'], true);
-                $questionAnswereds[$i][$j] = $jsonData['answered'];
-                if ($jsonData['answer'] === $jsonData['answered']) {
-                    $numCorrect++;
+            $numQuestions = 0;
+            foreach ($sessionAttributes[$val] as $j=>$jval) {
+                $json = json_decode($jval['event_data_complex'], true);
+                if ($jval['event_custom'] === SQL_QUESTION_CUSTOM && $json['event_custom'] === 'QUESTION_ANSWER') {
+                    $numQuestions++;
+                    $question = $json['question'];
+                    $questionAnswereds[$i][$question] = $json['answered'];
+                    if ($json['answer'] === $json['answered']) {
+                        $numCorrect++;
+                    }
                 }
             }
             $totalCorrect += $numCorrect;
@@ -2027,18 +1983,6 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
         }
         $questionsAll = array('numsCorrect'=>$questionsCorrect, 'numsQuestions'=>$questionsAnswered);
         $questionsTotal = array('totalNumCorrect'=>$totalCorrect, 'totalNumQuestions'=>$totalAnswered);
-
-        // Get moves histogram data
-        $numMovesAll = array();
-        foreach ($sessionIDs as $i=>$session) {
-            $numMoves = 0;
-            foreach ($sessionAttributes[$session] as $j=>$val) {
-                if (in_array($val['event_custom'], SQL_MOVE_CUSTOM)) {
-                    $numMoves++;
-                }
-            }
-            $numMovesAll[] = $numMoves;
-        }
 
         // Get levels histogram data
         $numLevelsAll = array();
@@ -2057,49 +2001,35 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
         $percentGoodMovesAvgs = array();
         foreach ($sessionIDs as $index=>$session) {
             $data = $allData[$session];
-            $dataObj = $data['dataObj'];
-            $sessionLevels = array_keys($data['features']['numMovesPerChallenge']);
+            $sessionLevels = array_keys($data['moveEventsPerLevel']);
 
             $totalGoodMoves = 0;
             $totalMoves = 0;
             foreach ($sessionLevels as $j=>$level) {
-                $numMovesPerChallenge = $data['numMovesPerChallengeArray'][$level];
-                $numMoves = $data['features']['numMovesPerChallenge'][$level];
+                $moveEvents = $data['moveEventsPerLevel'][$level];
+                $numMoves = count($moveEvents);
 
-                $distanceToGoal1;
-                $moveGoodness1;
-                $absDistanceToGoal1;
-                if (isset($numMovesPerChallenge)) {
-                    $absDistanceToGoal1 = array_fill(0, count($numMovesPerChallenge), 0);
-                    $distanceToGoal1 = array_fill(0, count($numMovesPerChallenge), 0); // this one is just -1/0/1
-                    $moveGoodness1 = array_fill(0, count($numMovesPerChallenge), 0); // an array of 0s
-                }
+                $moveGoodness = array_fill(0, $numMoves, 0); // an array of 0s
                 $moveNumbers = array();
-                $cumulativeDistance1 = 0;
 
-                foreach ($numMovesPerChallenge as $i=>$val) {
-                    $dataJson = json_decode($dataObj['data'][$i], true);
-                    if ($dataObj['events'][$i] === 'CUSTOM' && ($dataJson['event_custom'] === 'SLIDER_MOVE_RELEASE')) {
-                        if ($dataJson['end_closeness'] < $dataJson['begin_closeness']) $moveGoodness1[$i] = 1;
-                        else if ($dataJson['end_closeness'] > $dataJson['begin_closeness']) $moveGoodness1[$i] = -1;
-                    }
-                    $moveNumbers[$i] = $i;
-                    $cumulativeDistance1 += $moveGoodness1[$i];
-                    $distanceToGoal1[$i] = $cumulativeDistance1;
+                foreach ($moveEvents as $i=>$val) {
+                    $dataJson = $val['dataJson'];
+                    if ($dataJson['end_closeness'] < $dataJson['begin_closeness']) $moveGoodness[$i] = 1;
+                    else if ($dataJson['end_closeness'] > $dataJson['begin_closeness']) $moveGoodness[$i] = -1;
                 }
 
                 // Find % good moves by filtering moveGoodness array for 1s, aka good moves
-                $numGoodMoves = count(array_filter($moveGoodness1, function($val) { return $val === 1; }));
+                $numGoodMoves = count(array_filter($moveGoodness, function($val) { return $val === 1; }));
                 $totalGoodMoves += $numGoodMoves;
                 $totalMoves += $numMoves;
-                if ($numMoves > 1) {
+                if ($numMoves > 0) {
                     $percentGoodMoves = $numGoodMoves / $numMoves;
                 } else {
-                    $percentGoodMoves = 1; // if they only had 1 move or somehow beat the level with 0, give them 100% good moves
+                    $percentGoodMoves = 1; // if they somehow beat the level with 0 moves, give them 100% good moves
                 }
                 $percentGoodMovesAll[$level][$index] = $percentGoodMoves;
             }
-            if ($totalMoves !== 0) {
+            if ($totalMoves > 0) {
                 $percentGoodMovesAvgs[$index] = $totalGoodMoves / $totalMoves;
             } else {
                 $percentGoodMovesAvgs[$index] = 1;
@@ -2125,59 +2055,39 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
             }
         }
 
-        // All this stuff depends on the columns
-        foreach ($levels as $i) {
-            $avgTimesPerLevelAll[$i] = average(array_column($featureCols['levelTimes'], $i));
-            $avgMovesPerLevelArray[$i] = average(array_column($featureCols['numMovesPerChallenge'], $i));
-            $avgMoveTypeChangesPerLevelAll[$i] = average(array_column($featureCols['moveTypeChangesPerLevel'], $i));
-            $avgStdDevsPerLevelAll[$i] = average(array_column($featureCols['knobStdDevs'], $i));
-            $avgKnobTotalsPerLevelAll[$i] = average(array_column($featureCols['knobTotalAmts'], $i));
-            $avgKnobAvgsPerLevelAll[$i] = average(array_column($featureCols['knobAvgs'], $i));
-            $avgPgmPerLevelAll[$i] = average(array_column($featureCols['avgPercentGoodMoves'], $i));
-        }
-        $totalTimeAll = array_sum($avgTimesPerLevelAll);
-        $totalMovesAll = array_sum($avgMovesPerLevelArray);
-        $totalMoveTypeChangesAll = array_sum($avgMoveTypeChangesPerLevelAll);
-        $totalStdDevsAll = array_sum($avgStdDevsPerLevelAll);
-        $totalKnobTotalsAll = array_sum($avgKnobTotalsPerLevelAll);
-        $totalKnobAvgsAll = array_sum($avgKnobAvgsPerLevelAll);
-        $totalPgmAll = array_sum($avgPgmPerLevelAll);
-
-        $avgTimeAll = average($avgTimesPerLevelAll);
-        $avgMovesAll = average($avgMovesPerLevelArray);
-        $avgMoveTypeChangesAll = average($avgMoveTypeChangesPerLevelAll);
-        $avgStdDevAll = average($avgStdDevsPerLevelAll);
-        $avgKnobTotalsAll = average($avgKnobTotalsPerLevelAll);
-        $avgKnobAvgsAll = average($avgKnobAvgsPerLevelAll);
-        $avgPgmAll = average($avgPgmPerLevelAll);
-
         $basicInfoAll = array( // IMPORTANT: These names MUST be the same across perLevel, totals, and averages AND match the model
             'perLevel'=>array(
-                'levelTimes'=>$avgTimesPerLevelAll,
-                'numMovesPerChallenge'=>$avgMovesPerLevelArray,
-                'moveTypeChangesPerLevel'=>$avgMoveTypeChangesPerLevelAll,
-                'knobStdDevs'=>$avgStdDevsPerLevelAll,
-                'knobTotalAmts'=>$avgKnobTotalsPerLevelAll,
-                'knobAvgs'=>$avgKnobAvgsPerLevelAll,
-                'percentGoodMovesAll'=>$avgPgmPerLevelAll
+                'totalSliderMoves'=>$totalSliderMovesPerLevelAll,
+                'totalLevelTime'=>$totalLevelTimeAll,
+                'totalKnobStdDevs'=>$totalKnobStdDevsPerLevelAll,
+                'totalMoveTypeChanges'=>$totalMoveTypeChangesPerLevelAll,
+                'totalKnobAvgMaxMin'=>$totalKnobAvgMaxMinPerLevelAll,
+                'totalOffsetMoves'=>$totalOffsetMovesPerLevelAll,
+                'totalWavelengthMoves'=>$totalWavelengthMovesPerLevelAll,
+                'totalAmplitudeMoves'=>$totalAmplitudeMovesPerLevelAll,
+                'totalFails'=>$totalFailsPerLevelAll
             ),
             'totals'=>array(
-                'levelTimes'=>$totalTimeAll,
-                'numMovesPerChallenge'=>$totalMovesAll,
-                'moveTypeChangesPerLevel'=>$totalMoveTypeChangesAll,
-                'knobStdDevs'=>$totalStdDevsAll,
-                'knobTotalAmts'=>$totalKnobTotalsAll,
-                'knobAvgs'=>$totalKnobAvgsAll,
-                'percentGoodMovesAll'=>$totalPgmAll
+                'totalSliderMoves'=>array_sum($totalSliderMovesPerLevelAll),
+                'totalLevelTime'=>array_sum($totalLevelTimeAll),
+                'totalKnobStdDevs'=>array_sum($totalKnobStdDevsPerLevelAll),
+                'totalMoveTypeChanges'=>array_sum($totalMoveTypeChangesPerLevelAll),
+                'totalKnobAvgMaxMin'=>array_sum($totalKnobAvgMaxMinPerLevelAll),
+                'totalOffsetMoves'=>array_sum($totalOffsetMovesPerLevelAll),
+                'totalWavelengthMoves'=>array_sum($totalWavelengthMovesPerLevelAll),
+                'totalAmplitudeMoves'=>array_sum($totalAmplitudeMovesPerLevelAll),
+                'totalFails'=>array_sum($totalFailsPerLevelAll)
             ),
             'averages'=>array(
-                'levelTimes'=>$avgTimeAll,
-                'numMovesPerChallenge'=>$avgMovesAll,
-                'moveTypeChangesPerLevel'=>$avgMoveTypeChangesAll,
-                'knobStdDevs'=>$avgStdDevAll,
-                'knobTotalAmts'=>$avgKnobTotalsAll,
-                'knobAvgs'=>$avgKnobAvgsAll,
-                'percentGoodMovesAll'=>$avgPgmAll
+                'totalSliderMoves'=>average($totalSliderMovesPerLevelAll),
+                'totalLevelTime'=>average($totalLevelTimeAll),
+                'totalKnobStdDevs'=>average($totalKnobStdDevsPerLevelAll),
+                'totalMoveTypeChanges'=>average($totalMoveTypeChangesPerLevelAll),
+                'totalKnobAvgMaxMin'=>average($totalKnobAvgMaxMinPerLevelAll),
+                'totalOffsetMoves'=>average($totalOffsetMovesPerLevelAll),
+                'totalWavelengthMoves'=>average($totalWavelengthMovesPerLevelAll),
+                'totalAmplitudeMoves'=>average($totalAmplitudeMovesPerLevelAll),
+                'totalFails'=>average($totalFailsPerLevelAll)
             )
         );
 
@@ -2203,12 +2113,12 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
             $endLevel = 8;
             for ($lvl = intval($startLevel); $lvl <= intval($endLevel); $lvl++) {
                 $allColumns = array_merge($allColumns, [
-                    [array_column_fixed($featureCols['numMovesPerChallenge'], $lvl), 'numMovesPerChallenge', [216], $lvl],
-                    [array_column_fixed($featureCols['knobAvgs'], $lvl), 'knobAvgs', [], $lvl],
-                    [array_column_fixed($featureCols['levelTimes'], $lvl), 'levelTimes', [999999], $lvl],
-                    [array_column_fixed($featureCols['moveTypeChangesPerLevel'], $lvl), 'moveTypeChangesPerLevel', [], $lvl],
-                    [array_column_fixed($featureCols['knobStdDevs'], $lvl), 'knobStdDevs', [], $lvl],
-                    [array_column_fixed($featureCols['knobTotalAmts'], $lvl), 'knobTotalAmts', [], $lvl],
+                    [array_column_fixed($featureCols['totalSliderMoves'], $lvl), 'numMovesPerChallenge', [216], $lvl],
+                    [array_column_fixed($featureCols['avgKnobAvgMaxMin'], $lvl), 'knobAvgs', [], $lvl],
+                    [array_column_fixed($featureCols['totalLevelTime'], $lvl), 'levelTimes', [999999], $lvl],
+                    [array_column_fixed($featureCols['totalMoveTypeChanges'], $lvl), 'moveTypeChangesPerLevel', [], $lvl],
+                    [array_column_fixed($featureCols['totalKnobStdDevs'], $lvl), 'knobStdDevs', [], $lvl],
+                    [array_column_fixed($featureCols['totalKnobAvgMaxMin'], $lvl), 'knobTotalAmts', [], $lvl],
                     [array_column_fixed($featureCols['avgPercentGoodMoves'], $lvl), 'percentGoodMovesAll', [], $lvl],
                 ]);
             }
@@ -2350,15 +2260,30 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
                 $eigenvectors = $pca->getEigenvectors();
             }
 
-            $numTypeChangesPerSession = array_map(function($session) { return array_sum($session); }, $featureCols['moveTypeChangesPerLevel']);
-
             return array(
                 'histogramFeatures'=>array( // IMPORTANT: these keys must match the model's histogramFeatures
-                    'numMovesPerChallenge'=>$numMovesAll,
-                    'moveTypeChangesPerLevel'=>$numTypeChangesPerSession,
+                    'numLevels'=>array_column($allFeatures, 'numLevels'),
+                    'totalSliderMoves'=>array_column($allFeatures, 'totalSliderMoves'),
+                    'totalLevelTime'=>array_column($allFeatures, 'totalLevelTime'),
+                    'totalKnobStdDevs'=>array_column($allFeatures, 'totalKnobStdDevs'),
+                    'totalMoveTypeChanges'=>array_column($allFeatures, 'totalMoveTypeChanges'),
+                    'totalKnobAvgMaxMin'=>array_column($allFeatures, 'totalKnobAvgMaxMin'),
+                    'totalOffsetMoves'=>array_column($allFeatures, 'totalOffsetMoves'),
+                    'totalWavelengthMoves'=>array_column($allFeatures, 'totalWavelengthMoves'),
+                    'totalAmplitudeMoves'=>array_column($allFeatures, 'totalAmplitudeMoves'),
+                    'totalFails'=>array_column($allFeatures, 'totalFails'),
+                    'avgSliderMoves'=>array_column($allFeatures, 'avgSliderMoves'),
+                    'avgLevelTime'=>array_column($allFeatures, 'avgLevelTime'),
+                    'avgKnobStdDevs'=>array_column($allFeatures, 'avgKnobStdDevs'),
+                    'avgMoveTypeChanges'=>array_column($allFeatures, 'avgMoveTypeChanges'),
+                    'avgKnobAvgMaxMin'=>array_column($allFeatures, 'avgKnobAvgMaxMin'),
+                    'avgOffsetMoves'=>array_column($allFeatures, 'avgOffsetMoves'),
+                    'avgWavelengthMoves'=>array_column($allFeatures, 'avgWavelengthMoves'),
+                    'avgAmplitudeMoves'=>array_column($allFeatures, 'avgAmplitudeMoves'),
+                    'avgFails'=>array_column($allFeatures, 'avgFails'),
                     'questionAnswereds'=>$questionAnswereds,
                     'numQuestions'=>$questionsAll['numsQuestions'],
-                    'numLevels'=>$numLevelsAll
+                    'numLevels'=>array_column($allData, 'numLevels')
                 ),
                 'questionsAll'=>$questionsAll,
                 'basicInfoAll'=>$basicInfoAll,
@@ -2382,14 +2307,10 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
 
         // filter features by what should be used for regressions
         foreach ($featureCols as $colName=>$feature) {
-            if (isset($featuresToUse[$colName]) && !$featuresToUse[$colName]) {
+            if ((isset($featuresToUse[$colName]) && !$featuresToUse[$colName]) || !isset($featuresToUse[$colName])) {
                 unset($featureCols[$colName]);
             }
         }
-        // unset features that are calculated but never actually used
-        if (isset($featureCols['knobTotalAmts'])) unset($featureCols['knobTotalAmts']);
-        if (isset($featureCols['percentQuestionsCorrect'])) unset($featureCols['percentQuestionsCorrect']);
-        if (isset($featureCols['numLevels'])) unset($featureCols['numLevels']);
 
         // Linear regression stuff
         $regressionVars = array();
@@ -2407,11 +2328,7 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
                 if (isset($val[$quesIndex])) {
                     $predictor = array();
                     foreach ($featureCols as $j=>$feature) {
-                        if ($shouldUseAvgs) {
-                            $predictor[$j] = average($feature[$i]); 
-                        } else {
-                            $predictor[$j] = array_sum2($feature[$i]);
-                        }
+                        $predictor[$j] = $feature[$i]; 
                     }
                     $predictors[] = $predictor;
                     $predicted[] = ($val[$quesIndex] === $ansIndex) ? 1 : 0;
@@ -2430,11 +2347,7 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
             foreach ($sessionIDs as $i=>$val) {
                 $predictor = array();
                 foreach ($featureCols as $j=>$feature) {
-                    if ($shouldUseAvgs) {
-                        $predictor[$j] = average($feature[$i]); 
-                    } else {
-                        $predictor[$j] = array_sum2($feature[$i]);
-                    }
+                    $predictor[$j] = $feature[$i];
                 }
                 $colLvl = intval(substr($column, 3));
                 $predicted[] = (isset($levelsCompleteAll[$val][$colLvl]) && $levelsCompleteAll[$val][$colLvl]) ? 1 : 0;
@@ -2454,11 +2367,7 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
             foreach ($sessionIDs as $i=>$val) {
                 $predictor = array();
                 foreach ($featureCols as $j=>$feature) {
-                    if ($shouldUseAvgs) {
-                        $predictor[$j] = average($feature[$i]); 
-                    } else {
-                        $predictor[$j] = array_sum2($feature[$i]);
-                    }
+                    $predictor[$j] = $feature[$i]; 
                 }
                 $predicted[] = $numLevelsAll[$i];
 
@@ -2477,11 +2386,7 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
                 if (isset($val[$quesIndex])) {                
                     $predictor = array();
                     foreach ($featureCols as $j=>$feature) {
-                        if ($shouldUseAvgs) {
-                            $predictor[$j] = average($feature[$i]); 
-                        } else {
-                            $predictor[$j] = array_sum2($feature[$i]);
-                        }
+                        $predictor[$j] = $feature[$i];
                     }
                     $predictors[] = $predictor;
                     $predicted[] = $val[$quesIndex];
@@ -2504,7 +2409,7 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
         }
 
         $allData = array();    
-        // This section of variables is for 1D arrays of *per-challenge* data for "basic info summary"
+        // This section of variables is for 2D arrays of *per-challenge* data for "basic info summary"
         // Data at this level has been averaged from attempts per level of each session, then those averages averaged across all sessions that completed that level
         // Scalar per session data (like clear button presses) are not displayed in the summary, this is per challenge only
         $totalStampRotatesPerLevel = array();
@@ -2529,7 +2434,7 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
             $infoEvents = array();
             $infoEventCustoms = array();
             foreach ($sessionAttributes[$sessionID] as $i=>$val) {
-                if ($val['level'] > $maxLevel) break;
+                if ($val['level'] > $maxLevel) continue;
                 $infoTimes[] = $val['time'];
                 $infoEventData[] = $val['event_data_complex'];
                 $infoLevels[] = $val['level'];
@@ -2546,7 +2451,6 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
             $avgSingleRotatesPerChallenge = array();
             $avgMoleculesMovedPerChallenge = array();
             $avgClearBtnPressesPerChallenge = array();
-            $pgmPerChallenge = array();
             
             // scalars that hold running totals/averages for this session
             $totalLevelTime = 0; // total time this session spent in ALL attempts of ALL levels
@@ -2572,7 +2476,7 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
                 foreach ($dataObj['levels'] as $i) {
                     $startIndices[$i] = array();
                     $endIndices[$i] = array();
-                    $moveEvents[$i] = array();
+                    $moveEventsPerChallenge[$i] = array();
                     $totalMoleculesMovedPerChallenge[$i] = 0;
                     $totalClearBtnPressesPerChallenge[$i] = 0;
                     $totalTimePerChallenge[$i] = 0;
@@ -2737,8 +2641,7 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
             foreach ($sessionAttributes[$session] as $j=>$val) {
                 $json = json_decode($val['event_data_complex'], true);
                 if ($val['event'] === 'COMPLETE' || (isset($json['event_custom']) && $json['event_custom'] === 'GROW_BTN_PRESS')) {
-                    if (!isset($levelsCompleted[$val['level']])) $levelsCompleted[$val['level']] = 0;
-                    $levelsCompleted[$val['level']]++;
+                    increment($levelsCompleted[$val['level']]);
                 }
             }
             $numLevelsAll[] = count($levelsCompleted);
@@ -2746,7 +2649,6 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
         }
 
         $percentGoodMovesAvgs = array();
-        
         foreach ($sessionIDs as $index=>$session) {
             $data = $allData[$session];
             $sessionLevels = array_keys($data['moveEventsPerChallenge']);
@@ -2776,7 +2678,7 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
                 }
                 $percentGoodMovesAll[$level][$index] = $percentGoodMoves;
             }
-            if ($totalMoves !== 0) {
+            if ($totalMoves > 0) {
                 $percentGoodMovesAvgs[$index] = $totalGoodMoves / $totalMoves;
             } else {
                 $percentGoodMovesAvgs[$index] = 1;
@@ -3948,34 +3850,24 @@ function getAndParseData($column, $gameID, $db, $reqSessionID, $reqLevel) {
                 $paramTypes .= 'ii';
             }
 
-            if (file_exists(DATA_DIR.'/cache/numLevels/numLevels_'.$column.'.php') && $settings['enableSqlCache'] === 'true') {
-                $varImport = include(DATA_DIR.'/cache/numLevels/numLevels_'.$column.'.php');
-                $sessionAttributes = $varImport['sessionAttributes'];
-                $allEvents = $varImport['allEvents'];
-            } else {
-                $stmt = queryMultiParam($db, $query, $paramTypes, $params);
-                if ($stmt === NULL || !$stmt->bind_result($session_id, $level, $event, $event_custom, $event_data_complex, $client_time, $app_id)) {
-                    http_response_code(500);
-                    die();
-                }
-                $sessionAttributes = array(); // the master array of all sessions that will be built with attributes
-                $allEvents = array();
-                
-                while($stmt->fetch()) {
-                    $tuple = array('session_id'=>$session_id, 'level'=>$level, 'event'=>$event, 'event_custom'=>$event_custom,
-                    'event_data_complex'=>$event_data_complex, 'time'=>$client_time);
-                    // Group the variables into their sessionIDs in a big associative array
-                    $sessionAttributes[$session_id][] = $tuple;
-                    // Also make one big array of every event for easier extraction of unique attributes
-                    $allEvents[] = $tuple;
-                }
-                if ($settings['enableSqlCache'] === 'true') {
-                    $varExport = array('sessionAttributes'=>$sessionAttributes, 'allEvents'=>$allEvents);
-                    file_put_contents(DATA_DIR.'/cache/numLevels/numLevels_'.$column.'.php', '<?php return '.var_export($varExport, true).';?>');
-                }
-
-                $stmt->close();
+            $stmt = queryMultiParam($db, $query, $paramTypes, $params);
+            if ($stmt === NULL || !$stmt->bind_result($session_id, $level, $event, $event_custom, $event_data_complex, $client_time, $app_id)) {
+                http_response_code(500);
+                die();
             }
+            $sessionAttributes = array(); // the master array of all sessions that will be built with attributes
+            $allEvents = array();
+            
+            while($stmt->fetch()) {
+                $tuple = array('session_id'=>$session_id, 'level'=>$level, 'event'=>$event, 'event_custom'=>$event_custom,
+                'event_data_complex'=>$event_data_complex, 'time'=>$client_time);
+                // Group the variables into their sessionIDs in a big associative array
+                $sessionAttributes[$session_id][] = $tuple;
+                // Also make one big array of every event for easier extraction of unique attributes
+                $allEvents[] = $tuple;
+            }
+
+            $stmt->close();
 
             foreach ($sessionAttributes as $i=>$val) {
                 uasort($sessionAttributes[$i], function($a, $b) {

@@ -71,7 +71,8 @@ $(document).ready((event) => {
                 // numLevelsBody
                 if (true) { // this is simply so I can collapse this section of code
                     let algorithmNames = model.algorithms.numLevels
-                    let rowNames = { ...model.features.numLevels.general, ...model.features.numLevels.specific }
+                    let tableFeatures = model.features.numLevels
+                    let rowNames = { ...tableFeatures.general, ...tableFeatures.totals, ...tableFeatures.averages }
                     let headers = model.columns.numLevels.headers // each one has title and href
                     let headerSpans = model.columns.numLevels.headerSpans
                     let headerSpanIndexes = $.map(headerSpans, (val, i) => { // array of indexes where a headerSpan starts
@@ -161,7 +162,8 @@ $(document).ready((event) => {
                 // levelCompletionBody
                 if (true) {
                     let algorithmNames = model.algorithms.levelCompletion
-                    let rowNames = { ...model.features.levelCompletion.general, ...model.features.levelCompletion.specific }
+                    let tableFeatures = model.features.levelCompletion
+                    let rowNames = { ...tableFeatures.general, ...tableFeatures.totals, ...tableFeatures.averages }
                     let headers = model.columns.levelCompletion.headers // each one has title and href
                     let headerSpans = model.columns.levelCompletion.headerSpans
                     let headerSpanIndexes = $.map(headerSpans, (val, i) => { // array of indexes where a headerSpan starts
@@ -262,6 +264,9 @@ $(document).ready((event) => {
                             $('#binomialQuestionHeader tr:eq(1)').append(`<td style="text-align:center;">-</td>`)
                         })
                     }
+                    // Append the final column header for averages
+                    $('#binomialQuestionHeader tr:eq(0)').append(`<th scope="col">Avg</td>`)
+                    $('#binomialQuestionHeader tr:eq(1)').append(`<td style="text-align:center;">-</td>`)
                     for (let i = model.levels[0]; i <= model.questionLevels[0]; i++) {
                         let rowText
                         if (i === model.levels[0]) rowText = `L${model.levels[0]} only`
@@ -276,6 +281,8 @@ $(document).ready((event) => {
                             for (let k = 0; k < numQuestions * 4; k++) {
                                 $(rowContent).append(`<td style="width:${5}px;${(j === 0) ? 'border-bottom-width:4px;' : ''}"></td>`)
                             }
+                            // Append final column of averages
+                            $(rowContent).append(`<td style="width:${5}px;${(j === 0) ? 'border-bottom-width:4px;' : ''}"></td>`)
                             $(ival).after($(rowContent))
                         }
                     })
@@ -289,6 +296,9 @@ $(document).ready((event) => {
                         $('#multinomialQuestionHeader tr:eq(0)').append(`<th scope="col">Q${i}</th>`)
                         $('#multinomialQuestionHeader tr:eq(1)').append(`<td style="text-align:center;">-</td>`)
                     }
+                    // Append the final column header for averages
+                    $('#multinomialQuestionHeader tr:eq(0)').append(`<th scope="col">Avg</th>`)
+                    $('#multinomialQuestionHeader tr:eq(1)').append(`<td style="text-align:center;">-</td>`)
                     for (let i = model.levels[0]; i <= model.questionLevels[0]; i++) {
                         let rowText
                         if (i === model.levels[0]) rowText = `L${model.levels[0]} only`
@@ -303,6 +313,8 @@ $(document).ready((event) => {
                             for (let k = 0; k < numQuestions; k++) {
                                 $(rowContent).append(`<td style="width:${5}px;${(j === 0) ? 'border-bottom-width:4px;' : ''}"></td>`)
                             }
+                            // Append final column of averages
+                            $(rowContent).append(`<td style="width:${5}px;${(j === 0) ? 'border-bottom-width:4px;' : ''}"></td>`)
                             $(ival).after($(rowContent))
                         }
                     })
@@ -350,13 +362,16 @@ $(document).ready((event) => {
                     ))
                 }
 
-                $(Object.keys(allFeatures)).each((index, value) => {
-                    if (index > 0) $('#featuresList').append(`
-                    <li>
-                        <input type="checkbox" name="${value}" id="${value}" ${(value == 'OFFSET' || value == 'WAVELENGTH' || value == 'AMPLITUDE') ? '' : 'checked'}>
-                        <label for="${value}" style="font-weight:400;">${allFeatures[value]}</label>
-                    </li>
-                    `)
+                let featureTypes = getFeaturesAndTypes(model)
+                $(Object.keys(featureTypes)).each((index, value) => {
+                    $.each(Object.keys(featureTypes[value]), (j, featureKey) => {
+                        if (featureKey != '(Intercept)') $('#featuresList').append(`
+                        <li>
+                            <input type="checkbox" name="${featureKey}" id="${featureKey}" data-feature-type="${value}" checked>
+                            <label for="${featureKey}" style="font-weight:400;">${featureTypes[value][featureKey]}</label>
+                        </li>
+                        `)
+                    })
                 })
             
                 $('#mainContainer').hide().show(0) // force the page to redraw so collapsed elements don't open upwards
@@ -407,6 +422,16 @@ $(document).ready((event) => {
                         } else { 
                             $('#doneDiv').html('Aborted.').css('color', 'red')
                             $('#timerDiv').css('color', 'red')
+                        }
+
+                        // Also populate average columns of binomial/multinomial tables
+                        if ($('#levelRangeQuestionCheckbox').is(':checked')) {
+                            //let expecteds = $.map($('#binomialQuestionNumSessionsRow').text().map(function() {return $(this).text()}.toArray()), (text, i) => { return text.split(' ').slice(-1)[0] })
+                            //console.log(expecteds);
+                            //$('#binomialQuestionHeader tr:eq(1):last').text(``)
+                        }
+                        if ($('#multinomialQuestionCheckbox').is(':checked')) {
+
                         }
                     }
                 }
@@ -553,7 +578,7 @@ $(document).ready((event) => {
 
                         let featuresParams = {}
                         $.each($('#featuresList input'), (j, val) => {
-                            let flatFeatures = Object.keys({...model.features[table].general, ...model.features[table].specific})
+                            let flatFeatures = Object.keys({...model.features[table].general, ...model.features[table].totals, ...model.features[table].averages})
                             featuresParams[val.id] = ($(val).is(':checked') && flatFeatures.indexOf(val.id) > -1)
                         })
                         // make parameters for per level inputs separately so they can 'cascade' in the table
@@ -1602,6 +1627,54 @@ $(document).ready((event) => {
             });
         }
     
+        $('#toggleGeneral').on('click', (event) => {
+            event.preventDefault()
+            if ($('#featuresList input:not(:checked)[data-feature-type="general"]').length > 0) {
+                $('#featuresList input[data-feature-type="general"]').each((index, value) => {
+                    $(value).prop('checked', true)
+                })
+            } else {
+                $('#featuresList input[data-feature-type="general"]').each((index, value) => {
+                    $(value).prop('checked', false)
+                })
+            }
+        })
+        $('#toggleAverages').on('click', (event) => {
+            event.preventDefault()
+            if ($('#featuresList input:not(:checked)[data-feature-type="averages"]').length > 0) {
+                $('#featuresList input[data-feature-type="averages"]').each((index, value) => {
+                    $(value).prop('checked', true)
+                })
+            } else {
+                $('#featuresList input[data-feature-type="averages"]').each((index, value) => {
+                    $(value).prop('checked', false)
+                })
+            }
+        })
+        $('#toggleTotals').on('click', (event) => {
+            event.preventDefault()
+            if ($('#featuresList input:not(:checked)[data-feature-type="totals"]').length > 0) {
+                $('#featuresList input[data-feature-type="totals"]').each((index, value) => {
+                    $(value).prop('checked', true)
+                })
+            } else {
+                $('#featuresList input[data-feature-type="totals"]').each((index, value) => {
+                    $(value).prop('checked', false)
+                })
+            }
+        })
+        $('#togglePerLevel').on('click', (event) => {
+            event.preventDefault()
+            if ($('#featuresList input:not(:checked)[data-feature-type="perLevel"]').length > 0) {
+                $('#featuresList input[data-feature-type="perLevel"]').each((index, value) => {
+                    $(value).prop('checked', true)
+                })
+            } else {
+                $('#featuresList input[data-feature-type="perLevel"]').each((index, value) => {
+                    $(value).prop('checked', false)
+                })
+            }
+        })
         $('#toggleFeatures').on('click', (event) => {
             event.preventDefault()
             if ($('#featuresList input:not(:checked)').length > 0) {
@@ -1629,6 +1702,16 @@ $(document).ready((event) => {
                 }
             })
             return flattenedObj
+        }
+
+        function getFeaturesAndTypes(model) {
+            let featureTypes = {}
+            $.each(model.features, (table, tableData) => {
+                $.each(tableData, (featureType, features) => {
+                    featureTypes[featureType] = { ...featureTypes[featureType], ...features }
+                })
+            })
+            return featureTypes
         }
     }, 'json')
 })
