@@ -100,7 +100,7 @@ $(document).ready((event) => {
                         if (zeroIndex == 0 || headerSpanIndexes.indexOf(zeroIndex) !== -1) { // first col and new headerspans have thicker left borders
                             style = 'border-left-width:4px;'
                         }
-                        let headerElement = $(`<th scope="col" style="${style}"><a target="_blank" href="download.php?file=${header.href}">${header.title}</a></th>`)
+                        let headerElement = $(`<th scope="col" style="${style}"><a target="_blank" href="download.php?gameID=${$('#gameSelect').val()}&file=${header.href}">${header.title}</a></th>`)
                         $(`#numLevelsHead tr:eq(${hasHeader ? 1 : 0})`).append(headerElement)
 
                         let numSessionsElement = $(`<td style="${style}">-</td>`)
@@ -191,7 +191,7 @@ $(document).ready((event) => {
                         if (zeroIndex == 0 || headerSpanIndexes.indexOf(zeroIndex) !== -1) { // first col and new headerspans have thicker left borders
                             style = 'border-left-width:4px;'
                         }
-                        let headerElement = $(`<th scope="col" style="${style}"><a target="_blank" href="download.php?file=${header.href}">${header.title}</a></th>`)
+                        let headerElement = $(`<th scope="col" style="${style}"><a target="_blank" href="download.php?gameID=${$('#gameSelect').val()}&file=${header.href}">${header.title}</a></th>`)
                         $(`#levelCompletionHead tr:eq(${hasHeader ? 1 : 0})`).append(headerElement)
 
                         let percentCompleteElement = $(`<td style="${style}">- %</td>`)
@@ -754,7 +754,7 @@ $(document).ready((event) => {
                                         if (table === 'binomialQuestion' && j % numAlgorithms === 0) {
                                             $(innerText).wrapInner(`<a target="_blank" href="correlationGraph.html?gameID=${$('#gameSelect').val()}&table=${table}&row=${Math.floor(j/(numAlgorithms)+1)}&col=${column}&i=${i}&j=${Math.floor(j/(numAlgorithms))}"></a>`)
                                         } else if (table === 'multinomialQuestion') {
-                                            $(innerText).wrapInner(`<a target="_blank" href="download.php?file=${model.columns.multinomialQuestion.headers[column].href + Math.floor(j/(numAlgorithms)+1)}.txt"></a>`)
+                                            $(innerText).wrapInner(`<a target="_blank" href="download.php?gameID=${$('#gameSelect').val()}&file=${model.columns.multinomialQuestion.headers[column].href + Math.floor(j/(numAlgorithms)+1)}.txt"></a>`)
                                         }
                                         $(jval).html(innerText)
                                     }
