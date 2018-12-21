@@ -272,7 +272,7 @@ $(document).ready((event) => {
                         if (i === model.levels[0]) rowText = `L${model.levels[0]} only`
                         else rowText = `L${model.levels[0]}-L`+i
 
-                        let rowElement = $('<tr>').append($('<th>').attr('rowspan', algorithmNames.length + 1).css({'width':'6%', 'vertical-align':'middle', 'border-bottom-width':'4px'}).text(rowText))
+                        let rowElement = $('<tr class="headerCol">').append($('<th>').attr('rowspan', algorithmNames.length + 1).css({'width':'6%', 'vertical-align':'middle', 'border-bottom-width':'4px'}).text(rowText))
                         $('#binomialQuestionBody').append(rowElement)
                     }
                     $('#binomialQuestionBody tr').each((i, ival) => {
@@ -304,7 +304,7 @@ $(document).ready((event) => {
                         if (i === model.levels[0]) rowText = `L${model.levels[0]} only`
                         else rowText = `L${model.levels[0]}-L`+i
 
-                        let rowElement = $('<tr>').append($('<th>').attr('rowspan', algorithmNames.length + 1).css({'vertical-align':'middle', 'border-bottom-width':'4px', 'width': '6%'}).text(rowText))
+                        let rowElement = $('<tr class="headerCol">').append($('<th>').attr('rowspan', algorithmNames.length + 1).css({'vertical-align':'middle', 'border-bottom-width':'4px', 'width': '6%'}).text(rowText))
                         $('#multinomialQuestionBody').append(rowElement)
                     }
                     $('#multinomialQuestionBody tr').each((i, ival) => {
@@ -426,12 +426,66 @@ $(document).ready((event) => {
 
                         // Also populate average columns of binomial/multinomial tables
                         if ($('#levelRangeQuestionCheckbox').is(':checked')) {
-                            //let expecteds = $.map($('#binomialQuestionNumSessionsRow').text().map(function() {return $(this).text()}.toArray()), (text, i) => { return text.split(' ').slice(-1)[0] })
-                            //console.log(expecteds);
-                            //$('#binomialQuestionHeader tr:eq(1):last').text(``)
+                            let expecteds = $.map($('#binomialQuestionNumSessionsRow td:not(:last)').map(function() {return $(this).text()}).get(), (text, i) => { return parseFloat(text.substr(text.indexOf('(')+1, 4)) })
+                            let totalExpected = 0
+                            for (let i in expecteds) {
+                                totalExpected += expecteds[i]
+                            }
+                            let avgExpected = (totalExpected / expecteds.length).toFixed(2)
+                            $('#binomialQuestionHeader tr:eq(1) td:last').text(avgExpected)
+
+                            $(`#binomialQuestionBody tr:not(.headerCol)`).each((i, ival) => {
+                                //console.log($(ival).children('td:not(:last, :first)'))
+                                let accuracies = $.map($(ival).children('td:not(:last, :first)').map(function() {return $(this).text()}).get(), (text, i) => { return parseFloat(text.substr(0, text.indexOf(',')+1)) })
+                                let totalAccuracy = 0;
+                                let goodAccuracies = $.grep(accuracies, (val, index) => { return !isNaN(val) })
+                                for (let j in goodAccuracies) {
+                                    totalAccuracy += goodAccuracies[j]
+                                }
+                                let avgAccuracy = (totalAccuracy / goodAccuracies.length).toFixed(2)
+
+                                let fscores = $.map($(ival).children('td:not(:last, :first)').map(function() {return $(this).text()}).get(), (text, i) => { return parseFloat(text.substr(text.indexOf(',')+1)) })
+                                let totalFscore = 0;
+                                let goodFscores = $.grep(fscores, (val, index) => { return !isNaN(val) })
+                                for (let j in goodFscores) {
+                                    totalFscore += goodFscores[j]
+                                }
+                                let avgFscore = (totalFscore / goodFscores.length)
+                                if (isNaN(avgFscore)) avgFscore = 'N/A'
+                                else avgFscore = avgFscore.toFixed(2)
+                                $(ival).children('td:last').html(`${avgAccuracy},<br>${avgFscore}`).css({'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif'})
+                            })
                         }
                         if ($('#multinomialQuestionCheckbox').is(':checked')) {
+                            let expecteds = $.map($('#multinomialQuestionNumSessionsRow td:not(:last)').map(function() {return $(this).text()}).get(), (text, i) => { return parseFloat(text.substr(text.indexOf('(')+1, 4)) })
+                            let totalExpected = 0
+                            for (let i in expecteds) {
+                                totalExpected += expecteds[i]
+                            }
+                            let avgExpected = (totalExpected / expecteds.length).toFixed(2)
+                            $('#multinomialQuestionHeader tr:eq(1) td:last').text(avgExpected)
 
+                            $(`#multinomialQuestionBody tr:not(.headerCol)`).each((i, ival) => {
+                                //console.log($(ival).children('td:not(:last, :first)'))
+                                let accuracies = $.map($(ival).children('td:not(:last, :first)').map(function() {return $(this).text()}).get(), (text, i) => { return parseFloat(text.substr(0, text.indexOf(',')+1)) })
+                                let totalAccuracy = 0;
+                                let goodAccuracies = $.grep(accuracies, (val, index) => { return !isNaN(val) })
+                                for (let j in goodAccuracies) {
+                                    totalAccuracy += goodAccuracies[j]
+                                }
+                                let avgAccuracy = (totalAccuracy / goodAccuracies.length).toFixed(2)
+
+                                let fscores = $.map($(ival).children('td:not(:last, :first)').map(function() {return $(this).text()}).get(), (text, i) => { return parseFloat(text.substr(text.indexOf(',')+1)) })
+                                let totalFscore = 0;
+                                let goodFscores = $.grep(fscores, (val, index) => { return !isNaN(val) })
+                                for (let j in goodFscores) {
+                                    totalFscore += goodFscores[j]
+                                }
+                                let avgFscore = (totalFscore / goodFscores.length)
+                                if (isNaN(avgFscore)) avgFscore = 'N/A'
+                                else avgFscore = avgFscore.toFixed(2)
+                                $(ival).children('td:last').html(`${avgAccuracy},<br>${avgFscore}`).css({'color': 'black', 'text-align': 'center', 'font': '14px "Open Sans", sans-serif'})
+                            })
                         }
                     }
                 }
@@ -686,8 +740,9 @@ $(document).ready((event) => {
                                                     $(innerText).css('background-color', '#82e072')
                                                 }
                                                 let percentsText = ''
-                                                for (let percent in percentsCorrect) {
-                                                    percentsText += percentsCorrect[percent].toFixed(4) + '<br>'
+                                                if (!percentsCorrect[1]) percentsCorrect[1] = 'N/A' // for log reg which doesn't have f1
+                                                for (let j = 0; j < percentsCorrect.length; j++) {
+                                                    percentsText += $.isNumeric(percentsCorrect[j]) ? (percentsCorrect[j].toFixed(4) + `${j === 0 ? ',' : ''}<br>`) : (percentsCorrect[j] + `${j === 0 ? ',' : ''}<br>`)
                                                 }
                                                 innerText.html(percentsText)
                                             } else {

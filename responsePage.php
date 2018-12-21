@@ -1936,9 +1936,15 @@ function analyze($levels, $allEvents, $sessionsAndTimes, $numLevels, $sessionAtt
             $sessionData['features']['avgAmplitudeMoves'] = average($totalAmplitudeMovesPerLevel);
             $sessionData['features']['avgFails'] = average($numFailsPerLevel);
 
-            $sessionData['features']['avgPercentOffset'] = $sessionData['features']['totalOffsetMoves'] / $sessionData['features']['totalSliderMoves'];
-            $sessionData['features']['avgPercentAmplitude'] = $sessionData['features']['totalAmplitudeMoves'] / $sessionData['features']['totalSliderMoves'];
-            $sessionData['features']['avgPercentWavelength'] = $sessionData['features']['totalWavelengthMoves'] / $sessionData['features']['totalSliderMoves'];
+            if ($sessionData['features']['totalSliderMoves'] == 0) {
+                $sessionData['features']['avgPercentOffset'] = 0;
+                $sessionData['features']['avgPercentAmplitude'] = 0;
+                $sessionData['features']['avgPercentWavelength'] = 0;
+            } else {
+                $sessionData['features']['avgPercentOffset'] = $sessionData['features']['totalOffsetMoves'] / $sessionData['features']['totalSliderMoves'];
+                $sessionData['features']['avgPercentAmplitude'] = $sessionData['features']['totalAmplitudeMoves'] / $sessionData['features']['totalSliderMoves'];
+                $sessionData['features']['avgPercentWavelength'] = $sessionData['features']['totalWavelengthMoves'] / $sessionData['features']['totalSliderMoves'];
+            }
 
             $allData[$sessionID] = $sessionData;
         }
