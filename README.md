@@ -50,3 +50,4 @@ Some things to note:
 - Older features like the single tab have been untouched for a long time and are almost certainly no longer working
 - When developing (at least for HTML/JS/CSS changes), always keep the Chrome console open and tick "Disable cache" in the Network tab to make sure changes appear
 - Aborting requests with the button (which calls jquery's abort method on the jquery XMLHttpRequest object) only stops the client from listening; it does not stop the server from running the calculations. To free server resources, either wait for the aborted requests to finish or manually kill anything mysqld, httpd, R, or Python
+- A helpful trick for testing individual columns is to put garbage in responsePage.php (such as typing "asdf" somewhere invalid), save it, run the table you want, and copy the request link from the console and put it into Postman, then undo the garbage and send it there
